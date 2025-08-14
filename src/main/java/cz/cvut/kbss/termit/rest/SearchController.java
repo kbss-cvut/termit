@@ -69,7 +69,8 @@ public class SearchController extends BaseController {
     @GetMapping(value = "/fts", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<FullTextSearchResult> fullTextSearch(@Parameter(description = "Search string.")
                                                      @RequestParam(name = "searchString") String searchString,
-                                                     @Parameter(description = "Language of the search string")
+                                                     @Parameter(description = "Search language. " +
+                                                             "Searches in all languages if the field is omitted.")
                                                      @RequestParam(name = "language", required = false) String language) {
         return searchService.fullTextSearch(searchString, language);
     }
@@ -83,7 +84,8 @@ public class SearchController extends BaseController {
             @RequestParam(name = "searchString") String searchString,
             @Parameter(description = "Identifiers of vocabularies in which to search.")
             @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies,
-            @Parameter(description = "Language of the search string")
+            @Parameter(description = "Search language. " +
+                    "Searches in all languages if the field is omitted.")
             @RequestParam(name = "language", required = false) String language) {
         return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies), language);
     }
