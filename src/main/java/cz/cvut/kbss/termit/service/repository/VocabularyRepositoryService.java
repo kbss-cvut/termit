@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.RdfsStatement;
+import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
@@ -359,7 +359,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      *                               {@code vocabulary}
      */
     private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
-        final List<RdfsStatement> relations = vocabularyDao.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = vocabularyDao.getTermRelations(vocabulary);
         if (!relations.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. There are relations with other vocabularies.");
@@ -370,11 +370,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getTermCount(vocabulary);
     }
 
-    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+    public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
         return vocabularyDao.getTermRelations(vocabulary);
     }
 
-    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
+    public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
         return vocabularyDao.getVocabularyRelations(vocabulary, excludedRelations);
     }
 

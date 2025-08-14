@@ -21,12 +21,14 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
-import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -112,6 +114,18 @@ public class DataDao {
     }
 
     /**
+     * Finds all user-defined attributes.
+     *
+     * @return List of custom attributes
+     */
+    public List<CustomAttribute> findAllCustomAttributes() {
+        return em.createQuery("SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
+                              CustomAttribute.class)
+                 .setDescriptor(new EntityDescriptor(URI.create(CustomAttribute.CONTEXT)))
+                 .getResultList();
+    }
+
+    /**
      * Persists the specified resource.
      * <p>
      * This method should be used very rarely because it saves a basic RDFS resource with nothing but identifier and
@@ -151,6 +165,21 @@ public class DataDao {
         final RdfsResource result = resources.get(0);
         result.setTypes(resources.stream().flatMap(r -> r.getTypes().stream()).collect(Collectors.toSet()));
         return Optional.of(result);
+    }
+
+    /**
+     * Finds a custom attribute with the specified identifier.
+     *
+     * @param id Attribute identifier
+     * @return Optional attribute
+     */
+    public Optional<CustomAttribute> findCustomAttribute(URI id) {
+        Objects.requireNonNull(id);
+        try {
+            return Optional.ofNullable(em.find(CustomAttribute.class, id));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     /**

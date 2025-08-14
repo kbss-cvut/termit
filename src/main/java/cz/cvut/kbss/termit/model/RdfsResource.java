@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.dto;
+package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
@@ -155,7 +155,7 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
     @Override
     public String toString() {
         return "RdfsResource{" +
-                "uri=" + uri +
+                Utils.uriToString(uri) +
                 ", label=" + label +
                 ", types=" + types +
                 '}';

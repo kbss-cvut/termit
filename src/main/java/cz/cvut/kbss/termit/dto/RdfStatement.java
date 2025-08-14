@@ -36,13 +36,13 @@ import java.net.URI;
 @NonEntity
 @OWLClass(iri = RDF.STATEMENT)
 @SparqlResultSetMapping(name = "RDFStatement",
-                        classes = {@ConstructorResult(targetClass = RdfsStatement.class,
+                        classes = {@ConstructorResult(targetClass = RdfStatement.class,
                                                       variables = {
                                                               @VariableResult(name = "object", type = URI.class),
                                                               @VariableResult(name = "relation", type = URI.class),
                                                               @VariableResult(name = "subject", type = URI.class),
                                                       })})
-public class RdfsStatement implements Serializable {
+public class RdfStatement implements Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = RDF.OBJECT)
@@ -56,10 +56,10 @@ public class RdfsStatement implements Serializable {
     @OWLObjectProperty(iri = RDF.SUBJECT)
     private URI subject;
 
-    public RdfsStatement() {
+    public RdfStatement() {
     }
 
-    public RdfsStatement(URI object, URI relation, URI subject) {
+    public RdfStatement(URI object, URI relation, URI subject) {
         this.object = object;
         this.relation = relation;
         this.subject = subject;

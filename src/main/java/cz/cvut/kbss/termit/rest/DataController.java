@@ -18,8 +18,9 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
@@ -32,14 +33,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -73,9 +78,47 @@ public class DataController {
     @PostMapping(value = "/properties", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createProperty(@Parameter(description = "Property metadata.")
                                                @RequestBody RdfsResource property) {
-        dataService.persistProperty(property);
+        dataService.persist(property);
         LOG.debug("Created property {}.", property);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
+    }
+
+    @Operation(description = "Gets all user-defined custom attributes in the system.")
+    @ApiResponse(responseCode = "200", description = "List of custom attributes.")
+    @GetMapping(value = "/custom-attributes", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<CustomAttribute> getCustomAttributes() {
+        return dataService.findAllCustomProperties();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates a new custom attribute.")
+    @ApiResponse(responseCode = "201", description = "Attribute successfully created.")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
+    @PostMapping(value = "/custom-attributes", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> createCustomAttribute(@Parameter(description = "Attribute metadata.")
+                                                      @RequestBody CustomAttribute attribute) {
+        dataService.persistCustomAttribute(attribute);
+        LOG.debug("Created custom attribute {}.", attribute);
+        return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Updates a custom attribute. Only label and description can be changed.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Attribute successfully updated."),
+            @ApiResponse(responseCode = "404", description = "Attribute not found.")
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PutMapping(value = "/custom-attributes/{localName}",
+                consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public void updateCustomAttribute(@Parameter(
+                                              description = "Locally (in the context of the custom attributes namespace) unique part of the attribute identifier.",
+                                              example = "custom-attribute")
+                                      @PathVariable String localName,
+                                      @Parameter(description = "Updated attribute metadata.")
+                                      @RequestBody CustomAttribute update) {
+        dataService.updateCustomAttribute(update);
+        LOG.debug("Updated custom attribute {}.", update);
     }
 
     @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")

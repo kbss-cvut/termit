@@ -22,7 +22,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
@@ -200,7 +200,7 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
-                nt -> term.setProperties(Collections.singletonMap(DC.Terms.REFERENCES, splitIntoMultipleValues(nt))));
+                nt -> term.setProperties(Collections.singletonMap(DC.Terms.REFERENCES, new HashSet<>(splitIntoMultipleValues(nt)))));
         getAttributeValue(termRow, SKOS.RELATED).ifPresent(
                 rt -> mapSkosRelated(term, splitIntoMultipleValues(rt)));
         getAttributeValue(termRow, SKOS.RELATED_MATCH).ifPresent(

@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  * DTO for term listing.
  * <p>
- * Contains fewer data than a regular {@link cz.cvut.kbss.termit.model.Term}.
+ * Contains less data than a regular {@link cz.cvut.kbss.termit.model.Term}.
  */
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "parentTerms", "subTerms"})

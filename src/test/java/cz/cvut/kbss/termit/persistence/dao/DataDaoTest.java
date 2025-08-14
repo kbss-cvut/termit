@@ -21,10 +21,12 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.OWL;
+import cz.cvut.kbss.jopa.vocabulary.XSD;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
@@ -47,6 +49,7 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.IOException;
 import java.net.URI;
@@ -54,12 +57,15 @@ import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DataDaoTest extends BaseDaoTestRunner {
 
     private static final String FIRST_NAME_LABEL = "First name";
@@ -151,7 +157,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral(getPrimaryLabel(term)));
+                               vf.createLiteral(getPrimaryLabel(term)));
                 connection.commit();
             }
         });
@@ -182,7 +188,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral(getPrimaryLabel(term)));
+                               vf.createLiteral(getPrimaryLabel(term)));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral("Another label"));
                 connection.commit();
@@ -342,5 +348,25 @@ class DataDaoTest extends BaseDaoTestRunner {
                   .setParameter("ctx", context)
                   .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
                   .setParameter("type", URI.create(SKOS.CONCEPT.stringValue())).getSingleResult()));
+    }
+
+    @Test
+    void findAllCustomAttributesReturnsCustomAttributes() {
+        final CustomAttribute pOne = new CustomAttribute(Generator.generateUri(),
+                                                         MultilingualString.create("Attribute one", "en"), null);
+        pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        final CustomAttribute pTwo = new CustomAttribute(Generator.generateUri(),
+                                                         MultilingualString.create("Attribute two", "en"), null);
+        pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pTwo.setRange(URI.create(XSD.BOOLEAN));
+        transactional(() -> {
+            em.persist(pOne);
+            em.persist(pTwo);
+        });
+
+        final List<CustomAttribute> result = sut.findAllCustomAttributes();
+        assertEquals(2, result.size());
+        assertThat(result, hasItems(pOne, pTwo));
     }
 }

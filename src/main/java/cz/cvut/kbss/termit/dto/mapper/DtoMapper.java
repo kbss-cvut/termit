@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
 import cz.cvut.kbss.termit.dto.acl.AccessHolderDto;

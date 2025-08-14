@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;

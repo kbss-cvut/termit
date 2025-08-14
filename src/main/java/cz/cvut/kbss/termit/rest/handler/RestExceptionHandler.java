@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
 import cz.cvut.kbss.termit.exception.SuppressibleLogging;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
@@ -296,6 +297,13 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> unsupportedTextAnalysisLanguageException(HttpServletRequest request,
                                                                               UnsupportedTextAnalysisLanguageException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> unsupportedDomainException(HttpServletRequest request,
+                                                                UnsupportedDomainException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }

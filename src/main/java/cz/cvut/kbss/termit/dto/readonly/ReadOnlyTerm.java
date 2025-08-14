@@ -72,7 +72,7 @@ public class ReadOnlyTerm extends AbstractTerm {
     private Set<TermInfo> relatedMatch;
 
     @Properties
-    private Map<String, Set<String>> properties;
+    private Map<String, Set<Object>> properties;
 
     public ReadOnlyTerm() {
         // Public no-arg constructor for marshalling support
@@ -203,11 +203,11 @@ public class ReadOnlyTerm extends AbstractTerm {
         this.examples = examples;
     }
 
-    public Map<String, Set<String>> getProperties() {
+    public Map<String, Set<Object>> getProperties() {
         return properties;
     }
 
-    public void setProperties(final Map<String, Set<String>> properties) {
+    public void setProperties(final Map<String, Set<Object>> properties) {
         this.properties = properties;
     }
 }
