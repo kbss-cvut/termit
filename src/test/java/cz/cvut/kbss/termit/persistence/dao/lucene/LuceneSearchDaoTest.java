@@ -20,11 +20,9 @@ package cz.cvut.kbss.termit.persistence.dao.lucene;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
-import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,9 +47,6 @@ class LuceneSearchDaoTest {
     @Mock
     private EntityManager emMock;
 
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private Configuration configMock;
-
     @Mock
     private Query queryMock;
 
@@ -59,7 +54,7 @@ class LuceneSearchDaoTest {
 
     @BeforeEach
     void setUp() {
-        this.sut = new LuceneSearchDao(emMock, configMock);
+        this.sut = new LuceneSearchDao(emMock);
         sut.loadQueries();
     }
 

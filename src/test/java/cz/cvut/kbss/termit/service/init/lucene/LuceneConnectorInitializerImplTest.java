@@ -9,13 +9,13 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.TransactionalTestRunner;
 import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
@@ -31,9 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR;
-import static cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializerImpl.LUCENE_DROP_CONNECTOR;
-import static cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializerImpl.LUCENE_INSTANCE_NS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -47,18 +44,11 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
 
     @Autowired
     private EntityManager em;
-
-    @Spy
-    private Configuration configuration;
-
-    private Configuration.Persistence config;
-
     private LuceneConnectorInitializerImpl sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new LuceneConnectorInitializerImpl(configuration, em, Environment.getObjectMapper());
-        this.config = configuration.getPersistence();
+        this.sut = new LuceneConnectorInitializerImpl(em, Environment.getObjectMapper());
     }
 
     private List<URI> getConnectors() {
@@ -74,16 +64,16 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
                     }
                 }
                 """, URI.class)
-                 .setParameter("createConnector", LUCENE_CREATE_CONNECTOR)
-                 .setParameter("dropConnector", LUCENE_DROP_CONNECTOR)
+                 .setParameter("createConnector", LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR)
+                 .setParameter("dropConnector", LuceneConnectorInitializerImpl.LUCENE_DROP_CONNECTOR)
                  .getResultList();
     }
 
     private void assertConnectorsExist(Collection<String> languages) {
         Set<String> languagesSet = new HashSet<>(languages);
         languagesSet.add("");
-        String labelIndexPrefix = LUCENE_INSTANCE_NS + config.getLuceneLabelIndexPrefix();
-        String defcomIndexPrefix = LUCENE_INSTANCE_NS + config.getLuceneDefcomIndexPrefix();
+        String labelIndexPrefix = Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX;
+        String defcomIndexPrefix = Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX;
         List<URI> connectors = getConnectors();
         // +1 for universal connector indexing all languages
         // *2 one label index, one defcom index
@@ -147,18 +137,18 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
 
     @Test
     void initializeWontDropNonPrefixedConnectors() {
-        final URI connectorUri = URI.create(LUCENE_INSTANCE_NS + "myCustomPrefix");
+        final URI connectorUri = URI.create(Constants.LUCENE_INSTANCE_NS + "myCustomPrefix");
         transactional(() -> {
             em.createNativeQuery("INSERT DATA {?connectorUri ?createConnector [].}")
                     .setParameter("connectorUri", connectorUri)
-                    .setParameter("createConnector", LUCENE_CREATE_CONNECTOR)
+                    .setParameter("createConnector", LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR)
                     .executeUpdate();
         });
         sut.initialize();
         transactional(() -> {
             final int removedConnectorsCount =
                     em.createNativeQuery("SELECT ?connectorUri WHERE { ?connectorUri ?dropConnector ?value }")
-                      .setParameter("dropConnector", LUCENE_DROP_CONNECTOR)
+                      .setParameter("dropConnector", LuceneConnectorInitializerImpl.LUCENE_DROP_CONNECTOR)
                       .getResultList().size();
             assertEquals(0, removedConnectorsCount);
         });
@@ -181,7 +171,7 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
                         FILTER(REGEX(str(?uri), STR(?lang))) .
                     }
                 """, String.class)
-                                           .setParameter("createConnector", LUCENE_CREATE_CONNECTOR)
+                                           .setParameter("createConnector", LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR)
                                            .setParameter("lang", ".*" + lang + "$")
                                            .getResultStream()
                                            .map(options -> {
