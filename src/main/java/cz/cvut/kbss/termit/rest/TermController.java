@@ -156,7 +156,7 @@ public class TermController extends BaseController {
         if (searchString != null) {
 
             if (flat) {
-                ResponseEntity.ok(includeImported ?
+                return ResponseEntity.ok(includeImported ?
                         termService.findAllFlatIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
                         termService.findAllFlat(searchString, vocabulary, createPageRequest(pageSize, pageNo)));
             }

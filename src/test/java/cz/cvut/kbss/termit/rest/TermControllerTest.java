@@ -24,6 +24,7 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -81,6 +82,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Environment.termsToFlatDtos;
 import static cz.cvut.kbss.termit.environment.Generator.TERM_STATES;
 import static cz.cvut.kbss.termit.environment.Generator.generateComment;
 import static cz.cvut.kbss.termit.environment.Generator.generateComments;
@@ -310,6 +312,88 @@ class TermControllerTest extends BaseControllerTestRunner {
         assertEquals(terms, result);
         final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
         verify(termServiceMock).findAllIncludingImported(eq(vocabulary), captor.capture());
+    }
+
+    @Test
+    void getAllUsesSearchStringAndFlatListParameterToFindMatchingTerms() throws Exception {
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findAllFlat(anyString(), any(), any(Pageable.class))).thenReturn(terms);
+        final String searchString = "test";
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
+                                                   .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+                                                   .param("searchString", searchString)
+                                                   .param("flat", Boolean.TRUE.toString()))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
+        });
+        assertEquals(terms, result);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllFlat(eq(searchString), eq(vocabulary), captor.capture());
+    }
+
+    @Test
+    void getAllUsesFlatListParameterWithoutSearchStringToFindAllTerms() throws Exception {
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
+        final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termServiceMock.findAllFlat(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
+                                                   .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+                                                   .param("flat", Boolean.TRUE.toString()))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
+        });
+        assertEquals(terms, result);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllFlat(eq(vocabulary), captor.capture());
+    }
+
+    @Test
+    void getAllUsesFlatListParameterWithIncludeImportedToFindAllTermsIncludingImported() throws Exception {
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
+        final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termServiceMock.findAllFlatIncludingImported(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
+                                                   .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+                                                   .param("includeImported", Boolean.TRUE.toString())
+                                                   .param("flat", Boolean.TRUE.toString()))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
+        });
+        assertEquals(terms, result);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllFlatIncludingImported(eq(vocabulary), captor.capture());
+    }
+
+    @Test
+    void getAllUsesFlatListParameterWithSearchStringAndIncludeImportedToFindMatchingTermsIncludingImported() throws Exception {
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
+        final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termServiceMock.findAllFlatIncludingImported(anyString(), eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+        final String searchString = "test";
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
+                                                   .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+                                                   .param("searchString", searchString)
+                                                   .param("includeImported", Boolean.TRUE.toString())
+                                                   .param("flat", Boolean.TRUE.toString()))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
+        });
+        assertEquals(terms, result);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllFlatIncludingImported(eq(searchString), eq(vocabulary), captor.capture());
     }
 
     @Test

@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -75,6 +76,7 @@ import java.util.stream.IntStream;
 import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Environment.termsToFlatDtos;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -91,6 +93,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
@@ -341,6 +344,170 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         allExpected.addAll(parentTerms);
         allExpected.sort(Comparator.comparing(Environment::getPrimaryLabel));
         assertEquals(toDtos(allExpected), result);
+    }
+
+    @Test
+    void findAllFlatReturnsPageWithTermsOrderedByLabel() {
+        final List<Term> terms = generateTerms(8);
+        addTermsAndSave(terms, vocabulary);
+
+        final List<FlatTermDto> page = sut.findAllFlat(vocabulary, PageRequest.of(0, 5));
+        final List<Term> expected = new ArrayList<>(terms.subList(0,5));
+        assertEquals(5, page.size());
+        assertEquals(termsToFlatDtos(expected), page);
+    }
+
+    @Test
+    void findAllFlatRespectsPaging() {
+        final List<Term> terms = generateTerms(9);
+        addTermsAndSave(terms, vocabulary);
+
+        final List<FlatTermDto> first = sut.findAllFlat(vocabulary, PageRequest.of(0, 4));
+        final List<FlatTermDto> second = sut.findAllFlat(vocabulary, PageRequest.of(1, 4));
+
+        assertEquals(4, first.size());
+        assertEquals(4, second.size());
+
+        first.forEach(f -> second.forEach(s -> {
+            if (f.getUri().equals(s.getUri())) {
+                throw new AssertionError("Duplicate term across pages: " + f.getUri());
+            }
+        }));
+    }
+
+    @Test
+    void findAllFlatReturnsOnlyTermsInSpecifiedVocabulary() {
+        final List<Term> vocTerms = generateTerms(3);
+        addTermsAndSave(vocTerms, vocabulary);
+
+        final Vocabulary another = Generator.generateVocabularyWithId();
+        final List<Term> otherTerms = generateTerms(2);
+        addTermsAndSave(otherTerms, another);
+
+        final List<FlatTermDto> result = sut.findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(vocTerms.size(), result.size());
+        assertThat(result, hasItems(termsToFlatDtos(vocTerms).toArray(new FlatTermDto[0])));
+    }
+
+    /**
+     * Verifies that {@link TermDao#findAll(Vocabulary, org.springframework.data.domain.Pageable)} returns
+     * hierarchical DTOs (root has its child in subTerms) while {@link TermDao#findAllFlat(Vocabulary, org.springframework.data.domain.Pageable)}
+     * returns a flat list without a populated sub-term hierarchy.
+     */
+    @Test
+    void findAllFlatReturnsFlatListWithoutSubTerms() throws Exception {
+        final Term root = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        child.setParentTerms(Collections.singleton(root));
+
+        transactional(() -> {
+            vocabulary.getGlossary().setRootTerms(Collections.singleton(root.getUri()));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+
+            root.setGlossary(vocabulary.getGlossary().getUri());
+            em.persist(root, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(root, vocabulary.getUri(), em);
+
+            child.setGlossary(vocabulary.getGlossary().getUri());
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
+        });
+
+        final List<TermDto> hierarchical = sut.findAll(vocabulary, PageRequest.of(0, 10));
+        assertEquals(2, hierarchical.size());
+        final TermDto rootDto = hierarchical.stream()
+                                            .filter(t -> t.getUri().equals(root.getUri()))
+                                            .findFirst()
+                                            .orElseThrow();
+        assertNotNull(rootDto.getSubTerms());
+        assertTrue(rootDto.getSubTerms().stream().anyMatch(st -> st.getUri().equals(child.getUri())));
+
+        final List<FlatTermDto> flat = sut.findAllFlat(vocabulary, PageRequest.of(0, 10));
+        assertEquals(2, flat.size());
+        final FlatTermDto flatRoot = flat.stream()
+                                         .filter(t -> t.getUri().equals(root.getUri()))
+                                         .findFirst()
+                                         .orElseThrow();
+
+        try {
+            java.lang.reflect.Method m = flatRoot.getClass().getMethod("getSubTerms");
+            Object val = m.invoke(flatRoot);
+            if (val == null) {
+                // acceptable - no hierarchy loaded
+            } else if (val instanceof Collection) {
+                assertTrue(((Collection<?>) val).isEmpty(), "FlatTermDto should have empty subTerms.");
+            } else {
+                fail("getSubTerms returned unexpected type in FlatTermDto: " + val.getClass());
+            }
+        } catch (NoSuchMethodException ignored) {
+            // Truly flat DTO - also acceptable
+        }
+    }
+
+    @Test
+    void findAllFlatIncludingImportedReturnsTermsInVocabularyAndImportedVocabularies() {
+        final List<Term> localTerms = generateTerms(5);
+        addTermsAndSave(localTerms, vocabulary);
+        final Vocabulary imported = Generator.generateVocabularyWithId();
+        final List<Term> importedTerms = generateTerms(3);
+        addTermsAndSave(importedTerms, imported);
+
+        vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
+        transactional(() -> em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
+
+        final List<FlatTermDto> result =
+                sut.findAllFlatIncludingImported(vocabulary, PageRequest.of(0, 20));
+
+        final List<Term> all = new ArrayList<>();
+        all.addAll(localTerms);
+        all.addAll(importedTerms);
+        all.sort(Comparator.comparing(Environment::getPrimaryLabel));
+
+        assertEquals(termsToFlatDtos(all), result);
+    }
+
+    @Test
+    void findAllFlatBySearchStringReturnsTermsWithMatchingLabel() {
+        final List<Term> terms = generateTerms(7);
+        addTermsAndSave(terms, vocabulary);
+
+        final String searchString = getPrimaryLabel(terms.get(0)).substring(0, 3).toLowerCase();
+        final List<FlatTermDto> result =
+                sut.findAllFlat(searchString, vocabulary, PageRequest.of(0, 20));
+
+        final List<Term> expectedTerms = terms.stream()
+                                              .filter(t -> getPrimaryLabel(t).toLowerCase().contains(searchString))
+                                              .sorted(Comparator.comparing(Environment::getPrimaryLabel))
+                                              .collect(Collectors.toList());
+        final List<FlatTermDto> expected = termsToFlatDtos(expectedTerms);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void findAllFlatIncludingImportedBySearchStringReturnsTermsWithMatchingLabel() {
+        final List<Term> localTerms = generateTerms(5);
+        IntStream.range(0, localTerms.size()).forEach(i -> setPrimaryLabel(localTerms.get(i), "Common-" + i));
+        addTermsAndSave(localTerms, vocabulary);
+
+        final Vocabulary imported = Generator.generateVocabularyWithId();
+        final List<Term> importedTerms = generateTerms(3);
+        IntStream.range(0, importedTerms.size()).forEach(i -> setPrimaryLabel(importedTerms.get(i), "Common-IMP-" + i));
+        addTermsAndSave(importedTerms, imported);
+
+        vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
+        transactional(() -> em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
+
+        final String searchString = "common";
+        final List<FlatTermDto> result =
+                sut.findAllFlatIncludingImported(searchString, vocabulary, PageRequest.of(0, 50));
+
+        final List<Term> all = new ArrayList<>();
+        all.addAll(localTerms);
+        all.addAll(importedTerms);
+        all.sort(Comparator.comparing(Environment::getPrimaryLabel));
+
+        assertEquals(termsToFlatDtos(all), result);
     }
 
     @Test
