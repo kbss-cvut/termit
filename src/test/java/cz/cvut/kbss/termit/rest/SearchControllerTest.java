@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Constants;
@@ -44,7 +45,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static cz.cvut.kbss.termit.environment.Environment.LANGUAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -111,7 +111,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void facetedTermSearchPassesSearchParametersToSearchService() throws Exception {
         final FacetedSearchResult term = new FacetedSearchResult();
         term.setUri(Generator.generateUri());
-        term.setLabel(MultilingualString.create("Test term", LANGUAGE));
+        term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
         when(searchServiceMock.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
         final List<SearchParam> searchParams = List.of(
                 new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH),
@@ -130,7 +130,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void facetedSearchPassesSpecifiedPageSpecificationToService() throws Exception {
         final FacetedSearchResult term = new FacetedSearchResult();
         term.setUri(Generator.generateUri());
-        term.setLabel(MultilingualString.create("Test term", LANGUAGE));
+        term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
         when(searchServiceMock.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
         final List<SearchParam> searchParams = List.of(
                 new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));
