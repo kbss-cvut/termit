@@ -77,12 +77,12 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
  */
 @Service
 @Profile("lucene")
-public class LuceneConnectorInitializerImpl implements LuceneConnectorInitializer {
+public class GraphDBLuceneConnectorInitializer implements LuceneConnectorInitializer {
     static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
     static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
     static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
     static final URI LUCENE_CREATE_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#createConnector");
-    private static final Logger LOG = LoggerFactory.getLogger(LuceneConnectorInitializerImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GraphDBLuceneConnectorInitializer.class);
     /**
      * Map from language codes to analyzer class names available in GraphDB.
      * <p>
@@ -101,7 +101,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
     private final EntityManager em;
     private final ObjectMapper mapper;
 
-    public LuceneConnectorInitializerImpl(EntityManager em, ObjectMapper mapper) {
+    public GraphDBLuceneConnectorInitializer(EntityManager em, ObjectMapper mapper) {
         this.em = em;
         this.mapper = mapper;
 
@@ -166,7 +166,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
      * @return Loaded JSON tree
      */
     private static JsonNode loadConnectorJson(String name, ObjectMapper mapper) {
-        ClassLoader cl = LuceneConnectorInitializerImpl.class.getClassLoader();
+        ClassLoader cl = GraphDBLuceneConnectorInitializer.class.getClassLoader();
         try (InputStream in = cl.getResourceAsStream("lucene/" + name)) {
             return mapper.readTree(in);
         } catch (Exception e) {
