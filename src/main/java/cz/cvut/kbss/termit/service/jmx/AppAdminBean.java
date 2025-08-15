@@ -21,7 +21,7 @@ import cz.cvut.kbss.termit.event.ClearLongRunningTaskQueueEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.rest.dto.HealthInfo;
-import cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializer;
+import cz.cvut.kbss.termit.service.init.lucene.GraphDBLuceneConnectorInitializer;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -53,11 +53,11 @@ public class AppAdminBean implements SelfNaming {
 
     private final String beanName;
 
-    private final LuceneConnectorInitializer luceneConnectorInitializer;
+    private final GraphDBLuceneConnectorInitializer luceneConnectorInitializer;
 
     @Autowired
     public AppAdminBean(ApplicationEventPublisher eventPublisher, Postman postman, Configuration config,
-                        LuceneConnectorInitializer luceneConnectorInitializer) {
+                        GraphDBLuceneConnectorInitializer luceneConnectorInitializer) {
         this.eventPublisher = eventPublisher;
         this.postman = postman;
         this.beanName = config.getJmxBeanName();

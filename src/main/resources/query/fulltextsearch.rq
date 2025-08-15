@@ -1,41 +1,57 @@
 ##
-# This is the default full text search query for repositories without text index.
-#
-# It searches in term and vocabulary labels and uses a plain string lowercase containment.
+# Full text search query for GraphDB with a Lucene connector.
 ##
 
+PREFIX : <http://www.ontotext.com/connectors/lucene#>
+PREFIX inst: <http://www.ontotext.com/connectors/lucene/instance#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-SELECT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippetText WHERE {
+SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score {
     {
-        ?entity a ?term ;
-            skos:prefLabel ?label ;
-            ?inVocabulary ?vocabularyUri .
-        OPTIONAL { ?entity ?hasState ?state . }
+        ?search a ?label_index .
+    }
+    UNION
+    {
+        ?search a ?defcom_index .
+    }
+    {
+        ?entity skos:prefLabel ?label .
         OPTIONAL {
             ?entity skos:definition ?definition .
         }
         OPTIONAL {
             ?entity skos:scopeNote ?scopeNote .
         }
-        BIND (?term as ?type) .
     } UNION {
-        ?entity a ?vocabulary ;
-            dc:title ?label .
+        ?entity dc:title ?label .
         OPTIONAL {
             ?entity dc:description ?dcDescription .
         }
-        BIND (?vocabulary as ?type) .
     }
-    BIND (?requestedLanguageVal AS ?requestedLanguage)
-    BIND (?label as ?snippetText) .
-    BIND (str("prefLabel") as ?snippetField) .
-    FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
-    FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)
+    ?search :query ?wildCardSearchString ;
+        :snippetSize 250 ;
+        :entities ?entity .
+    ?entity a ?type ;
+        :score ?initScore ;
+        :snippets _:s .
+    _:s :snippetText ?snippetText ;
+        :snippetField ?snippetField .
+    OPTIONAL {
+        ?entity ?inVocabulary ?vocabularyUri .
+    }
+    OPTIONAL {
+        ?entity ?hasState ?state .
+    }
+    FILTER (?type = ?term || ?type = ?vocabulary)
     FILTER NOT EXISTS { ?entity a ?snapshot . }
+    BIND (?requestedLanguageVal AS ?requestedLanguage)
+    FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)
     BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
     FILTER (!BOUND(?description) || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
-} ORDER BY ?label
+    BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "prefLabel", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
+    BIND(IF(?snippetField = "prefLabel", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
+}
+ORDER BY desc(?score)

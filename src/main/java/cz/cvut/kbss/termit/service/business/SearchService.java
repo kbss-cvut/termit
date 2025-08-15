@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
-import cz.cvut.kbss.termit.persistence.dao.SearchDao;
+import cz.cvut.kbss.termit.persistence.dao.LuceneSearchDao;
 import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -38,10 +38,10 @@ import java.util.stream.Collectors;
 @Service
 public class SearchService {
 
-    private final SearchDao searchDao;
+    private final LuceneSearchDao searchDao;
 
     @Autowired
-    public SearchService(SearchDao searchDao) {
+    public SearchService(LuceneSearchDao searchDao) {
         this.searchDao = searchDao;
     }
 

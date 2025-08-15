@@ -76,8 +76,8 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
  * Remaining lucene connectors that are matching prefixes of {@link #requiredConnectors} are dropped.
  */
 @Service
-@Profile("lucene")
-public class GraphDBLuceneConnectorInitializer implements LuceneConnectorInitializer {
+@Profile("!test")
+public class GraphDBLuceneConnectorInitializer {
     static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
     static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
     static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
@@ -364,7 +364,6 @@ public class GraphDBLuceneConnectorInitializer implements LuceneConnectorInitial
      */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
-    @Override
     public void initialize() {
         LOG.debug("Initializing Lucene Connectors");
         final Map<String, Set<LuceneConnector>> connectors = loadExistingConnectors();
@@ -375,6 +374,5 @@ public class GraphDBLuceneConnectorInitializer implements LuceneConnectorInitial
         }
         LOG.debug("Lucene Connectors initialized");
     }
-
 
 }
