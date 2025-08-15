@@ -294,20 +294,6 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <!-- Profile for GraphDB storage with Lucene connectors. Important for correct full text search functionality -->
-        <profile>
-            <id>graphdb</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <profile.name>graphdb</profile.name>
-                <spring.profiles.active>lucene</spring.profiles.active>
-            </properties>
-        </profile>
-    </profiles>
-
     <build>
         <finalName>termit</finalName>
         <plugins>
@@ -454,12 +440,6 @@
                                 <resource>
                                     <directory>src/main/resources</directory>
                                     <filtering>true</filtering>
-                                </resource>
-                                <resource>
-                                    <directory>profile/${profile.name}</directory>
-                                    <includes>
-                                        <include>query/*.rq</include>
-                                    </includes>
                                 </resource>
                             </resources>
                         </configuration>

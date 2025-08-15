@@ -19,14 +19,16 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
@@ -35,25 +37,43 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * {@link SearchDao} extension for Lucene-based repositories. These support rich search strings with wildcards and
+ * Search data access object using Lucene-based repositories. These support rich search strings with wildcards and
  * operators.
  * <p>
  * This DAO automatically adds a wildcard to the last token in the search string, so that results for incomplete words
  * are returned as well.
  */
 @Repository
-@Profile("lucene")  // Corresponds to a profile set in pom.xml
-public class LuceneSearchDao extends SearchDao {
+public class LuceneSearchDao extends FacetedSearchDao {
+    private static final String FTS_QUERY_FILE = "fulltextsearch.rq";
 
     private static final Logger LOG = LoggerFactory.getLogger(LuceneSearchDao.class);
 
     static final char LUCENE_WILDCARD = '*';
+    protected String ftsQuery;
 
     public LuceneSearchDao(EntityManager em) {
         super(em);
     }
 
-    @Override
+    @PostConstruct
+    void loadQueries() {
+        this.ftsQuery = Utils.loadQuery(FTS_QUERY_FILE);
+    }
+
+    /**
+     * Finds terms and vocabularies that match the specified search string.
+     * <p>
+     * The search functionality depends on the underlying repository and the index it uses. But basically the search
+     * looks for match in asset label, comment and SKOS definition (if exists).
+     * <p>
+     * Note that this version of the search excludes asset snapshots from the results.
+     *
+     * @param searchString The string to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
+     * @return List of matching results
+     * @see #fullTextSearchIncludingSnapshots(String, String)
+     */
     public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
@@ -95,7 +115,19 @@ public class LuceneSearchDao extends SearchDao {
         return s.concat(String.join("</em> <em>", split)).concat("</em>");
     }
 
-    @Override
+    /**
+     * Finds terms and vocabularies that match the specified search string.
+     * <p>
+     * The search functionality depends on the underlying repository and the index it uses. But basically the search
+     * looks for match in asset label, comment and SKOS definition (if exists).
+     * <p>
+     * Note that this version of the search includes asset snapshots.
+     *
+     * @param searchString The string to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
+     * @return List of matching results
+     * @see #fullTextSearchIncludingSnapshots(String, String)
+     */
     public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
@@ -113,12 +145,25 @@ public class LuceneSearchDao extends SearchDao {
                 .getResultList();
     }
 
-    @Override
+    protected String queryIncludingSnapshots() {
+        // This string has to match the filter string in the query
+        return ftsQuery.replace("FILTER NOT EXISTS { ?entity a ?snapshot . }", "");
+    }
+
     protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
         String langSuffix = requestedLanguage == null ? "" : requestedLanguage;
         URI labelIndex = URI.create(Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX + langSuffix);
         URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
         q.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
-        return super.setCommonQueryParams(q, searchString, requestedLanguage);
+
+        q.setParameter("term", URI.create(SKOS.CONCEPT))
+                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
+                .setParameter("searchString", searchString, null);
+        if (requestedLanguage != null) {
+            q.setParameter("requestedLanguageVal", requestedLanguage);
+        }
+        return q;
     }
 }
