@@ -1001,9 +1001,20 @@ public class TermController extends BaseController {
                description = "Gets terms whose label matches the specified search string, regardless of their vocabulary.")
     @ApiResponse(responseCode = "200", description = "A list of matching terms.")
     @GetMapping(value = "/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermDto> getAll(@Parameter(description = "String by which the terms should be filtered.")
-                                @RequestParam String searchString) {
-        return termService.findAll(searchString);
+    public ResponseEntity<?> getAll(
+            @Parameter(description = "String by which the terms should be filtered.")
+            @RequestParam(required = false, defaultValue = "") String searchString,
+            @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
+            @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo
+    ) {
+        if (flat) {
+            return ResponseEntity.ok(termService.findAllFlat(searchString, createPageRequest(pageSize, pageNo)));
+        }
+        return ResponseEntity.ok(termService.findAll(searchString));
     }
 
     /**

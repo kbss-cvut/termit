@@ -389,6 +389,17 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Gets all terms regardless vocabulary and returns them in a flat structure.
+     *
+     * @param pageSpec Page specifying result number and position
+     * @return List of terms ordered by label in a flat structure
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+        return termDao.findAllFlat(searchString, pageSpec);
+    }
+
+    /**
      * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
      * (transitively) imports.
      *

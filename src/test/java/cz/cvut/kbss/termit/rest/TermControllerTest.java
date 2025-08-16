@@ -1292,4 +1292,27 @@ class TermControllerTest extends BaseControllerTestRunner {
         final TermInfo result = readValue(mvcResult, TermInfo.class);
         assertEquals(term, result);
     }
+
+    @Test
+    void getAllTermsFlatCallsServiceWithSearchStringAndPagination() throws Exception {
+        final String searchString = "test";
+        final List<FlatTermDto> terms = Environment.termsToFlatDtos(Generator.generateTermsWithIds(3));
+        when(termServiceMock.findAllFlat(eq(searchString), any(Pageable.class))).thenReturn(terms);
+
+        final MvcResult mvcResult = mockMvc.perform(get("/terms")
+                                                   .param("searchString", searchString)
+                                                   .param("flat", "true")
+                                                   .param(PAGE, "2")
+                                                   .param(PAGE_SIZE, "50"))
+                                           .andExpect(status().isOk())
+                                           .andReturn();
+
+        final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {});
+        assertEquals(terms, result);
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllFlat(eq(searchString), captor.capture());
+        assertEquals(PageRequest.of(2, 50), captor.getValue());
+        verify(termServiceMock, never()).findAll(anyString());
+    }
 }

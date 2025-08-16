@@ -863,6 +863,40 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
+    /**
+     * Finds all terms whose label contains the specified search string and returns them as a flat list of DTOs.
+     *
+     * @param searchString String the search term labels by
+     * @param pageSpec     Page specification
+     * @return             Flat list of matching terms
+     */
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+        Objects.requireNonNull(pageSpec);
+        Objects.requireNonNull(searchString);
+        final TypedQuery<FlatTermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                            "?term a ?type ; " +
+                                                            "      ?hasLabel ?label ; " +
+                                                            "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                                            "?term ?inVocabulary ?vocabulary . " +
+                                                            "FILTER NOT EXISTS {?term a ?snapshot . }" +
+                                                            "} ORDER BY " + orderSentence("?label"),
+                                                    FlatTermDto.class)
+                                            .setParameter("type", typeUri)
+                                            .setParameter("hasLabel", LABEL_PROP)
+                                            .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                            .setParameter("snapshot", URI.create(
+                                                    cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
+                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setFirstResult((int) pageSpec.getOffset())
+                                            .setMaxResults(pageSpec.getPageSize());
+
+        try {
+            return query.getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     private void loadParentSubTerms(TermDto parent) {
         parent.setSubTerms(getSubTerms(parent));
         if (parent.getParentTerms() != null) {

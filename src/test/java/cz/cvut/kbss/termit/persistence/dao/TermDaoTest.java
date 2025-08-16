@@ -1601,4 +1601,28 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertEquals(parent.getSubTerms().stream().map(TermInfo::getUri).toList(),
                      result.stream().map(Asset::getUri).toList());
     }
+
+    @Test
+    void findAllFlatWithoutVocabularyBySearchStringReturnsTermsWithMatchingLabel() {
+        final Term t1 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t2 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t3 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t4 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t5 = Generator.generateTermWithId(vocabulary.getUri());
+
+        setPrimaryLabel(t1, "Alpha");
+        setPrimaryLabel(t2, "Beta");
+        setPrimaryLabel(t3, "Gamma");
+        setPrimaryLabel(t4, "Delta");
+        setPrimaryLabel(t5, "Epsilon");
+
+        addTermsAndSave(List.of(t1, t2, t3, t4, t5), vocabulary);
+
+        final List<FlatTermDto> result = sut.findAllFlat("ta", PageRequest.of(0, 10));
+        final List<String> labels = result.stream()
+                                          .map(d -> d.getLabel().get(Environment.LANGUAGE))
+                                          .toList();
+
+        assertEquals(List.of("Beta", "Delta"), labels);
+    }
 }

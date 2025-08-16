@@ -308,6 +308,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Finds all terms and returns them in a flat structure.
+     *
+     * @param pageSpec Page specification
+     * @return Terms in a flat structure
+     */
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+        Objects.requireNonNull(searchString);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFlat(searchString, pageSpec);
+    }
+
+    /**
      * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
      * (transitively) imports.
      *
