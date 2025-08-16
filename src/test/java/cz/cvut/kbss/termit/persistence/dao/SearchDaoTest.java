@@ -41,7 +41,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class LuceneSearchDaoTest {
+class SearchDaoTest {
 
     @Mock
     private EntityManager emMock;
@@ -49,11 +49,11 @@ class LuceneSearchDaoTest {
     @Mock
     private Query queryMock;
 
-    private LuceneSearchDao sut;
+    private SearchDao sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new LuceneSearchDao(emMock);
+        this.sut = new SearchDao(emMock);
         sut.loadQueries();
     }
 
@@ -72,7 +72,7 @@ class LuceneSearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream().filter(s -> s
-                .equals(searchString + " " + searchString + LuceneSearchDao.LUCENE_WILDCARD))
+                .equals(searchString + " " + searchString + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
@@ -86,7 +86,7 @@ class LuceneSearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals(searchString + " " + lastToken + LuceneSearchDao.LUCENE_WILDCARD))
+                                                .filter(s -> s.equals(searchString + " " + lastToken + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }

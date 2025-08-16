@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.persistence.dao.LuceneSearchDao;
+import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
 class SearchServiceTest {
 
     @Mock
-    private LuceneSearchDao searchDao;
+    private SearchDao searchDao;
 
     @InjectMocks
     private SearchService sut;

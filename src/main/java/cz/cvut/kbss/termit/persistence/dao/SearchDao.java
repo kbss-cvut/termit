@@ -49,16 +49,16 @@ import java.util.stream.Collectors;
  * are returned as well.
  */
 @Repository
-public class LuceneSearchDao {
+public class SearchDao {
     private static final String FTS_QUERY_FILE = "fulltextsearch.rq";
 
-    private static final Logger LOG = LoggerFactory.getLogger(LuceneSearchDao.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
     static final char LUCENE_WILDCARD = '*';
     private final EntityManager em;
     protected String ftsQuery;
 
-    public LuceneSearchDao(EntityManager em) {
+    public SearchDao(EntityManager em) {
         this.em = em;
     }
 
