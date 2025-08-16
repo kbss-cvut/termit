@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class FacetedSearchDaoTest extends BaseDaoTestRunner{
+public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
     private static final String[] TYPES = {"http://onto.fel.cvut.cz/ontologies/ufo/event",
                                            "http://onto.fel.cvut.cz/ontologies/ufo/object",
                                            "http://onto.fel.cvut.cz/ontologies/ufo/relator"};
@@ -55,11 +55,11 @@ public class FacetedSearchDaoTest extends BaseDaoTestRunner{
     @Autowired
     private DescriptorFactory descriptorFactory;
 
-    private FacetedSearchDao sut;
+    private LuceneSearchDao sut;
 
     @BeforeEach
     void setUp() {
-        sut = new FacetedSearchDao(em);
+        sut = new LuceneSearchDao(em);
 
         if (!initialized) {
             user = Generator.generateUserWithId();
