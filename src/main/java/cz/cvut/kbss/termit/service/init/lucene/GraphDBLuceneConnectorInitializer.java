@@ -100,6 +100,7 @@ public class GraphDBLuceneConnectorInitializer {
     private final Set<URI> indexedFields;
     private final EntityManager em;
     private final ObjectMapper mapper;
+    private Set<String> indexedLanguages = Set.of();
 
     public GraphDBLuceneConnectorInitializer(EntityManager em, ObjectMapper mapper) {
         this.em = em;
@@ -367,12 +368,15 @@ public class GraphDBLuceneConnectorInitializer {
     public void initialize() {
         LOG.debug("Initializing Lucene Connectors");
         final Map<String, Set<LuceneConnector>> connectors = loadExistingConnectors();
-        final Set<String> languages = fetchUsedLanguages();
-        languages.add(""); // explicitly add empty language to force creation of universal index for all languages
-        for (String lang : languages) {
+        indexedLanguages = fetchUsedLanguages();
+        indexedLanguages.add(""); // explicitly add empty language to force creation of universal index for all languages
+        for (String lang : indexedLanguages) {
             handleRequiredConnectors(lang, connectors.getOrDefault(lang, Set.of()));
         }
         LOG.debug("Lucene Connectors initialized");
     }
 
+    public Set<String> getIndexedLanguages() {
+        return indexedLanguages;
+    }
 }

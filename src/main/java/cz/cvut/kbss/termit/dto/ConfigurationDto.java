@@ -56,6 +56,9 @@ public class ConfigurationDto implements Serializable {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_adresu_modelovaciho_nastroje)
     private String modelingToolUrl;
 
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_indexovany_jazyk)
+    private Set<String> indexedLanguages = Set.of();
+
     public String getLanguage() {
         return language;
     }
@@ -102,5 +105,13 @@ public class ConfigurationDto implements Serializable {
 
     public void setModelingToolUrl(String modelingToolUrl) {
         this.modelingToolUrl = modelingToolUrl;
+    }
+
+    public Set<String> getIndexedLanguages() {
+        return indexedLanguages;
+    }
+
+    public void setIndexedLanguages(Set<String> indexedLanguages) {
+        this.indexedLanguages = indexedLanguages;
     }
 }
