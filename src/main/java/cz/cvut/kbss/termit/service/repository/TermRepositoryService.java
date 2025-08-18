@@ -234,6 +234,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param pageSpec   Page specifying result number and position
      * @return List of term DTOs ordered by label in a flat structure
      */
+    @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
         return termDao.findAllFlat(vocabulary, pageSpec);
     }

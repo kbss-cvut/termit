@@ -424,24 +424,21 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
         final List<FlatTermDto> flat = sut.findAllFlat(vocabulary, PageRequest.of(0, 10));
         assertEquals(2, flat.size());
-        final FlatTermDto flatRoot = flat.stream()
-                                         .filter(t -> t.getUri().equals(root.getUri()))
-                                         .findFirst()
-                                         .orElseThrow();
+        assertTrue(flat.stream().anyMatch(t -> t.getUri().equals(root.getUri())));
+        assertTrue(flat.stream().anyMatch(t -> t.getUri().equals(child.getUri())));
 
-        try {
-            java.lang.reflect.Method m = flatRoot.getClass().getMethod("getSubTerms");
-            Object val = m.invoke(flatRoot);
-            if (val == null) {
-                // acceptable - no hierarchy loaded
-            } else if (val instanceof Collection) {
-                assertTrue(((Collection<?>) val).isEmpty(), "FlatTermDto should have empty subTerms.");
-            } else {
-                fail("getSubTerms returned unexpected type in FlatTermDto: " + val.getClass());
+        // Verify that flat DTOs do not expose populated subTerms
+        flat.forEach(term -> {
+            try {
+                Collection<TermInfo> val = term.getSubTerms();
+                if (val != null) {
+                    assertTrue(val.isEmpty(),
+                            "FlatTermDto must not expose populated subTerms.");
+                }
+            } catch (Exception e) {
+                fail(e.getMessage());
             }
-        } catch (NoSuchMethodException ignored) {
-            // Truly flat DTO - also acceptable
-        }
+        });
     }
 
     @Test

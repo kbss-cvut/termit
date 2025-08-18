@@ -395,9 +395,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                       "GRAPH ?context { " +
                                       "?term a ?type ;" +
                                       "?hasLabel ?label ;" +
-                                      "FILTER (lang(?label) = ?labelLang) ." +
                                       "}" +
                                       "?term ?inVocabulary ?vocabulary ." +
+                                      "?vocabulary ?hasLanguage ?labelLang ." +
+                                      "FILTER (lang(?label) = ?labelLang) ." +
                                       " } ORDER BY " + orderSentence("?label"),
                               FlatTermDto.class)
                       .setParameter("context", context(vocabulary))
@@ -405,7 +406,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                       .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("hasLabel", LABEL_PROP)
                       .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                      .setParameter("labelLang", config.getLanguage())
+                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
                       .setMaxResults(pageSpec.getPageSize())
                       .setFirstResult((int) pageSpec.getOffset());
 
