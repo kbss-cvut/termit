@@ -77,7 +77,7 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
  */
 @Service
 @Profile("!test")
-public class GraphDBLuceneConnectorInitializer {
+public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvider {
     static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
     static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
     static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
@@ -376,6 +376,7 @@ public class GraphDBLuceneConnectorInitializer {
         LOG.debug("Lucene Connectors initialized");
     }
 
+    @Override
     public Set<String> getIndexedLanguages() {
         return indexedLanguages;
     }

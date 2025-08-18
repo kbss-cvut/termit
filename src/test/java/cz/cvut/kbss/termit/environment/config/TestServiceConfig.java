@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
+import cz.cvut.kbss.termit.service.init.lucene.IndexedLanguagesProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -107,5 +108,10 @@ public class TestServiceConfig {
     @Bean
     public DtoMapper dtoMapper() {
         return new DtoMapperImpl();
+    }
+
+    @Bean
+    public IndexedLanguagesProvider indexedLanguagesProvider() {
+        return Set::of;
     }
 }
