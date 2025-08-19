@@ -570,6 +570,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                               "?hasLabel ?label ;" +
                                               "?inVocabulary ?parent ." +
                                               "?vocabulary ?imports* ?parent ." +
+                                              "?parent ?hasLanguage ?labelLang ." +
                                               "FILTER (lang(?label) = ?labelLang) ." +
                                               "} ORDER BY " + orderSentence("?label"), FlatTermDto.class)
                                       .setParameter("type", typeUri)
@@ -579,7 +580,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                               URI.create(
                                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                       .setParameter("vocabulary", vocabulary.getUri())
-                                      .setParameter("labelLang", config.getLanguage())
+                                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
                                       .setMaxResults(pageSpec.getPageSize())
                                       .setFirstResult((int) pageSpec.getOffset());
         return query.getResultList();

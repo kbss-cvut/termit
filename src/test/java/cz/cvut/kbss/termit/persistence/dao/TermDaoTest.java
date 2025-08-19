@@ -428,17 +428,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertTrue(flat.stream().anyMatch(t -> t.getUri().equals(child.getUri())));
 
         // Verify that flat DTOs do not expose populated subTerms
-        flat.forEach(term -> {
-            try {
-                Collection<TermInfo> val = term.getSubTerms();
-                if (val != null) {
-                    assertTrue(val.isEmpty(),
-                            "FlatTermDto must not expose populated subTerms.");
-                }
-            } catch (Exception e) {
-                fail(e.getMessage());
-            }
-        });
+        flat.forEach(term -> assertThat(term.getSubTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class))));
     }
 
     @Test
