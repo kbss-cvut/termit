@@ -2,13 +2,16 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,8 +22,12 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,6 +48,11 @@ class DataRepositoryServiceTest {
 
     @InjectMocks
     private DataRepositoryService sut;
+
+    @BeforeEach
+    void setUp() {
+        config.getPersistence().setLanguage(Environment.LANGUAGE);
+    }
 
     @Test
     void persistCustomAttributeSetsSkosConceptAsAttributeDomainWhenNoDomainIsSet() {
@@ -83,6 +95,26 @@ class DataRepositoryServiceTest {
         sut.persistCustomAttribute(customAttribute);
         assertNotNull(customAttribute.getUri());
         assertEquals(URI.create(Vocabulary.s_c_vlastni_atribut + "/custom-attribute"), customAttribute.getUri());
+    }
+
+    @Test
+    void persistCustomAttributeUsesAnyAvailableLabelToGenerateUriWhenLabelInConfiguredLanguageIsNotSet() {
+        final CustomAttribute customAttribute = new CustomAttribute();
+        customAttribute.setLabel(MultilingualString.create("Testovací atribut", "cs"));
+        assertEquals(Environment.LANGUAGE, config.getPersistence().getLanguage());
+
+        sut.persistCustomAttribute(customAttribute);
+        assertNotNull(customAttribute.getUri());
+        assertThat(customAttribute.getUri().toString(), not(containsString("null")));
+        assertEquals(URI.create(Vocabulary.s_c_vlastni_atribut + "/testovací-atribut"), customAttribute.getUri());
+    }
+
+    @Test
+    void persistCustomAttributeThrowsValidationExceptionWhenLabelIsEmpty() {
+        final CustomAttribute customAttribute = new CustomAttribute();
+        customAttribute.setLabel(new MultilingualString(Map.of()));
+
+        assertThrows(ValidationException.class, () -> sut.persistCustomAttribute(customAttribute));
     }
 
     @Test

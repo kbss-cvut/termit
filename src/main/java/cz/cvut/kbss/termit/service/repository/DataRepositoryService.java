@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
@@ -117,21 +118,31 @@ public class DataRepositoryService {
         if (attribute.getDomain() == null) {
             attribute.setDomain(URI.create(SKOS.CONCEPT));
         }
-        verifySupportedDomain(attribute);
+        validate(attribute);
         if (attribute.getUri() == null) {
-            attribute.setUri(idResolver.generateIdentifier(Vocabulary.s_c_vlastni_atribut, attribute.getLabel()
-                                                                                                    .get(config.getPersistence()
-                                                                                                               .getLanguage())));
+            attribute.setUri(
+                    idResolver.generateIdentifier(Vocabulary.s_c_vlastni_atribut, getLabelForIdentifier(attribute)));
         }
         LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
     }
 
-    private static void verifySupportedDomain(CustomAttribute attribute) {
+    private String getLabelForIdentifier(CustomAttribute att) {
+        if (att.getLabel().contains(config.getPersistence().getLanguage())) {
+            return att.getLabel().get(config.getPersistence().getLanguage());
+        }
+        assert !att.getLabel().isEmpty();
+        return att.getLabel().get();
+    }
+
+    private static void validate(CustomAttribute attribute) {
         assert attribute.getDomain() != null;
         final String strDomain = attribute.getDomain().toString();
         if (!SKOS.CONCEPT.equals(strDomain) && !Vocabulary.s_c_slovnik.equals(strDomain)) {
             throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
+        }
+        if (attribute.getLabel() == null || attribute.getLabel().isEmpty()) {
+            throw new ValidationException("Custom attribute must have a label.");
         }
     }
 
@@ -149,9 +160,9 @@ public class DataRepositoryService {
     /**
      * Gets the label of a resource with the specified identifier.
      *
-     * @param id Resource identifier
-     * @param language Label language, if null, the vocabulary language is used when available,
-     *                 otherwise the configured persistence unit language is used instead.
+     * @param id       Resource identifier
+     * @param language Label language, if null, the vocabulary language is used when available, otherwise the configured
+     *                 persistence unit language is used instead.
      * @return Matching resource identifier (if found)
      */
     @Transactional(readOnly = true)
