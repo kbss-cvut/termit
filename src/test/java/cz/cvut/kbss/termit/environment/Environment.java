@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.config.WebAppConfig;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
@@ -202,6 +203,10 @@ public class Environment {
 
     public static List<TermDto> termsToDtos(List<Term> terms) {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
+    }
+
+    public static List<FlatTermDto>termsToFlatDtos(List<Term> terms) {
+        return terms.stream().map(FlatTermDto::new).collect(Collectors.toList());
     }
 
     /**

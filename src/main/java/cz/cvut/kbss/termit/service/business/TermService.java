@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -137,11 +138,26 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Retrieves all terms from the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
+     * @param pageSpec   Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAll(Vocabulary vocabulary) {
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
-        return repositoryService.findAll(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAll(vocabulary, pageSpec);
+    }
+
+    /**
+     * Retrieves all terms from the specified vocabulary in a flat structure.
+     *
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
+     * @param pageSpec   Page specification
+     * @return Matching terms in a flat structure
+     */
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFlat(vocabulary, pageSpec);
     }
 
     /**
@@ -172,11 +188,27 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Retrieves all terms from the specified vocabulary and its imports (transitive).
      *
      * @param vocabulary Base vocabulary for the vocabulary import closure
+     * @param pageSpec   Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary) {
+    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
-        return repositoryService.findAllIncludingImported(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllIncludingImported(vocabulary, pageSpec);
+    }
+
+    /**
+     * Retrieves all terms from the specified vocabulary and its imports (transitive)
+     * in a flat structure.
+     *
+     * @param vocabulary Base vocabulary for the vocabulary import closure
+     * @param pageSpec   Page specification
+     * @return Matching terms in a flat structure
+     */
+    public List<FlatTermDto> findAllFlatIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFlatIncludingImported(vocabulary, pageSpec);
     }
 
     /**
@@ -238,12 +270,30 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
+    public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(searchString);
-        return repositoryService.findAll(searchString, vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAll(searchString, vocabulary, pageSpec);
+    }
+
+    /**
+     * Finds all terms that match the specified search string in the specified
+     * vocabulary and returns them in a flat structure.
+     *
+     * @param searchString Search string
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return Matching terms in a flat structure
+     */
+    public List<FlatTermDto> findAllFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(searchString);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFlat(searchString, vocabulary, pageSpec);
     }
 
     /**
@@ -258,17 +308,47 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Finds all terms and returns them in a flat structure.
+     *
+     * @param pageSpec Page specification
+     * @return Terms in a flat structure
+     */
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+        Objects.requireNonNull(searchString);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFlat(searchString, pageSpec);
+    }
+
+    /**
      * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
      * (transitively) imports.
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
+    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
-        return repositoryService.findAllIncludingImported(searchString, vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllIncludingImported(searchString, vocabulary, pageSpec);
+    }
+
+    /**
+     * Finds all terms that match the specified search string in the specified vocabulary and any vocabularies it
+     * (transitively) imports and returns them in a flat structure.
+     *
+     * @param searchString Search string
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return Matching terms in a flat structure
+     */
+    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(searchString);
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     /**
