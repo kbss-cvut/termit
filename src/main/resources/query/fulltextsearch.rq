@@ -50,7 +50,7 @@ SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippet
     BIND (?requestedLanguageVal AS ?requestedLanguage)
     FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)
     BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
-    FILTER (!BOUND(?description) || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
+    FILTER (!BOUND(?description) || STRLEN(?description) = 0 || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
     BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "prefLabel", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
     BIND(IF(?snippetField = "prefLabel", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
 }
