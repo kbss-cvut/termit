@@ -93,7 +93,6 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
@@ -395,7 +394,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
      * returns a flat list without a populated sub-term hierarchy.
      */
     @Test
-    void findAllFlatReturnsFlatListWithoutSubTerms() throws Exception {
+    void findAllFlatReturnsFlatListWithoutSubTerms() {
         final Term root = Generator.generateTermWithId(vocabulary.getUri());
         final Term child = Generator.generateTermWithId(vocabulary.getUri());
         child.setParentTerms(Collections.singleton(root));

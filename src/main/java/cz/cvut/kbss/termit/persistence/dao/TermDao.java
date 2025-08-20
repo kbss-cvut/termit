@@ -570,7 +570,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                               "?hasLabel ?label ;" +
                                               "?inVocabulary ?parent ." +
                                               "?vocabulary ?imports* ?parent ." +
-                                              "?parent ?hasLanguage ?labelLang ." +
+                                              "?vocabulary ?hasLanguage ?labelLang ." +
                                               "FILTER (lang(?label) = ?labelLang) ." +
                                               "} ORDER BY " + orderSentence("?label"), FlatTermDto.class)
                                       .setParameter("type", typeUri)
@@ -965,7 +965,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                             "      ?hasLabel ?label ;\n" +
                                                             "      ?inVocabulary ?vocabulary ." +
                                                             "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
-                                                            "} ORDER BY " + orderSentence("?label"),
+                                                            "} ORDER BY " + orderSentence("?label") + " ?label ?term",
                                                     FlatTermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
