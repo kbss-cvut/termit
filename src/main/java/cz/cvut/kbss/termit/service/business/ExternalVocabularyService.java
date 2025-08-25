@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
-import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -19,7 +18,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
@@ -38,8 +36,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,11 +45,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ExternalVocabularyService implements ApplicationEventPublisherAware{
     
-    private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExternalVocabularyService.class);
     
     private final ApplicationContext context;
     private final VocabularyRepositoryService repositoryService;
-    private final VocabularyService vocabularyService;
     
     private final AccessControlListService aclService;
     private ApplicationEventPublisher eventPublisher;
@@ -62,11 +57,9 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
     private static final String EXPORT_FULL_VOCABULARY_QUERY = "import/exportFullVocabulary.rq";
     
         public ExternalVocabularyService(VocabularyRepositoryService repositoryService,
-                             VocabularyService vocabularyService,
                              AccessControlListService aclService,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
-        this.vocabularyService = vocabularyService;
         this.aclService = aclService;
         this.context = context;
     }
@@ -149,33 +142,21 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
             InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
             if (newVocabulary != null) {
                 URI uri = new URI(vocabularyIri);
-                Vocabulary vocabulary = null;
-                Optional<Vocabulary> oldVocabulary = repositoryService.find(uri);
-                if (oldVocabulary.isEmpty()) { // new vocabulary  
-                    vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
-                    // add types
-                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+                // add types
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
 
-                    final AccessControlList acl = aclService.createFor(vocabulary);
-                    vocabulary.setAcl(acl.getUri());
-
+                final AccessControlList acl = aclService.createFor(vocabulary);
+                vocabulary.setAcl(acl.getUri());
+                
+                if (repositoryService.find(uri).isEmpty()) { // The vocabulary is new 
                     eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
-                    LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
-                } else { // updating existing vocabulary
-                    vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
-                    
-                    // add types
-                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
-
-                    final AccessControlList acl = aclService.createFor(vocabulary);
-                    vocabulary.setAcl(acl.getUri());
-                    
-                    LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
                 }
                 
+                LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+
                 if (firstImportedVocabulary == null) {
                     firstImportedVocabulary = vocabulary;
                 }
