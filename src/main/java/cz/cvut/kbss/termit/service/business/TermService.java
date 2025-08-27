@@ -297,14 +297,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds all terms label of which is matching the searchString.
+     * Finds all terms whose label matches the searchString.
      *
      * @param searchString string to search the label by
+     * @param pageSpec Page specifying result number and position
      * @return Matching terms
      */
-    public List<TermDto> findAll(String searchString) {
+    public List<TermDto> findAll(String searchString, Pageable pageSpec) {
         Objects.requireNonNull(searchString);
-        return repositoryService.findAll(searchString);
+        return repositoryService.findAll(searchString, pageSpec);
     }
 
     /**

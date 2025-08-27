@@ -123,7 +123,7 @@ public class TermController extends BaseController {
     @ApiResponse(responseCode = "200", description = "List of vocabulary terms.")
     @GetMapping(value = "/vocabularies/{localName}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
-                            JsonLd.MEDIA_TYPE, 
+                            JsonLd.MEDIA_TYPE,
                             Constants.MediaType.EXCEL,
                             Constants.MediaType.TURTLE,
                             Constants.MediaType.RDF_XML})
@@ -1014,7 +1014,7 @@ public class TermController extends BaseController {
         if (flat) {
             return ResponseEntity.ok(termService.findAllFlat(searchString, createPageRequest(pageSize, pageNo)));
         }
-        return ResponseEntity.ok(termService.findAll(searchString));
+        return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo)));
     }
 
     /**

@@ -54,6 +54,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -261,10 +262,10 @@ class TermServiceTest {
     void findAllCallsFindAllInRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         final String searchString = "test";
-        when(termRepositoryService.findAll(searchString)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString);
+        when(termRepositoryService.findAll(eq(searchString), any(Pageable.class))).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString);
+        verify(termRepositoryService).findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test

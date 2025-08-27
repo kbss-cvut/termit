@@ -1107,7 +1107,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void getAllTermsCallsServiceWithSearchString() throws Exception {
         final String searchString = "test";
         mockMvc.perform(get("/terms").param("searchString", searchString)).andExpect(status().isOk());
-        verify(termServiceMock).findAll(searchString);
+        verify(termServiceMock).findAll(searchString, DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -1313,6 +1313,6 @@ class TermControllerTest extends BaseControllerTestRunner {
         final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
         verify(termServiceMock).findAllFlat(eq(searchString), captor.capture());
         assertEquals(PageRequest.of(2, 50), captor.getValue());
-        verify(termServiceMock, never()).findAll(anyString());
+        verify(termServiceMock, never()).findAll(anyString(), eq(PageRequest.of(2, 50)));
     }
 }

@@ -379,19 +379,21 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all terms from a vocabulary, with label matching the searchString
+     * Gets all terms with label matching the searchString
      *
      * @param searchString String to search by
+     * @param pageSpec Page specifying result number and position
      * @return List of terms ordered by label
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(String searchString) {
-        return termDao.findAll(searchString);
+    public List<TermDto> findAll(String searchString, Pageable pageSpec) {
+        return termDao.findAll(searchString, pageSpec);
     }
 
     /**
      * Gets all terms regardless vocabulary and returns them in a flat structure.
      *
+     * @param searchString String to search by
      * @param pageSpec Page specifying result number and position
      * @return List of terms ordered by label in a flat structure
      */

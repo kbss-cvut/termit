@@ -237,7 +237,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
-        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Environment.LANGUAGE));
+        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Environment.LANGUAGE), Constants.DEFAULT_PAGE_SPEC);
         assertEquals(1, result.size());
         assertTrue(toDtos(terms).contains(result.get(0)));
     }

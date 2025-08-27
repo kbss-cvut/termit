@@ -213,7 +213,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         enableRdfsInference(em);
         final Term term = generateTermWithSnapshot();
 
-        final List<TermDto> result = sut.findAll(getPrimaryLabel(term));
+        final List<TermDto> result = sut.findAll(getPrimaryLabel(term), Constants.DEFAULT_PAGE_SPEC);
         assertEquals(Collections.singletonList(new TermDto(term)), result);
     }
 
