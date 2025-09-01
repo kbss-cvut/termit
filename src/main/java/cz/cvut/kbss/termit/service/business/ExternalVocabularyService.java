@@ -74,12 +74,10 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
 
         List<RdfsResource> response;
         
-        String sparqlEndpoint = config.getExternal().getResources();
-        String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
+        SPARQLRepository sparqlRepo = initSparqlRepository();
 
-        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
-        sparqlRepo.init();
         try (RepositoryConnection conn = sparqlRepo.getConnection()) {
+            String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
             TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
 
             TupleQueryResult result = query.evaluate();
@@ -89,7 +87,15 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
             LOG.error(e.getMessage());
             return List.of();
         }
+        sparqlRepo.shutDown();
         return response;
+    }
+
+    private SPARQLRepository initSparqlRepository() throws RepositoryException {
+        String sparqlEndpoint = config.getExternal().getResources();
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        return sparqlRepo;
     }
 
     private List<RdfsResource> extractListOfAvailableVocabularies(final TupleQueryResult result) throws QueryEvaluationException {
@@ -168,18 +174,20 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
 
     private InputStream downloadExternalVocabulary(String vocabularyIri) throws QueryEvaluationException, RepositoryException{
         
-        String sparqlEndpoint = config.getExternal().getResources();
-        String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
-
-        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
-        sparqlRepo.init();
+        SPARQLRepository sparqlRepo = initSparqlRepository();
+        
         RepositoryConnection conn = sparqlRepo.getConnection();
+
+        String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
         GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
 
         GraphQueryResult result = graphQuery.evaluate();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Rio.write(result, outputStream, RDFFormat.TURTLE);
         InputStream vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
+        
+        sparqlRepo.shutDown();
+        
         return vocabularyFile;
 
     }
