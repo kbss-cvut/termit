@@ -31,7 +31,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -47,7 +46,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
     
     private static final Logger LOG = LoggerFactory.getLogger(ExternalVocabularyService.class);
     
-    private final ApplicationContext context;
+    private final Configuration config;
     private final VocabularyRepositoryService repositoryService;
     
     private final AccessControlListService aclService;
@@ -58,10 +57,10 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
     
         public ExternalVocabularyService(VocabularyRepositoryService repositoryService,
                              AccessControlListService aclService,
-                             ApplicationContext context) {
+                             Configuration config) {
         this.repositoryService = repositoryService;
         this.aclService = aclService;
-        this.context = context;
+        this.config = config;
     }
     
     
@@ -73,10 +72,8 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
  */
     public List<RdfsResource> getAvailableVocabularies() {
 
-        List<RdfsResource> response = new ArrayList<>();
+        List<RdfsResource> response;
         
-        final Configuration config = context.getBean(Configuration.class);
-
         String sparqlEndpoint = config.getExternal().getResources();
         String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
 
@@ -85,16 +82,17 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
         try (RepositoryConnection conn = sparqlRepo.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
 
-            try (TupleQueryResult result = query.evaluate()) {
-                response = extractListOfAvailableVocabularies(result);
-            }
-        } catch (Exception e) {
+            TupleQueryResult result = query.evaluate();
+            response = extractListOfAvailableVocabularies(result);
+            
+        } catch (QueryEvaluationException e) {
             LOG.error(e.getMessage());
+            return List.of();
         }
         return response;
     }
 
-    private List<RdfsResource> extractListOfAvailableVocabularies(final TupleQueryResult result) throws URISyntaxException, QueryEvaluationException {
+    private List<RdfsResource> extractListOfAvailableVocabularies(final TupleQueryResult result) throws QueryEvaluationException {
         List<RdfsResource> response = new ArrayList<>();
         
         while (result.hasNext()) {
@@ -103,7 +101,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
                 LOG.error("Error: no slovnik binding in: {}", line.toString());
                 continue;
             }
-            URI uri = new URI(line.getBinding("slovnik").getValue().stringValue());
+            URI uri = URI.create(line.getBinding("slovnik").getValue().stringValue());
             HashMap<String, String> labels = new HashMap<>();
             
             // add cs label if available
@@ -127,11 +125,8 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
     /**
      * Imports multiple vocabularies from external source.
      *
-     * @param vocabularyIris List of
+     * @param vocabularyIris List of iris of vocabularies that shall be imported.
      * @return first imported Vocabulary
-     * @throws URISyntaxException
-     * @throws QueryEvaluationException
-     * @throws RepositoryException
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
@@ -140,6 +135,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
 
         for (String vocabularyIri : vocabularyIris) {
             try {
+                LOG.trace("Starting import of external vocabulary {}", vocabularyIri);
                 InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
                 if (newVocabulary != null) {
                     URI uri = URI.create(vocabularyIri);
@@ -156,7 +152,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
                         eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
                     }
 
-                    LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+                    LOG.trace("Vocabulary {} import was successful.", vocabularyIri);
 
                     if (firstImportedVocabulary == null) {
                         firstImportedVocabulary = vocabulary;
@@ -170,12 +166,8 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
         return firstImportedVocabulary;
     }
 
-    @Transactional
     private InputStream downloadExternalVocabulary(String vocabularyIri) throws QueryEvaluationException, RepositoryException{
-
-        List<RdfsResource> response = new ArrayList<>();
-        final Configuration config = context.getBean(Configuration.class);
-
+        
         String sparqlEndpoint = config.getExternal().getResources();
         String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
 
