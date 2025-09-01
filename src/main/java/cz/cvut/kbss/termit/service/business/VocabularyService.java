@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfStatement;
@@ -41,7 +40,6 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
-import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -85,28 +83,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
-import cz.cvut.kbss.termit.util.Utils;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.query.Binding;
-import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.GraphQueryResult;
+
 import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
-import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+
 
 
 /**
@@ -123,6 +103,8 @@ public class VocabularyService
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
 
     private final VocabularyRepositoryService repositoryService;
+    
+    private final ExternalVocabularyService externalVocabularyService;
 
     private final ChangeRecordService changeRecordService;
 
@@ -143,6 +125,7 @@ public class VocabularyService
     private ApplicationEventPublisher eventPublisher;
 
     public VocabularyService(VocabularyRepositoryService repositoryService,
+                             ExternalVocabularyService externalVocabularyService,
                              ChangeRecordService changeRecordService,
                              @Lazy TermService termService,
                              VocabularyContextMapper contextMapper,
@@ -152,6 +135,7 @@ public class VocabularyService
                              VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
+        this.externalVocabularyService = externalVocabularyService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
@@ -281,6 +265,28 @@ public class VocabularyService
     }
 
     /**
+     * Sends a SPARQL query to fetch list of available vocabularies.
+     *
+     * @return list of available vocabulary information or null if connection
+     * failed
+     */
+    public List<RdfsResource> getAvailableVocabularies() {
+        return externalVocabularyService.getAvailableVocabularies();
+    }
+
+    /**
+     * Imports multiple vocabularies from external source.
+     *
+     * @param vocabularyIris List of
+     * @return first imported Vocabulary
+     * @throws QueryEvaluationException
+     * @throws RepositoryException
+     */
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
+        return externalVocabularyService.importFromExternalUris(vocabularyIris);
+    }
+
+    /**
      * Imports a new vocabulary from the specified file.
      * <p>
      * The file could be a text file containing RDF.
@@ -302,7 +308,7 @@ public class VocabularyService
         eventPublisher.publishEvent(new VocabularyCreatedEvent(this, imported.getUri()));
         return imported;
     }
-    
+
     /**
      * Imports a vocabulary from the specified file.
      * <p>

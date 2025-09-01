@@ -74,7 +74,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
-import cz.cvut.kbss.termit.service.business.ExternalVocabularyService;
 
 /**
  * Vocabulary management REST API.
@@ -93,14 +92,12 @@ public class VocabularyController extends BaseController {
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyController.class);
 
     private final VocabularyService vocabularyService;
-    private final ExternalVocabularyService externalVocabularyService;
 
     @Autowired
     public VocabularyController(VocabularyService vocabularyService, IdentifierResolver idResolver,
-                                ExternalVocabularyService externalVocabularyService, Configuration config) {
+                                Configuration config) {
         super(idResolver, config);
         this.vocabularyService = vocabularyService;
-        this.externalVocabularyService = externalVocabularyService;
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -173,7 +170,7 @@ public class VocabularyController extends BaseController {
     })
     @GetMapping(value = "/imports/available", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getAvailableVocabularies(){
-        return externalVocabularyService.getAvailableVocabularies();
+        return vocabularyService.getAvailableVocabularies();
     }
    
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -219,7 +216,7 @@ public class VocabularyController extends BaseController {
             return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
             
         } else if (vocabularyIris != null) { // importing externally
-            Vocabulary vocabulary = externalVocabularyService.importFromExternalUris(vocabularyIris);
+            Vocabulary vocabulary = vocabularyService.importFromExternalUris(vocabularyIris);
             LOG.debug("Vocabulary imported from IRIs: {}", vocabularyIris.toArray());
             return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
             
