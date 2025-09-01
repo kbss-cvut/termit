@@ -104,7 +104,7 @@ public class VocabularyService
 
     private final VocabularyRepositoryService repositoryService;
     
-    private final ExternalVocabularyService externalVocabularyService;
+    private final SparqlExternalVocabularyService sparqlExternalVocabularyService;
 
     private final ChangeRecordService changeRecordService;
 
@@ -125,7 +125,7 @@ public class VocabularyService
     private ApplicationEventPublisher eventPublisher;
 
     public VocabularyService(VocabularyRepositoryService repositoryService,
-                             ExternalVocabularyService externalVocabularyService,
+                             SparqlExternalVocabularyService sparqlExternalVocabularyService,
                              ChangeRecordService changeRecordService,
                              @Lazy TermService termService,
                              VocabularyContextMapper contextMapper,
@@ -135,7 +135,7 @@ public class VocabularyService
                              VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
-        this.externalVocabularyService = externalVocabularyService;
+        this.sparqlExternalVocabularyService = sparqlExternalVocabularyService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
@@ -271,7 +271,7 @@ public class VocabularyService
      * failed
      */
     public List<RdfsResource> getAvailableVocabularies() {
-        return externalVocabularyService.getAvailableVocabularies();
+        return sparqlExternalVocabularyService.getAvailableVocabularies();
     }
 
     /**
@@ -283,7 +283,7 @@ public class VocabularyService
      * @throws RepositoryException
      */
     public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
-        return externalVocabularyService.importFromExternalUris(vocabularyIris);
+        return sparqlExternalVocabularyService.importFromExternalUris(vocabularyIris);
     }
 
     /**
