@@ -75,11 +75,6 @@ import java.util.Optional;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 import cz.cvut.kbss.termit.service.business.ExternalVocabularyService;
-import java.net.URISyntaxException;
-import java.util.logging.Level;
-import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.eclipse.rdf4j.repository.RepositoryException;
-import org.springframework.web.bind.annotation.RequestPart;
 
 /**
  * Vocabulary management REST API.
@@ -222,16 +217,12 @@ public class VocabularyController extends BaseController {
             final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
             LOG.debug("New vocabulary {} imported.", vocabulary);
             return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+            
         } else if (vocabularyIris != null) { // importing externally
-            try {
-                Vocabulary vocabulary = externalVocabularyService.importFromExternalUris(vocabularyIris);
-                LOG.debug("Vocabulary imported from IRIs: {}", vocabularyIris.toArray());
-                return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
-
-            } catch (URISyntaxException | QueryEvaluationException | RepositoryException ex) {
-                LOG.error(ex.getMessage());
-                return ResponseEntity.accepted().build();
-            }
+            Vocabulary vocabulary = externalVocabularyService.importFromExternalUris(vocabularyIris);
+            LOG.debug("Vocabulary imported from IRIs: {}", vocabularyIris.toArray());
+            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+            
         } else {
             LOG.error("File and vocabularyIris are both null");
             return ResponseEntity.badRequest().build(); // no file or IRIs

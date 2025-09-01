@@ -135,31 +135,35 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
-    public Vocabulary importFromExternalUris(List<String> vocabularyIris) throws URISyntaxException, QueryEvaluationException, RepositoryException {
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
         Vocabulary firstImportedVocabulary = null;
-        
+
         for (String vocabularyIri : vocabularyIris) {
-            InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
-            if (newVocabulary != null) {
-                URI uri = new URI(vocabularyIri);
-                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+            try {
+                InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
+                if (newVocabulary != null) {
+                    URI uri = URI.create(vocabularyIri);
+                    Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
-                // add types
-                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+                    // add types
+                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
 
-                final AccessControlList acl = aclService.createFor(vocabulary);
-                vocabulary.setAcl(acl.getUri());
-                
-                if (repositoryService.find(uri).isEmpty()) { // The vocabulary is new 
-                    eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
+                    final AccessControlList acl = aclService.createFor(vocabulary);
+                    vocabulary.setAcl(acl.getUri());
+
+                    if (repositoryService.find(uri).isEmpty()) { // The vocabulary is new
+                        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
+                    }
+
+                    LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+
+                    if (firstImportedVocabulary == null) {
+                        firstImportedVocabulary = vocabulary;
+                    }
                 }
-                
-                LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
-
-                if (firstImportedVocabulary == null) {
-                    firstImportedVocabulary = vocabulary;
-                }
+            } catch (QueryEvaluationException | RepositoryException ex) {
+                LOG.error(ex.getMessage());
             }
         }
         
