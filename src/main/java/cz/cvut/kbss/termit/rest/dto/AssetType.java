@@ -21,5 +21,6 @@ public enum AssetType {
     RESOURCE,
     VOCABULARY,
     FILE,
-    TERM
+    TERM,
+    CUSTOM_ATTRIBUTE
 }
