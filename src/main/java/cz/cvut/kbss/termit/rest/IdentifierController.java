@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
-import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.rest.dto.AssetType;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -69,24 +68,30 @@ public class IdentifierController extends BaseController {
                                   @RequestParam("assetType") AssetType assetType) {
         final Configuration.Namespace cfgNamespace = config.getNamespace();
 
-        switch (assetType) {
-            case TERM:
+        return switch (assetType) {
+            case TERM -> {
                 ensureContextIriIsNotNull(assetType, contextIri);
-                return idResolver
+                yield idResolver
                         .generateDerivedIdentifier(URI.create(contextIri), cfgNamespace.getTerm().getSeparator(), name);
-            case VOCABULARY:
+            }
+            case VOCABULARY -> {
                 ensureContextIriIsNull(assetType, contextIri);
-                return idResolver.generateIdentifier(cfgNamespace.getVocabulary(), name);
-            case FILE:
+                yield idResolver.generateIdentifier(cfgNamespace.getVocabulary(), name);
+            }
+            case FILE -> {
                 ensureContextIriIsNotNull(assetType, contextIri);
-                return idResolver
+                yield idResolver
                         .generateDerivedIdentifier(URI.create(contextIri), cfgNamespace.getFile().getSeparator(), name);
-            case RESOURCE:
+            }
+            case RESOURCE -> {
                 ensureContextIriIsNull(assetType, contextIri);
-                return idResolver.generateIdentifier(cfgNamespace.getResource(), name);
-            default:
-                throw new UnsupportedOperationException("Unsupported asset type " + assetType + " supplied.");
-        }
+                yield idResolver.generateIdentifier(cfgNamespace.getResource(), name);
+            }
+            case CUSTOM_ATTRIBUTE -> {
+                ensureContextIriIsNull(assetType, contextIri);
+                yield idResolver.generateIdentifier(cfgNamespace.getCustomAttribute(), name);
+            }
+        };
     }
 
     private static void ensureContextIriIsNull(AssetType assetType, String contextIri) {

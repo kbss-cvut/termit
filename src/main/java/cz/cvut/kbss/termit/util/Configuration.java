@@ -500,6 +500,11 @@ public class Configuration {
         @NotNull
         String resource;
         /**
+         * Namespace for custom attribute identifiers.
+         */
+        @NotNull
+        String customAttribute = Vocabulary.s_c_vlastni_atribut;
+        /**
          * Separator of Term namespace from the parent Vocabulary identifier.
          * <p>
          * Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized
@@ -561,6 +566,14 @@ public class Configuration {
 
         public void setResource(String resource) {
             this.resource = resource;
+        }
+
+        public String getCustomAttribute() {
+            return customAttribute;
+        }
+
+        public void setCustomAttribute(String customAttribute) {
+            this.customAttribute = customAttribute;
         }
 
         public NamespaceDetail getTerm() {

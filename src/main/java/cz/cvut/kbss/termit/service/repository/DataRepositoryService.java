@@ -121,7 +121,7 @@ public class DataRepositoryService {
         validate(attribute);
         if (attribute.getUri() == null) {
             attribute.setUri(
-                    idResolver.generateIdentifier(Vocabulary.s_c_vlastni_atribut, getLabelForIdentifier(attribute)));
+                    idResolver.generateIdentifier(config.getNamespace().getCustomAttribute(), getLabelForIdentifier(attribute)));
         }
         LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
