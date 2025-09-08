@@ -99,11 +99,12 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
 
             } catch (QueryEvaluationException e) {
                 LOG.error(e.getMessage());
-                return List.of();
+                response = List.of();
+            } finally {
+                sparqlRepo.shutDown();
             }
-            sparqlRepo.shutDown();
         } catch (RepositoryException ex) {
-            return List.of();
+            response = List.of();
         }
         return response;
     }
@@ -158,54 +159,58 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         Vocabulary firstImportedVocabulary = null;
 
         for (String vocabularyIri : vocabularyIris) {
-            try {
-                LOG.trace("Starting import of external vocabulary {}", vocabularyIri);
-                InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
-                if (newVocabulary != null) {
-                    URI uri = URI.create(vocabularyIri);
-                    Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+            LOG.trace("Starting import of external vocabulary {}", vocabularyIri);
+            InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
+            if (newVocabulary != null) {
+                URI uri = URI.create(vocabularyIri);
+                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
-                    // add types
-                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+                // add types
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
 
-                    final AccessControlList acl = aclService.createFor(vocabulary);
-                    vocabulary.setAcl(acl.getUri());
+                final AccessControlList acl = aclService.createFor(vocabulary);
+                vocabulary.setAcl(acl.getUri());
 
-                    if (repositoryService.find(uri).isEmpty()) { // The vocabulary is new
-                        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
-                    }
-
-                    LOG.trace("Vocabulary {} import was successful.", vocabularyIri);
-
-                    if (firstImportedVocabulary == null) {
-                        firstImportedVocabulary = vocabulary;
-                    }
+                if (repositoryService.find(uri).isEmpty()) { // The vocabulary is new
+                    eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
                 }
-            } catch (QueryEvaluationException | RepositoryException ex) {
-                LOG.error(ex.getMessage());
+
+                LOG.trace("Vocabulary {} import was successful.", vocabularyIri);
+
+                if (firstImportedVocabulary == null) {
+                    firstImportedVocabulary = vocabulary;
+                }
             }
+
         }
         
         return firstImportedVocabulary;
     }
 
-    private InputStream downloadExternalVocabulary(String vocabularyIri) throws QueryEvaluationException, RepositoryException{
-        
-        SPARQLRepository sparqlRepo = initSparqlRepository();
-        
-        RepositoryConnection conn = sparqlRepo.getConnection();
+    private InputStream downloadExternalVocabulary(String vocabularyIri) {
+        InputStream vocabularyFile = null;
+        try {
+            SPARQLRepository sparqlRepo = initSparqlRepository();
+            try {
+                RepositoryConnection conn = sparqlRepo.getConnection();
 
-        String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
-        GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
+                String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
+                GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
 
-        GraphQueryResult result = graphQuery.evaluate();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Rio.write(result, outputStream, RDFFormat.TURTLE);
-        InputStream vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
-        
-        sparqlRepo.shutDown();
-        
+                GraphQueryResult result = graphQuery.evaluate();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                Rio.write(result, outputStream, RDFFormat.TURTLE);
+                vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
+            } catch (QueryEvaluationException ex) {
+                 LOG.error(ex.getMessage());
+            } finally {
+                sparqlRepo.shutDown();
+            }
+        } catch (RepositoryException ex) {
+             LOG.error(ex.getMessage());
+        }
+    
         return vocabularyFile;
 
     }
