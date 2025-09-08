@@ -170,7 +170,7 @@ public class VocabularyController extends BaseController {
     })
     @GetMapping(value = "/imports/available", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getAvailableVocabularies(){
-        return vocabularyService.getAvailableVocabularies();
+        return vocabularyService.getAvailableExternalVocabularies();
     }
    
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

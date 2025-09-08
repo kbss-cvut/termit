@@ -263,12 +263,12 @@ public class VocabularyService
     }
 
     /**
-     * Sends a SPARQL query to fetch list of available vocabularies.
+     * Sends a request to fetch list of available vocabularies.
      *
-     * @return list of available vocabulary information or null if connection
-     * failed
+     * @return list of available vocabulary information or an empty list if the
+     * connection failed
      */
-    public List<RdfsResource> getAvailableVocabularies() {
+    public List<RdfsResource> getAvailableExternalVocabularies() {
         return sparqlExternalVocabularyService.getAvailableVocabularies();
     }
 
