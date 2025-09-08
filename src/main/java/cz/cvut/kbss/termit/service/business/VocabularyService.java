@@ -84,8 +84,6 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
-import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.eclipse.rdf4j.repository.RepositoryException;
 
 
 
@@ -279,8 +277,6 @@ public class VocabularyService
      *
      * @param vocabularyIris List of
      * @return first imported Vocabulary
-     * @throws QueryEvaluationException
-     * @throws RepositoryException
      */
     public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
         return sparqlExternalVocabularyService.importFromExternalUris(vocabularyIris);
