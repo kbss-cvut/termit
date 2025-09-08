@@ -1090,14 +1090,14 @@ public class Configuration {
          * Address for the external resource
          */
         @NotNull
-        private String resources = "";
+        private String resource = "";
 
-        public String getResources() {
-            return resources;
+        public String getResource() {
+            return resource;
         }
 
-        public void setResources(String resources) {
-            this.resources = resources;
+        public void setResource(String resource) {
+            this.resource = resource;
         }
 
         /**
