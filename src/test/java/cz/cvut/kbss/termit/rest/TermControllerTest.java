@@ -52,6 +52,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -1293,6 +1294,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         assertEquals(term, result);
     }
 
+    @Disabled   // TODO Temporarily disabled due to workaround for https://github.com/lecbyjak/intelligent-tree-select/issues/99
     @Test
     void getAllTermsFlatCallsServiceWithSearchStringAndPagination() throws Exception {
         final String searchString = "test";

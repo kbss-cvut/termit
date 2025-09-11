@@ -156,26 +156,35 @@ public class TermController extends BaseController {
         if (searchString != null) {
 
             if (flat) {
+                // TODO Temporary workaround for https://github.com/lecbyjak/intelligent-tree-select/issues/99
                 return ResponseEntity.ok(includeImported ?
-                        termService.findAllFlatIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
-                        termService.findAllFlat(searchString, vocabulary, createPageRequest(pageSize, pageNo)));
+                                         termService.findAllFlatIncludingImported(searchString, vocabulary,
+                                                                                  Constants.DEFAULT_PAGE_SPEC) :
+                                         termService.findAllFlat(searchString, vocabulary,
+                                                                 Constants.DEFAULT_PAGE_SPEC));
             }
 
             return ResponseEntity.ok(includeImported ?
-                                     termService.findAllIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
-                                     termService.findAll(searchString, vocabulary, createPageRequest(pageSize, pageNo)));
+                                     termService.findAllIncludingImported(searchString, vocabulary,
+                                                                          createPageRequest(pageSize, pageNo)) :
+                                     termService.findAll(searchString, vocabulary,
+                                                         createPageRequest(pageSize, pageNo)));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
 
             if (flat) {
-                return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
-                    termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)));
+                return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary,
+                                                                                                    createPageRequest(
+                                                                                                            pageSize,
+                                                                                                            pageNo)) :
+                                         termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)));
             }
 
             return ResponseEntity
-                    .ok(includeImported ? termService.findAllIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
+                    .ok(includeImported ?
+                        termService.findAllIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
                         termService.findAll(vocabulary, createPageRequest(pageSize, pageNo)));
         });
     }
@@ -1012,7 +1021,10 @@ public class TermController extends BaseController {
             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo
     ) {
         if (flat) {
-            return ResponseEntity.ok(termService.findAllFlat(searchString, createPageRequest(pageSize, pageNo)));
+            // TODO Temporary workaround for https://github.com/lecbyjak/intelligent-tree-select/issues/99
+            return ResponseEntity.ok(termService.findAllFlat(searchString,
+                                                             !searchString.isBlank() ? Constants.DEFAULT_PAGE_SPEC :
+                                                             createPageRequest(pageSize, pageNo)));
         }
         return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo)));
     }
