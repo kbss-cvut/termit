@@ -856,10 +856,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     private <T extends AbstractTerm> TypedQuery<T> createFindAllQuery(String searchString, Pageable pageable,
                                                                       Class<T> resultType) {
-        return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+        final TypedQuery<T> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                             "?term a ?type ; " +
-                                            "      ?hasLabel ?label ; " +
-                                            "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                            "      ?hasLabel ?label . " +
+                                            (!searchString.isBlank() ? "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) " : "") +
                                             "?term ?inVocabulary ?vocabulary . " +
                                             "FILTER NOT EXISTS {?term a ?snapshot . }" +
                                             "} ORDER BY " + orderSentence("?label"),
@@ -869,9 +869,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                  .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                  .setParameter("snapshot", URI.create(
                          cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
-                 .setParameter("searchString", searchString, config.getLanguage())
                 .setFirstResult((int) pageable.getOffset())
                 .setMaxResults(pageable.getPageSize());
+        if (!searchString.isBlank()) {
+            query.setParameter("searchString", searchString, config.getLanguage());
+        }
+        return query;
     }
 
     /**
