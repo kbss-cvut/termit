@@ -28,13 +28,24 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
 import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
+import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.security.model.LoginStatus;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -52,6 +63,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Map;
 
 @Configuration
 public class WebAppConfig implements WebMvcConfigurer {
@@ -158,5 +170,56 @@ public class WebAppConfig implements WebMvcConfigurer {
                                                                                                 .bearerFormat("JWT")))
                             .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
                                             .version(version));
+    }
+
+    @Bean
+    public OpenApiCustomizer customerGlobalHeaderOpenApiCustomizer() {
+        return openApi -> {
+            // Add form login endpoint
+            // We create the docs programmatically because our custom AuthenticationFilter apparently prevents Springdoc from
+            // correctly recognizing the login endpoint and not offering the url-encoded content type in the login endpoint docs.
+            openApi.getPaths().addPathItem(SecurityConstants.LOGIN_PATH, createLoginPathDocumentation());
+        };
+    }
+
+    private static PathItem createLoginPathDocumentation() {
+        return new PathItem()
+                .post(new Operation()
+                              .addTagsItem("Authentication")
+                              .summary("Login with username and password")
+                              .description("Authenticates user and returns JWT token")
+                              .requestBody(new RequestBody()
+                                                   .content(new Content()
+                                                                    .addMediaType(
+                                                                            MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+                                                                            new io.swagger.v3.oas.models.media.MediaType().schema(
+                                                                                    new Schema<Map<String, String>>()
+                                                                                            .type("object")
+                                                                                            .addProperty(
+                                                                                                    SecurityConstants.USERNAME_PARAM,
+                                                                                                    new StringSchema().description(
+                                                                                                            "The username"))
+                                                                                            .addProperty(
+                                                                                                    SecurityConstants.PASSWORD_PARAM,
+                                                                                                    new StringSchema().description(
+                                                                                                                              "The password")
+                                                                                                                      .format("password"))
+                                                                                            .required(
+                                                                                                    java.util.Arrays.asList(
+                                                                                                            SecurityConstants.USERNAME_PARAM,
+                                                                                                            SecurityConstants.PASSWORD_PARAM))))))
+                              .responses(new ApiResponses()
+                                                 .addApiResponse("200",
+                                                                 new ApiResponse().description(
+                                                                                          "Authentication request successfully processed")
+                                                                                  .content(
+                                                                                          new Content().addMediaType(
+                                                                                                  MediaType.APPLICATION_JSON_VALUE,
+                                                                                                  new io.swagger.v3.oas.models.media.MediaType().example(
+                                                                                                          new LoginStatus(
+                                                                                                                  true,
+                                                                                                                  true,
+                                                                                                                  "username",
+                                                                                                                  "Error message if not logged in.")))))));
     }
 }

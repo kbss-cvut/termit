@@ -28,6 +28,11 @@ public class SecurityConstants {
     public static final String USERNAME_PARAM = "username";
 
     /**
+     * Password parameter for the login form
+     */
+    public static final String PASSWORD_PARAM = "password";
+
+    /**
      * URL path used for logging into the application.
      */
     public static final String LOGIN_PATH = "/login";
