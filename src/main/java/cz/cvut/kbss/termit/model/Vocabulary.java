@@ -86,7 +86,7 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
     private URI acl;
 
     @Properties(fetchType = FetchType.EAGER)
-    private Map<String, Set<String>> properties;
+    private Map<String, Set<Object>> properties;
 
     @Types
     private Set<String> types;
@@ -182,11 +182,11 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
         this.acl = acl;
     }
 
-    public Map<String, Set<String>> getProperties() {
+    public Map<String, Set<Object>> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, Set<String>> properties) {
+    public void setProperties(Map<String, Set<Object>> properties) {
         this.properties = properties;
     }
 

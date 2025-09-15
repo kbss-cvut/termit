@@ -18,7 +18,8 @@ CONSTRUCT {
               owl:versionIRI ?versionIri ;
               <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
               <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
-              <http://purl.org/ontology/bibo/status> ?status .
+              <http://purl.org/ontology/bibo/status> ?status ;
+              ?y ?z .
 } WHERE {
     GRAPH ?g {
         ?vocabulary pdp:má-glosář ?glossary ;
@@ -42,6 +43,12 @@ CONSTRUCT {
         }
         OPTIONAL {
             ?glossary <http://purl.org/ontology/bibo/status> ?status .
+        }
+        OPTIONAL {
+            ?vocabulary ?y ?z .
+            FILTER EXISTS {
+                    ?y a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> .
+                }
         }
     }
     OPTIONAL {
