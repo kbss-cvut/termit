@@ -87,5 +87,3 @@ logging:
         file: "%date{dd-MM-yyyy HH:mm:ss.SSS} [%X{username}] [%thread] %-5level %logger{30} - %msg%n"
     file:
         name:
-springdoc:
-    show-login-endpoint: true

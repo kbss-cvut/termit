@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.websocket;
 
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TextAnalysisFailedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -113,6 +114,15 @@ public class VocabularySocketController extends BaseWebSocketController {
         messagingTemplate.convertAndSend(
                 WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_FILE,
                 event.getFileUri(),
+                getHeaders(event)
+        );
+    }
+
+    @EventListener
+    public void onTextAnalysisFailed(TextAnalysisFailedEvent event) {
+        messagingTemplate.convertAndSend(
+                WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FAILED,
+                event.getException().getMessage(),
                 getHeaders(event)
         );
     }

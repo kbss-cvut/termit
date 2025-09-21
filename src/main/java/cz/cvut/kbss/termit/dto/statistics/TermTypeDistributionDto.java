@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.ArrayList;

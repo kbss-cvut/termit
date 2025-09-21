@@ -41,6 +41,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+
 @Repository
 public class AssetDao {
 
@@ -84,14 +86,16 @@ public class AssetDao {
                                 "?hasEditor ?author ;" +
                                 "?hasModificationDate ?modified ." +
                                 "?ent ?hasLabel ?label . " +
+                                "BIND (?languageVal as ?language) " +
                                 insertVocabularyPattern(asset) +
+                                insertLanguagePattern("?ent") +
                                 "BIND (?ent as ?entity)" +
                                 "BIND (?author as ?modifiedBy)" +
                                 "FILTER (?chType != ?change)" +
                                 "FILTER (?hasLabel in (?labelProperties))" +
                                 "BIND (?assetType as ?type)" +
                                 "BIND (IF(?chType = ?persist, ?persist, ?update) as ?changeType)" +
-                                "FILTER (lang(?label) = ?language)" +
+                                "FILTER (lang(?label) = ?language || lang(?label) = \"\")" +
                                 "} ORDER BY DESC(?modified)", "RecentlyModifiedAsset")
                 .setParameter("ent", asset.uri)
                 .setParameter("assetType", asset.type)
@@ -102,7 +106,8 @@ public class AssetDao {
                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
                 .setParameter("persist", URI.create(Vocabulary.s_c_vytvoreni_entity))
                 .setParameter("update", URI.create(Vocabulary.s_c_uprava_entity))
-                .setParameter("language", config.getLanguage())
+                .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                .setParameter("languageVal", config.getLanguage())
                 .setMaxResults(1);
         setVocabularyRelatedParameter(asset, query);
         if (author != null) {
@@ -120,16 +125,12 @@ public class AssetDao {
     }
 
     private String insertVocabularyPattern(AssetWithType elem) {
-        switch (elem.type.toString()) {
-            case SKOS.CONCEPT:
-                return "?ent ?isFromVocabulary ?vocabulary . ";
-            case Vocabulary.s_c_dokument:
-                return "?ent ?hasVocabulary ?vocabulary . ";
-            case Vocabulary.s_c_soubor:
-                return "?ent ?inDocument/?hasVocabulary ?vocabulary . ";
-            default:
-                return "BIND (?ent as ?vocabulary)";
-        }
+        return switch (elem.type.toString()) {
+            case SKOS.CONCEPT -> "?ent ?isFromVocabulary ?vocabulary . ";
+            case Vocabulary.s_c_dokument -> "?ent ?hasVocabulary ?vocabulary . ";
+            case Vocabulary.s_c_soubor -> "?ent ?inDocument/?hasVocabulary ?vocabulary . ";
+            default -> "BIND (?ent as ?vocabulary)";
+        };
     }
 
     private void setVocabularyRelatedParameter(AssetWithType elem, Query query) {
@@ -205,13 +206,6 @@ public class AssetDao {
         }
     }
 
-    private static final class AssetWithType {
-        private final URI uri;
-        private final URI type;
-
-        private AssetWithType(URI uri, URI type) {
-            this.uri = uri;
-            this.type = type;
-        }
+    private record AssetWithType(URI uri, URI type) {
     }
 }

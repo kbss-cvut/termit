@@ -571,4 +571,53 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         assertEquals(Set.of("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/"),
                      result.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
     }
+
+    @Test
+    void importVocabularyUsesSpecifiedPrimaryLanguage() {
+        final String lang = "pl";
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                            Environment.loadFile("data/test-glossary-with-language.ttl")));
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
+        assertNotNull(result);
+        assertEquals(lang, result.getPrimaryLanguage());
+    }
+
+    @Test
+    void importVocabularyUsesLabelLanguageWhenNoPrimaryLanguageIsImported() {
+        final String lang = "pl";
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                         Environment.loadFile("data/test-glossary-without-language.ttl")));
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
+        assertNotNull(result);
+        assertEquals(lang, result.getPrimaryLanguage());
+        assertEquals("Słownictwo systemu TermIt - glosariusz", result.getPrimaryLabel());
+        assertEquals("To jest wersja testowa słownictwa TermIt", result.getDescription().get(lang));
+    }
+
+    @Test
+    void importVocabularyUsesLabelLanguageMatchingInstanceWhenNoPrimaryLanguageIsImported() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                         Environment.loadFile("data/test-glossary-without-language-and-label-matching-instance.ttl")));
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
+        assertNotNull(result);
+        assertEquals(Environment.LANGUAGE, result.getPrimaryLanguage());
+        assertEquals("Vocabulary of system TermIt - glossary", result.getPrimaryLabel());
+        // description was imported even when it does not match the language
+        assertEquals("To jest wersja testowa słownictwa TermIt", result.getDescription().get("pl"));
+    }
 }

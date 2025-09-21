@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -54,6 +54,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -176,10 +177,10 @@ class TermServiceTest {
     void findAllBySearchStringRetrievesMatchingTermsFromVocabularyUsingRepositoryService() {
         final String searchString = "test";
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAll(searchString, vocabulary)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString, vocabulary);
+        when(termRepositoryService.findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString, vocabulary);
+        verify(termRepositoryService).findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -251,20 +252,20 @@ class TermServiceTest {
     @Test
     void findAllRetrievesAllTermsFromVocabularyUsingRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAll(vocabulary)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(vocabulary);
+        when(termRepositoryService.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(vocabulary);
+        verify(termRepositoryService).findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
     void findAllCallsFindAllInRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         final String searchString = "test";
-        when(termRepositoryService.findAll(searchString)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString);
+        when(termRepositoryService.findAll(eq(searchString), any(Pageable.class))).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString);
+        verify(termRepositoryService).findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -293,10 +294,10 @@ class TermServiceTest {
     void findAllIncludingImportedBySearchStringRetrievesMatchingTermsUsingRepositoryService() {
         final String searchString = "test";
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAllIncludingImported(searchString, vocabulary)).thenReturn(terms);
-        final List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary);
+        when(termRepositoryService.findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
+        final List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAllIncludingImported(searchString, vocabulary);
+        verify(termRepositoryService).findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -308,11 +309,12 @@ class TermServiceTest {
 
     @Test
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
+        when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
         when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
-        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
+        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
     }
 
     @Test
@@ -333,6 +335,7 @@ class TermServiceTest {
 
     @Test
     void updateInvokesTextAnalysisOnUpdatedTerm() {
+        when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term(original.getUri());
@@ -343,7 +346,7 @@ class TermServiceTest {
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
         sut.update(toUpdate);
-        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
+        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary(), vocabulary.getPrimaryLanguage());
     }
 
     @Test
@@ -397,8 +400,8 @@ class TermServiceTest {
 
     @Test
     void findAllIncludingImportedRetrievesAllTermsFromVocabularyImportsChain() {
-        sut.findAllIncludingImported(vocabulary);
-        verify(termRepositoryService).findAllIncludingImported(vocabulary);
+        sut.findAllIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        verify(termRepositoryService).findAllIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test

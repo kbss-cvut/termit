@@ -173,7 +173,7 @@ public class ExcelImporter implements VocabularyImporter {
         if (term.getUri() == null) {
             return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
                                                         config.getNamespace().getTerm().getSeparator(),
-                                                        term.getLabel().get(config.getPersistence().getLanguage()));
+                                                        term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         if (term.getUri() != null && !term.getUri().toString().startsWith(termNamespace)) {
             LOG.trace(
@@ -181,7 +181,7 @@ public class ExcelImporter implements VocabularyImporter {
                     Utils.uriToString(term.getUri()), termNamespace);
             return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
                                                         config.getNamespace().getTerm().getSeparator(),
-                                                        term.getLabel().get(config.getPersistence().getLanguage()));
+                                                        term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         return term.getUri();
     }
@@ -283,7 +283,7 @@ public class ExcelImporter implements VocabularyImporter {
 
     private void identifyTermByLabelIfNecessary(Term t, Vocabulary targetVocabulary) {
         if (t.getUri() == null) {
-            final String termLabel = t.getLabel().get(config.getPersistence().getLanguage());
+            final String termLabel = t.getLabel().get(targetVocabulary.getPrimaryLanguage());
             if (termLabel == null) {
                 throw new VocabularyImportException(
                         "Unable to identify terms in Excel - it contains neither term identifiers nor labels in primary language.",

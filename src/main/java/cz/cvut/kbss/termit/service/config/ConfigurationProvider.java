@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.config;
 
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
+import cz.cvut.kbss.termit.service.init.lucene.IndexedLanguagesProvider;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -38,13 +39,17 @@ public class ConfigurationProvider {
 
     private final UserRoleRepositoryService service;
 
+    private final IndexedLanguagesProvider indexedLanguagesProvider;
+
     @Value("${spring.servlet.multipart.max-file-size}")
     private String maxFileUploadSize;
 
     @Autowired
-    public ConfigurationProvider(Configuration config, UserRoleRepositoryService service) {
+    public ConfigurationProvider(Configuration config, UserRoleRepositoryService service,
+                                 IndexedLanguagesProvider indexedLanguagesProvider) {
         this.config = config;
         this.service = service;
+        this.indexedLanguagesProvider = indexedLanguagesProvider;
     }
 
     /**
@@ -60,6 +65,7 @@ public class ConfigurationProvider {
         result.setMaxFileUploadSize(maxFileUploadSize);
         result.setVersionSeparator(config.getNamespace().getSnapshot().getSeparator());
         result.setModelingToolUrl(config.getModelingToolUrl());
+        result.setIndexedLanguages(indexedLanguagesProvider.getIndexedLanguages());
         return result;
     }
 }

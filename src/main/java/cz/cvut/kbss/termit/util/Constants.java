@@ -175,6 +175,21 @@ public class Constants {
      */
     public static final String BNODE_PREFIX = "_:";
 
+    /**
+     * Lucene index URI namespace
+     */
+    public static final String LUCENE_INSTANCE_NS = "http://www.ontotext.com/connectors/lucene/instance#";
+
+    /**
+     * Prefix used for naming lucene connectors indexing labels.
+     */
+    public static final String LUCENE_CONNECTOR_LABEL_INDEX_PREFIX = LUCENE_INSTANCE_NS + "termit_labelIndex_";
+
+    /**
+     * Prefix used for naming lucene connectors indexing definitions.
+     */
+    public static final String LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX = LUCENE_INSTANCE_NS + "termit_defcomIndex_";
+
     private Constants() {
         throw new AssertionError();
     }

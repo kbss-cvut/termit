@@ -56,16 +56,16 @@ public class ReadOnlyTermService {
         return termService.findVocabularyRequired(vocabularyUri);
     }
 
-    public List<TermDto> findAll(Vocabulary vocabulary) {
-        return termService.findAll(vocabulary);
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAll(vocabulary, pageSpec);
     }
 
-    public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
-        return termService.findAll(searchString, vocabulary);
+    public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAll(searchString, vocabulary, pageSpec);
     }
 
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
-        return termService.findAllIncludingImported(searchString, vocabulary);
+    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAllIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {

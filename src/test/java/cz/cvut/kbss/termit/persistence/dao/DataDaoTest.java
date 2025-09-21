@@ -21,10 +21,12 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.OWL;
+import cz.cvut.kbss.jopa.vocabulary.XSD;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
@@ -47,6 +49,7 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.IOException;
 import java.net.URI;
@@ -54,12 +57,15 @@ import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DataDaoTest extends BaseDaoTestRunner {
 
     private static final String FIRST_NAME_LABEL = "First name";
@@ -70,11 +76,15 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Autowired
     private DataDao sut;
 
+    private cz.cvut.kbss.termit.model.Vocabulary vocabulary;
+
     @BeforeEach
     void setUp() {
         final User author = Generator.generateUserWithId();
         transactional(() -> em.persist(author));
         Environment.setCurrentUser(author);
+        vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary));
     }
 
     @Test
@@ -129,7 +139,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void getLabelReturnsLabelWithMatchingLanguageOfSpecifiedIdentifier() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term));
 
         final Optional<String> result = sut.getLabel(term.getUri());
@@ -140,14 +150,14 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void getLabelReturnsLabelWithoutLanguageTagWhenMatchingLanguageTagDoesNotExist() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral(getPrimaryLabel(term)));
+                               vf.createLiteral(getPrimaryLabel(term)));
                 connection.commit();
             }
         });
@@ -171,14 +181,14 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void getLabelReturnsEmptyOptionalForIdentifierWithMultipleLabels() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral(getPrimaryLabel(term)));
+                               vf.createLiteral(getPrimaryLabel(term)));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral("Another label"));
                 connection.commit();
@@ -187,6 +197,36 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         final Optional<String> result = sut.getLabel(term.getUri());
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    void getLabelReturnsTermLabelInVocabularyLanguage() {
+        enableRdfsInference(em);
+        final String lang = "pl";
+        final String label = "Term label in PL";
+        vocabulary.setPrimaryLanguage(lang);
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setLabel(lang, label);
+        transactional(() -> {
+            em.merge(vocabulary);
+            em.persist(term);
+        });
+        final Optional<String> result = sut.getLabel(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(label, result.get());
+        assertTrue(term.getLabel().getLanguages().size() > 1);
+    }
+
+    @Test
+    void getLabelReturnsLabelInInstanceLanguageWhenVocabularyIsNotFoundAndNoLanguageIsRequested() {
+        enableRdfsInference(em);
+        final Term term = Generator.generateTermWithId();
+        term.setLabel("af", "AF label");
+        term.setLabel("zu", "ZU label");
+        transactional(() -> em.persist(term));
+        final Optional<String> result = sut.getLabel(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(getPrimaryLabel(term), result.get());
     }
 
     @Test
@@ -308,5 +348,25 @@ class DataDaoTest extends BaseDaoTestRunner {
                   .setParameter("ctx", context)
                   .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
                   .setParameter("type", URI.create(SKOS.CONCEPT.stringValue())).getSingleResult()));
+    }
+
+    @Test
+    void findAllCustomAttributesReturnsCustomAttributes() {
+        final CustomAttribute pOne = new CustomAttribute(Generator.generateUri(),
+                                                         MultilingualString.create("Attribute one", "en"), null);
+        pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        final CustomAttribute pTwo = new CustomAttribute(Generator.generateUri(),
+                                                         MultilingualString.create("Attribute two", "en"), null);
+        pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pTwo.setRange(URI.create(XSD.BOOLEAN));
+        transactional(() -> {
+            em.persist(pOne);
+            em.persist(pTwo);
+        });
+
+        final List<CustomAttribute> result = sut.findAllCustomAttributes();
+        assertEquals(2, result.size());
+        assertThat(result, hasItems(pOne, pTwo));
     }
 }

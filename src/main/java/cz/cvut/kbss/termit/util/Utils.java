@@ -39,11 +39,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -53,7 +51,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -424,6 +421,8 @@ public class Utils {
      * @return {@code true} if the {@code development} profile is active, {@code false} otherwise
      */
     public static boolean isDevelopmentProfile(String[] activeProfiles) {
+        Objects.requireNonNull(activeProfiles);
+        Arrays.sort(activeProfiles);
         return Arrays.binarySearch(activeProfiles, Constants.DEVELOPMENT_PROFILE) != -1;
     }
 

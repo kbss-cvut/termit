@@ -75,7 +75,7 @@ class ReadOnlyTermTest {
         final URI u3 = Generator.generateUri();
 
         final Term term = Generator.generateTermWithId();
-        final Map<String, Set<String>> properties = new HashMap<>();
+        final Map<String, Set<Object>> properties = new HashMap<>();
         properties.put(u1.toString(), Collections.singleton("a"));
         properties.put(u2.toString(), Collections.singleton("b"));
 

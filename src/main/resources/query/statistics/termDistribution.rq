@@ -4,13 +4,14 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 PREFIX dc: <http://purl.org/dc/terms/>
 
-SELECT ?slovnik ?labelSlovniku ( COUNT(DISTINCT ?pojem) AS ?count ) {
+SELECT ?vocabulary ?label ( COUNT(DISTINCT ?term) AS ?count ) ?language {
     GRAPH ?g {
-        ?pojem a skos:Concept ;
+        ?term a skos:Concept ;
     }
-    ?pojem pdp:je-pojmem-ze-slovníku ?slovnik .
+    ?term pdp:je-pojmem-ze-slovníku ?vocabulary .
     FILTER NOT EXISTS {
-        ?slovnik a pdp:verze-slovníku .
+        ?vocabulary a pdp:verze-slovníku .
     }
-    ?slovnik dc:title ?labelSlovniku .
-} GROUP BY ?slovnik ?labelSlovniku
+    ?vocabulary dc:title ?label .
+    ?vocabulary dc:language ?language .
+} GROUP BY ?vocabulary ?label ?language

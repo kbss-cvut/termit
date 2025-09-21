@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
-import cz.cvut.kbss.termit.dto.RdfsStatement;
+import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -237,7 +237,7 @@ public class VocabularyService
      * @return List of RDF statements
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
-    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+    public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
         return repositoryService.getTermRelations(vocabulary);
     }
 
@@ -250,7 +250,7 @@ public class VocabularyService
      * @return List of RDF statements
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
-    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary) {
+    public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary) {
         return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
     }
 
@@ -391,7 +391,7 @@ public class VocabularyService
                                  k -> new ArrayList<>())
                 .add(t)
         );
-        termService.analyzeTermDefinitions(contextToTerms);
+        termService.analyzeTermDefinitions(contextToTerms, vocabulary.getPrimaryLanguage());
     }
 
     /**
@@ -585,5 +585,15 @@ public class VocabularyService
     @Override
     public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Gets the primary language of the vocabulary.
+     *
+     * @param vocabularyUri vocabulary identifier
+     * @return The vocabulary primary language
+     */
+    public String getPrimaryLanguage(URI vocabularyUri) {
+        return repositoryService.getPrimaryLanguage(vocabularyUri);
     }
 }

@@ -112,6 +112,9 @@ public class TermController extends BaseController {
      * @param properties      A set of properties representing references to terms from other vocabularies to take into
      *                        account in export. Relevant only for term export. Optional
      * @param acceptType      MIME type accepted by the client, relevant only for term export
+     * @param flat            Whether to flatten the term hierarchy in the response. Optional, defaults to false
+     * @param pageSize        Limit the number of elements in the returned page. Optional
+     * @param pageNo          Number of the page to return. Optional
      * @return List of terms of the specific vocabulary
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -141,20 +144,47 @@ public class TermController extends BaseController {
             @Parameter(
                     description = "HTTP Accept header. If its value is not JSON or JSON-LD, the request is interpreted as data export.")
             @RequestHeader(value = HttpHeaders.ACCEPT, required = false,
-                           defaultValue = MediaType.ALL_VALUE) String acceptType) {
+                           defaultValue = MediaType.ALL_VALUE) String acceptType,
+            @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
+            @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
+
+            if (flat) {
+                return ResponseEntity.ok(includeImported ?
+                                         termService.findAllFlatIncludingImported(searchString, vocabulary,
+                                                                                  createPageRequest(pageSize, pageNo)) :
+                                         termService.findAllFlat(searchString, vocabulary,
+                                                                 createPageRequest(pageSize, pageNo)));
+            }
+
             return ResponseEntity.ok(includeImported ?
-                                     termService.findAllIncludingImported(searchString, vocabulary) :
-                                     termService.findAll(searchString, vocabulary));
+                                     termService.findAllIncludingImported(searchString, vocabulary,
+                                                                          createPageRequest(pageSize, pageNo)) :
+                                     termService.findAll(searchString, vocabulary,
+                                                         createPageRequest(pageSize, pageNo)));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
+
+            if (flat) {
+                return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary,
+                                                                                                    createPageRequest(
+                                                                                                            pageSize,
+                                                                                                            pageNo)) :
+                                         termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)));
+            }
+
             return ResponseEntity
-                    .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
-                        termService.findAll(vocabulary));
+                    .ok(includeImported ?
+                        termService.findAllIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
+                        termService.findAll(vocabulary, createPageRequest(pageSize, pageNo)));
         });
     }
 
@@ -979,9 +1009,20 @@ public class TermController extends BaseController {
                description = "Gets terms whose label matches the specified search string, regardless of their vocabulary.")
     @ApiResponse(responseCode = "200", description = "A list of matching terms.")
     @GetMapping(value = "/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermDto> getAll(@Parameter(description = "String by which the terms should be filtered.")
-                                @RequestParam String searchString) {
-        return termService.findAll(searchString);
+    public ResponseEntity<?> getAll(
+            @Parameter(description = "String by which the terms should be filtered.")
+            @RequestParam(required = false, defaultValue = "") String searchString,
+            @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
+            @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo
+    ) {
+        if (flat) {
+            return ResponseEntity.ok(termService.findAllFlat(searchString,createPageRequest(pageSize, pageNo)));
+        }
+        return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo)));
     }
 
     /**
