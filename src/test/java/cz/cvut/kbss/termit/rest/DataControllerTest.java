@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
@@ -120,7 +120,7 @@ class DataControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(
                        post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isCreated());
-        verify(dataServiceMock).persistProperty(property);
+        verify(dataServiceMock).persist(property);
     }
 
     @Test

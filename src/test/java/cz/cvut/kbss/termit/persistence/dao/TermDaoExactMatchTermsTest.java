@@ -52,7 +52,8 @@ public class TermDaoExactMatchTermsTest extends BaseTermDaoTestRunner {
     @Test
     void findLoadsInferredInverseExactMatchTerms() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final List<Term> exactMatchTerms = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()), Generator.generateTermWithId(Generator.generateUri()));
+        final List<Term> exactMatchTerms = Arrays.asList(Generator.generateTermWithId(generateAndPersistVocabulary().getUri()),
+                Generator.generateTermWithId(generateAndPersistVocabulary().getUri()));
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
@@ -85,8 +86,10 @@ public class TermDaoExactMatchTermsTest extends BaseTermDaoTestRunner {
     @Test
     void loadingInferredInverseExactMatchExcludesExactMatchAssertedFromSubject() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final List<Term> exactMatchTerms = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()), Generator.generateTermWithId(Generator.generateUri()));
-        final List<Term> inverseExactMatchTerms = new ArrayList<>(Collections.singletonList(Generator.generateTermWithId(Generator.generateUri())));
+        final List<Term> exactMatchTerms = Arrays.asList(Generator.generateTermWithId(generateAndPersistVocabulary().getUri()),
+                Generator.generateTermWithId(generateAndPersistVocabulary().getUri()));
+        final List<Term> inverseExactMatchTerms = new ArrayList<>(Collections.singletonList(
+                Generator.generateTermWithId(generateAndPersistVocabulary().getUri())));
         inverseExactMatchTerms.addAll(exactMatchTerms);
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));

@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;

@@ -29,7 +29,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,12 +43,14 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ThrottlingValidatorTest extends BaseDaoTestRunner {
 
@@ -61,8 +63,8 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     @Autowired
     private VocabularyContextMapper vocabularyContextMapper;
 
-    @Autowired
-    private Configuration config;
+    @Mock
+    private VocabularyService vocabularyService;
 
     @Mock
     private RepositoryContextValidator validator;
@@ -78,15 +80,17 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void validateUsesPersistenceLanguageForInternationalizedRules() {
+    void validateUsesVocabularyPrimaryLanguageForInternationalizedRules() {
         final Vocabulary vocabulary = generateVocabulary();
+        Objects.requireNonNull(vocabulary.getPrimaryLanguage());
+        when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         transactional(() -> {
-            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyContextMapper,
-                                                                    config, eventPublisher);
+            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyService,
+                    vocabularyContextMapper, eventPublisher);
             final Collection<ValidationResult> result = runFuture(
                     sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
             assertTrue(result.isEmpty());
-            verify(validator).validate(List.of(vocabulary.getUri()), Environment.LANGUAGE);
+            verify(validator).validate(List.of(vocabulary.getUri()), vocabulary.getPrimaryLanguage());
         });
     }
 
@@ -97,9 +101,10 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     @Test
     void publishesVocabularyValidationFinishedEventAfterValidation() {
         final Vocabulary vocabulary = generateVocabulary();
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         transactional(() -> {
-            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyContextMapper,
-                                                                    config, eventPublisher);
+            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyService,
+                    vocabularyContextMapper, eventPublisher);
             final Collection<URI> iris = Collections.singleton(vocabulary.getUri());
             final Collection<ValidationResult> result;
             try {

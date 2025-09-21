@@ -116,14 +116,15 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
-        when(termService.findAll(any())).thenReturn(terms);
+        when(termService.findAll(any(), any(Pageable.class))).thenReturn(terms);
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")).andExpect(status().isOk())
                                            .andReturn();
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        verify(termService).findAll(vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termService).findAll(eq(vocabulary), captor.capture());
     }
 
     private List<TermDto> generateTerms() {
@@ -136,7 +137,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
-        when(termService.findAll(any(), any())).thenReturn(terms);
+        when(termService.findAll(any(), any(), any(Pageable.class))).thenReturn(terms);
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform((get(PATH + VOCABULARY_NAME + "/terms"))
@@ -148,7 +149,8 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        verify(termService).findAll(searchString, vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termService).findAll(eq(searchString), eq(vocabulary), captor.capture());
     }
 
     @Test
@@ -158,7 +160,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
-        when(termService.findAllIncludingImported(any(), any())).thenReturn(terms);
+        when(termService.findAllIncludingImported(any(), any(), any(Pageable.class))).thenReturn(terms);
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform((get(PATH + VOCABULARY_NAME + "/terms"))
@@ -171,7 +173,8 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        verify(termService).findAllIncludingImported(searchString, vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termService).findAllIncludingImported(eq(searchString), eq(vocabulary), captor.capture());
     }
 
     @Test

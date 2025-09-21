@@ -18,6 +18,8 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -36,6 +38,10 @@ import org.springframework.data.domain.Pageable;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
 
 /**
  * Base DAO implementation for assets managed by the application.
@@ -99,6 +105,8 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                     + "        } GROUP BY ?entity"
                                     + "  }"
                                     + "  FILTER (?lastCommented = ?max)"
+                                    + "  BIND(?languageVal as ?language)"
+                                    + insertLanguagePattern("?entity")
                                     + "  FILTER (lang(?label) = ?language)"
                                     + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                     .setParameter("cls", typeUri)
@@ -108,7 +116,8 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("language", config.getLanguage())
+                    .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                    .setParameter("languageVal", config.getLanguage())
                     .setFirstResult((int) pageSpec.getOffset())
                     .setMaxResults(pageSpec.getPageSize()).getResultStream()
                     .map(r -> {
@@ -128,50 +137,56 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
      * @return list
      */
     public Page<RecentlyCommentedAsset> findLastCommentedInReaction(User author, Pageable pageSpec) {
+        final Query query = em
+                .createNativeQuery("SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?type"
+                        + " WHERE { ?lastCommentUri a ?commentType ;"
+                        + "           ?hasEntity ?entity ."
+                        + "  ?entity ?hasLabel ?label ."
+                        + "         ?myLastCommentUri ?hasEntity ?entity ;"
+                        + "                           ?hasAuthor ?author . "
+                        + "         OPTIONAL { ?myLastCommentUri ?hasModifiedTime ?modifiedByMe . } "
+                        + "         OPTIONAL { ?myLastCommentUri ?hasCreatedByMe  ?createdByMe . } "
+                        + "         BIND(COALESCE(?modifiedByMe,?createdByMe) AS ?lastCommentedByMe) "
+                        + " { SELECT (MAX(?lastCommentedByMe2) AS ?maxByMe) {"
+                        + "         ?commentByMe ?hasEntity ?entity ; "
+                        + "                      ?hasAuthor ?author . "
+                        + "          OPTIONAL { ?commentByMe ?hasModifiedTime ?modifiedByMe2 . } "
+                        + "          OPTIONAL { ?commentByMe ?hasCreatedTime ?createdByMe2 . } "
+                        + "          BIND(COALESCE(?modifiedByMe2,?createdByMe2) AS ?lastCommentedByMe2) "
+                        + "        } GROUP BY ?entity "
+                        + "  }"
+                        + "  FILTER (?lastCommentedByMe = ?maxByMe )"
+                        + "  FILTER(?myLastCommentUri != ?lastCommentUri)"
+                        + "  BIND(?languageVal as ?language)"
+                        + insertVocabularyPattern("?entity")
+                        + insertLanguagePattern("?entity")
+                        + "  FILTER (lang(?label) = ?language || lang(?label) = \"\")"
+                        + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
+                        + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                        + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
+                        + "  BIND(?cls as ?type) "
+                        + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
+                        + "           ?comment2 ?hasEntity ?entity ."
+                        + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
+                        + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
+                        + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
+                        + "        } GROUP BY ?entity"
+                        + "  }"
+                        + "  FILTER (?lastCommented = ?max )"
+                        + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
+                .setParameter("cls", typeUri)
+                .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                .setParameter("hasLabel", labelProperty())
+                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_sioc_has_creator))
+                .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                .setParameter("languageVal", config.getLanguage())
+                .setParameter("author", author);
+        bindVocabularyRelatedParameters(query);
         try {
-            return new PageImpl<>((List<RecentlyCommentedAsset>) em
-                    .createNativeQuery("SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?type"
-                                               + " WHERE { ?lastCommentUri a ?commentType ;"
-                                               + "           ?hasEntity ?entity ."
-                                               + "  ?entity ?hasLabel ?label ."
-                                               + "         ?myLastCommentUri ?hasEntity ?entity ;"
-                                               + "                           ?hasAuthor ?author . "
-                                               + "         OPTIONAL { ?myLastCommentUri ?hasModifiedTime ?modifiedByMe . } "
-                                               + "         OPTIONAL { ?myLastCommentUri ?hasCreatedByMe  ?createdByMe . } "
-                                               + "         BIND(COALESCE(?modifiedByMe,?createdByMe) AS ?lastCommentedByMe) "
-                                               + " { SELECT (MAX(?lastCommentedByMe2) AS ?maxByMe) {"
-                                               + "         ?commentByMe ?hasEntity ?entity ; "
-                                               + "                      ?hasAuthor ?author . "
-                                               + "          OPTIONAL { ?commentByMe ?hasModifiedTime ?modifiedByMe2 . } "
-                                               + "          OPTIONAL { ?commentByMe ?hasCreatedTime ?createdByMe2 . } "
-                                               + "          BIND(COALESCE(?modifiedByMe2,?createdByMe2) AS ?lastCommentedByMe2) "
-                                               + "        } GROUP BY ?entity "
-                                               + "  }"
-                                               + "  FILTER (?lastCommentedByMe = ?maxByMe )"
-                                               + "  FILTER(?myLastCommentUri != ?lastCommentUri)"
-                                               + "  FILTER (lang(?label) = ?language)"
-                                               + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
-                                               + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
-                                               + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
-                                               + "  BIND(?cls as ?type) "
-                                               + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
-                                               + "           ?comment2 ?hasEntity ?entity ."
-                                               + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
-                                               + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
-                                               + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
-                                               + "        } GROUP BY ?entity"
-                                               + "  }"
-                                               + "  FILTER (?lastCommented = ?max )"
-                                               + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
-                    .setParameter("cls", typeUri)
-                    .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
-                    .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
-                    .setParameter("hasLabel", labelProperty())
-                    .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                    .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("hasAuthor", URI.create(Vocabulary.s_p_sioc_has_creator))
-                    .setParameter("language", config.getLanguage())
-                    .setParameter("author", author)
+            return new PageImpl<>((List<RecentlyCommentedAsset>) query
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
                     .getResultStream()
                     .map(r -> {
@@ -192,38 +207,44 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
      * @return list
      */
     public Page<RecentlyCommentedAsset> findMyLastCommented(User author, Pageable pageSpec) {
+        final Query query = em
+                .createNativeQuery("SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?type"
+                        + " WHERE { ?lastCommentUri a ?commentType ;"
+                        + "           ?hasEntity ?entity ."
+                        + "  ?entity ?hasLabel ?label ."
+                        + "        FILTER EXISTS { ?x ?hasModifiedEntity ?entity ;"
+                        + "           ?hasEditor ?author .}"
+                        + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
+                        + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                        + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
+                        + "  BIND(?cls as ?type) "
+                        + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
+                        + "           ?comment2 ?hasEntity ?entity ."
+                        + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
+                        + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
+                        + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
+                        + "        } GROUP BY ?entity"
+                        + "  }"
+                        + "  FILTER (?lastCommented = ?max )"
+                        + "  BIND(?languageVal as ?language)"
+                        + insertVocabularyPattern("?entity")
+                        + insertLanguagePattern("?entity")
+                        + "  FILTER (lang(?label) = ?language)"
+                        + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
+                .setParameter("cls", typeUri)
+                .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                .setParameter("hasLabel", labelProperty())
+                .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
+                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                .setParameter("author", author)
+                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                .setParameter("languageVal", config.getLanguage());
+        bindVocabularyRelatedParameters(query);
         try {
-            return new PageImpl<>((List<RecentlyCommentedAsset>) em
-                    .createNativeQuery("SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?type"
-                                               + " WHERE { ?lastCommentUri a ?commentType ;"
-                                               + "           ?hasEntity ?entity ."
-                                               + "  ?entity ?hasLabel ?label ."
-                                               + "        FILTER EXISTS { ?x ?hasModifiedEntity ?entity ;"
-                                               + "           ?hasEditor ?author .}"
-                                               + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
-                                               + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
-                                               + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
-                                               + "  BIND(?cls as ?type) "
-                                               + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
-                                               + "           ?comment2 ?hasEntity ?entity ."
-                                               + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
-                                               + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
-                                               + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
-                                               + "        } GROUP BY ?entity"
-                                               + "  }"
-                                               + "  FILTER (?lastCommented = ?max )"
-                                               + "  FILTER (lang(?label) = ?language)"
-                                               + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
-                    .setParameter("cls", typeUri)
-                    .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
-                    .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
-                    .setParameter("hasLabel", labelProperty())
-                    .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
-                    .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                    .setParameter("author", author)
-                    .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                    .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("language", config.getLanguage())
+            return new PageImpl<>((List<RecentlyCommentedAsset>) query
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
                     .getResultStream()
                     .map(r -> {

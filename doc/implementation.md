@@ -40,18 +40,10 @@ follows:
 
 ### Fulltext Search
 
-Fulltext search currently supports multiple types of implementation:
-
-* Simple substring matching on term and vocabulary label _(default)_
-* GraphDB with Lucene connector
-
-Each implementation has its own search query which is loaded and used by `SearchDao`. In order for the more advanced
-implementation for Lucene to work, a corresponding Maven profile (**graphdb**) has to be selected. This
-inserts the correct query into the resulting artifact during build. If none of the profiles is selected, the default
-search is used.
-
-Note that in case of GraphDB, corresponding Lucene connectors (`label_index` for labels and `defcom_index` for
-definitions and comments) have to be created as well.
+Fulltext search is implemented using Lucene connectors in GraphDB.
+Connectors are automatically managed by `GraphDBLuceneConnectorInitializer`.
+The initializer creates connectors from definitions in `src/main/resources/lucene`
+for all languages used by indexed fields.
 
 ### RDFS Inference in Tests
 

@@ -245,7 +245,8 @@ public class Generator {
     }
 
     /**
-     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary and a model.
+     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary, a model
+     * and {@link Environment#LANGUAGE} as the primary language.
      *
      * @return New {@code Vocabulary} instance
      */
@@ -254,9 +255,11 @@ public class Generator {
                 new cz.cvut.kbss.termit.model.Vocabulary();
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
-        vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), Environment.LANGUAGE));
+        final String primaryLanguage = Environment.LANGUAGE;
+        vocabulary.setPrimaryLanguage(primaryLanguage);
+        vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), primaryLanguage));
         vocabulary.setDescription(MultilingualString.create(
-                "Description of vocabulary " + vocabulary.getLabel().get(Environment.LANGUAGE), Environment.LANGUAGE));
+                "Description of vocabulary " + vocabulary.getPrimaryLabel(), primaryLanguage));
         return vocabulary;
     }
 
@@ -291,6 +294,7 @@ public class Generator {
                                    .create("Normative definition of term " + term.getLabel().get(Environment.LANGUAGE),
                                            Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
+        term.setPrimaryLanguage(Environment.LANGUAGE);
         if (Generator.randomBoolean()) {
             term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
         }

@@ -256,6 +256,10 @@ termit-pojem:má-maximální-velikost-souboru
         a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
 
+termit-pojem:má-indexovaný-jazyk
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
 termit-pojem:má-oddělovač-verze
         a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
@@ -339,10 +343,14 @@ termit-pojem:koncový-stav-pojmu
         rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
 
 termit-pojem:požadavek-na-změnu-hesla
-    a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
 
 termit-pojem:má-adresu-modelovacího-nástroje
         a                   owl:AnnotationProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:vlastní-atribut
+        a                owl:Class ;
+        rdfs:subClassOf rdf:Property .
 
 

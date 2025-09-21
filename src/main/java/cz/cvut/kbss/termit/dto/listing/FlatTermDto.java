@@ -22,15 +22,28 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Term;
 
 import java.net.URI;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @OWLClass(iri = SKOS.CONCEPT)
 public class FlatTermDto extends AbstractTerm {
 
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<URI> parentTerms;
+
+    public FlatTermDto() {}
+
+    public FlatTermDto(Term other) {
+        super(other);
+        if (other.getParentTerms() != null) {
+            setParentTerms(other.getParentTerms().stream()
+                .map(AbstractTerm::getUri)
+                .collect(Collectors.toSet()));
+        }
+    }
 
     public Set<URI> getParentTerms() {
         return parentTerms;

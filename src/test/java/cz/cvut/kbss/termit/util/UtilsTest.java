@@ -38,10 +38,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
 
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -56,7 +58,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 class UtilsTest {
-
+    private static final char DECIMAL_SEPARATOR = DecimalFormatSymbols.getInstance(Locale.getDefault(Locale.Category.FORMAT))
+                                                                      .getDecimalSeparator();
     private static final String BASE = "BASE";
 
     @Test
@@ -272,6 +275,6 @@ class UtilsTest {
     @ParameterizedTest
     @CsvSource("4368, 4.37, 5000, 5.00, 2100, 2.10")
     void millisToStringConvertsSpecifiedValueToSecondsAndRounds(long millis, String expected) {
-        assertEquals(expected, Utils.millisToString(millis));
+        assertEquals(expected.replace('.', DECIMAL_SEPARATOR), Utils.millisToString(millis));
     }
 }

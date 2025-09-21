@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +96,14 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         Objects.requireNonNull(vocabulary);
         prePersist(resource);
         resourceDao.persist(resource, vocabulary);
+    }
+
+    @Override
+    protected void preUpdate(@NotNull Resource instance) {
+        super.preUpdate(instance);
+        // Need to detach the instance because we may want to merge it into a vocabulary context,
+        // which would cause issues because it was originally loaded from the default context
+        resourceDao.detach(instance);
     }
 
     @Override

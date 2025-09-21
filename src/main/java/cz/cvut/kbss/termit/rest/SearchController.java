@@ -68,8 +68,11 @@ public class SearchController extends BaseController {
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/fts", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<FullTextSearchResult> fullTextSearch(@Parameter(description = "Search string.")
-                                                     @RequestParam(name = "searchString") String searchString) {
-        return searchService.fullTextSearch(searchString);
+                                                     @RequestParam(name = "searchString") String searchString,
+                                                     @Parameter(description = "Search language. " +
+                                                             "Searches in all languages if the field is omitted.")
+                                                     @RequestParam(name = "language", required = false) String language) {
+        return searchService.fullTextSearch(searchString, language);
     }
 
     @Operation(description = "Runs full-text search over terms, matching their labels, definitions and scope notes.")
@@ -80,8 +83,11 @@ public class SearchController extends BaseController {
             @Parameter(description = "Search string.")
             @RequestParam(name = "searchString") String searchString,
             @Parameter(description = "Identifiers of vocabularies in which to search.")
-            @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies) {
-        return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies));
+            @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies,
+            @Parameter(description = "Search language. " +
+                    "Searches in all languages if the field is omitted.")
+            @RequestParam(name = "language", required = false) String language) {
+        return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies), language);
     }
 
     @Operation(description = "Runs a faceted search using the specified search parameters over all terms.")

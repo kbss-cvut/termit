@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.service.validation;
 import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import jakarta.annotation.Nonnull;
@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -40,18 +41,18 @@ public class ThrottlingValidator implements VocabularyContentValidator {
     private static final Logger LOG = LoggerFactory.getLogger(ThrottlingValidator.class);
 
     private final RepositoryContextValidator validator;
-    private final String language;
+    private final VocabularyService vocabularyService;
     private final VocabularyContextMapper vocabularyContextMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public ThrottlingValidator(RepositoryContextValidator validator,
+    public ThrottlingValidator(RepositoryContextValidator validator, @Lazy VocabularyService vocabularyService,
                                VocabularyContextMapper vocabularyContextMapper,
-                               Configuration config, ApplicationEventPublisher eventPublisher) {
+                               ApplicationEventPublisher eventPublisher) {
         this.validator = validator;
+        this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
         this.eventPublisher = eventPublisher;
-        this.language = config.getPersistence().getLanguage();
     }
 
     @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
@@ -64,14 +65,15 @@ public class ThrottlingValidator implements VocabularyContentValidator {
         }
 
         return ThrottledFuture.of(() -> {
-            final List<ValidationResult> results = runValidation(vocabularyIris);
+            final String originVocabularyLanguage = vocabularyService.getPrimaryLanguage(originVocabularyIri);
+            final List<ValidationResult> results = runValidation(vocabularyIris, originVocabularyLanguage);
             eventPublisher.publishEvent(
                     new VocabularyValidationFinishedEvent(this, originVocabularyIri, vocabularyIris, results));
             return results;
         });
     }
 
-    protected synchronized List<ValidationResult> runValidation(@Nonnull Collection<URI> vocabularyIris) {
+    protected synchronized List<ValidationResult> runValidation(@Nonnull Collection<URI> vocabularyIris, String language) {
         LOG.debug("Validating vocabularies {}", vocabularyIris);
         return validator.validate(vocabularyIris.stream().map(
                 vocabularyContextMapper::getVocabularyContext).toList(), language);

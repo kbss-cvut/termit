@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.RdfsStatement;
+import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
@@ -103,10 +103,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
-    private String getPrimaryLabel(Vocabulary vocabulary) {
-        return vocabulary.getLabel(config.getPersistence().getLanguage());
-    }
-
     // Cache only if all vocabularies are editable
     @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
     @Override
@@ -140,7 +136,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(
-                    idResolver.generateIdentifier(config.getNamespace().getVocabulary(), getPrimaryLabel(instance)));
+                    idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -172,7 +168,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                                                  Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
         doc.setLabel(
                 new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
-                                                                                          getPrimaryLabel(vocabulary)));
+                                                                                          vocabulary.getPrimaryLabel()));
         vocabulary.setDocument(doc);
     }
 
@@ -351,7 +347,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         if (!vocabularies.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                            + vocabularies.stream().map(this::getPrimaryLabel).collect(Collectors.joining(", ")));
+                            + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
         }
     }
 
@@ -363,7 +359,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      *                               {@code vocabulary}
      */
     private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
-        final List<RdfsStatement> relations = vocabularyDao.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = vocabularyDao.getTermRelations(vocabulary);
         if (!relations.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. There are relations with other vocabularies.");
@@ -374,11 +370,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getTermCount(vocabulary);
     }
 
-    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+    public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
         return vocabularyDao.getTermRelations(vocabulary);
     }
 
-    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
+    public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
         return vocabularyDao.getVocabularyRelations(vocabulary, excludedRelations);
     }
 
@@ -414,5 +410,16 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional(readOnly = true)
     public List<String> getLanguages(URI vocabularyUri) {
         return vocabularyDao.getLanguages(vocabularyUri);
+    }
+
+    /**
+     * Returns the primary language of the vocabulary.
+     *
+     * @param vocabularyUri vocabulary identifier
+     * @return The vocabulary primary language
+     */
+    @Transactional(readOnly = true)
+    public String getPrimaryLanguage(URI vocabularyUri) {
+        return vocabularyDao.getPrimaryLanguage(vocabularyUri);
     }
 }

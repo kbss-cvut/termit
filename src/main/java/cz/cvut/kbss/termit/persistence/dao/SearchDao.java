@@ -23,15 +23,14 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -42,28 +41,29 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Search data access object using Lucene-based repositories. These support rich search strings with wildcards and
+ * operators.
+ * <p>
+ * This DAO automatically adds a wildcard to the last token in the search string, so that results for incomplete words
+ * are returned as well.
+ */
 @Repository
-@Profile("!lucene")
 public class SearchDao {
-
     private static final String FTS_QUERY_FILE = "fulltextsearch.rq";
 
     private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
-    private final Configuration.Persistence config;
-
+    static final char LUCENE_WILDCARD = '*';
+    private final EntityManager em;
     protected String ftsQuery;
 
-    protected final EntityManager em;
-
-    @Autowired
-    public SearchDao(EntityManager em, Configuration config) {
+    public SearchDao(EntityManager em) {
         this.em = em;
-        this.config = config.getPersistence();
     }
 
     @PostConstruct
-    private void loadQueries() {
+    void loadQueries() {
         this.ftsQuery = Utils.loadQuery(FTS_QUERY_FILE);
     }
 
@@ -76,18 +76,49 @@ public class SearchDao {
      * Note that this version of the search excludes asset snapshots from the results.
      *
      * @param searchString The string to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String)
+     * @see #fullTextSearchIncludingSnapshots(String, String)
      */
-    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
         }
-        LOG.trace("Running full text search for search string \"{}\".", searchString);
-        return setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
+
+        String query = ftsQuery;
+        if (language == null) {
+            // BIND using unbound expression needs to be removed for lucene query
+            query = query.replace("BIND (?requestedLanguageVal AS ?requestedLanguage)", "");
+        }
+
+        final String wildcardString = addWildcard(searchString);
+        final String exactMatch = splitExactMatch(searchString);
+        LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
+                  wildcardString);
+        return setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
+                searchString, language)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+                .setParameter("wildCardSearchString", wildcardString, null)
+                .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();
+    }
+
+    private static String addWildcard(String searchString) {
+        // Search string already contains a wildcard
+        if (searchString.charAt(searchString.length() - 1) == LUCENE_WILDCARD) {
+            return searchString;
+        }
+        // Append the last token also with a wildcard
+        final String[] split = searchString.split("\\s+");
+        final String lastTokenWithWildcard = split[split.length - 1] + LUCENE_WILDCARD;
+        return String.join(" ", split) + " " + lastTokenWithWildcard;
+    }
+
+    private static String splitExactMatch(String searchString) {
+        final String[] split = searchString.trim().split("\\s+");
+        String s = "<em>";
+        return s.concat(String.join("</em> <em>", split)).concat("</em>");
     }
 
     /**
@@ -99,32 +130,47 @@ public class SearchDao {
      * Note that this version of the search includes asset snapshots.
      *
      * @param searchString The string to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String)
+     * @see #fullTextSearchIncludingSnapshots(String, String)
      */
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
         }
-        LOG.trace("Running full text search (including snapshots) for search string \"{}\".", searchString);
+        final String wildcardString = addWildcard(searchString);
+        final String exactMatch = splitExactMatch(searchString);
+        LOG.trace(
+                "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
+                searchString, wildcardString);
         return setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"),
-                                    searchString).getResultList();
-    }
-
-    protected Query setCommonQueryParams(Query q, String searchString) {
-        return q.setParameter("term", URI.create(SKOS.CONCEPT))
-                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                .setParameter("inVocabulary",
-                        URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
-                .setParameter("langTag", config.getLanguage(), null)
-                .setParameter("searchString", searchString, null);
+                                    searchString, language)
+                .setParameter("wildCardSearchString", wildcardString, null)
+                .setParameter("splitExactMatch", exactMatch, null)
+                .getResultList();
     }
 
     protected String queryIncludingSnapshots() {
         // This string has to match the filter string in the query
         return ftsQuery.replace("FILTER NOT EXISTS { ?entity a ?snapshot . }", "");
+    }
+
+    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
+        String langSuffix = requestedLanguage == null ? "" : requestedLanguage;
+        URI labelIndex = URI.create(Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX + langSuffix);
+        URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
+        q.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
+
+        q.setParameter("term", URI.create(SKOS.CONCEPT))
+                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
+                .setParameter("searchString", searchString, null);
+        if (requestedLanguage != null) {
+            q.setParameter("requestedLanguageVal", requestedLanguage);
+        }
+        return q;
     }
 
     /**

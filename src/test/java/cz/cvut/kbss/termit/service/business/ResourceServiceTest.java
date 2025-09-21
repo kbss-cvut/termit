@@ -23,7 +23,6 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -73,8 +72,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -324,15 +325,6 @@ class ResourceServiceTest {
     }
 
     @Test
-    void addFileToDocumentPersistsFileAndPersistsDocumentWithAddedFile() {
-        final Document doc = Generator.generateDocumentWithId();
-        final File fOne = Generator.generateFileWithId("test.html");
-        sut.addFileToDocument(doc, fOne);
-        verify(resourceRepositoryService).persist(fOne);
-        verify(resourceRepositoryService).persist(doc);
-    }
-
-    @Test
     void addFileToDocumentThrowsUnsupportedAssetOperationExceptionWhenSpecifiedResourceIsNotDocument() {
         final Resource resource = Generator.generateResourceWithId();
         final File fOne = Generator.generateFileWithId("test.html");
@@ -349,19 +341,7 @@ class ResourceServiceTest {
 
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(fOne, vocabulary);
-        verify(vocabularyService).getReference(vocabulary.getUri());
-    }
-
-    @Test
-    void addFileToDocumentUpdatesDocumentInVocabularyContextForDocumentWithVocabulary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Document doc = Generator.generateDocumentWithId();
-        doc.setVocabulary(vocabulary.getUri());
-        final File fOne = Generator.generateFileWithId("test.html");
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
-
-        sut.addFileToDocument(doc, fOne);
-        verify(resourceRepositoryService).persist(doc);
+        verify(resourceRepositoryService).update(doc);
         verify(vocabularyService).getReference(vocabulary.getUri());
     }
 
@@ -377,12 +357,6 @@ class ResourceServiceTest {
 
         verify(resourceRepositoryService).remove(fOne);
         verify(documentManager).remove(fOne);
-    }
-
-    @Test
-    void removeFileThrowsTermItExceptionWhenFileIsNotLinkedToDocument() {
-        final File fOne = Generator.generateFileWithId("test.html");
-        assertThrows(TermItException.class, () -> sut.removeFile(fOne));
     }
 
     @Test
@@ -493,16 +467,27 @@ class ResourceServiceTest {
 
     @Test
     void removeNonEmptyDocumentRemovesAllAssociatedFiles() {
-        final File file = Generator.generateFileWithId("test.html");
+        final File fileA = Generator.generateFileWithId("testA.html");
+        final File fileB = Generator.generateFileWithId("testB.html");
         final Document document = Generator.generateDocumentWithId();
-        document.addFile(file);
+        document.addFile(fileA);
+        document.addFile(fileB);
         when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
+        doAnswer((answer) -> {
+            if (answer.getArgument(0) instanceof File file) {
+                document.removeFile(file);
+            }
+            return null;
+        }).when(resourceRepositoryService).remove(notNull(Resource.class));
 
         sut.remove(document);
-        verify(documentManager).remove(file);
+        verify(documentManager).remove(fileA);
+        verify(documentManager).remove(fileB);
         verify(documentManager).remove(document);
-        verify(resourceRepositoryService).remove(file);
+        verify(resourceRepositoryService).remove(fileA);
+        verify(resourceRepositoryService).remove(fileB);
         verify(resourceRepositoryService).remove(document);
+        assertTrue(document.getFiles().isEmpty());
     }
 
     @Test
@@ -536,8 +521,6 @@ class ResourceServiceTest {
         final Document document = Generator.generateDocumentWithId();
         document.setVocabulary(vocabulary.getUri());
         final File file = Generator.generateFileWithId("test.hml");
-        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
-        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(document, file);
@@ -553,8 +536,6 @@ class ResourceServiceTest {
         document.setVocabulary(vocabulary.getUri());
         final File file = Generator.generateFileWithId("test.hml");
         file.setLanguage("cs");
-        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
-        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(document, file);
