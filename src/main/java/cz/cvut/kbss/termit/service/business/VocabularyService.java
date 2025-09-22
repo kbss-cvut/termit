@@ -102,7 +102,7 @@ public class VocabularyService
 
     private final VocabularyRepositoryService repositoryService;
     
-    private final SparqlExternalVocabularyService sparqlExternalVocabularyService;
+    private final ExternalVocabularyService externalVocabularyService;
 
     private final ChangeRecordService changeRecordService;
 
@@ -133,7 +133,7 @@ public class VocabularyService
                              VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
-        this.sparqlExternalVocabularyService = sparqlExternalVocabularyService;
+        this.externalVocabularyService = sparqlExternalVocabularyService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
@@ -269,7 +269,7 @@ public class VocabularyService
      * connection failed
      */
     public List<RdfsResource> getAvailableExternalVocabularies() {
-        return sparqlExternalVocabularyService.getAvailableVocabularies();
+        return externalVocabularyService.getAvailableVocabularies();
     }
 
     /**
@@ -279,7 +279,7 @@ public class VocabularyService
      * @return first imported Vocabulary
      */
     public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
-        return sparqlExternalVocabularyService.importFromExternalUris(vocabularyIris);
+        return externalVocabularyService.importFromExternalUris(vocabularyIris);
     }
 
     /**
