@@ -48,6 +48,6 @@ public interface ExternalVocabularyService extends ApplicationEventPublisherAwar
     /**
      * Reload already imported external vocabularies.
      */
-    public void reloadVocabularies();
+    public void reloadExternalVocabularies();
 
 }

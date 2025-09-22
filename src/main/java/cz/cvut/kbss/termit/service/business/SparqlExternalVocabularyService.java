@@ -218,21 +218,14 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     @Scheduled(cron = "${termit.external.reloadCron:-}")
     @Transactional
     @Override
-    public void reloadVocabularies() {
+    public void reloadExternalVocabularies() {
         LOG.debug("Reloading vocabularies at " + Instant.now());
-        reloadAllExternal();
-    }
-    
-    
-    @Transactional
-    public void reloadAllExternal(){
         List<String> externalVocabularies = repositoryService.findAll().stream()
                 .filter((t) -> t.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
                 .map((t) -> t.getUri().toString())
                 .toList();
 
         importFromExternalUris(externalVocabularies);
-        
     }
     
     @Override
