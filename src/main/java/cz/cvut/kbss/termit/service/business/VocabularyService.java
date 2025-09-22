@@ -123,7 +123,7 @@ public class VocabularyService
     private ApplicationEventPublisher eventPublisher;
 
     public VocabularyService(VocabularyRepositoryService repositoryService,
-                             SparqlExternalVocabularyService sparqlExternalVocabularyService,
+                             ExternalVocabularyService externalVocabularyService,
                              ChangeRecordService changeRecordService,
                              @Lazy TermService termService,
                              VocabularyContextMapper contextMapper,
@@ -133,7 +133,7 @@ public class VocabularyService
                              VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
-        this.externalVocabularyService = sparqlExternalVocabularyService;
+        this.externalVocabularyService = externalVocabularyService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
