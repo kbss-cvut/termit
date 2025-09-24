@@ -7,8 +7,6 @@ spring:
         exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
     main:
         allow-bean-definition-overriding: true
-keycloak:
-    enabled: false
 termit:
     repository:
         url: termit
@@ -43,8 +41,5 @@ termit:
     admin:
         credentialsLocation: ${user.home}
         credentialsFile: .termit-admin
-    public:
+    publicView:
         whiteListProperties: http://www.w3.org/2004/02/skos/core#notation
-    external:
-        resource:
-        reloadCron: 0 0 0 * * *

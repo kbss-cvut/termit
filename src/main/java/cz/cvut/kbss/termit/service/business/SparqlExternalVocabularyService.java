@@ -18,22 +18,14 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
@@ -48,16 +40,25 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- * Business logic concerning external vocabularies imported from SPARQL repository.
+ * Supports importing external vocabularies from a configured SPARQL endpoint.
  */
 @Service
-public class SparqlExternalVocabularyService implements ExternalVocabularyService {
+public class SparqlExternalVocabularyService implements ExternalVocabularyService, ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(SparqlExternalVocabularyService.class);
 
@@ -71,21 +72,14 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     private static final String EXPORT_FULL_VOCABULARY_QUERY = "import/exportFullVocabulary.rq";
 
     public SparqlExternalVocabularyService(VocabularyRepositoryService repositoryService,
-                                           AccessControlListService aclService,
-                                           Configuration config) {
+                                           AccessControlListService aclService, Configuration config) {
         this.repositoryService = repositoryService;
         this.aclService = aclService;
         this.config = config;
     }
-    
-/**
- * Sends a SPARQL query to fetch list of available vocabularies.
- * 
- * @return list of available vocabulary information or null if connection failed
- */
+
     @Override
     public List<RdfsResource> getAvailableVocabularies() {
-
         List<RdfsResource> response;
         try {
             SPARQLRepository sparqlRepo = initSparqlRepository();
@@ -98,12 +92,13 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                 response = extractListOfAvailableVocabularies(result);
 
             } catch (QueryEvaluationException e) {
-                LOG.error(e.getMessage());
+                LOG.error("Failed to get available vocabularies.", e);
                 response = List.of();
             } finally {
                 sparqlRepo.shutDown();
             }
         } catch (RepositoryException ex) {
+            LOG.error("Failed to connect to external repository.", ex);
             response = List.of();
         }
         return response;
@@ -116,18 +111,19 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         return sparqlRepo;
     }
 
-    private List<RdfsResource> extractListOfAvailableVocabularies(final TupleQueryResult result) throws QueryEvaluationException {
+    private List<RdfsResource> extractListOfAvailableVocabularies(
+            final TupleQueryResult result) throws QueryEvaluationException {
         List<RdfsResource> response = new ArrayList<>();
-        
+
         while (result.hasNext()) {
             BindingSet line = result.next();
             if (!line.hasBinding("slovnik")) {
-                LOG.error("Error: no slovnik binding in: {}", line.toString());
+                LOG.error("Error: no slovnik binding in: {}", line);
                 continue;
             }
             URI uri = URI.create(line.getBinding("slovnik").getValue().stringValue());
-            HashMap<String, String> labels = new HashMap<>();
-            
+            Map<String, String> labels = new HashMap<>();
+
             // add cs label if available
             if (line.hasBinding("nazev_slovniku_cs")) {
                 labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
@@ -146,14 +142,7 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         return response;
     }
 
-    /**
-     * Imports multiple vocabularies from external source.
-     *
-     * @param vocabularyIris List of iris of vocabularies that shall be imported.
-     * @return first imported Vocabulary
-     */
     @Transactional
-    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     @Override
     public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
         Vocabulary firstImportedVocabulary = null;
@@ -163,7 +152,8 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
             InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
             if (newVocabulary != null) {
                 URI uri = URI.create(vocabularyIri);
-                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+                Vocabulary vocabulary =
+                        repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
                 // add types
                 vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
@@ -182,9 +172,7 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                     firstImportedVocabulary = vocabulary;
                 }
             }
-
         }
-        
         return firstImportedVocabulary;
     }
 
@@ -203,34 +191,32 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                 Rio.write(result, outputStream, RDFFormat.TURTLE);
                 vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
             } catch (QueryEvaluationException ex) {
-                 LOG.error(ex.getMessage());
+                LOG.error(ex.getMessage());
             } finally {
                 sparqlRepo.shutDown();
             }
         } catch (RepositoryException ex) {
-             LOG.error(ex.getMessage());
+            LOG.error(ex.getMessage());
         }
-    
         return vocabularyFile;
-
     }
-    
-    @Scheduled(cron = "${termit.external.reloadCron:-}")
+
+    @Scheduled(cron = "${termit.external.reloadCron:0 0 0 * * *}")
     @Transactional
     @Override
     public void reloadExternalVocabularies() {
-        LOG.debug("Reloading vocabularies at " + Instant.now());
+        LOG.debug("Reloading externally imported vocabularies.");
         List<String> externalVocabularies = repositoryService.findAll().stream()
-                .filter((t) -> t.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
-                .map((t) -> t.getUri().toString())
-                .toList();
+                                                             .filter((t) -> t.getTypes().contains(
+                                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
+                                                             .map((t) -> t.getUri().toString())
+                                                             .toList();
 
         importFromExternalUris(externalVocabularies);
     }
-    
+
     @Override
     public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
-    
 }

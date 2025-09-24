@@ -85,8 +85,6 @@ import java.util.Set;
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
 
-
-
 /**
  * Business logic concerning vocabularies.
  * <p>
@@ -101,7 +99,7 @@ public class VocabularyService
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
 
     private final VocabularyRepositoryService repositoryService;
-    
+
     private final ExternalVocabularyService externalVocabularyService;
 
     private final ChangeRecordService changeRecordService;
@@ -263,21 +261,21 @@ public class VocabularyService
     }
 
     /**
-     * Sends a request to fetch list of available vocabularies.
+     * Gets a list of available vocabularies for import from the configured external source.
      *
-     * @return list of available vocabulary information or an empty list if the
-     * connection failed
+     * @return list of available vocabularies
      */
     public List<RdfsResource> getAvailableExternalVocabularies() {
         return externalVocabularyService.getAvailableVocabularies();
     }
 
     /**
-     * Imports multiple vocabularies from external source.
+     * Imports vocabularies with the specified identifiers from an external source.
      *
      * @param vocabularyIris List of
      * @return first imported Vocabulary
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
         return externalVocabularyService.importFromExternalUris(vocabularyIris);
     }
