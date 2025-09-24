@@ -86,11 +86,7 @@ public class SearchDao {
             return Collections.emptyList();
         }
 
-        String query = ftsQuery;
-        if (language == null) {
-            // BIND using unbound expression needs to be removed for lucene query
-            query = query.replace("BIND (?requestedLanguageVal AS ?requestedLanguage)", "");
-        }
+        String query = adjustQueryForLanguage(ftsQuery, language);
 
         final String wildcardString = addWildcard(searchString);
         final String exactMatch = splitExactMatch(searchString);
@@ -102,6 +98,14 @@ public class SearchDao {
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();
+    }
+
+    private static String adjustQueryForLanguage(String query,String language) {
+        if (language == null) {
+            // BIND using unbound expression needs to be removed from the FTS query
+            return query.replace("BIND (?requestedLanguageVal AS ?requestedLanguage)", "");
+        }
+        return query;
     }
 
     private static String addWildcard(String searchString) {
@@ -139,12 +143,14 @@ public class SearchDao {
         if (searchString.isBlank()) {
             return Collections.emptyList();
         }
+        String query = adjustQueryForLanguage(queryIncludingSnapshots(), language);
+
         final String wildcardString = addWildcard(searchString);
         final String exactMatch = splitExactMatch(searchString);
         LOG.trace(
                 "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
                 searchString, wildcardString);
-        return setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"),
+        return setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
                                     searchString, language)
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
