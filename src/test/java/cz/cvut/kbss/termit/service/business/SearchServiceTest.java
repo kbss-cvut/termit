@@ -39,9 +39,9 @@ import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -119,7 +119,7 @@ class SearchServiceTest {
         item.setUri(Generator.generateUri());
         item.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
         item.setVocabulary(Generator.generateUri());
-        item.setTypes(new HashSet<>(spOne.getValue()));
+        item.setTypes(spOne.getValue().stream().map(Object::toString).collect(Collectors.toSet()));
         when(searchDao.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
         final Pageable pageSpec = PageRequest.of(2, 100);
 
