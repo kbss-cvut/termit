@@ -208,7 +208,8 @@ public class SearchDao {
                                     Collectors.joining(","))).append("))\n");
                     break;
                 case EXACT_MATCH:
-                    // This should handle also datatypes, as we transform the variable value to string and compare it with a string
+                    // This also handles datatypes, as we transform the variable value to string and compare it with
+                    // a string representation of the parameter value (e.g., "true" for Boolean true)
                     queryStr.append("FILTER (STR(").append(variable).append(") = \"")
                             .append(p.getValue().iterator().next().toString()).append("\")\n");
                     break;
