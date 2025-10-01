@@ -24,11 +24,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.lang.reflect.Method;
@@ -52,10 +52,10 @@ class ThrottleAspectBeanTest {
     @Autowired
     ThreadPoolTaskScheduler longRunningTaskScheduler;
 
-    @SpyBean
+    @MockitoSpyBean
     ThrottleAspect throttleAspect;
 
-    @MockBean
+    @MockitoBean
     LongRunningTasksRegistry longRunningTasksRegistry;
 
     @Autowired

@@ -86,12 +86,12 @@ public class DataDao {
         final List<RdfsResource> result = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
                                                                        "BIND (?property as ?type)" +
                                                                        "?x a ?type ." +
-                                                                       "OPTIONAL { ?x ?has-label ?label . }" +
-                                                                       "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                                                       "OPTIONAL { ?x ?hasLabel ?label . }" +
+                                                                       "OPTIONAL { ?x ?hasComment ?comment . }" +
                                                                        "}", "RdfsResource")
                                             .setParameter("property", URI.create(RDF.PROPERTY))
-                                            .setParameter("has-label", RDFS_LABEL)
-                                            .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
+                                            .setParameter("hasLabel", RDFS_LABEL)
+                                            .setParameter("hasComment", URI.create(RDFS.COMMENT)).getResultList();
         return consolidateTranslations(result);
     }
 
@@ -154,11 +154,11 @@ public class DataDao {
                 em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
                                              "BIND (?id AS ?x)" +
                                              "?x a ?type ." +
-                                             "OPTIONAL { ?x ?has-label ?label .}" +
-                                             "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                             "OPTIONAL { ?x ?hasLabel ?label .}" +
+                                             "OPTIONAL { ?x ?hasComment ?comment . }" +
                                              "}", "RdfsResource").setParameter("id", id)
-                  .setParameter("has-label", RDFS_LABEL)
-                  .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList());
+                  .setParameter("hasLabel", RDFS_LABEL)
+                  .setParameter("hasComment", URI.create(RDFS.COMMENT)).getResultList());
         if (resources.isEmpty()) {
             return Optional.empty();
         }
@@ -211,7 +211,7 @@ public class DataDao {
         if (!id.isAbsolute()) {
             return Optional.of(id.toString());
         }
-        String languageOptionalPattern = "";
+        String languageOptionalPattern;
         final boolean languageSpecified = language != null;
         if (languageSpecified) {
             // only bind parameter value to the ?labelLanguage variable if the parameter value is present
@@ -224,9 +224,9 @@ public class DataDao {
         }
 
         TypedQuery<String> query = em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
-                                        "{?x ?has-label ?label .}" +
+                                        "{?x ?hasLabel ?label .}" +
                                         "UNION" +
-                                        "{?x ?has-title ?label .}" +
+                                        "{?x ?hasTitle ?label .}" +
                                         "BIND (str(?label) as ?strippedLabel )." +
                                         languageOptionalPattern +
                                         "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
@@ -236,8 +236,8 @@ public class DataDao {
                                         "   ?instanceLanguage) AS ?labelLanguage) ." +
                                         "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
                                 String.class)
-                             .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
-                             .setParameter("has-title", URI.create(DC.Terms.TITLE))
+                             .setParameter("x", id).setParameter("hasLabel", RDFS_LABEL)
+                             .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                              .setParameter("instanceLanguageVal", config.getLanguage());
         if (languageSpecified) {
             query.setParameter("labelLanguageVal", language, null);

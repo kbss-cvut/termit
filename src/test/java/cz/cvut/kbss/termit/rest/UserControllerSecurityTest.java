@@ -26,9 +26,9 @@ import cz.cvut.kbss.termit.service.business.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -56,10 +56,10 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String BASE_URL = REST_MAPPING_PATH + "/users";
 
-    @MockBean
+    @MockitoBean
     private IdentifierResolver idResolver;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Autowired

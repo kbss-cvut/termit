@@ -246,7 +246,7 @@ public class ChangeRecordDao {
             return new HashSet<>(em.createNativeQuery("SELECT ?author WHERE {" +
                                            "?x a ?persistRecord ;" +
                                            "?hasChangedEntity ?asset ;" +
-                                           "?hasAuthor ?author }", User.class)
+                                           "?hasAuthor ?author . }", User.class)
                                    .setParameter("persistRecord", URI.create(Vocabulary.s_c_vytvoreni_entity))
                                    .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                                    .setParameter("asset", asset.getUri())

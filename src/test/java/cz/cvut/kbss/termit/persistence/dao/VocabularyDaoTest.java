@@ -60,11 +60,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.net.URI;
 import java.time.Instant;
@@ -115,7 +115,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Autowired
     private VocabularyDao sut;
 
-    @SpyBean
+    @MockitoSpyBean
     private ChangeRecordDao changeRecordDao;
 
     private User author;

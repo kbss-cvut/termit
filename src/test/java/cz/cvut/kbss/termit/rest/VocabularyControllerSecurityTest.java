@@ -22,19 +22,19 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.business.SparqlExternalVocabularyService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
-import cz.cvut.kbss.termit.service.business.SparqlExternalVocabularyService;
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
@@ -48,13 +48,13 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String PATH = REST_MAPPING_PATH + "/vocabularies";
 
-    @MockBean
+    @MockitoBean
     private VocabularyService serviceMock;
 
-    @MockBean
+    @MockitoBean
     private IdentifierResolver idResolverMock;
 
-    @MockBean
+    @MockitoBean
     private SparqlExternalVocabularyService externalVocabularyService;
 
     @Autowired
