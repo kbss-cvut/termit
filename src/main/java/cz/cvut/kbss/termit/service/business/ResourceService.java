@@ -36,6 +36,7 @@ import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -202,7 +203,7 @@ public class ResourceService
         LOG.trace("Saving new content of resource {}.", resource);
         final File file = (File) resource;
         if (documentManager.exists(file)) {
-            documentManager.createBackup(file);
+            documentManager.createBackup(file, BackupReason.UNKNOWN); // TODO remove or/and move elsewhere
         }
         documentManager.saveFileContent(file, content);
     }

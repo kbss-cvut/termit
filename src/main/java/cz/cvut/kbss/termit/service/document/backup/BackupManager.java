@@ -103,35 +103,49 @@ public class BackupManager {
     }
 
     /**
-     * Decompress the given BZip2 archive into a newly created temporary file
-     * @param archive the archive to decompress
+     * Decompress the given BZip2 file into a newly created temporary file
+     * @param file the file to decompress
+     * @implSpec The decompressed file cannot be larger than 2GB
      * @see #compressFile(java.io.File) 
      */
-    private java.io.File decompressFile(java.io.File archive) {
+    private java.io.File decompressFile(java.io.File file) {
+        if (!file.isFile()) {
+            throw new BackupManagerException("Unable to decompress non-file entry: " + file);
+        }
         try {
-            Path tempFile = Files.createTempFile(null, BZip2Utils.getUncompressedFileName(archive.getName()));
+            Path tempFile = Files.createTempFile(null, BZip2Utils.getUncompressedFileName(file.getName()));
             try (
-                    InputStream is = Files.newInputStream(archive.toPath());
+                    // Compressed file
+                    InputStream is = Files.newInputStream(file.toPath());
+                    // bzip2 reads from ↑
                     CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is);
+                    // final decompressed file
                     OutputStream os = Files.newOutputStream(tempFile)
             ) {
                 IOUtils.copy(cis, os);
             }
             return tempFile.toFile();
-        } catch (IOException | CompressorException e) {
+        } catch (IOException | CompressorException | NullPointerException e) {
             throw new BackupManagerException("Unable to decompress file.", e);
         }
     }
 
     /**
-     * Compresses the given file to a BZip2 archive into the same folder
+     * Compresses the given file with BZip2 into the same folder
      * @param file the file to compress
+     * @implSpec The file cannot be larger than 2GB
      * @see #decompressFile(java.io.File)
      */
     private void compressFile(java.io.File file) {
-        Path archivePath = Path.of(BZip2Utils.getCompressedFileName(file.getName()));
+        if (!file.isFile()) {
+            throw new BackupManagerException("Unable to compress non-file entry: " + file.getAbsolutePath());
+        }
+        String compressedFileName = BZip2Utils.getCompressedFileName(file.getName());
+        Path compressedFilePath = file.toPath().getParent().resolve(compressedFileName);
         try (
-                OutputStream fos = Files.newOutputStream(archivePath);
+                // final bzip2 compressed file
+                OutputStream fos = Files.newOutputStream(compressedFilePath);
+                // bzip2 writes to ↑
                 CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos);
                 InputStream is = Files.newInputStream(file.toPath())
         ) {
