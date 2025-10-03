@@ -7,11 +7,19 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.FileUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorOutputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.compressors.bzip2.BZip2Utils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -76,9 +84,60 @@ public class BackupManager {
                                                      .resolve(generateBackupFileName(file, reason)).toFile();
             LOG.debug("Backing up file {} to {}.", toBackup, backupFile);
             Files.copy(toBackup.toPath(), backupFile.toPath());
-            // TODO compress file and remove the copy
+            // compress the created copy
+            compressFile(backupFile);
+            // delete the uncompressed copy
+            backupFile.delete();
         } catch (IOException e) {
             throw new BackupManagerException("Unable to backup file.", e);
+        }
+    }
+
+    /**
+     * Prepares a temporary file extracted from the backup
+     * @param backupFile the backup file
+     * @return temporary file extracted from the backup
+     */
+    public java.io.File openBackup(BackupFile backupFile) {
+        return decompressFile(backupFile.file());
+    }
+
+    /**
+     * Decompress the given BZip2 archive into a newly created temporary file
+     * @param archive the archive to decompress
+     * @see #compressFile(java.io.File) 
+     */
+    private java.io.File decompressFile(java.io.File archive) {
+        try {
+            Path tempFile = Files.createTempFile(null, BZip2Utils.getUncompressedFileName(archive.getName()));
+            try (
+                    InputStream is = Files.newInputStream(archive.toPath());
+                    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is);
+                    OutputStream os = Files.newOutputStream(tempFile)
+            ) {
+                IOUtils.copy(cis, os);
+            }
+            return tempFile.toFile();
+        } catch (IOException | CompressorException e) {
+            throw new BackupManagerException("Unable to decompress file.", e);
+        }
+    }
+
+    /**
+     * Compresses the given file to a BZip2 archive into the same folder
+     * @param file the file to compress
+     * @see #decompressFile(java.io.File)
+     */
+    private void compressFile(java.io.File file) {
+        Path archivePath = Path.of(BZip2Utils.getCompressedFileName(file.getName()));
+        try (
+                OutputStream fos = Files.newOutputStream(archivePath);
+                CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos);
+                InputStream is = Files.newInputStream(file.toPath())
+        ) {
+            IOUtils.copy(is, cos);
+        } catch (IOException | CompressorException | NullPointerException e) {
+            throw new BackupManagerException("Unable to compress file.", e);
         }
     }
 
@@ -130,7 +189,7 @@ public class BackupManager {
      */
     private BackupFile parseBackupFile(java.io.File file) {
         if (!file.getName().contains(BACKUP_NAME_SEPARATOR)) {
-            return new BackupFile(Utils.timestamp(), file, BackupReason.UNKNOWN));
+            return new BackupFile(Utils.timestamp(), file, BackupReason.UNKNOWN);
         }
         String strTimestamp = file.getName().substring(file.getName().indexOf(BACKUP_NAME_SEPARATOR) + 1);
         // Cut off possibly legacy extra millis places

@@ -98,12 +98,10 @@ public class DefaultDocumentManager implements DocumentManager {
         Objects.requireNonNull(file);
         Objects.requireNonNull(at);
         BackupFile backup = backupManager.getBackup(file, at);
+        java.io.File backupContent = backupManager.openBackup(backup);
 
-        // TODO: lukas - extract the backup to temp file and pass the path to it
-        return new TypeAwareFileSystemResource(backup, getMediaType(file));
+        return new TypeAwareFileSystemResource(backupContent, getMediaType(file));
     }
-
-
 
     @Override
     public void saveFileContent(File file, InputStream content) {
