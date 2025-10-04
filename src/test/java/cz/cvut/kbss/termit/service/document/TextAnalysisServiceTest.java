@@ -37,6 +37,7 @@ import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
@@ -150,7 +151,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         generateFile();
         this.documentManagerSpy = spy(documentManager);
         doCallRealMethod().when(documentManagerSpy).loadFileContent(any());
-        doNothing().when(documentManagerSpy).createBackup(any());
+        doNothing().when(documentManagerSpy).createBackup(any(), any());
         when(vocabularyDao.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy, annotationGeneratorMock,
                                            textAnalysisRecordDao, eventPublisher, vocabularyDao);
@@ -296,7 +297,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
         final InOrder inOrder = Mockito.inOrder(documentManagerSpy, annotationGeneratorMock);
-        inOrder.verify(documentManagerSpy).createBackup(file);
+        inOrder.verify(documentManagerSpy).createBackup(file, BackupReason.TEXT_ANALYSIS);
         inOrder.verify(annotationGeneratorMock).generateAnnotations(any(), eq(file));
     }
 
@@ -324,7 +325,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
         final InOrder inOrder = Mockito.inOrder(documentManagerSpy, annotationGeneratorMock);
-        inOrder.verify(documentManagerSpy).createBackup(file);
+        inOrder.verify(documentManagerSpy).createBackup(file, BackupReason.TEXT_ANALYSIS);
         inOrder.verify(annotationGeneratorMock).generateAnnotations(any(InputStream.class), eq(file));
     }
 

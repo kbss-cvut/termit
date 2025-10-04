@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -185,7 +186,7 @@ class ResourceServiceTest {
         when(documentManager.exists(file)).thenReturn(true);
         sut.saveContent(file, bis);
         final InOrder inOrder = Mockito.inOrder(documentManager);
-        inOrder.verify(documentManager).createBackup(file);
+        inOrder.verify(documentManager).createBackup(file, BackupReason.UNKNOWN);
         inOrder.verify(documentManager).saveFileContent(file, bis);
     }
 
@@ -195,7 +196,7 @@ class ResourceServiceTest {
         final File file = Generator.generateFileWithId("test.html");
         when(documentManager.exists(file)).thenReturn(false);
         sut.saveContent(file, bis);
-        verify(documentManager, never()).createBackup(file);
+        verify(documentManager, never()).createBackup(file, BackupReason.UNKNOWN);
         verify(documentManager).saveFileContent(file, bis);
     }
 

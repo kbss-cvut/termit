@@ -26,10 +26,10 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.backup.BackupFile;
+import cz.cvut.kbss.termit.service.document.backup.BackupFileUtils;
 import cz.cvut.kbss.termit.service.document.backup.BackupManager;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.FileUtils;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.apache.tika.Tika;
@@ -68,7 +68,7 @@ public class DefaultDocumentManager implements DocumentManager {
     }
 
     private java.io.File resolveFile(File file, boolean verifyExists) {
-        return FileUtils.resolveTermitFile(storageDirectory, file, verifyExists);
+        return BackupFileUtils.resolveTermitFile(storageDirectory, file, verifyExists);
     }
 
     private java.io.File resolveDocumentDirectory(Document document) {
