@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.FileUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
@@ -23,8 +22,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -42,10 +39,7 @@ import java.util.stream.Stream;
 @Service
 public class BackupManager {
     private static final Logger LOG = LoggerFactory.getLogger(BackupManager.class);
-    static final String BACKUP_NAME_SEPARATOR = "~";
     private static final int BACKUP_TIMESTAMP_LENGTH = 19;
-    static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
-                                                                              .withZone(ZoneId.systemDefault());
 
     private final Path storageDirectory;
 
@@ -79,9 +73,9 @@ public class BackupManager {
      */
     public void createBackup(File file, BackupReason reason) {
         try {
-            final java.io.File toBackup = FileUtils.resolveTermitFile(storageDirectory, file, true);
+            final java.io.File toBackup = BackupFileUtils.resolveTermitFile(storageDirectory, file, true);
             final java.io.File backupFile = toBackup.toPath().getParent()
-                                                     .resolve(generateBackupFileName(file, reason)).toFile();
+                                                    .resolve(BackupFileUtils.generateBackupFileName(file, reason, Utils.timestamp())).toFile();
             LOG.debug("Backing up file {} to {}.", toBackup, backupFile);
             Files.copy(toBackup.toPath(), backupFile.toPath());
             // compress the created copy
@@ -113,7 +107,8 @@ public class BackupManager {
             throw new BackupManagerException("Unable to decompress non-file entry: " + file);
         }
         try {
-            Path tempFile = Files.createTempFile(null, BZip2Utils.getUncompressedFileName(file.getName()));
+            Path tempFile = Files.createTempFile(null, "_" + BZip2Utils.getUncompressedFileName(file.getName()));
+            LOG.trace("Decompressing file {} to temporary file {}", file, tempFile);
             try (
                     // Compressed file
                     InputStream is = Files.newInputStream(file.toPath());
@@ -156,19 +151,6 @@ public class BackupManager {
     }
 
     /**
-     * Backup file name consists of the original file name + ~ + the current time stamp in a predefined format
-     *
-     * @param file File for which backup file name should be generated
-     * @return Backup name
-     */
-    private String generateBackupFileName(File file, BackupReason reason) {
-        final String origName = IdentifierResolver.sanitizeFileName(file.getLabel());
-        return origName +
-                BACKUP_NAME_SEPARATOR + BACKUP_TIMESTAMP_FORMAT.format(Utils.timestamp()) +
-                BACKUP_NAME_SEPARATOR + reason.name();
-    }
-
-    /**
      * List available backups for the specified file.
      * @param file backed up file
      * @param reason reason for which backups are returned, or {@code null}
@@ -202,15 +184,15 @@ public class BackupManager {
      * when the timestamp could not be parsed.
      */
     private BackupFile parseBackupFile(java.io.File file) {
-        if (!file.getName().contains(BACKUP_NAME_SEPARATOR)) {
+        if (!file.getName().contains(BackupFileUtils.BACKUP_NAME_SEPARATOR)) {
             return new BackupFile(Utils.timestamp(), file, BackupReason.UNKNOWN);
         }
-        String strTimestamp = file.getName().substring(file.getName().indexOf(BACKUP_NAME_SEPARATOR) + 1);
+        String strTimestamp = file.getName().substring(file.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
         // Cut off possibly legacy extra millis places
         strTimestamp = strTimestamp.substring(0, Math.min(BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
-        String strReason = file.getName().substring(file.getName().lastIndexOf(BACKUP_NAME_SEPARATOR));
+        String strReason = file.getName().substring(file.getName().lastIndexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR));
         try {
-            final TemporalAccessor backupTimestamp = BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
+            final TemporalAccessor backupTimestamp = BackupFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
             return new BackupFile(Instant.from(backupTimestamp), file, BackupReason.from(strReason));
         } catch (DateTimeParseException e) {
             LOG.warn("Unable to parse backup timestamp {}. Skipping file.", strTimestamp);
@@ -234,7 +216,7 @@ public class BackupManager {
             }
         }
         LOG.warn("Unable to find version of {} valid at {}, returning current file.", file, at);
-        java.io.File currentFile = FileUtils.resolveTermitFile(storageDirectory, file, true);
+        java.io.File currentFile = BackupFileUtils.resolveTermitFile(storageDirectory, file, true);
         return new BackupFile(Utils.timestamp(), currentFile, BackupReason.UNKNOWN);
     }
 }
