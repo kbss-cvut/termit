@@ -26,13 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class BackupManagerTest extends BaseDocumentTestRunner {
+public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     private static final String BACKUP_REASON_VALUES_METHOD_SIGNATURE = "cz.cvut.kbss.termit.service.document.backup.BackupReason#values()";
-    private BackupManager sut;
+    private DocumentBackupManager sut;
 
     @BeforeEach
     void setupSut() {
-        sut = new BackupManager(configuration);
+        sut = new DocumentBackupManager(configuration);
     }
 
     @Test

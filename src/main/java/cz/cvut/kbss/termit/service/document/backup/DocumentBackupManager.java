@@ -38,13 +38,13 @@ import java.util.stream.Stream;
  * Allows to manage backups of documents in local file system
  */
 @Service
-public class BackupManager {
-    private static final Logger LOG = LoggerFactory.getLogger(BackupManager.class);
+public class DocumentBackupManager {
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentBackupManager.class);
     private static final int BACKUP_TIMESTAMP_LENGTH = 19;
 
     private final Path storageDirectory;
 
-    public BackupManager(Configuration config) {
+    public DocumentBackupManager(Configuration config) {
         this.storageDirectory = Path.of(config.getFile().getStorage());
     }
 

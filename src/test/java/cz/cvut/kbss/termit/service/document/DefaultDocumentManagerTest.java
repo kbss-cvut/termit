@@ -25,8 +25,8 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.backup.BackupFile;
-import cz.cvut.kbss.termit.service.document.backup.BackupManager;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +58,7 @@ import static org.mockito.Mockito.when;
 
 class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
     @MockitoBean
-    private BackupManager backupManager;
+    private DocumentBackupManager backupManager;
 
     private DefaultDocumentManager sut;
 
