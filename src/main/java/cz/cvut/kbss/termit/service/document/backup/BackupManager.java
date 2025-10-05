@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
@@ -72,6 +73,8 @@ public class BackupManager {
      * @throws NotFoundException If the file cannot be found
      */
     public void createBackup(File file, BackupReason reason) {
+        Objects.requireNonNull(file);
+        Objects.requireNonNull(reason);
         try {
             final java.io.File toBackup = BackupFileUtils.resolveTermitFile(storageDirectory, file, true);
             final java.io.File backupFile = toBackup.toPath().getParent()
@@ -93,7 +96,20 @@ public class BackupManager {
      * @return temporary file extracted from the backup
      */
     public java.io.File openBackup(BackupFile backupFile) {
-        return decompressFile(backupFile.file());
+        if (BZip2Utils.isCompressedFileName(backupFile.file().getName())) {
+            return decompressFile(backupFile.file());
+        }
+        return openLegacyBackup(backupFile.file());
+    }
+
+    private java.io.File openLegacyBackup(java.io.File file) {
+        try {
+            Path tempFile = Files.createTempFile(null, "_" + file.getName());
+            Files.copy(file.toPath(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+            return tempFile.toFile();
+        } catch (IOException e) {
+            throw new BackupManagerException("Unable to copy a file", e);
+        }
     }
 
     /**
@@ -190,7 +206,7 @@ public class BackupManager {
         String strTimestamp = file.getName().substring(file.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
         // Cut off possibly legacy extra millis places
         strTimestamp = strTimestamp.substring(0, Math.min(BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
-        String strReason = file.getName().substring(file.getName().lastIndexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR));
+        String strReason = file.getName().substring(file.getName().lastIndexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
         try {
             final TemporalAccessor backupTimestamp = BackupFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
             return new BackupFile(Instant.from(backupTimestamp), file, BackupReason.from(strReason));

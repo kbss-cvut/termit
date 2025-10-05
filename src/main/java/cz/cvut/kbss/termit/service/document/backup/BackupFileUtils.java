@@ -30,6 +30,7 @@ public class BackupFileUtils {
      * @return the resolved file in the file system
      */
     public static java.io.File resolveTermitFile(Path termitDir, File file, boolean verifyExists) {
+        Objects.requireNonNull(termitDir);
         Objects.requireNonNull(file);
         final Path path = termitDir.resolve(file.getDirectoryName())
                                              .resolve(IdentifierResolver.sanitizeFileName(file.getLabel()));

@@ -8,21 +8,26 @@ import cz.cvut.kbss.termit.service.document.BaseDocumentTestRunner;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Files;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BackupManagerTest extends BaseDocumentTestRunner {
+    private static final String BACKUP_REASON_VALUES_METHOD_SIGNATURE = "cz.cvut.kbss.termit.service.document.backup.BackupReason#values()";
     private BackupManager sut;
 
     @BeforeEach
@@ -101,6 +106,47 @@ public class BackupManagerTest extends BaseDocumentTestRunner {
                 f.deleteOnExit();
             }
         }
+    }
+
+    @Test
+    void createBackupCreatesBackupWithBzip2Extension() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        final java.io.File docDir = physicalFile.getParentFile();
+        assertNotNull(docDir.listFiles());
+        assertEquals(1, docDir.listFiles().length);
+        sut.createBackup(file, BackupReason.UNKNOWN);
+        assertEquals(2, docDir.listFiles().length);
+        // check that there is a backup with a name ending with the given reason
+        String backupName = Arrays.stream(docDir.listFiles())
+              .map(java.io.File::getName)
+              .filter(name -> !name.endsWith("html"))
+              .findAny().orElseThrow();
+        assertThat(backupName, endsWith("bz2"));
+    }
+
+    @ParameterizedTest
+    @MethodSource(BACKUP_REASON_VALUES_METHOD_SIGNATURE)
+    void createBackupCreatesBackupWithReasonInFileName(BackupReason reason) throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        final java.io.File docDir = physicalFile.getParentFile();
+        assertNotNull(docDir.listFiles());
+        assertEquals(1, docDir.listFiles().length);
+        sut.createBackup(file, reason);
+        assertEquals(2, docDir.listFiles().length);
+        String backupName = Arrays.stream(docDir.listFiles())
+                .map(java.io.File::getName)
+                .filter(name -> !name.endsWith(".html"))
+                .map(name -> name.substring(0, name.lastIndexOf('.'))) // strip file format
+                .findAny().orElseThrow();
+        assertThat(backupName, endsWith(reason.name()));
     }
 
     @Test
@@ -187,6 +233,30 @@ public class BackupManagerTest extends BaseDocumentTestRunner {
     }
 
     @Test
+    void getBackupHandlesLegacyBackupWithoutBackupReason() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+
+        final Instant now = Instant.now().minusSeconds(100);
+
+        final String path = physicalFile.getAbsolutePath();
+        // Legacy pattern used multiple millis places
+        final String newPath = path + BackupFileUtils.BACKUP_NAME_SEPARATOR +
+                DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
+                                 .withZone(ZoneId.systemDefault())
+                                 .format(now.plusSeconds(10));
+        assertEquals(path, newPath.substring(0, path.length()));
+        final java.io.File backup = new java.io.File(newPath);
+        Files.copy(physicalFile.toPath(), backup.toPath());
+        backup.deleteOnExit();
+        final BackupFile result = sut.getBackup(file, now);
+        assertEquals(backup, result.file());
+    }
+
+    @Test
     void getBackupHandlesLegacyBackupTimestampPattern() throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
@@ -194,16 +264,18 @@ public class BackupManagerTest extends BaseDocumentTestRunner {
         document.addFile(file);
         file.setDocument(document);
 
+        final Instant now = Instant.now().minusSeconds(100);
+
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
         final String newPath = path + BackupFileUtils.BACKUP_NAME_SEPARATOR +
                 DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_SSS")
                                  .withZone(ZoneId.systemDefault())
-                                 .format(Instant.now().minusSeconds(10));
+                                 .format(now.plusSeconds(10));
         final java.io.File backup = new java.io.File(newPath);
         Files.copy(physicalFile.toPath(), backup.toPath());
         backup.deleteOnExit();
-        final BackupFile result = sut.getBackup(file, Instant.EPOCH);
+        final BackupFile result = sut.getBackup(file, now);
         assertEquals(backup, result.file());
     }
 
@@ -226,5 +298,79 @@ public class BackupManagerTest extends BaseDocumentTestRunner {
         backup.deleteOnExit();
         final BackupFile result = sut.getBackup(file, Instant.EPOCH);
         assertEquals(physicalFile, result.file());
+    }
+
+    @Test
+    void getBackupsWithNullReasonReturnsAllBackups() throws Exception {
+        final int expectedBackupsPerReason = 3;
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        int expectedBackups = 1; // +1 for the original file
+        // generate backups for all reasons
+        for (BackupReason reason : BackupReason.values()) {
+            createTestBackups(file, reason);
+            expectedBackups += expectedBackupsPerReason; // the amount of created backups
+        }
+
+        List<BackupFile> backups = sut.getBackups(file, null);
+        assertEquals(expectedBackups, backups.size());
+    }
+
+    @ParameterizedTest
+    @MethodSource(BACKUP_REASON_VALUES_METHOD_SIGNATURE)
+    void getBackupsReturnsOnlyBackupsWithGivenReason(BackupReason reasonFilter) throws Exception {
+        // add 1 for unknown reason for the original file
+        final int expectedBackups = 3 + (reasonFilter == BackupReason.UNKNOWN ? 1 : 0);
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        // generate backups for all reasons
+        for (BackupReason reason : BackupReason.values()) {
+            createTestBackups(file, reason);
+        }
+
+        List<BackupFile> backups = sut.getBackups(file, reasonFilter);
+        assertEquals(expectedBackups, backups.size());
+
+        for (BackupFile backup : backups) {
+            assertEquals(reasonFilter, backup.backupReason());
+        }
+    }
+
+    @Test
+    void openBackupOpensCompressedBackup() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+
+        sut.createBackup(file, BackupReason.UNKNOWN);
+
+        BackupFile backupFile = sut.getBackup(file, Instant.EPOCH);
+        java.io.File extractedFile = sut.openBackup(backupFile);
+        final List<String> backupLines = Files.readAllLines(extractedFile.toPath());
+        final String result = String.join("\n", backupLines);
+        assertEquals(CONTENT, result);
+    }
+
+    @Test
+    void openBackupOpensLegacyUncompressedBackup() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+
+        BackupFile backupFile = new BackupFile(Instant.now(), physicalFile, BackupReason.UNKNOWN);
+        java.io.File extractedFile = sut.openBackup(backupFile);
+        final List<String> backupLines = Files.readAllLines(extractedFile.toPath());
+        final String result = String.join("\n", backupLines);
+        assertEquals(CONTENT, result);
     }
 }

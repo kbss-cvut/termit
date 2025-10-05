@@ -54,12 +54,15 @@ public abstract class BaseDocumentTestRunner extends BaseServiceTestRunner {
         return content;
     }
 
-
     protected List<java.io.File> createTestBackups(File file) throws Exception {
+        return createTestBackups(file, BackupReason.UNKNOWN);
+    }
+
+    protected List<java.io.File> createTestBackups(File file, BackupReason reason) throws Exception {
         final List<java.io.File> backupFiles = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Instant instant = Instant.ofEpochMilli(System.currentTimeMillis() - (i + 1) * 10000);
-            final String newPath = BackupFileUtils.generateBackupFileName(file, BackupReason.UNKNOWN, instant);
+            final String newPath = BackupFileUtils.generateBackupFileName(file, reason, instant);
             final Path target = documentDir.resolve(newPath);
             Files.createFile(target);
             backupFiles.add(target.toFile());
