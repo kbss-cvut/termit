@@ -389,24 +389,22 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         final java.io.File physicalFile = generateFile();
         final String newName = "newFileName.html";
         file.setDocument(document);
-        file.setLabel(newName);
+        file.setLabel(physicalFile.getName());
         final List<java.io.File> backups = createTestBackups(file);
+        file.setLabel(newName);
+
+        final java.io.File newFile = documentDir.resolve(file.getLabel()).toFile();
+        newFile.deleteOnExit();
 
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
         for (java.io.File backup : backups) {
-            final java.io.File newBackup = new java.io.File(
-                    documentDir + java.io.File.separator +
-                            file.getDirectoryName() +
+            final java.io.File newBackup = new java.io.File(documentDir +
                             java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
             assertTrue(newBackup.exists());
             newBackup.deleteOnExit();
             assertFalse(backup.exists());
         }
-        final java.io.File newFile = new java.io.File(
-                documentDir + java.io.File.separator + file.getDirectoryName() +
-                        java.io.File.separator + file.getLabel());
         assertTrue(newFile.exists());
-        newFile.deleteOnExit();
     }
 
     @Test

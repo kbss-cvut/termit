@@ -58,22 +58,26 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDocumentManager.class);
 
-    private final Path storageDirectory;
+    private final Configuration configuration;
     private final DocumentBackupManager backupManager;
 
     @Autowired
     public DefaultDocumentManager(Configuration config, DocumentBackupManager backupManager) {
-        this.storageDirectory = Path.of(config.getFile().getStorage());
+        this.configuration = config;
         this.backupManager = backupManager;
     }
 
+    private Path storageDirectory() {
+        return Path.of(configuration.getFile().getStorage());
+    }
+
     private java.io.File resolveFile(File file, boolean verifyExists) {
-        return BackupFileUtils.resolveTermitFile(storageDirectory, file, verifyExists);
+        return BackupFileUtils.resolveTermitFile(storageDirectory(), file, verifyExists);
     }
 
     private java.io.File resolveDocumentDirectory(Document document) {
         Objects.requireNonNull(document);
-        return storageDirectory.resolve(document.getDirectoryName()).toFile();
+        return storageDirectory().resolve(document.getDirectoryName()).toFile();
     }
 
     @Override
@@ -194,7 +198,7 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private void removeDocumentFolderWithContent(Document document) {
         LOG.debug("Removing directory of document {} together will all its content.", document);
-        final java.io.File result = storageDirectory.resolve(document.getDirectoryName()).toFile();
+        final java.io.File result = storageDirectory().resolve(document.getDirectoryName()).toFile();
         if (result.exists()) {
             final java.io.File[] files = result.listFiles();
             if (files != null) {
