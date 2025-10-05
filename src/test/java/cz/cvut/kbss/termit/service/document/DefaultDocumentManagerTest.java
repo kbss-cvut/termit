@@ -18,36 +18,27 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.backup.BackupFile;
-import cz.cvut.kbss.termit.service.document.backup.BackupFileUtils;
 import cz.cvut.kbss.termit.service.document.backup.BackupManager;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.MimeTypeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -65,48 +56,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ContextConfiguration(initializers = {PropertyMockingApplicationContextInitializer.class})
-class DefaultDocumentManagerTest extends BaseServiceTestRunner {
-
-    private static final String CONTENT =
-            "<html><body><h1>Metropolitan plan</h1><p>Description of the metropolitan plan.</body></html>";
-
+class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
     @MockitoBean
     private BackupManager backupManager;
 
-    @Autowired
-    private Configuration configuration;
-
     private DefaultDocumentManager sut;
 
-    private Document document;
-    private Path documentDir;
-
     @BeforeEach
-    void setUp() throws Exception {
-        this.document = new Document();
-        document.setLabel("Metropolitan plan");
-        document.setUri(Generator.generateUri());
-
-        Path termitStorageDir = Files.createTempDirectory("termit");
-        termitStorageDir.toFile().deleteOnExit();
-
-        documentDir = termitStorageDir.resolve(document.getDirectoryName());
-        documentDir.toFile().mkdir();
-        configuration.getFile().setStorage(termitStorageDir.toString());
-
+    void setupSut() {
         sut = new DefaultDocumentManager(configuration, backupManager);
-    }
-
-    private java.io.File generateFile() throws Exception {
-        return generateFile("test", ".html", CONTENT);
-    }
-
-    private java.io.File generateFile(String filePrefix, String fileSuffix, String fileContent) throws Exception {
-        final java.io.File content = Files.createTempFile(documentDir, filePrefix, fileSuffix).toFile();
-        content.deleteOnExit();
-        Files.write(content.toPath(), Collections.singletonList(fileContent));
-        return content;
     }
 
     @Test
@@ -327,21 +285,6 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         assertThat(docDir.list().length, greaterThan(0));
         sut.remove(file);
         assertEquals(0, docDir.list().length);
-    }
-
-    private List<java.io.File> createTestBackups(File file) throws Exception {
-        final List<java.io.File> backupFiles = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Instant instant = Instant.ofEpochMilli(System.currentTimeMillis() - (i + 1) * 10000);
-            final String newPath = BackupFileUtils.generateBackupFileName(file, BackupReason.UNKNOWN, instant);
-            final Path target = documentDir.resolve(newPath);
-            Files.createFile(target);
-            backupFiles.add(target.toFile());
-            target.toFile().deleteOnExit();
-        }
-        // So that the oldest is first
-        Collections.reverse(backupFiles);
-        return backupFiles;
     }
 
     @Test
