@@ -27,8 +27,8 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.backup.BackupFile;
 import cz.cvut.kbss.termit.service.document.backup.BackupFileUtils;
-import cz.cvut.kbss.termit.service.document.backup.BackupManager;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -59,10 +59,10 @@ public class DefaultDocumentManager implements DocumentManager {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDocumentManager.class);
 
     private final Path storageDirectory;
-    private final BackupManager backupManager;
+    private final DocumentBackupManager backupManager;
 
     @Autowired
-    public DefaultDocumentManager(Configuration config, BackupManager backupManager) {
+    public DefaultDocumentManager(Configuration config, DocumentBackupManager backupManager) {
         this.storageDirectory = Path.of(config.getFile().getStorage());
         this.backupManager = backupManager;
     }
