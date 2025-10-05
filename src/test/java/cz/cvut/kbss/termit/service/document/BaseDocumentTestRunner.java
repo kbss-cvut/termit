@@ -62,7 +62,7 @@ public abstract class BaseDocumentTestRunner extends BaseServiceTestRunner {
         final List<java.io.File> backupFiles = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Instant instant = Instant.ofEpochMilli(System.currentTimeMillis() - (i + 1) * 10000);
-            final String newPath = BackupFileUtils.generateBackupFileName(file, reason, instant);
+            final String newPath = BackupFileUtils.generateBackupFileName(file, reason, instant) + ".bz2";
             final Path target = documentDir.resolve(newPath);
             Files.createFile(target);
             backupFiles.add(target.toFile());

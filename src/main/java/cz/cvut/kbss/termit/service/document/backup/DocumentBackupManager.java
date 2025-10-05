@@ -40,7 +40,6 @@ import java.util.stream.Stream;
 @Service
 public class DocumentBackupManager {
     private static final Logger LOG = LoggerFactory.getLogger(DocumentBackupManager.class);
-    private static final int BACKUP_TIMESTAMP_LENGTH = 19;
 
     private final Path storageDirectory;
 
@@ -205,8 +204,11 @@ public class DocumentBackupManager {
         }
         String strTimestamp = file.getName().substring(file.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
         // Cut off possibly legacy extra millis places
-        strTimestamp = strTimestamp.substring(0, Math.min(BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
-        String strReason = file.getName().substring(file.getName().lastIndexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
+        strTimestamp = strTimestamp.substring(0, Math.min(BackupFileUtils.BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
+
+        String uncompressedFileName = BZip2Utils.getUncompressedFileName(file.getName());
+        String strReason = file.getName().substring(file.getName().lastIndexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1,
+                uncompressedFileName.length());
         try {
             final TemporalAccessor backupTimestamp = BackupFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
             return new BackupFile(Instant.from(backupTimestamp), file, BackupReason.from(strReason));

@@ -17,6 +17,7 @@ public class BackupFileUtils {
     static final String BACKUP_NAME_SEPARATOR = "~";
     static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
                                                                               .withZone(ZoneId.systemDefault());
+    static final int BACKUP_TIMESTAMP_LENGTH = 19;
 
     private BackupFileUtils() {
         throw new AssertionError();

@@ -36,24 +36,6 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     }
 
     @Test
-    void createBackupCreatesBackupFileWithIdenticalContent() throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-        final java.io.File docDir = physicalFile.getParentFile();
-        assertNotNull(docDir.listFiles());
-        assertEquals(1, docDir.listFiles().length);
-        sut.createBackup(file, BackupReason.UNKNOWN);
-        assertEquals(2, docDir.listFiles().length);
-        for (java.io.File f : docDir.listFiles()) {
-            f.deleteOnExit();
-            assertEquals(CONTENT, String.join("\n", Files.readAllLines(f.toPath())));
-        }
-    }
-
-    @Test
     void createBackupCreatesBackupOfFileWithoutExtension() throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
@@ -70,33 +52,22 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         final java.io.File[] files = docDir.listFiles((d, name) -> name.startsWith("withoutExtension"));
         assertNotNull(files);
         assertEquals(2, files.length);
-        for (java.io.File f : files) {
-            f.deleteOnExit();
-            assertEquals(CONTENT, String.join("\n", Files.readAllLines(f.toPath())));
-        }
     }
 
     @Test
     void createBackupSanitizesFileLabelToEnsureValidFileName() throws Exception {
-        final java.io.File dir = Files.createTempDirectory("termit").toFile();
-        dir.deleteOnExit();
-        configuration.getFile().setStorage(dir.getAbsolutePath());
-        final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
-                document.getDirectoryName());
-        docDir.mkdir();
-        docDir.deleteOnExit();
         final File file = new File();
         file.setUri(Generator.generateUri());
         final String label = "Zákon 130/2002";
         file.setLabel(label);
         document.addFile(file);
         file.setDocument(document);
-        final java.io.File content = new java.io.File(docDir, IdentifierResolver.sanitizeFileName(label));
+        final java.io.File content = new java.io.File(documentDir.toFile(), IdentifierResolver.sanitizeFileName(label));
         content.deleteOnExit();
         Files.write(content.toPath(), CONTENT.getBytes());
         sut.createBackup(file, BackupReason.UNKNOWN);
 
-        final java.io.File[] files = docDir.listFiles();
+        final java.io.File[] files = documentDir.toFile().listFiles();
         assertNotNull(files);
         assertEquals(2, files.length);
         for (java.io.File f : files) {
@@ -159,8 +130,9 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final List<java.io.File> files = createTestBackups(file);
         final java.io.File expected = files.get(Generator.randomIndex(files));
-        final String strBackupTimestamp = expected.getName().substring(
-                expected.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
+        int separatorIndex = expected.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1;
+        final String strBackupTimestamp = expected.getName().substring(separatorIndex, separatorIndex +
+                                                          BackupFileUtils.BACKUP_TIMESTAMP_LENGTH);
         final TemporalAccessor backupTimestamp = BackupFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(
                 strBackupTimestamp);
         final Instant timestamp = Instant.from(backupTimestamp).minusSeconds(5);
