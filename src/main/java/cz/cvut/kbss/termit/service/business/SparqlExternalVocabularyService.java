@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Supports importing external vocabularies from a configured SPARQL endpoint.
@@ -82,9 +84,12 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     public List<RdfsResource> getAvailableVocabularies() {
         List<RdfsResource> response;
         try {
-            SPARQLRepository sparqlRepo = initSparqlRepository();
+            final Optional<SPARQLRepository> sparqlRepo = initSparqlRepository();
+            if (sparqlRepo.isEmpty()) {
+                return List.of();
+            }
 
-            try (RepositoryConnection conn = sparqlRepo.getConnection()) {
+            try (RepositoryConnection conn = sparqlRepo.get().getConnection()) {
                 String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
                 TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
 
@@ -95,7 +100,7 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                 LOG.error("Failed to get available vocabularies.", e);
                 response = List.of();
             } finally {
-                sparqlRepo.shutDown();
+                sparqlRepo.get().shutDown();
             }
         } catch (RepositoryException ex) {
             LOG.error("Failed to connect to external repository.", ex);
@@ -104,11 +109,15 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         return response;
     }
 
-    private SPARQLRepository initSparqlRepository() throws RepositoryException {
+    private Optional<SPARQLRepository> initSparqlRepository() throws RepositoryException {
         String sparqlEndpoint = config.getExternal().getResource();
+        if (sparqlEndpoint == null || sparqlEndpoint.isBlank()) {
+            LOG.trace("External SPARQL endpoint not specified.");
+            return Optional.empty();
+        }
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
         sparqlRepo.init();
-        return sparqlRepo;
+        return Optional.of(sparqlRepo);
     }
 
     private List<RdfsResource> extractListOfAvailableVocabularies(
@@ -179,9 +188,13 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     private InputStream downloadExternalVocabulary(String vocabularyIri) {
         InputStream vocabularyFile = null;
         try {
-            SPARQLRepository sparqlRepo = initSparqlRepository();
+            final Optional<SPARQLRepository> sparqlRepo = initSparqlRepository();
+            if (sparqlRepo.isEmpty()) {
+                throw new VocabularyImportException(
+                        "External SPARQL endpoint not specified for import of vocabulary " + vocabularyIri);
+            }
             try {
-                RepositoryConnection conn = sparqlRepo.getConnection();
+                RepositoryConnection conn = sparqlRepo.get().getConnection();
 
                 String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
                 GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
@@ -193,7 +206,7 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
             } catch (QueryEvaluationException ex) {
                 LOG.error(ex.getMessage());
             } finally {
-                sparqlRepo.shutDown();
+                sparqlRepo.get().shutDown();
             }
         } catch (RepositoryException ex) {
             LOG.error(ex.getMessage());
