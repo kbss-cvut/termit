@@ -11,7 +11,6 @@ import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.compressors.bzip2.BZip2Utils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -49,8 +48,9 @@ public class DocumentBackupManager {
 
     /**
      * Resolves backup matching {@code at} timestamp or the first newer one.
+     *
      * @param file the backed file
-     * @param at timestamp of the backup creation
+     * @param at   timestamp of the backup creation
      * @return backup file created at the timestamp or the oldest backup created after the timestamp.
      */
     public BackupFile getBackup(File file, Instant at) {
@@ -75,9 +75,10 @@ public class DocumentBackupManager {
         Objects.requireNonNull(file);
         Objects.requireNonNull(reason);
         try {
-            final java.io.File toBackup = BackupFileUtils.resolveTermitFile(storageDirectory, file, true);
+            final java.io.File toBackup = DocumentFileUtils.resolveTermitFile(storageDirectory, file, true);
             final java.io.File backupFile = toBackup.toPath().getParent()
-                                                    .resolve(BackupFileUtils.generateBackupFileName(file, reason, Utils.timestamp())).toFile();
+                                                    .resolve(DocumentFileUtils.generateBackupFileName(file, reason, Utils.timestamp()))
+                                                    .toFile();
             LOG.debug("Backing up file {} to {}.", toBackup, backupFile);
             Files.copy(toBackup.toPath(), backupFile.toPath());
             // compress the created copy
@@ -91,6 +92,7 @@ public class DocumentBackupManager {
 
     /**
      * Prepares a temporary file extracted from the backup
+     *
      * @param backupFile the backup file
      * @return temporary file extracted from the backup
      */
@@ -113,9 +115,10 @@ public class DocumentBackupManager {
 
     /**
      * Decompress the given BZip2 file into a newly created temporary file
+     *
      * @param file the file to decompress
      * @implSpec The decompressed file cannot be larger than 2GB
-     * @see #compressFile(java.io.File) 
+     * @see #compressFile(java.io.File)
      */
     private java.io.File decompressFile(java.io.File file) {
         if (!file.isFile()) {
@@ -129,10 +132,8 @@ public class DocumentBackupManager {
                     InputStream is = Files.newInputStream(file.toPath());
                     // bzip2 reads from ↑
                     CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is);
-                    // final decompressed file
-                    OutputStream os = Files.newOutputStream(tempFile)
             ) {
-                IOUtils.copy(cis, os);
+                Files.copy(cis, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile.toFile();
         } catch (IOException | CompressorException | NullPointerException e) {
@@ -142,6 +143,7 @@ public class DocumentBackupManager {
 
     /**
      * Compresses the given file with BZip2 into the same folder
+     *
      * @param file the file to compress
      * @implSpec The file cannot be larger than 2GB
      * @see #decompressFile(java.io.File)
@@ -157,9 +159,8 @@ public class DocumentBackupManager {
                 OutputStream fos = Files.newOutputStream(compressedFilePath);
                 // bzip2 writes to ↑
                 CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos);
-                InputStream is = Files.newInputStream(file.toPath())
         ) {
-            IOUtils.copy(is, cos);
+            Files.copy(file.toPath(), cos);
         } catch (IOException | CompressorException | NullPointerException e) {
             throw new BackupManagerException("Unable to compress file.", e);
         }
@@ -167,7 +168,8 @@ public class DocumentBackupManager {
 
     /**
      * List available backups for the specified file.
-     * @param file backed up file
+     *
+     * @param file   backed up file
      * @param reason reason for which backups are returned, or {@code null}
      * @return List of available backups
      */
@@ -181,7 +183,7 @@ public class DocumentBackupManager {
         if (files == null) {
             return List.of();
         }
-        Stream<BackupFile> filesStream = Arrays.stream(files).map(this::parseBackupFile).filter(Objects::nonNull);
+        Stream<BackupFile> filesStream = Arrays.stream(files).map(this::parseBackupFileName).filter(Objects::nonNull);
         if (reason != null) {
             filesStream = filesStream.filter(b -> reason.equals(b.backupReason()));
         }
@@ -194,23 +196,26 @@ public class DocumentBackupManager {
      * If the timestamp is missing, the current time is used.
      * <p>
      * If the backup reason cannot be used, {@link BackupReason#UNKNOWN UNKNOWN} is used.
+     *
      * @param file the file to parse
      * @return The parsed backup file or {@code null} when parsing fails
      * when the timestamp could not be parsed.
      */
-    private BackupFile parseBackupFile(java.io.File file) {
-        if (!file.getName().contains(BackupFileUtils.BACKUP_NAME_SEPARATOR)) {
+    private BackupFile parseBackupFileName(java.io.File file) {
+        if (!file.getName().contains(DocumentFileUtils.BACKUP_NAME_SEPARATOR)) {
             return new BackupFile(Utils.timestamp(), file, BackupReason.UNKNOWN);
         }
-        String strTimestamp = file.getName().substring(file.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1);
+        String strTimestamp = file.getName()
+                                  .substring(file.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1);
         // Cut off possibly legacy extra millis places
-        strTimestamp = strTimestamp.substring(0, Math.min(BackupFileUtils.BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
+        strTimestamp = strTimestamp.substring(0, Math.min(DocumentFileUtils.BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
 
         String uncompressedFileName = BZip2Utils.getUncompressedFileName(file.getName());
-        String strReason = file.getName().substring(file.getName().lastIndexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1,
-                uncompressedFileName.length());
+        String strReason = file.getName()
+                               .substring(file.getName().lastIndexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1,
+                                       uncompressedFileName.length());
         try {
-            final TemporalAccessor backupTimestamp = BackupFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
+            final TemporalAccessor backupTimestamp = DocumentFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
             return new BackupFile(Instant.from(backupTimestamp), file, BackupReason.from(strReason));
         } catch (DateTimeParseException e) {
             LOG.warn("Unable to parse backup timestamp {}. Skipping file.", strTimestamp);
@@ -234,7 +239,7 @@ public class DocumentBackupManager {
             }
         }
         LOG.warn("Unable to find version of {} valid at {}, returning current file.", file, at);
-        java.io.File currentFile = BackupFileUtils.resolveTermitFile(storageDirectory, file, true);
+        java.io.File currentFile = DocumentFileUtils.resolveTermitFile(storageDirectory, file, true);
         return new BackupFile(Utils.timestamp(), currentFile, BackupReason.UNKNOWN);
     }
 }

@@ -130,10 +130,10 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final List<java.io.File> files = createTestBackups(file);
         final java.io.File expected = files.get(Generator.randomIndex(files));
-        int separatorIndex = expected.getName().indexOf(BackupFileUtils.BACKUP_NAME_SEPARATOR) + 1;
+        int separatorIndex = expected.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1;
         final String strBackupTimestamp = expected.getName().substring(separatorIndex, separatorIndex +
-                                                          BackupFileUtils.BACKUP_TIMESTAMP_LENGTH);
-        final TemporalAccessor backupTimestamp = BackupFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(
+                DocumentFileUtils.BACKUP_TIMESTAMP_LENGTH);
+        final TemporalAccessor backupTimestamp = DocumentFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(
                 strBackupTimestamp);
         final Instant timestamp = Instant.from(backupTimestamp).minusSeconds(5);
 
@@ -216,7 +216,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
-        final String newPath = path + BackupFileUtils.BACKUP_NAME_SEPARATOR +
+        final String newPath = path + DocumentFileUtils.BACKUP_NAME_SEPARATOR +
                 DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
                                  .withZone(ZoneId.systemDefault())
                                  .format(now.plusSeconds(10));
@@ -240,7 +240,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
-        final String newPath = path + BackupFileUtils.BACKUP_NAME_SEPARATOR +
+        final String newPath = path + DocumentFileUtils.BACKUP_NAME_SEPARATOR +
                 DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_SSS")
                                  .withZone(ZoneId.systemDefault())
                                  .format(now.plusSeconds(10));
@@ -261,7 +261,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
-        final String newPath = path + BackupFileUtils.BACKUP_NAME_SEPARATOR +
+        final String newPath = path + DocumentFileUtils.BACKUP_NAME_SEPARATOR +
                 DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss")
                                  .withZone(ZoneId.systemDefault())
                                  .format(Instant.now().minusSeconds(10));
