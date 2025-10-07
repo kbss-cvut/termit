@@ -276,7 +276,9 @@ class LocalizedSheetImporter {
                 u -> Objects.equals(referenced.getVocabulary(), u))) {
             throw new ReferencedTermInUnrelatedVocabularyException(
                     "Term " + referenced + " referenced by " + subject + " via <" + relationship + "> belongs to a vocabulary not related to the target vocabulary.",
-                    "error.vocabulary.import.excel.externalParentUnrelatedVocabulary");
+                    "error.vocabulary.import.excel.externalParentUnrelatedVocabulary")
+                    .addParameter("referencedIri", referenced.getUri().toString())
+                    .addParameter("label", subject.getLabel(langTag));
         }
     }
 
