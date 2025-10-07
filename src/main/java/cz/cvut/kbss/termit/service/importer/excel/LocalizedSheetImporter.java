@@ -22,8 +22,9 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.exception.importing.ReferencedTermInUnrelatedVocabularyException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.language.LanguageService;
@@ -72,6 +73,7 @@ class LocalizedSheetImporter {
     private final LanguageService languageService;
     private final PrefixMap prefixMap;
     private final List<Term> existingTerms;
+    private final cz.cvut.kbss.termit.model.Vocabulary targetVocabulary;
 
     private Map<String, Integer> attributeToColumn;
     private String langTag;
@@ -82,11 +84,13 @@ class LocalizedSheetImporter {
     private final Set<URI> sheetIdentifiers = new HashSet<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms) {
+    LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms,
+                           cz.cvut.kbss.termit.model.Vocabulary targetVocabulary) {
         this.termRepositoryService = services.termRepositoryService();
         this.languageService = services.languageService();
         this.prefixMap = prefixMap;
         this.existingTerms = existingTerms;
+        this.targetVocabulary = targetVocabulary;
         existingTerms.stream().filter(t -> t.getUri() != null).forEach(t -> idToTerm.put(t.getUri(), t));
     }
 
@@ -200,7 +204,8 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
-                nt -> term.setProperties(Collections.singletonMap(DC.Terms.REFERENCES, new HashSet<>(splitIntoMultipleValues(nt)))));
+                nt -> term.setProperties(
+                        Collections.singletonMap(DC.Terms.REFERENCES, new HashSet<>(splitIntoMultipleValues(nt)))));
         getAttributeValue(termRow, SKOS.RELATED).ifPresent(
                 rt -> mapSkosRelated(term, splitIntoMultipleValues(rt)));
         getAttributeValue(termRow, SKOS.RELATED_MATCH).ifPresent(
@@ -241,17 +246,20 @@ class LocalizedSheetImporter {
     }
 
     private void setParentTerms(Term term, Set<String> parents) {
-        parents.forEach(parentIdentification -> getReferencedTerm(parentIdentification, SKOS.BROADER, term).ifPresent(
-                term::addParentTerm));
+        parents.forEach(
+                parentIdentification -> getReferencedTerm(parentIdentification, SKOS.BROADER, term, true).ifPresent(
+                        term::addParentTerm));
     }
 
-    private Optional<Term> getReferencedTerm(String identification, String relationship, Term subject) {
-        final Term referenced = getTerm(identification);
+    private Optional<Term> getReferencedTerm(String identification, String relationship, Term subject,
+                                             boolean allowExternal) {
+        final Term referenced = getTerm(identification, allowExternal);
         if (referenced == null) {
             LOG.warn("No term identified by '{}' found for term '{}' and relationship <{}>.", identification,
                      subject.getLabel().get(langTag), relationship);
             return Optional.empty();
         }
+        verifyReferencedTermFromThisOrImportedVocabulary(referenced, subject, relationship);
         if ((subject.getUri() != null && Objects.equals(referenced.getUri(), subject.getUri()))
                 || Objects.equals(referenced.getLabel(langTag), subject.getLabel(langTag))) {
             LOG.trace("Skipping self-reference for term '{}' and relationship <{}>.", subject.getLabel().get(langTag),
@@ -261,11 +269,22 @@ class LocalizedSheetImporter {
         return Optional.of(referenced);
     }
 
+    private void verifyReferencedTermFromThisOrImportedVocabulary(Term referenced, Term subject, String relationship) {
+        if (referenced.getVocabulary() != null && !Objects.equals(targetVocabulary.getUri(),
+                                                                  referenced.getVocabulary()) && Utils.emptyIfNull(
+                targetVocabulary.getImportedVocabularies()).stream().noneMatch(
+                u -> Objects.equals(referenced.getVocabulary(), u))) {
+            throw new ReferencedTermInUnrelatedVocabularyException(
+                    "Term " + referenced + " referenced by " + subject + " via <" + relationship + "> belongs to a vocabulary not related to the target vocabulary.",
+                    "error.vocabulary.import.excel.externalParentUnrelatedVocabulary");
+        }
+    }
+
     private void mapSkosRelated(Term subject, Set<String> objects) {
         final URI propertyUri = URI.create(SKOS.RELATED);
         objects.forEach(object -> {
             try {
-                getReferencedTerm(object, SKOS.RELATED, subject)
+                getReferencedTerm(object, SKOS.RELATED, subject, false)
                         .ifPresent(objectTerm -> rawDataToInsert.add(
                                 new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm)));
             } catch (IllegalArgumentException e) {
@@ -275,10 +294,20 @@ class LocalizedSheetImporter {
         });
     }
 
-    private Term getTerm(String identification) {
+    private Term getTerm(String identification, boolean allowExternal) {
+        if (labelToTerm.containsKey(identification)) {
+            return labelToTerm.get(identification);
+        }
         try {
-            return labelToTerm.containsKey(identification) ? labelToTerm.get(identification) :
-                   idToTerm.get(URI.create(prefixMap.resolvePrefixed(identification)));
+            final URI uri = URI.create(prefixMap.resolvePrefixed(identification));
+            if (idToTerm.containsKey(uri)) {
+                return idToTerm.get(uri);
+            } else if (allowExternal) {
+                return termRepositoryService.find(uri).orElse(null);
+            } else {
+                LOG.warn("'{}' is not a known term label or identifier. Skipping it.", identification);
+                return null;
+            }
         } catch (IllegalArgumentException e) {
             LOG.warn("'{}' is not a known term label nor is it a valid URI. Skipping it.", identification);
             return null;
