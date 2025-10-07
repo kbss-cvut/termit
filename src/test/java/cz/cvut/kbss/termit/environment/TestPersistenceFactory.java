@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.environment;
 
 import cz.cvut.kbss.jopa.Persistence;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
+import cz.cvut.kbss.jopa.model.JOPAExperimentalProperties;
 import cz.cvut.kbss.ontodriver.rdf4j.config.Rdf4jOntoDriverProperties;
 import cz.cvut.kbss.termit.persistence.MainPersistenceFactory;
 import jakarta.annotation.PostConstruct;
@@ -61,15 +62,16 @@ public class TestPersistenceFactory {
     private void init() {
         final Map<String, String> properties = MainPersistenceFactory.defaultParams();
         properties.put(ONTOLOGY_PHYSICAL_URI_KEY, config.getRepository().getUrl());
-        properties.put(Rdf4jOntoDriverProperties.USE_VOLATILE_STORAGE, Boolean.TRUE.toString());
-        properties.put(Rdf4jOntoDriverProperties.USE_INFERENCE, Boolean.TRUE.toString());
+        properties.put(Rdf4jOntoDriverProperties.USE_VOLATILE_STORAGE, "true");
+        properties.put(Rdf4jOntoDriverProperties.USE_INFERENCE, "true");
         properties.put(DATA_SOURCE_CLASS, config.getPersistence().getDriver());
         properties.put(LANG, config.getPersistence().getLanguage());
-        properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
+        properties.put(PREFER_MULTILINGUAL_STRING, "true");
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(Rdf4jOntoDriverProperties.LOAD_ALL_THRESHOLD, "1");
         properties.put(Rdf4jOntoDriverProperties.REPOSITORY_CONFIG, "classpath:rdf4j-memory-rdfs.ttl");
-        properties.put(Rdf4jOntoDriverProperties.INFERENCE_IN_DEFAULT_CONTEXT, Boolean.TRUE.toString());
+        properties.put(Rdf4jOntoDriverProperties.INFERENCE_IN_DEFAULT_CONTEXT, "true");
+        properties.put(JOPAExperimentalProperties.QUERY_ENABLE_ENTITY_LOADING_OPTIMIZER, "true");
         this.emf = Persistence.createEntityManagerFactory("termitTestPU", properties);
     }
 

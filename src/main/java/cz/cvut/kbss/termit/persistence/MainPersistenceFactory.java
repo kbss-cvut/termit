@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence;
 
 import cz.cvut.kbss.jopa.Persistence;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
+import cz.cvut.kbss.jopa.model.JOPAExperimentalProperties;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProvider;
 import cz.cvut.kbss.ontodriver.config.OntoDriverProperties;
@@ -71,7 +72,7 @@ public class MainPersistenceFactory {
         properties.put(ONTOLOGY_PHYSICAL_URI_KEY, configuration.getRepository().getUrl());
         properties.put(DATA_SOURCE_CLASS, configuration.getPersistence().getDriver());
         properties.put(LANG, configuration.getPersistence().getLanguage());
-        properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
+        properties.put(PREFER_MULTILINGUAL_STRING, "true");
         if (configuration.getRepository().getUsername() != null) {
             properties.put(OntoDriverProperties.DATA_SOURCE_USERNAME, configuration.getRepository().getUsername());
             properties.put(OntoDriverProperties.DATA_SOURCE_PASSWORD, configuration.getRepository().getPassword());
@@ -79,6 +80,7 @@ public class MainPersistenceFactory {
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(Rdf4jOntoDriverProperties.LOAD_ALL_THRESHOLD, "1");
         properties.put(JOPAPersistenceProperties.LRU_CACHE_CAPACITY, "32768");
+        properties.put(JOPAExperimentalProperties.QUERY_ENABLE_ENTITY_LOADING_OPTIMIZER, "true");
         this.emf = Persistence.createEntityManagerFactory("termitPU", properties);
     }
 
