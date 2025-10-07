@@ -203,7 +203,7 @@ public class ResourceService
         LOG.trace("Saving new content of resource {}.", resource);
         final File file = (File) resource;
         if (documentManager.exists(file)) {
-            documentManager.createBackup(file, BackupReason.UNKNOWN); // TODO remove or/and move elsewhere
+            documentManager.createBackup(file, BackupReason.UNKNOWN);
         }
         documentManager.saveFileContent(file, content);
     }

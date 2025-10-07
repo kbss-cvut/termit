@@ -5,8 +5,8 @@ import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitiali
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.service.document.backup.BackupFileUtils;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
+import cz.cvut.kbss.termit.service.document.backup.DocumentFileUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +62,7 @@ public abstract class BaseDocumentTestRunner extends BaseServiceTestRunner {
         final List<java.io.File> backupFiles = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Instant instant = Instant.ofEpochMilli(System.currentTimeMillis() - (i + 1) * 10000);
-            final String newPath = BackupFileUtils.generateBackupFileName(file, reason, instant) + ".bz2";
+            final String newPath = DocumentFileUtils.generateBackupFileName(file, reason, instant) + ".bz2";
             final Path target = documentDir.resolve(newPath);
             Files.createFile(target);
             backupFiles.add(target.toFile());

@@ -12,23 +12,25 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-public class BackupFileUtils {
-    private static final Logger LOG = LoggerFactory.getLogger(BackupFileUtils.class);
+public class DocumentFileUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentFileUtils.class);
     static final String BACKUP_NAME_SEPARATOR = "~";
     static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
                                                                               .withZone(ZoneId.systemDefault());
     static final int BACKUP_TIMESTAMP_LENGTH = 19;
 
-    private BackupFileUtils() {
+    private DocumentFileUtils() {
         throw new AssertionError();
     }
+
     /**
      * Resolves {@code file} inside the {@code termitDir}.
-     * If instructed to verify the file existence, throws then the resolved path is not a file (or does not exist).
-     * @param termitDir the directory with termit files
-     * @param file the file to resol ve
+     *
+     * @param termitDir    the directory with termit files
+     * @param file         the file to resolve
      * @param verifyExists whether check for file existence
      * @return the resolved file in the file system
+     * @throws NotFoundException when {@code verifyExists} is {@code true} and the resolved file does not exist
      */
     public static java.io.File resolveTermitFile(Path termitDir, File file, boolean verifyExists) {
         Objects.requireNonNull(termitDir);
