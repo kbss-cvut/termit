@@ -134,7 +134,7 @@ public class ExcelImporter implements VocabularyImporter {
                     }
                     final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
                             new LocalizedSheetImporter.Services(termService, languageService),
-                            prefixMap, terms);
+                            prefixMap, terms, targetVocabulary);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
@@ -232,6 +232,7 @@ public class ExcelImporter implements VocabularyImporter {
     }
 
     private void persistNewTerms(List<Term> terms, Vocabulary targetVocabulary, Set<TermRelationship> rawDataToInsert) {
+        terms.forEach(Term::splitExternalAndInternalParents);
         // Ensure all parents are saved before we start adding children
         terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
              .forEach(root -> {
@@ -260,7 +261,7 @@ public class ExcelImporter implements VocabularyImporter {
                 () -> NotFoundException.create(Vocabulary.class, vocabularyIri));
         LOG.debug("Importing translations for terms in vocabulary {}.", vocabularyIri);
         try {
-            final List<Term> terms = readTermsFromSheet(data);
+            final List<Term> terms = readTermsFromSheet(data, targetVocabulary);
             terms.forEach(t -> {
                 identifyTermByLabelIfNecessary(t, targetVocabulary);
                 final Optional<Term> existingTerm = termService.find(t.getUri());
@@ -295,7 +296,7 @@ public class ExcelImporter implements VocabularyImporter {
         }
     }
 
-    private List<Term> readTermsFromSheet(@Nonnull ImportInput data) throws IOException {
+    private List<Term> readTermsFromSheet(@Nonnull ImportInput data, Vocabulary targetVocabulary) throws IOException {
         List<Term> terms = Collections.emptyList();
         for (InputStream input : data.data()) {
             final Workbook workbook = new XSSFWorkbook(input);
@@ -309,7 +310,7 @@ public class ExcelImporter implements VocabularyImporter {
                 }
                 final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
                         new LocalizedSheetImporter.Services(termService, languageService),
-                        prefixMap, terms);
+                        prefixMap, terms, targetVocabulary);
                 terms = sheetImporter.resolveTermsFromSheet(sheet);
             }
         }
