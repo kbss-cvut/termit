@@ -64,8 +64,8 @@ import java.util.Set;
  * The importer processes all sheets in the workbook, skipping any sheets that do not match the expected format. The
  * format is given by column labels available currently in Czech and English (all other languages should use English
  * column labels). It is expected that each sheet contains the same terms in the same order. Sheet name should
- * correspond to language in English. Term identifiers may be specified in the sheet, but if they do not correspond to
- * the target vocabulary, they will be adjusted.
+ * correspond to the language in English. Term identifiers may be specified in the sheet, but if they do not correspond
+ * to the target vocabulary, they will be adjusted.
  * <p>
  * The importer removes any existing terms that appear in the sheet and would thus be overwritten.
  * <p>

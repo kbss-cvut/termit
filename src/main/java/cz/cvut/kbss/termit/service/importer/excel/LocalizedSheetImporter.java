@@ -75,7 +75,7 @@ class LocalizedSheetImporter {
     private final List<Term> existingTerms;
     private final cz.cvut.kbss.termit.model.Vocabulary targetVocabulary;
 
-    private Map<String, Integer> attributeToColumn;
+    private Map<String, List<Integer>> attributeToColumn;
     private String langTag;
 
     private final Map<String, Term> labelToTerm = new LinkedHashMap<>();
@@ -171,7 +171,7 @@ class LocalizedSheetImporter {
                 if (labelToTerm.containsKey(label.get())) {
                     throw new VocabularyImportException(
                             "Sheet " + sheet.getSheetName() + " contains multiple terms with the same label: " + label.get(),
-                            "error.vocabulary.import.excel.duplicateLabel");
+                            "error.vocabulary.import.excel.duplicateLabel").addParameter("label", label.get());
                 }
                 labelToTerm.put(label.get(), term);
             } else {
@@ -271,7 +271,8 @@ class LocalizedSheetImporter {
 
     private boolean sameLabelSameVocabulary(Term subject, Term referenced) {
         return Objects.equals(subject.getLabel(langTag), referenced.getLabel(langTag))
-                && (Objects.equals(targetVocabulary.getUri(), referenced.getVocabulary()) || referenced.getVocabulary() == null);
+                && (Objects.equals(targetVocabulary.getUri(),
+                                   referenced.getVocabulary()) || referenced.getVocabulary() == null);
     }
 
     private void verifyReferencedTermFromThisOrImportedVocabulary(Term referenced, Term subject, String relationship) {
@@ -376,15 +377,16 @@ class LocalizedSheetImporter {
         return Optional.of(codes.get(0));
     }
 
-    private static Map<String, Integer> resolveAttributeColumns(Row attributes, Properties attributeMapping) {
-        final Map<String, Integer> attributesToColumn = new HashMap<>();
+    private static Map<String, List<Integer>> resolveAttributeColumns(Row attributes, Properties attributeMapping) {
+        final Map<String, List<Integer>> attributesToColumn = new HashMap<>();
         final Iterator<Cell> it = attributes.cellIterator();
         while (it.hasNext()) {
             final Cell cell = it.next();
             final String columnLabel = cell.getStringCellValue();
             for (Map.Entry<Object, Object> e : attributeMapping.entrySet()) {
                 if (e.getValue().equals(columnLabel)) {
-                    attributesToColumn.put(e.getKey().toString(), cell.getColumnIndex());
+                    attributesToColumn.computeIfAbsent(e.getKey().toString(), k -> new ArrayList<>())
+                                      .add(cell.getColumnIndex());
                     break;
                 }
             }
@@ -397,12 +399,10 @@ class LocalizedSheetImporter {
             // Attribute column is not present at all
             return Optional.empty();
         }
-        final Cell cell = row.getCell(attributeToColumn.get(attributeIri));
-        if (cell == null) {
-            // The cell may be null instead of blank if there are no other columns behind at
-            return Optional.empty();
-        }
-        final String cellValue = row.getCell(attributeToColumn.get(attributeIri)).getStringCellValue();
+        // Cell may be null, so ensure to filter such values out
+        String cellValue = attributeToColumn.get(attributeIri).stream().map(row::getCell).filter(Objects::nonNull)
+                                              .map(c -> c.getStringCellValue().trim()).filter(s -> !s.isBlank())
+                                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER));
         return cellValue.isBlank() ? Optional.empty() : Optional.of(cellValue.trim());
     }
 
