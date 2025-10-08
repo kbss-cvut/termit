@@ -292,10 +292,10 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param uri the uri to validate
      * @throws cz.cvut.kbss.termit.exception.InvalidIdentifierException when the URI is invalid
-     * @see cz.cvut.kbss.termit.service.IdentifierResolver#isUri(String)
+     * @see cz.cvut.kbss.termit.service.IdentifierResolver#isAbsoluteUri(String)
      */
     protected void validateUri(URI uri) throws InvalidIdentifierException {
-        if (uri != null && !IdentifierResolver.isUri(uri.toString())) {
+        if (uri != null && !IdentifierResolver.isAbsoluteUri(uri.toString())) {
             throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter("uri", uri.toString());
         }
     }

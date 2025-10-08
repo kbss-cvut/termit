@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.exception.importing.ReferencedTermInUnrelatedVocabula
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -310,7 +311,7 @@ class LocalizedSheetImporter {
             final URI uri = URI.create(prefixMap.resolvePrefixed(identification));
             if (idToTerm.containsKey(uri)) {
                 return idToTerm.get(uri);
-            } else if (allowExternal) {
+            } else if (allowExternal && IdentifierResolver.isAbsoluteUri(uri.toString())) {
                 return termRepositoryService.findDetached(uri).orElse(null);
             } else {
                 LOG.warn("'{}' is not a known term label or identifier. Skipping it.", identification);
@@ -382,7 +383,7 @@ class LocalizedSheetImporter {
         final Iterator<Cell> it = attributes.cellIterator();
         while (it.hasNext()) {
             final Cell cell = it.next();
-            final String columnLabel = cell.getStringCellValue();
+            final String columnLabel = cell.getStringCellValue().trim();
             for (Map.Entry<Object, Object> e : attributeMapping.entrySet()) {
                 if (e.getValue().equals(columnLabel)) {
                     attributesToColumn.computeIfAbsent(e.getKey().toString(), k -> new ArrayList<>())
