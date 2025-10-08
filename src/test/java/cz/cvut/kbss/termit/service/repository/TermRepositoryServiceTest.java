@@ -51,6 +51,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
@@ -778,7 +779,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         });
 
         final AssetRemovalException ex = assertThrows(AssetRemovalException.class, () -> sut.remove(toRemove));
-        assertEquals(ex.getMessageId(), "error.term.remove.annotationsExist");
+        assertEquals("error.term.remove.annotationsExist", ex.getMessageId());
     }
 
     @Test
@@ -801,5 +802,17 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         assertDoesNotThrow(() -> sut.remove(toRemove));
         assertNull(em.find(Term.class, toRemove.getUri()));
+    }
+
+    @Test
+    void findDetachedReturnsTermDetachedFromPersistenceContext() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+
+        transactional(() -> {
+            final Optional<Term> result = sut.findDetached(term.getUri());
+            assertTrue(result.isPresent());
+            assertFalse(em.contains(result.get()));
+        });
     }
 }

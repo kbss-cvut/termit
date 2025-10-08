@@ -159,7 +159,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     private void prepareTermForPersist(Term instance, Vocabulary vocabulary) {
-        // new term will be missing value for sparql attribute which is required for validation
+        // A new term will be missing value for sparql attribute which is required for validation
         instance.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         validate(instance);
 
@@ -204,6 +204,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         termDao.persist(instance, vocabulary);
     }
 
+    /**
+     * Finds a term with the specified identifier and returns it detached from the current persistence context.
+     *
+     * @param id Term identifier
+     * @return Optional term detached from persistence context
+     */
     @Transactional(readOnly = true)
     public Optional<Term> findDetached(URI id) {
         return termDao.find(id).stream().peek(termDao::detach).findFirst();
@@ -259,10 +265,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
+     * Gets all terms from vocabulary, regardless of their position in the term hierarchy.
      * <p>
-     * This returns the full versions of all terms (complete metadata) contained in a vocabulary's glossary and thus its
-     * performance may be worse. If complete metadata are not required, use {@link #findAll(Vocabulary, Pageable)}.
+     * This returns the full versions of all terms (complete metadata) contained in vocabulary's glossary, and thus its
+     * performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @return List of full terms ordered by label
@@ -387,7 +393,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * Gets all terms with label matching the searchString
      *
      * @param searchString String to search by
-     * @param pageSpec Page specifying result number and position
+     * @param pageSpec     Page specifying result number and position
      * @return List of terms ordered by label
      */
     @Transactional(readOnly = true)
@@ -399,7 +405,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * Gets all terms regardless vocabulary and returns them in a flat structure.
      *
      * @param searchString String to search by
-     * @param pageSpec Page specifying result number and position
+     * @param pageSpec     Page specifying result number and position
      * @return List of terms ordered by label in a flat structure
      */
     @Transactional(readOnly = true)
@@ -431,12 +437,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return Matching terms in a flat structure
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary,
+                                                          Pageable pageSpec) {
         return termDao.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     /**
-     * Finds all terms which are subterms of the specified term.
+     * Finds all terms that are subterms of the specified term.
      *
      * @param parent Parent term
      * @return List of subterms
@@ -447,7 +454,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
+     * Checks whether a term with the specified label exists in vocabulary with the specified URI.
      *
      * @param label      Label to check
      * @param vocabulary Vocabulary in which terms will be searched
@@ -460,10 +467,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets the identifier of a term with the specified label in a vocabulary with the specified URI.
+     * Gets the identifier of a term with the specified label in vocabulary with the specified URI.
      * <p>
-     * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
-     * considered same here.
+     * Note that this method uses case-insensitive comparison, so that two labels differing just in character case are
+     * considered the same here.
      *
      * @param label      Label to search by
      * @param vocabulary Vocabulary in which terms will be searched
@@ -477,7 +484,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets the identifier of a vocabulary to which a term with the specified id belongs.
+     * Gets the identifier of vocabulary to which a term with the specified id belongs.
      *
      * @param termId Term identifier
      * @return Vocabulary identifier wrapped in {@code Optional}
