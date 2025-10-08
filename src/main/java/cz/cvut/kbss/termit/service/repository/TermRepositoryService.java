@@ -205,6 +205,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Transactional(readOnly = true)
+    public Optional<Term> findDetached(URI id) {
+        return termDao.find(id).stream().peek(termDao::detach).findFirst();
+    }
+
+    @Transactional(readOnly = true)
     public TermInfo findRequiredTermInfo(URI id) {
         return termDao.findTermInfo(id).orElseThrow(() -> NotFoundException.create(TermInfo.class.getSimpleName(), id));
     }

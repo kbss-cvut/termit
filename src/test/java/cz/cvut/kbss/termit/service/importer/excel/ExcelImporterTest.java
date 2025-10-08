@@ -821,7 +821,7 @@ class ExcelImporterTest {
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
         referencedParent.setGlossary(Generator.generateUri());
-        when(termService.find(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -842,7 +842,7 @@ class ExcelImporterTest {
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
         referencedParent.setGlossary(Generator.generateUri());
-        when(termService.find(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final ReferencedTermInUnrelatedVocabularyException ex = assertThrows(
                 ReferencedTermInUnrelatedVocabularyException.class, () -> sut.importVocabulary(
@@ -851,5 +851,28 @@ class ExcelImporterTest {
                                                            Environment.loadFile(
                                                                    "data/import-with-external-parents-en.xlsx"))));
         assertEquals("error.vocabulary.import.excel.externalParentUnrelatedVocabulary", ex.getMessageId());
+    }
+
+    @Test
+    void importSupportsExternalParentWithSameLabelAsImportedTerm() {
+        initVocabularyResolution();
+        final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
+        vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
+        final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
+        referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setGlossary(Generator.generateUri());
+        referencedParent.setLabel(MultilingualString.create("Building", "en"));
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-external-parents-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        final Term resultTerm = captor.getValue();
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
     }
 }

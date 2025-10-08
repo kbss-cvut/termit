@@ -261,12 +261,17 @@ class LocalizedSheetImporter {
         }
         verifyReferencedTermFromThisOrImportedVocabulary(referenced, subject, relationship);
         if ((subject.getUri() != null && Objects.equals(referenced.getUri(), subject.getUri()))
-                || Objects.equals(referenced.getLabel(langTag), subject.getLabel(langTag))) {
+                || sameLabelSameVocabulary(subject, referenced)) {
             LOG.trace("Skipping self-reference for term '{}' and relationship <{}>.", subject.getLabel().get(langTag),
                       relationship);
             return Optional.empty();
         }
         return Optional.of(referenced);
+    }
+
+    private boolean sameLabelSameVocabulary(Term subject, Term referenced) {
+        return Objects.equals(subject.getLabel(langTag), referenced.getLabel(langTag))
+                && (Objects.equals(targetVocabulary.getUri(), referenced.getVocabulary()) || referenced.getVocabulary() == null);
     }
 
     private void verifyReferencedTermFromThisOrImportedVocabulary(Term referenced, Term subject, String relationship) {
@@ -305,7 +310,7 @@ class LocalizedSheetImporter {
             if (idToTerm.containsKey(uri)) {
                 return idToTerm.get(uri);
             } else if (allowExternal) {
-                return termRepositoryService.find(uri).orElse(null);
+                return termRepositoryService.findDetached(uri).orElse(null);
             } else {
                 LOG.warn("'{}' is not a known term label or identifier. Skipping it.", identification);
                 return null;
