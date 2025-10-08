@@ -875,4 +875,33 @@ class ExcelImporterTest {
         final Term resultTerm = captor.getValue();
         assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
     }
+
+    @Test
+    void importSupportsMultipleColumnsPerPluralAttribute() {
+        initVocabularyResolution();
+        when(termService.exists(any())).thenReturn(false);
+        when(termService.exists(URI.create("http://example.com/another-vocabulary/terms/relatedMatch"))).thenReturn(
+                true);
+        when(termService.exists(
+                URI.create("http://example.com/another-vocabulary/terms/anotherRelatedMatch"))).thenReturn(true);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-multicolumn-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> termCaptor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(termCaptor.capture(), eq(vocabulary));
+        final ArgumentCaptor<Collection<Quad>> quadsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(dataDao).insertRawData(quadsCaptor.capture());
+        assertEquals(2, quadsCaptor.getValue().size());
+        assertEquals(List.of(new Quad(termCaptor.getAllValues().get(0).getUri(), URI.create(SKOS.RELATED_MATCH),
+                                      URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
+                                      vocabulary.getUri()),
+                             (new Quad(termCaptor.getAllValues().get(0).getUri(), URI.create(SKOS.RELATED_MATCH),
+                                       URI.create("http://example.com/another-vocabulary/terms/anotherRelatedMatch"),
+                                       vocabulary.getUri()))),
+                     quadsCaptor.getValue());
+    }
 }
