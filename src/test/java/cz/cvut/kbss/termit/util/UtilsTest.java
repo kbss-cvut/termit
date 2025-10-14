@@ -37,7 +37,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.Collection;
@@ -276,5 +279,11 @@ class UtilsTest {
     @CsvSource("4368, 4.37, 5000, 5.00, 2100, 2.10")
     void millisToStringConvertsSpecifiedValueToSecondsAndRounds(long millis, String expected) {
         assertEquals(expected.replace('.', DECIMAL_SEPARATOR), Utils.millisToString(millis));
+    }
+
+    @Test
+    void resolveContentTypeRecognizesTtlWhenPrefixIsWithoutAtSign() throws IOException {
+        final MultipartFile mf = new MockMultipartFile("mock-aviation-safety-skos.ttl", UtilsTest.class.getClassLoader().getResourceAsStream("data/mock-aviation-safety-skos.ttl"));
+        assertEquals("text/turtle", Utils.resolveContentType(mf));
     }
 }

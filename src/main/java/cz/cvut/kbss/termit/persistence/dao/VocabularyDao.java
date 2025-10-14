@@ -283,6 +283,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             find(entity.getUri()).ifPresent(em::remove);
             refreshLastModified();
             em.getEntityManagerFactory().getCache().evict(vocabularyContext);
+            em.getEntityManagerFactory().getCache().evict(Glossary.class, entity.getGlossary().getUri(), null);
+            em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

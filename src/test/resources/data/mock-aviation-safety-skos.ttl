@@ -1,0 +1,21 @@
+PREFIX maso: <http://onto.fel.cvut.cz/ontologies/mock-aviation-safety/>
+PREFIX dcterms:           <http://purl.org/dc/terms/>
+PREFIX skos:              <http://www.w3.org/2004/02/skos/core#>
+PREFIX owl:               <http://www.w3.org/2002/07/owl#>
+PREFIX rdf:               <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:              <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:               <http://www.w3.org/2001/XMLSchema#>
+
+
+<http://onto.fel.cvut.cz/ontologies/mock-aviation-safety--skos>
+        rdf:type             skos:ConceptScheme , owl:Ontology;
+        dcterms:created      "2025-10-02T16:12:15.527+02:00"^^xsd:dateTime;
+        dcterms:creator      "Bogdan Kostov";
+        dcterms:description  ""@en;
+        dcterms:title        "mock aviation safety ontology"@en .
+
+maso:airplane  rdf:type  skos:Concept;
+        skos:altLabel   "Aeroplane"@en;
+        skos:broader    maso:fixed_wing_aircraft;
+        skos:inScheme   <http://onto.fel.cvut.cz/ontologies/mock-aviation-safety--skos>;
+        skos:prefLabel  "Airplane"@en .
