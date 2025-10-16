@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.importing.MissingLanguageTagException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -382,13 +383,17 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importFailsIfAnEmptyLanguageTagIsProvidedForMultilingualProperties() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            assertThrows(IllegalArgumentException.class, () ->
-                    sut.importVocabulary(new VocabularyImporter.ImportConfiguration(true, null, persister),
-                                         new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                            Environment.loadFile(
-                                                                                    "data/test-glossary.ttl"),
-                                                                            Environment.loadFile(
-                                                                                    "data/test-glossary-with-definition-with-empty-language-tag.ttl"))));
+            final MissingLanguageTagException ex = assertThrows(
+                    MissingLanguageTagException.class, () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                            new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
+                                    "data/test-glossary.ttl"),
+                                                               Environment.loadFile(
+                                                                       "data/test-glossary-with-definition-with-empty-language-tag.ttl"))));
+            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zablokovaný-uživatel-termitu",
+                         ex.getParameters().get("term"));
+            assertEquals("http://www.w3.org/2004/02/skos/core#definition",
+                         ex.getParameters().get("property"));
         });
     }
 
@@ -578,8 +583,9 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                    new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                            Environment.loadFile("data/test-glossary-with-language.ttl")));
+                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                                                    Environment.loadFile(
+                                                                            "data/test-glossary-with-language.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
@@ -594,7 +600,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
                                  new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                         Environment.loadFile("data/test-glossary-without-language.ttl")));
+                                                                    Environment.loadFile(
+                                                                            "data/test-glossary-without-language.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
@@ -610,7 +617,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
                                  new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                         Environment.loadFile("data/test-glossary-without-language-and-label-matching-instance.ttl")));
+                                                                    Environment.loadFile(
+                                                                            "data/test-glossary-without-language-and-label-matching-instance.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
