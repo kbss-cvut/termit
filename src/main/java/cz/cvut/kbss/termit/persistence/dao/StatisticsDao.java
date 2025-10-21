@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
 import cz.cvut.kbss.termit.dto.statistics.TermTypeDistributionDto;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
@@ -48,11 +47,8 @@ public class StatisticsDao {
 
     private final EntityManager em;
 
-    private final Configuration config;
-
-    public StatisticsDao(EntityManager em, Configuration config) {
+    public StatisticsDao(EntityManager em) {
         this.em = em;
-        this.config = config;
     }
 
     private static RdfsResource initNoType() {

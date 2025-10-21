@@ -98,13 +98,15 @@ public class Document extends Resource implements SupportsStorage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (!(o instanceof Document document)) {
             return false;
         }
-        return Objects.equals(getUri(), document.getUri());
+        return super.equals(document);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Override

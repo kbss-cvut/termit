@@ -441,6 +441,9 @@ public class TextAnalysisService {
                                                                            new ParameterizedTypeReference<>() {
                                                                            });
                 this.supportedLanguages = response.getBody();
+                if (supportedLanguages == null) {
+                    this.supportedLanguages = Set.of();
+                }
                 LOG.trace("Text analysis supported languages: {}", supportedLanguages);
             } catch (RuntimeException e) {
                 LOG.error("Unable to get list of supported languages from text analysis service at '{}'.",

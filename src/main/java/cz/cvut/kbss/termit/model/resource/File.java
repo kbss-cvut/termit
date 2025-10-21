@@ -31,7 +31,6 @@ import cz.cvut.kbss.termit.model.util.SupportsStorage;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.util.Objects;
 import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_soubor)
@@ -75,13 +74,15 @@ public class File extends Resource implements SupportsStorage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (!(o instanceof File file)) {
             return false;
         }
-        return Objects.equals(getUri(), file.getUri());
+        return super.equals(file);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Override

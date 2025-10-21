@@ -68,9 +68,6 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (!(o instanceof DeleteChangeRecord that)) {
             return false;
         }
@@ -78,6 +75,11 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
             return false;
         }
         return Objects.equals(label, that.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), label);
     }
 
     @Override

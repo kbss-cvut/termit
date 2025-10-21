@@ -118,7 +118,6 @@ public class AssetDao {
             rec.setEditor(em.find(User.class, rec.getModifiedBy()));
             return Optional.of(rec);
         } catch (NoResultException e) {
-            // TODO This should be a temporary until we are able to properly record asset deletion as a change
             LOG.warn("Skipping change record of deleted asset {}.", asset);
             return Optional.empty();
         }
