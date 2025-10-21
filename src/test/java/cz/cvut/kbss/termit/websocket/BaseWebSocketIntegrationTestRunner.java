@@ -128,22 +128,22 @@ public abstract class BaseWebSocketIntegrationTestRunner {
     protected class TestWebSocketSessionHandler implements WebSocketHandler {
 
         @Override
-        public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        public void afterConnectionEstablished(@Nonnull WebSocketSession session) {
             LOG.info("WebSocket connection established");
         }
 
         @Override
-        public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+        public void handleMessage(@Nonnull WebSocketSession session, WebSocketMessage<?> message) throws Exception {
             LOG.info("WebSocket message received: {}", message.getPayload());
         }
 
         @Override
-        public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        public void handleTransportError(@Nonnull WebSocketSession session, @Nonnull Throwable exception) {
             LOG.error("WebSocket transport error", exception);
         }
 
         @Override
-        public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
+        public void afterConnectionClosed(@Nonnull WebSocketSession session, @Nonnull CloseStatus closeStatus) {
             LOG.info("WebSocket connection closed");
         }
 
@@ -158,7 +158,7 @@ public abstract class BaseWebSocketIntegrationTestRunner {
         private final AtomicReference<Throwable> exception = new AtomicReference<>();
 
         @Override
-        public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+        public void afterConnected(@Nonnull StompSession session, @Nonnull StompHeaders connectedHeaders) {
             super.afterConnected(session, connectedHeaders);
             LOG.info("STOMP session connected");
         }

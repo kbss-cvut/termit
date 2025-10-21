@@ -17,12 +17,10 @@
  */
 package cz.cvut.kbss.termit.service;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.TransactionalTestRunner;
 import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
 import cz.cvut.kbss.termit.environment.config.TestServiceConfig;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -35,8 +33,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.net.URI;
-
 @Execution(ExecutionMode.SAME_THREAD)
 @EnableAspectJAutoProxy
 @EnableTransactionManagement
@@ -48,12 +44,4 @@ import java.net.URI;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class BaseServiceTestRunner extends TransactionalTestRunner {
-
-    private static final String EXISTENCE_CHECK_QUERY = "ASK { ?x a ?type . }";
-
-    protected void verifyInstancesDoNotExist(String type, EntityManager em) {
-        Assertions.assertFalse(
-                em.createNativeQuery(EXISTENCE_CHECK_QUERY, Boolean.class).setParameter("type", URI.create(type))
-                        .getSingleResult());
-    }
 }
