@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.rest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.environment.Environment;
+import cz.cvut.kbss.termit.environment.util.Parallelizable;
 import cz.cvut.kbss.termit.rest.handler.RestExceptionHandler;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /**
  * Common configuration for REST controller tests.
  */
-public class BaseControllerTestRunner {
+public class BaseControllerTestRunner implements Parallelizable {
 
     protected ObjectMapper objectMapper;
 

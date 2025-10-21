@@ -24,6 +24,8 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -50,6 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * This tests only the security aspect of {@link UserController}. Functionality is tested in {@link
  * UserControllerTest}.
  */
+@Execution(ExecutionMode.SAME_THREAD)
 @WebMvcTest(UserController.class)
 @Import({TestRestSecurityConfig.class})
 class UserControllerSecurityTest extends BaseControllerTestRunner {

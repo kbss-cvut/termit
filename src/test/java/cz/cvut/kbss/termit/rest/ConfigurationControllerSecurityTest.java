@@ -26,6 +26,8 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -49,6 +51,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @WithMockUser
 @WebMvcTest(ConfigurationController.class)
 @Import({TestRestSecurityConfig.class})
