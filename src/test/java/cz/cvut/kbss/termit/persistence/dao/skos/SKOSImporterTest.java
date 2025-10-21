@@ -628,4 +628,19 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         // description was imported even when it does not match the language
         assertEquals("To jest wersja testowa słownictwa TermIt", result.getDescription().get("pl"));
     }
+
+    @Test
+    void importFailsIfTermDoesNotHaveAnyLabel() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            final VocabularyImportException ex = assertThrows(
+                    VocabularyImportException.class, () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                            new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
+                                    "data/test-glossary-term-without-label.ttl"))));
+            assertEquals("error.vocabulary.import.skos.missingLabel", ex.getMessageId());
+            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zablokovaný-uživatel-termitu",
+                         ex.getParameters().get("term"));
+        });
+    }
 }

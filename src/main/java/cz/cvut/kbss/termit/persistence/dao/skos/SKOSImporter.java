@@ -128,6 +128,7 @@ public class SKOSImporter implements VocabularyImporter {
         }
         LOG.debug("Vocabulary import started.");
         parseDataFromStreams(mediaType, inputStreams);
+        validateTermLabels();
         validateRequiredLanguageTags();
 
         glossaryIri = resolveGlossaryIriFromImportedData(model);
@@ -161,6 +162,21 @@ public class SKOSImporter implements VocabularyImporter {
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
+    }
+
+    private void validateTermLabels() {
+        LOG.debug("Checking terms have labels.");
+        model.stream().filter(s -> RDF.TYPE.equals(s.getPredicate()) && SKOS.CONCEPT.equals(s.getObject()))
+             .forEach(s -> {
+                 final Resource term = s.getSubject();
+                 final Set<Statement> labels = model.filter(term, SKOS.PREF_LABEL, null);
+                 if (labels.isEmpty()) {
+                     final VocabularyImportException ex = new VocabularyImportException("Term " + term + " has no label.",
+                                                         "error.vocabulary.import.skos.missingLabel");
+                     ex.addParameter("term", term.stringValue());
+                     throw ex;
+                 }
+             });
     }
 
     /**

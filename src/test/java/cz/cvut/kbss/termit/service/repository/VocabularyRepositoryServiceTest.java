@@ -337,7 +337,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                         "<https://example.org/cs> a skos:ConceptScheme ; " +
                         "    dc:title \"Test\"@en ; " +
                         "    <http://purl.org/dc/terms/language> \"cs\" ." +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
 
 
         final MultipartFile mf = new MockMultipartFile(
@@ -359,7 +359,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                         "<https://example.org/cs> a skos:ConceptScheme ; " +
                         "    dc:title \"Test\"@en ; " +
                         "    <http://purl.org/dc/terms/language> \"cs\" ." +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
 
 
         final MultipartFile mf = new MockMultipartFile(
@@ -478,7 +478,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                         "<https://example.org/cs> a skos:ConceptScheme ; " +
                         "    dc:title \"Test\"@en ;" +
                         "    <http://purl.org/dc/terms/language> \"en\" ." +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
 
 
         final MultipartFile mf = new MockMultipartFile(
