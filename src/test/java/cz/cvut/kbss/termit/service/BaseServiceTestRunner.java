@@ -24,6 +24,8 @@ import cz.cvut.kbss.termit.environment.config.TestServiceConfig;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -35,6 +37,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.net.URI;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @EnableAspectJAutoProxy
 @EnableTransactionManagement
 @ExtendWith(SpringExtension.class)

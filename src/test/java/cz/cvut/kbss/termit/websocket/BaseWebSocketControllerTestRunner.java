@@ -27,6 +27,8 @@ import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,7 @@ import java.util.UUID;
 import static cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate.MESSAGE_IDENTIFIER_HEADER;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
