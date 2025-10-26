@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.backup.BackupFile;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
+import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,11 +61,14 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
     @MockitoBean
     private DocumentBackupManager backupManager;
 
+    @MockitoBean
+    private ResourceRepositoryService resourceRepositoryService;
+
     private DefaultDocumentManager sut;
 
     @BeforeEach
     void setupSut() {
-        sut = new DefaultDocumentManager(configuration, backupManager);
+        sut = new DefaultDocumentManager(configuration, backupManager, resourceRepositoryService);
     }
 
     @Test
@@ -133,6 +137,20 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         final TypeAwareResource result = sut.getAsResource(file);
         assertTrue(result.getMediaType().isPresent());
         assertEquals(MediaType.TEXT_HTML_VALUE, result.getMediaType().get());
+    }
+
+    @Test
+    void saveFileContentsUpdatesFileLastModifiedTimestamp() throws Exception {
+        final InputStream content = loadFile("data/rdfa-simple.html");
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        final Instant before = Utils.timestamp().minusSeconds(1);
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        sut.saveFileContent(file, content);
+        assertNotNull(file.getLastModified());
+        assertTrue(file.getLastModified().isAfter(before));
     }
 
     @Test
