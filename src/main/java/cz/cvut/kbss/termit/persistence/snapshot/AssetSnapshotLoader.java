@@ -51,10 +51,16 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
     public List<Snapshot> findSnapshots(T asset) {
         Objects.requireNonNull(asset);
         try {
-            return em.createNativeQuery("SELECT ?s ?created ?asset ?type WHERE { " +
+            return em.createNativeQuery("SELECT ?s ?created ?asset ?type ?author ?authorFirstName ?authorLastName ?authorUsername WHERE { " +
                                                 "?s a ?snapshotType ; " +
                                                 "?hasCreated ?created ; " +
                                                 "?versionOf ?source . " +
+                                                "OPTIONAL { " +
+                                                "  ?s ?hasCreator ?author . " +
+                                                "  ?author ?firstName ?authorFirstName ; " +
+                                                "          ?lastName ?authorLastName ; " +
+                                                "          ?accountName ?authorUsername . " +
+                                                "} " +
                                                 "BIND (?source as ?asset) . " +
                                                 "BIND (?snapshotType as ?type) . " +
                                                 "} ORDER BY DESC(?created)",
@@ -62,6 +68,14 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                      .setParameter("snapshotType", snapshotType)
                      .setParameter("hasCreated",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                     .setParameter("hasCreator",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_sioc_has_creator))
+                     .setParameter("firstName",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
+                     .setParameter("lastName",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni))
+                     .setParameter("accountName",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uzivatelske_jmeno))
                      .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
                      .setParameter("source", asset).getResultList();
         } catch (RuntimeException e) {

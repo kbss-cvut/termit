@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.VocabularySnapshotDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -43,6 +44,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
@@ -165,27 +167,39 @@ public class VocabularyService
     }
 
     /**
-     * @return {@link cz.cvut.kbss.termit.dto.VocabularyDto}
+     * @return {@link cz.cvut.kbss.termit.dto.VocabularyDto} or {@link cz.cvut.kbss.termit.dto.VocabularySnapshotDto}
      */
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> find(URI id) {
-        return repositoryService.find(id).map(v -> {
-            // Enhance vocabulary data with info on current user's access level
-            final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(v);
-            dto.setAccessLevel(getAccessLevel(v));
-            return dto;
-        });
+        return repositoryService.find(id).map(this::toDto);
     }
 
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary findRequired(URI id) {
-        // Enhance vocabulary data with info on current user's access level
-        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(
-                repositoryService.findRequired(id));
-        dto.setAccessLevel(getAccessLevel(dto));
+        return toDto(repositoryService.findRequired(id));
+    }
+
+    private Vocabulary toDto(Vocabulary v) {
+        final cz.cvut.kbss.termit.dto.VocabularyDto dto;
+        if (v.isSnapshot()) {
+            final VocabularySnapshotDto snapshotDto = new VocabularySnapshotDto(v);
+            loadFullAuthorInfo(snapshotDto);
+            dto = snapshotDto;
+        } else {
+            dto = new cz.cvut.kbss.termit.dto.VocabularyDto(v);
+        }
+        dto.setAccessLevel(getAccessLevel(v));
         return dto;
+    }
+
+    private void loadFullAuthorInfo(VocabularySnapshotDto snapshotDto) {
+        if (snapshotDto.getAuthor() != null && snapshotDto.getAuthor().getFirstName() == null) {
+            context.getBean(UserRepositoryService.class)
+                   .find(snapshotDto.getAuthor().getUri())
+                   .ifPresent(snapshotDto::setAuthor);
+        }
     }
 
     @Override

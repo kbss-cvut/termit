@@ -51,11 +51,17 @@ public class SnapshotDao {
     public Optional<Snapshot> find(URI uri) {
         Objects.requireNonNull(uri);
         try {
-            return Optional.of((Snapshot) em.createNativeQuery("SELECT DISTINCT ?s ?created ?asset ?type WHERE { " +
+            return Optional.of((Snapshot) em.createNativeQuery("SELECT DISTINCT ?s ?created ?asset ?type ?author ?authorFirstName ?authorLastName ?authorUsername WHERE { " +
                                                                        "?id a ?snapshotType ; " +
                                                                        "a ?type ; " +
                                                                        "?versionOf ?asset ; " +
                                                                        "?hasCreated ?created . " +
+                                                                       "OPTIONAL { " +
+                                                                       "  ?id ?hasCreator ?author . " +
+                                                                       "  ?author ?firstName ?authorFirstName ; " +
+                                                                       "          ?lastName ?authorLastName ; " +
+                                                                       "          ?accountName ?authorUsername . " +
+                                                                       "} " +
                                                                        "FILTER (?type in (?supportedTypes)) " +
                                                                        "BIND (?id as ?s)" +
                                                                        "}", "Snapshot")
@@ -64,6 +70,14 @@ public class SnapshotDao {
                                             .setParameter("versionOf", URI.create(Vocabulary.s_p_je_verzi))
                                             .setParameter("hasCreated",
                                                           URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                                            .setParameter("hasCreator",
+                                                          URI.create(Vocabulary.s_p_sioc_has_creator))
+                                            .setParameter("firstName",
+                                                          URI.create(Vocabulary.s_p_ma_krestni_jmeno))
+                                            .setParameter("lastName",
+                                                          URI.create(Vocabulary.s_p_ma_prijmeni))
+                                            .setParameter("accountName",
+                                                          URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
                                             .setParameter("supportedTypes", SNAPSHOT_TYPES)
                                             .getSingleResult());
         } catch (NoResultException e) {

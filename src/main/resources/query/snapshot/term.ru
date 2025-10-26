@@ -1,5 +1,6 @@
 PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX sioc: <http://rdfs.org/sioc/ns#>
 
 INSERT {
     GRAPH ?vocabularySnapshot {
@@ -12,6 +13,7 @@ INSERT {
                skos:exactMatch ?exactMatchSnapshot ;
                pdp:je-verzí-pojmu ?t ;
                pdp:má-datum-a-čas-vytvoření-verze ?created ;
+               sioc:has_creator ?author ;
                ?y ?z .
     }
 } WHERE {
