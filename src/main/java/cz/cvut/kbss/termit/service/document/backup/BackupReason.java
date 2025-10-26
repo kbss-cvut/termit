@@ -4,6 +4,7 @@ package cz.cvut.kbss.termit.service.document.backup;
  * The reason for creation of a document file backup
  */
 public enum BackupReason {
+    REUPLOAD,
     TEXT_ANALYSIS,
     NEW_OCCURRENCE,
     SCHEDULED,

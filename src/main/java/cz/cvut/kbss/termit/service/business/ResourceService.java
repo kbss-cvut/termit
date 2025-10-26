@@ -32,11 +32,12 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
-import cz.cvut.kbss.termit.service.document.backup.BackupReason;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -196,15 +197,17 @@ public class ResourceService
      */
     @Transactional
     @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
-    public void saveContent(Resource resource, InputStream content) {
+    public void saveContent(Resource resource, InputStream content, ResourceSaveReason saveReason) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(content);
         verifyFileOperationPossible(resource, "Content saving");
         LOG.trace("Saving new content of resource {}.", resource);
         final File file = (File) resource;
-        if (documentManager.exists(file)) {
-            documentManager.createBackup(file, BackupReason.UNKNOWN);
-        }
+        DocumentBackupManager.mapSaveReasonToBackup(saveReason).ifPresent(backupReason -> {
+            if (documentManager.exists(file)) {
+                documentManager.createBackup(file, backupReason);
+            }
+        });
         documentManager.saveFileContent(file, content);
     }
 
@@ -256,6 +259,7 @@ public class ResourceService
             throw new TermItException("Document " + doc + " does not have a vocabulary.");
         }
         final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
+        file.updateLastModified();
         repositoryService.persist(file, vocabulary);
         repositoryService.update(doc);
     }

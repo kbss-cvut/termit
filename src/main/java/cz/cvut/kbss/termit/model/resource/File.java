@@ -23,14 +23,17 @@ import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.util.SupportsStorage;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
+import java.time.Instant;
 import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_soubor)
@@ -44,6 +47,9 @@ public class File extends Resource implements SupportsStorage {
 
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String language;
+
+    @OWLDataProperty(iri = DC.Terms.MODIFIED)
+    private Instant lastModified;
 
     @Types
     private Set<String> types;
@@ -62,6 +68,14 @@ public class File extends Resource implements SupportsStorage {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public Instant getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(Instant lastModified) {
+        this.lastModified = lastModified;
     }
 
     public Set<String> getTypes() {
@@ -116,5 +130,9 @@ public class File extends Resource implements SupportsStorage {
             final String labelPart = dotIndex > 0 ? getLabel().substring(0, getLabel().indexOf('.')) : getLabel();
             return IdentifierResolver.normalizeToAscii(labelPart) + '_' + getUri().hashCode();
         }
+    }
+
+    public void updateLastModified() {
+        setLastModified(Utils.timestamp());
     }
 }

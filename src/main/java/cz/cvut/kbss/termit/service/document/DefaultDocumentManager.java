@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.service.document.backup.BackupFile;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.document.backup.DocumentFileUtils;
+import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -60,11 +61,14 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private final Configuration configuration;
     private final DocumentBackupManager backupManager;
+    private final ResourceRepositoryService resourceRepositoryService;
 
     @Autowired
-    public DefaultDocumentManager(Configuration config, DocumentBackupManager backupManager) {
+    public DefaultDocumentManager(Configuration config, DocumentBackupManager backupManager,
+                                  ResourceRepositoryService resourceRepositoryService) {
         this.configuration = config;
         this.backupManager = backupManager;
+        this.resourceRepositoryService = resourceRepositoryService;
     }
 
     private Path storageDirectory() {
@@ -114,6 +118,8 @@ public class DefaultDocumentManager implements DocumentManager {
             LOG.debug("Saving file content to {}.", target);
             Files.createDirectories(target.getParentFile().toPath());
             Files.copy(content, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            file.updateLastModified();
+            resourceRepositoryService.update(file);
         } catch (IOException e) {
             throw new DocumentManagerException("Unable to write out file content.", e);
         }

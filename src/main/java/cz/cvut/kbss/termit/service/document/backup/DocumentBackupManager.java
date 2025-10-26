@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.document.backup;
 import cz.cvut.kbss.termit.exception.BackupManagerException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -39,11 +41,23 @@ import java.util.stream.Stream;
 @Service
 public class DocumentBackupManager {
     private static final Logger LOG = LoggerFactory.getLogger(DocumentBackupManager.class);
-
+    private static final Map<ResourceSaveReason, BackupReason> SAVE_REASONS_FOR_BACKUP = Map.of(
+            ResourceSaveReason.NEW_OCCURRENCE, BackupReason.NEW_OCCURRENCE,
+            ResourceSaveReason.REUPLOAD, BackupReason.REUPLOAD
+    );
     private final Path storageDirectory;
 
     public DocumentBackupManager(Configuration config) {
         this.storageDirectory = Path.of(config.getFile().getStorage());
+    }
+
+    /**
+     * Maps {@link ResourceSaveReason} to {@link BackupReason} if the backup should be created.
+     * @param saveReason The save reason to map
+     * @return The mapped value or empty optional if the backup should not be created.
+     */
+    public static Optional<BackupReason> mapSaveReasonToBackup(ResourceSaveReason saveReason) {
+        return Optional.ofNullable(SAVE_REASONS_FOR_BACKUP.get(saveReason));
     }
 
     /**
