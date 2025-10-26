@@ -44,6 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.BufferedReader;
@@ -79,6 +80,9 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @MockitoBean
+    private DocumentManager documentManager;
 
     @Autowired
     private DescriptorFactory descriptorFactory;

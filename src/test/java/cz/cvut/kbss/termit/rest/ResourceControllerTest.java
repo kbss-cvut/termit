@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
@@ -191,7 +192,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                                                                           return req;
                                                                       }))
                .andExpect(status().isNoContent());
-        verify(resourceServiceMock).saveContent(eq(file), any(InputStream.class));
+        verify(resourceServiceMock).saveContent(eq(file), any(InputStream.class), eq(ResourceSaveReason.UNKNOWN));
     }
 
     @Test
