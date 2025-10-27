@@ -48,8 +48,11 @@ public class File extends Resource implements SupportsStorage {
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String language;
 
-    @OWLDataProperty(iri = DC.Terms.MODIFIED)
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
     private Instant modified;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_zalohy)
+    private Instant lastBackup;
 
     @Types
     private Set<String> types;
@@ -76,6 +79,14 @@ public class File extends Resource implements SupportsStorage {
 
     public void setModified(Instant modified) {
         this.modified = modified;
+    }
+
+    public Instant getLastBackup() {
+        return lastBackup;
+    }
+
+    public void setLastBackup(Instant lastBackup) {
+        this.lastBackup = lastBackup;
     }
 
     public Set<String> getTypes() {
@@ -138,5 +149,13 @@ public class File extends Resource implements SupportsStorage {
      */
     public void updateModified() {
         setModified(Utils.timestamp());
+    }
+
+    /**
+     * Sets the {@link #lastBackup} to the current timestamp.
+     * @see Utils#timestamp()
+     */
+    public void updateLastBackup() {
+        setLastBackup(Utils.timestamp());
     }
 }

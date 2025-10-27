@@ -16,7 +16,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,37 +37,35 @@ public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
     @MockitoBean
     private DocumentBackupManager backupManager;
 
-    private List<File> olderThan24Hours;
-    private List<File> modifiedIn24Hours;
+    private List<File> backupAfterModified;
+    private List<File> modifiedAfterBackup;
 
     private Instant now;
-    private Instant since;
-
     @BeforeEach
     public void generateFiles() {
         now = Utils.timestamp();
-        since = now.minus(24, ChronoUnit.HOURS);
 
-        olderThan24Hours = new ArrayList<>();
-        modifiedIn24Hours = new ArrayList<>();
+        backupAfterModified = new ArrayList<>();
+        modifiedAfterBackup = new ArrayList<>();
 
         transactional(() -> em.persist(document));
 
         // generate files with different modified timestamps
-        Stream.of(now.minus(25, ChronoUnit.HOURS),
-                now.minus(23, ChronoUnit.HOURS),
-                now.minusSeconds(10),
-                Instant.EPOCH)
-              .forEach(modified -> {
+        Map.of(now.minus(25, ChronoUnit.HOURS), now.minus(24, ChronoUnit.HOURS),
+                now.minus(23, ChronoUnit.HOURS), now.minus(25, ChronoUnit.HOURS),
+                now.minusSeconds(10), now.minus(1, ChronoUnit.MINUTES),
+                Instant.EPOCH, now.minus(5, ChronoUnit.DAYS))
+           .forEach((modified, lastBackup) -> {
 
             File file = generateDocumentFile();
             file.setModified(modified);
+            file.setLastBackup(lastBackup);
             transactional(() -> em.persist(file));
 
-            if (modified.isAfter(since)) {
-                modifiedIn24Hours.add(file);
+            if (modified.isAfter(lastBackup)) {
+                modifiedAfterBackup.add(file);
             } else {
-                olderThan24Hours.add(file);
+                backupAfterModified.add(file);
             }
         });
     }
@@ -83,10 +81,10 @@ public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
     }
 
     @Test
-    void findFilesModifiedSinceReturnsFilesSince24Hours() {
-        List<File> files = sut.findFilesModifiedSince(since);
-        assertEquals(modifiedIn24Hours.size(), files.size());
-        assertTrue(files.containsAll(modifiedIn24Hours));
+    void findFilesToBackupReturnsFilesModifiedAfterLastBackup() {
+        List<File> files = sut.findFilesToBackup();
+        assertEquals(modifiedAfterBackup.size(), files.size());
+        assertTrue(files.containsAll(modifiedAfterBackup));
     }
 
     @Test
@@ -94,9 +92,9 @@ public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
         doNothing().when(backupManager).createBackup(any(), any());
         sut.backupModifiedDocuments();
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        verify(backupManager, times(modifiedIn24Hours.size())).createBackup(fileCaptor.capture(), eq(BackupReason.SCHEDULED));
+        verify(backupManager, times(modifiedAfterBackup.size())).createBackup(fileCaptor.capture(), eq(BackupReason.SCHEDULED));
         List<File> files = fileCaptor.getAllValues();
-        assertEquals(modifiedIn24Hours.size(), files.size());
-        assertTrue(files.containsAll(modifiedIn24Hours));
+        assertEquals(modifiedAfterBackup.size(), files.size());
+        assertTrue(files.containsAll(modifiedAfterBackup));
     }
 }

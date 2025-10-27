@@ -7,6 +7,7 @@ public enum BackupReason {
     REUPLOAD,
     TEXT_ANALYSIS,
     NEW_OCCURRENCE,
+    REMOVE_OCCURRENCE,
     SCHEDULED,
     BACKUP_RESTORE,
     UNKNOWN;

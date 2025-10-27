@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -15,6 +16,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,12 +45,15 @@ public class DocumentBackupManager {
     private static final Logger LOG = LoggerFactory.getLogger(DocumentBackupManager.class);
     private static final Map<ResourceSaveReason, BackupReason> SAVE_REASONS_FOR_BACKUP = Map.of(
             ResourceSaveReason.NEW_OCCURRENCE, BackupReason.NEW_OCCURRENCE,
+            ResourceSaveReason.REMOVE_OCCURRENCE, BackupReason.REMOVE_OCCURRENCE,
             ResourceSaveReason.REUPLOAD, BackupReason.REUPLOAD
     );
     private final Path storageDirectory;
+    private final ResourceRepositoryService resourceRepositoryService;
 
-    public DocumentBackupManager(Configuration config) {
+    public DocumentBackupManager(Configuration config, ResourceRepositoryService resourceRepositoryService) {
         this.storageDirectory = Path.of(config.getFile().getStorage());
+        this.resourceRepositoryService = resourceRepositoryService;
     }
 
     /**
@@ -85,6 +90,7 @@ public class DocumentBackupManager {
      * @param file File to back up
      * @throws NotFoundException If the file cannot be found
      */
+    @Transactional
     public void createBackup(File file, BackupReason reason) {
         Objects.requireNonNull(file);
         Objects.requireNonNull(reason);
@@ -99,6 +105,9 @@ public class DocumentBackupManager {
             compressFile(backupFile);
             // delete the uncompressed copy
             backupFile.delete();
+            // update last backup timestamp
+            file.updateLastBackup();
+            resourceRepositoryService.update(file);
         } catch (IOException e) {
             throw new BackupManagerException("Unable to backup file.", e);
         }

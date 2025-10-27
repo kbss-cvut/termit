@@ -2,14 +2,12 @@ package cz.cvut.kbss.termit.service.document.backup;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.model.resource.File_;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -24,13 +22,13 @@ public class DocumentScheduledBackupManager {
     }
 
     /**
-     * Creates a scheduled backup of all document files modified in last 24 hours.
+     * Creates a scheduled backup of all document files with missing backup since last modification.
      * <p>
      * Every day at {@code 03:00}.
      */
     @Scheduled(cron = "0 0 3 * * *")
     void backupModifiedDocuments() {
-        List<File> toBackup = findFilesModifiedSince(Utils.timestamp().minus(24, ChronoUnit.HOURS));
+        List<File> toBackup = findFilesToBackup();
         if (!toBackup.isEmpty()) {
             LOG.info("Starting scheduled backup for {} document files", toBackup.size());
         }
@@ -43,9 +41,18 @@ public class DocumentScheduledBackupManager {
         }
     }
 
-    List<File> findFilesModifiedSince(Instant since) {
-        return em.createQuery("SELECT DISTINCT f FROM File f WHERE f.modified > :since", File.class)
-                .setParameter("since", since)
+    List<File> findFilesToBackup() {
+        return em.createNativeQuery("""
+                SELECT DISTINCT ?f WHERE {
+                    ?f a ?file;
+                        ?hasModified ?modified;
+                        ?hasLastBackup ?lastBackup .
+                    FILTER(?modified > ?lastBackup)
+                }
+                """, File.class)
+                .setParameter("file", File_.entityClassIRI)
+                .setParameter("hasModified", File_.modified.getIRI())
+                .setParameter("hasLastBackup", File_.lastBackup.getIRI())
                 .getResultList();
     }
 

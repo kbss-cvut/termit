@@ -5,11 +5,13 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.BaseDocumentTestRunner;
+import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.nio.file.Files;
 import java.time.Instant;
@@ -30,9 +32,12 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     private static final String BACKUP_REASON_VALUES_METHOD_SIGNATURE = "cz.cvut.kbss.termit.service.document.backup.BackupReason#values()";
     private DocumentBackupManager sut;
 
+    @MockitoBean
+    ResourceRepositoryService resourceRepositoryService;
+
     @BeforeEach
     void setupSut() {
-        sut = new DocumentBackupManager(configuration);
+        sut = new DocumentBackupManager(configuration, resourceRepositoryService);
     }
 
     @Test

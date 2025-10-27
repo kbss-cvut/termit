@@ -690,3 +690,11 @@ termit-pojem:vlastní-atribut
     <http://www.w3.org/2004/02/skos/core#prefLabel>
             "Custom attribute"@en , "Vlastní atribut"@cs .
 
+termit-pojem:má-datum-a-čas-poslední-zálohy
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has date and time of the last backup"@en , "Má datum a čas poslední zálohy"@cs .
