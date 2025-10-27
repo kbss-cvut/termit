@@ -27,6 +27,9 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     private static final String BACKUP_REASON_VALUES_METHOD_SIGNATURE = "cz.cvut.kbss.termit.service.document.backup.BackupReason#values()";
@@ -38,6 +41,22 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     @BeforeEach
     void setupSut() {
         sut = new DocumentBackupManager(configuration, resourceRepositoryService);
+    }
+
+    @Test
+    void createBackupUpdatesFileLastBackupTimestamp() {
+        Instant old = Instant.now().minusSeconds(10);
+        final File file = new File();
+        file.setModified(old);
+        file.setLastBackup(old);
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        sut.createBackup(file, BackupReason.UNKNOWN);
+        verify(resourceRepositoryService).update(eq(file));
+        assertEquals(old, file.getModified()); // no change expected
+        assertTrue(old.isBefore(file.getLastBackup()));
     }
 
     @Test
