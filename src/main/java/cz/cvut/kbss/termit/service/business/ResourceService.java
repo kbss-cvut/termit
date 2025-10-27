@@ -259,7 +259,7 @@ public class ResourceService
             throw new TermItException("Document " + doc + " does not have a vocabulary.");
         }
         final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
-        file.updateLastModified();
+        file.updateModified();
         repositoryService.persist(file, vocabulary);
         repositoryService.update(doc);
     }

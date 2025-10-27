@@ -43,8 +43,12 @@ public abstract class BaseDocumentTestRunner extends BaseServiceTestRunner {
         configuration.getFile().setStorage(termitStorageDir.toString());
     }
 
-    protected java.io.File generateFile() throws Exception {
-        return generateFile("test", ".html", CONTENT);
+    protected java.io.File generateFile() {
+        try {
+            return generateFile("test", ".html", CONTENT);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected java.io.File generateFile(String filePrefix, String fileSuffix, String fileContent) throws Exception {

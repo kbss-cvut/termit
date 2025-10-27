@@ -149,8 +149,8 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         document.addFile(file);
         file.setDocument(document);
         sut.saveFileContent(file, content);
-        assertNotNull(file.getLastModified());
-        assertTrue(file.getLastModified().isAfter(before));
+        assertNotNull(file.getModified());
+        assertTrue(file.getModified().isAfter(before));
     }
 
     @Test
