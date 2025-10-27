@@ -118,7 +118,7 @@ public class DefaultDocumentManager implements DocumentManager {
             LOG.debug("Saving file content to {}.", target);
             Files.createDirectories(target.getParentFile().toPath());
             Files.copy(content, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            file.updateLastModified();
+            file.updateModified();
             resourceRepositoryService.update(file);
         } catch (IOException e) {
             throw new DocumentManagerException("Unable to write out file content.", e);

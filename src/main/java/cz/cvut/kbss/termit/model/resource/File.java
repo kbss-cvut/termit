@@ -49,7 +49,7 @@ public class File extends Resource implements SupportsStorage {
     private String language;
 
     @OWLDataProperty(iri = DC.Terms.MODIFIED)
-    private Instant lastModified;
+    private Instant modified;
 
     @Types
     private Set<String> types;
@@ -70,12 +70,12 @@ public class File extends Resource implements SupportsStorage {
         this.language = language;
     }
 
-    public Instant getLastModified() {
-        return lastModified;
+    public Instant getModified() {
+        return modified;
     }
 
-    public void setLastModified(Instant lastModified) {
-        this.lastModified = lastModified;
+    public void setModified(Instant modified) {
+        this.modified = modified;
     }
 
     public Set<String> getTypes() {
@@ -132,7 +132,11 @@ public class File extends Resource implements SupportsStorage {
         }
     }
 
-    public void updateLastModified() {
-        setLastModified(Utils.timestamp());
+    /**
+     * Sets the {@link #modified} to the current timestamp.
+     * @see Utils#timestamp()
+     */
+    public void updateModified() {
+        setModified(Utils.timestamp());
     }
 }
