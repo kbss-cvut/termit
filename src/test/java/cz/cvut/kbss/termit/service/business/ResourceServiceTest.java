@@ -36,7 +36,6 @@ import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
-import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -184,7 +183,7 @@ class ResourceServiceTest {
     @Test
     void saveContentCreatesBackupBeforeSavingFileContentInDocumentManager() {
         final ResourceSaveReason saveReason = ResourceSaveReason.REUPLOAD;
-        final BackupReason backupReason = DocumentBackupManager.mapSaveReasonToBackup(saveReason).orElseThrow();
+        final BackupReason backupReason = saveReason.getBackupReason().orElseThrow();
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
         final File file = Generator.generateFileWithId("test.html");
         when(documentManager.exists(file)).thenReturn(true);

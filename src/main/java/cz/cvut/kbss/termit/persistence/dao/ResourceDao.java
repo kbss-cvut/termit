@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.resource.File_;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -171,5 +172,23 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
+    }
+
+    /**
+     * Finds {@link File Files} with {@link File#modified modification} after the {@link File#lastBackup last backup}.
+     */
+    public List<File> findModifiedFilesAfterLastBackup() {
+        return em.createNativeQuery("""
+                SELECT DISTINCT ?f WHERE {
+                    ?f a ?file;
+                        ?hasModified ?modified;
+                        ?hasLastBackup ?lastBackup .
+                    FILTER(?modified > ?lastBackup)
+                }
+                """, File.class)
+                 .setParameter("file", File_.entityClassIRI)
+                 .setParameter("hasModified", File_.modified.getIRI())
+                 .setParameter("hasLastBackup", File_.lastBackup.getIRI())
+                 .getResultList();
     }
 }
