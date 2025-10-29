@@ -1,8 +1,7 @@
 package cz.cvut.kbss.termit.service.document.backup;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.model.resource.File_;
+import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,14 +9,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Periodically creates backups for document files
+ */
 @Service
-public class DocumentScheduledBackupManager {
-    private static final Logger LOG = LoggerFactory.getLogger(DocumentScheduledBackupManager.class);
-    private final EntityManager em;
+public class ScheduledDocumentBackupManager {
+    private static final Logger LOG = LoggerFactory.getLogger(ScheduledDocumentBackupManager.class);
+    private final ResourceDao resourceDao;
     private final DocumentBackupManager backupManager;
 
-    public DocumentScheduledBackupManager(EntityManager em, DocumentBackupManager backupManager) {
-        this.em = em;
+    public ScheduledDocumentBackupManager(ResourceDao resourceDao, DocumentBackupManager backupManager) {
+        this.resourceDao = resourceDao;
         this.backupManager = backupManager;
     }
 
@@ -28,7 +30,7 @@ public class DocumentScheduledBackupManager {
      */
     @Scheduled(cron = "0 0 3 * * *")
     void backupModifiedDocuments() {
-        List<File> toBackup = findFilesToBackup();
+        List<File> toBackup = resourceDao.findModifiedFilesAfterLastBackup();
         if (!toBackup.isEmpty()) {
             LOG.info("Starting scheduled backup for {} document files", toBackup.size());
         }
@@ -39,21 +41,6 @@ public class DocumentScheduledBackupManager {
                 LOG.error("Failed to create scheduled backup for file <{}>", file.getUri(), e);
             }
         }
-    }
-
-    List<File> findFilesToBackup() {
-        return em.createNativeQuery("""
-                SELECT DISTINCT ?f WHERE {
-                    ?f a ?file;
-                        ?hasModified ?modified;
-                        ?hasLastBackup ?lastBackup .
-                    FILTER(?modified > ?lastBackup)
-                }
-                """, File.class)
-                .setParameter("file", File_.entityClassIRI)
-                .setParameter("hasModified", File_.modified.getIRI())
-                .setParameter("hasLastBackup", File_.lastBackup.getIRI())
-                .getResultList();
     }
 
 }

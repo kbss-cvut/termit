@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.document.backup;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.service.document.BaseDocumentTestRunner;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,9 +28,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
+public class ScheduledDocumentBackupManagerTest extends BaseDocumentTestRunner {
     @Autowired
-    private DocumentScheduledBackupManager sut;
+    private ScheduledDocumentBackupManager sut;
+
+    @Autowired
+    private ResourceDao resourceDao;
 
     @Autowired
     private EntityManager em;
@@ -37,15 +41,12 @@ public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
     @MockitoBean
     private DocumentBackupManager backupManager;
 
-    private List<File> backupAfterModified;
     private List<File> modifiedAfterBackup;
 
-    private Instant now;
     @BeforeEach
     public void generateFiles() {
-        now = Utils.timestamp();
+        Instant now = Utils.timestamp();
 
-        backupAfterModified = new ArrayList<>();
         modifiedAfterBackup = new ArrayList<>();
 
         transactional(() -> em.persist(document));
@@ -64,8 +65,6 @@ public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
 
             if (modified.isAfter(lastBackup)) {
                 modifiedAfterBackup.add(file);
-            } else {
-                backupAfterModified.add(file);
             }
         });
     }
@@ -82,7 +81,7 @@ public class DocumentScheduledBackupManagerTest extends BaseDocumentTestRunner {
 
     @Test
     void findFilesToBackupReturnsFilesModifiedAfterLastBackup() {
-        List<File> files = sut.findFilesToBackup();
+        List<File> files = resourceDao.findModifiedFilesAfterLastBackup();
         assertEquals(modifiedAfterBackup.size(), files.size());
         assertTrue(files.containsAll(modifiedAfterBackup));
     }
