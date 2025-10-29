@@ -37,7 +37,6 @@ import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
-import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -193,6 +192,7 @@ public class ResourceService
      *
      * @param resource Domain resource associated with the content
      * @param content  Resource content
+     * @param saveReason Reason for saving the file content
      * @throws UnsupportedAssetOperationException If content saving is not supported for the specified resource
      */
     @Transactional
@@ -200,10 +200,11 @@ public class ResourceService
     public void saveContent(Resource resource, InputStream content, ResourceSaveReason saveReason) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(content);
+        Objects.requireNonNull(saveReason);
         verifyFileOperationPossible(resource, "Content saving");
         LOG.trace("Saving new content of resource {}.", resource);
         final File file = (File) resource;
-        DocumentBackupManager.mapSaveReasonToBackup(saveReason).ifPresent(backupReason -> {
+        saveReason.getBackupReason().ifPresent(backupReason -> {
             if (documentManager.exists(file)) {
                 documentManager.createBackup(file, backupReason);
             }
