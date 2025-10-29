@@ -358,6 +358,7 @@ termit-pojem:vlastní-atribut
 
 termit-pojem:má-datum-a-čas-poslední-zálohy
         a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
-        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> .
+        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> ;
+        rdfs:range          xsd:dateTime .
 
 
