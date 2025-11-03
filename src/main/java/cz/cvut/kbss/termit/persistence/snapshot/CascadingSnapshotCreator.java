@@ -79,7 +79,7 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
         final Set<URI> toSnapshot = resolveVocabulariesToSnapshot(vocabulary);
         toSnapshot.forEach(v -> {
             snapshotVocabulary(v, currentUser.getUri());
-            snapshotTerms(v, currentUser.getUri());
+            snapshotTerms(v);
         });
         final Snapshot snapshot = new Snapshot(snapshotUri(vocabulary.getUri()), timestamp, vocabulary.getUri(),
                                                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
@@ -111,11 +111,10 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
           .executeUpdate();
     }
 
-    private void snapshotTerms(URI vocabulary, URI author) {
+    private void snapshotTerms(URI vocabulary) {
         em.createNativeQuery(snapshotTermQuery).setParameter("vocabulary", vocabulary)
           .setParameter("suffix", getSnapshotSuffix())
           .setParameter("created", timestamp)
-          .setParameter("author", author)
           .executeUpdate();
     }
 }

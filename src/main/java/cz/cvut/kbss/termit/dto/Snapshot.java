@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -62,7 +63,7 @@ public class Snapshot implements HasIdentifier, HasTypes, Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_je_verzi)
     private URI versionOf;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_creator, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = DC.Terms.CREATOR, fetch = FetchType.EAGER)
     private User author;
 
     @Types

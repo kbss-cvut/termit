@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -57,7 +58,7 @@ public class SnapshotDao {
                                                                        "?versionOf ?asset ; " +
                                                                        "?hasCreated ?created . " +
                                                                        "OPTIONAL { " +
-                                                                       "  ?id ?hasCreator ?author . " +
+                                                                       "  ?id ?creator ?author . " +
                                                                        "  ?author ?firstName ?authorFirstName ; " +
                                                                        "          ?lastName ?authorLastName ; " +
                                                                        "          ?accountName ?authorUsername . " +
@@ -70,8 +71,8 @@ public class SnapshotDao {
                                             .setParameter("versionOf", URI.create(Vocabulary.s_p_je_verzi))
                                             .setParameter("hasCreated",
                                                           URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                                            .setParameter("hasCreator",
-                                                          URI.create(Vocabulary.s_p_sioc_has_creator))
+                                            .setParameter("creator",
+                                                          URI.create(DC.Terms.CREATOR))
                                             .setParameter("firstName",
                                                           URI.create(Vocabulary.s_p_ma_krestni_jmeno))
                                             .setParameter("lastName",

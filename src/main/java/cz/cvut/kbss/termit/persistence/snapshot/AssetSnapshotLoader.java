@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.snapshot;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
@@ -56,7 +57,7 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                                                 "?hasCreated ?created ; " +
                                                 "?versionOf ?source . " +
                                                 "OPTIONAL { " +
-                                                "  ?s ?hasCreator ?author . " +
+                                                "  ?s ?creator ?author . " +
                                                 "  ?author ?firstName ?authorFirstName ; " +
                                                 "          ?lastName ?authorLastName ; " +
                                                 "          ?accountName ?authorUsername . " +
@@ -68,8 +69,8 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                      .setParameter("snapshotType", snapshotType)
                      .setParameter("hasCreated",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("hasCreator",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_sioc_has_creator))
+                     .setParameter("creator",
+                                   URI.create(DC.Terms.CREATOR))
                      .setParameter("firstName",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
                      .setParameter("lastName",

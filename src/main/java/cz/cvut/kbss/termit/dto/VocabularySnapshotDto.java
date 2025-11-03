@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.dto;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -36,13 +37,13 @@ import java.net.URI;
 @JsonLdAttributeOrder({"uri", "label", "description", "author"})
 public class VocabularySnapshotDto extends VocabularyDto {
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_sioc_has_creator)
+    @OWLObjectProperty(iri = DC.Terms.CREATOR)
     private UserAccount author;
 
     public VocabularySnapshotDto(Vocabulary source) {
         super(source);
-        if (source.getProperties() != null && source.getProperties().containsKey(cz.cvut.kbss.termit.util.Vocabulary.s_p_sioc_has_creator)) {
-            Object authorValue = source.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_sioc_has_creator).iterator().next();
+        if (source.getProperties() != null && source.getProperties().containsKey(DC.Terms.CREATOR)) {
+            Object authorValue = source.getProperties().get(DC.Terms.CREATOR).iterator().next();
             if (authorValue instanceof URI authorUri) {
                 this.author = new UserAccount();
                 this.author.setUri(authorUri);

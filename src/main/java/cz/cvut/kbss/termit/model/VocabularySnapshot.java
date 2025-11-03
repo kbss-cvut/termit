@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.model;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 
 /**
@@ -31,7 +32,7 @@ import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 @JsonLdAttributeOrder({"uri", "label", "description", "author"})
 public class VocabularySnapshot extends Vocabulary {
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_sioc_has_creator, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = DC.Terms.CREATOR, fetch = FetchType.EAGER)
     private UserAccount author;
 
     public UserAccount getAuthor() {
