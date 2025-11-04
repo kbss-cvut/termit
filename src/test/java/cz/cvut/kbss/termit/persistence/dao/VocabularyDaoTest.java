@@ -864,9 +864,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         assertEquals(1, relations.size());
         final RdfStatement relation = relations.get(0);
-        assertEquals(term.getUri(), relation.getObject());
+        assertEquals(term.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
-        assertEquals(secondTerm.getUri(), relation.getSubject());
+        assertEquals(secondTerm.getUri(), relation.getObject());
     }
 
     /**
@@ -874,7 +874,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
      */
     @ParameterizedTest
     @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
-    void getAnyExternalRelationsReturnsTermsWithIncommingRelations(URI termRelation) {
+    void getAnyExternalRelationsReturnsTermsWithIncomingRelations(URI termRelation) {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
@@ -897,9 +897,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         assertEquals(1, relations.size());
         final RdfStatement relation = relations.get(0);
-        assertEquals(secondTerm.getUri(), relation.getObject());
+        assertEquals(secondTerm.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
-        assertEquals(term.getUri(), relation.getSubject());
+        assertEquals(term.getUri(), relation.getObject());
     }
 
     /**
