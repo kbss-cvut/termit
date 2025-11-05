@@ -26,9 +26,11 @@ import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
+import cz.cvut.kbss.termit.util.Utils;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * Utility class describing a generic {@link #relation} between an {@link #object} and {@link #subject}
@@ -87,5 +89,25 @@ public class RdfStatement implements Serializable {
 
     public void setObject(URI object) {
         this.object = object;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof RdfStatement that)) {
+            return false;
+        }
+        return Objects.equals(object, that.object) && Objects.equals(relation,
+                                                                     that.relation) && Objects.equals(
+                subject, that.subject);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(object, relation, subject);
+    }
+
+    @Override
+    public String toString() {
+        return Utils.uriToString(subject) + " " + Utils.uriToString(relation) + " " + Utils.uriToString(object);
     }
 }
