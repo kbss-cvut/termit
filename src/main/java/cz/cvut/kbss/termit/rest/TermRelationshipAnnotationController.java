@@ -4,12 +4,15 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.business.readonly.TermRelationshipAnnotationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,8 +33,14 @@ import java.util.List;
 @RestController
 public class TermRelationshipAnnotationController extends BaseController {
 
-    public TermRelationshipAnnotationController(IdentifierResolver idResolver, Configuration config) {
+    private static final Logger LOG = LoggerFactory.getLogger(TermRelationshipAnnotationController.class);
+
+    private final TermRelationshipAnnotationService service;
+
+    public TermRelationshipAnnotationController(IdentifierResolver idResolver, Configuration config,
+                                                TermRelationshipAnnotationService service) {
         super(idResolver, config);
+        this.service = service;
     }
 
     @Operation(security = @SecurityRequirement(name = "bearer-key"),
@@ -48,8 +57,7 @@ public class TermRelationshipAnnotationController extends BaseController {
                        example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam String namespace) {
         final URI termUri = resolveIdentifier(namespace, localName);
-        // TODO
-        return null;
+        return service.findAllForSubject(termUri);
     }
 
     @Operation(security = @SecurityRequirement(name = "bearer-key"),
@@ -69,6 +77,7 @@ public class TermRelationshipAnnotationController extends BaseController {
             @Parameter(description = "Term relationship annotation")
             @RequestBody TermRelationshipAnnotation annotation) {
         final URI termUri = resolveIdentifier(namespace, localName);
-        // TODO
+        service.updateAnnotation(termUri, annotation);
+        LOG.debug("Successfully updated annotation of term relationship {}.", annotation.getRelationship());
     }
 }
