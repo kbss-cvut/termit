@@ -56,21 +56,25 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                                                 "?s a ?snapshotType ; " +
                                                 "?hasCreated ?created ; " +
                                                 "?versionOf ?source . " +
+                                                "OPTIONAL {?s ?hasAuthor ?vAuthor .} " +
+                                                "OPTIONAL {?s ?pdp_je_pojmem_ze_slovniku ?vocSnapshot . ?vocSnapshot ?hasAuthor ?tAuthor . } " +
+                                                "BIND (COALESCE(?vAuthor, ?tAuthor) as ?author) . " +
+                                                "BIND (?source as ?asset) . " +
+                                                "BIND (?snapshotType as ?type) . " +
                                                 "OPTIONAL { " +
-                                                "  ?s ?creator ?author . " +
                                                 "  ?author ?firstName ?authorFirstName ; " +
                                                 "          ?lastName ?authorLastName ; " +
                                                 "          ?accountName ?authorUsername . " +
                                                 "} " +
-                                                "BIND (?source as ?asset) . " +
-                                                "BIND (?snapshotType as ?type) . " +
                                                 "} ORDER BY DESC(?created)",
                                         "Snapshot")
                      .setParameter("snapshotType", snapshotType)
                      .setParameter("hasCreated",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("creator",
+                     .setParameter("hasAuthor",
                                    URI.create(DC.Terms.CREATOR))
+                     .setParameter("pdp_je_pojmem_ze_slovniku",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("firstName",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
                      .setParameter("lastName",
