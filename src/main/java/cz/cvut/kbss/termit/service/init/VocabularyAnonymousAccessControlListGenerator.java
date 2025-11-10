@@ -35,8 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.util.List;
 
-import static cz.cvut.kbss.termit.service.repository.RepositoryAccessControlListService.isAnonymous;
-import static cz.cvut.kbss.termit.service.repository.RepositoryAccessControlListService.isRestricted;
+import static cz.cvut.kbss.termit.service.repository.AccessControlListRepositoryService.isAnonymous;
+import static cz.cvut.kbss.termit.service.repository.AccessControlListRepositoryService.isRestricted;
 
 @Service
 public class VocabularyAnonymousAccessControlListGenerator {

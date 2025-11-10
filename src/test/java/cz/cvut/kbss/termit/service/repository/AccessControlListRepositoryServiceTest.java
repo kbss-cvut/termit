@@ -70,7 +70,7 @@ import static org.mockito.Mockito.when;
 
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-class RepositoryAccessControlListServiceTest {
+class AccessControlListRepositoryServiceTest {
 
     @Mock
     private AccessControlListDao dao;
@@ -89,7 +89,7 @@ class RepositoryAccessControlListServiceTest {
                                                             new Configuration());
 
     @InjectMocks
-    private RepositoryAccessControlListService sut;
+    private AccessControlListRepositoryService sut;
 
     @Test
     void addRecordLoadsTargetAccessControlListAddsSpecifiedRecordToItAndUpdatesIt() {
