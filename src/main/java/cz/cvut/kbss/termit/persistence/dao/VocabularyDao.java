@@ -283,6 +283,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             find(entity.getUri()).ifPresent(em::remove);
             refreshLastModified();
             em.getEntityManagerFactory().getCache().evict(vocabularyContext);
+            em.getEntityManagerFactory().getCache().evict(Glossary.class, entity.getGlossary().getUri(), null);
+            em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -497,12 +499,12 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
         try {
             return em.createNativeQuery("""
-                                                SELECT DISTINCT ?object ?relation ?subject {
-                                                    ?object a ?vocabularyType ;
-                                                       ?relation ?subject .
-                                                    FILTER(?object != ?subject) .
+                                                SELECT DISTINCT ?subject ?relation ?object {
+                                                    ?subject a ?vocabularyType ;
+                                                       ?relation ?object .
+                                                    FILTER(?subject != ?object) .
                                                     FILTER(?relation NOT IN (?excluded)) .
-                                                } ORDER BY ?object ?relation
+                                                } ORDER BY ?subject ?relation
                                                 """, "RDFStatement")
                      .setParameter("subject", vocabularyUri)
                      .setParameter("excluded", excludedRelations)
@@ -525,7 +527,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
         try {
             return em.createNativeQuery("""
-                                                SELECT DISTINCT ?object ?relation ?subject WHERE {
+                                                SELECT DISTINCT ?subject ?relation ?object WHERE {
                                                         ?term a ?termType;
                                                             ?inVocabulary ?vocabulary .
 
@@ -534,21 +536,21 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                            ?secondTerm a ?termType;
                                                                ?inVocabulary ?secondVocabulary .
 
-                                                           BIND(?term as ?object)
-                                                           BIND(?secondTerm as ?subject)
+                                                           BIND(?term as ?subject)
+                                                           BIND(?secondTerm as ?object)
                                                         } UNION {
                                                            ?secondTerm ?relation ?term .
                                                            ?secondTerm a ?termType;
                                                                ?inVocabulary ?secondVocabulary .
 
-                                                           BIND(?secondTerm as ?object)
-                                                           BIND(?term as ?subject)
+                                                           BIND(?secondTerm as ?subject)
+                                                           BIND(?term as ?object)
                                                         }
 
                                                         FILTER(?relation IN (?deniedRelations))
-                                                        FILTER(?object != ?subject)
+                                                        FILTER(?subject != ?object)
                                                         FILTER(?secondVocabulary != ?vocabulary)
-                                                } ORDER by ?object ?relation ?subject
+                                                } ORDER by ?subject ?relation ?object
                                                 """, "RDFStatement"
                      ).setMaxResults(DEFAULT_PAGE_SIZE)
                      .setParameter("termType", termType)

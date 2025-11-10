@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -83,6 +84,7 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
+
 /**
  * Business logic concerning vocabularies.
  * <p>
@@ -97,6 +99,8 @@ public class VocabularyService
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
 
     private final VocabularyRepositoryService repositoryService;
+
+    private final ExternalVocabularyService externalVocabularyService;
 
     private final ChangeRecordService changeRecordService;
 
@@ -117,6 +121,7 @@ public class VocabularyService
     private ApplicationEventPublisher eventPublisher;
 
     public VocabularyService(VocabularyRepositoryService repositoryService,
+                             ExternalVocabularyService externalVocabularyService,
                              ChangeRecordService changeRecordService,
                              @Lazy TermService termService,
                              VocabularyContextMapper contextMapper,
@@ -126,6 +131,7 @@ public class VocabularyService
                              VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
+        this.externalVocabularyService = externalVocabularyService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
@@ -252,6 +258,26 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
     public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary) {
         return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
+    }
+
+    /**
+     * Gets a list of available vocabularies for import from the configured external source.
+     *
+     * @return list of available vocabularies
+     */
+    public List<RdfsResource> getAvailableExternalVocabularies() {
+        return externalVocabularyService.getAvailableVocabularies();
+    }
+
+    /**
+     * Imports vocabularies with the specified identifiers from an external source.
+     *
+     * @param vocabularyIris List of
+     * @return first imported Vocabulary
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
+        return externalVocabularyService.importFromExternalUris(vocabularyIris);
     }
 
     /**

@@ -109,6 +109,10 @@ public class ChangeTracker {
             LOG.trace("Skipping recording of creation of file {}.", added);
             return;
         }
+        if (!securityUtils.isAuthenticated()) {
+            LOG.trace("Skipping recording of creation for system user.");
+            return;
+        }
         LOG.trace("Recording creation of asset {}.", added);
         final AbstractChangeRecord changeRecord = new PersistChangeRecord(added);
         changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());

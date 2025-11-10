@@ -60,11 +60,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.net.URI;
 import java.time.Instant;
@@ -115,7 +115,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Autowired
     private VocabularyDao sut;
 
-    @SpyBean
+    @MockitoSpyBean
     private ChangeRecordDao changeRecordDao;
 
     private User author;
@@ -864,9 +864,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         assertEquals(1, relations.size());
         final RdfStatement relation = relations.get(0);
-        assertEquals(term.getUri(), relation.getObject());
+        assertEquals(term.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
-        assertEquals(secondTerm.getUri(), relation.getSubject());
+        assertEquals(secondTerm.getUri(), relation.getObject());
     }
 
     /**
@@ -874,7 +874,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
      */
     @ParameterizedTest
     @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
-    void getAnyExternalRelationsReturnsTermsWithIncommingRelations(URI termRelation) {
+    void getAnyExternalRelationsReturnsTermsWithIncomingRelations(URI termRelation) {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
@@ -897,9 +897,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         assertEquals(1, relations.size());
         final RdfStatement relation = relations.get(0);
-        assertEquals(secondTerm.getUri(), relation.getObject());
+        assertEquals(secondTerm.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
-        assertEquals(term.getUri(), relation.getSubject());
+        assertEquals(term.getUri(), relation.getObject());
     }
 
     /**

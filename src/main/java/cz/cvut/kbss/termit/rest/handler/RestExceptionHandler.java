@@ -290,7 +290,8 @@ public class RestExceptionHandler {
                 .addParameter("reason", e.getReason())
                 .addParameter("message", e.getMessage())
                 .addParameter("index", Integer.toString(e.getIndex()))
-                .addParameter("char", Character.toString(e.getInput().charAt(e.getIndex())));
+                .addParameter("char", e.getIndex() < e.getInput().length() ?
+                                      Character.toString(e.getInput().charAt(e.getIndex())) : "");
         return new ResponseEntity<>(errorInfo(request, exception), HttpStatus.CONFLICT);
     }
 

@@ -38,39 +38,39 @@ import java.net.URI;
 @SparqlResultSetMapping(name = "RDFStatement",
                         classes = {@ConstructorResult(targetClass = RdfStatement.class,
                                                       variables = {
-                                                              @VariableResult(name = "object", type = URI.class),
-                                                              @VariableResult(name = "relation", type = URI.class),
                                                               @VariableResult(name = "subject", type = URI.class),
+                                                              @VariableResult(name = "relation", type = URI.class),
+                                                              @VariableResult(name = "object", type = URI.class)
                                                       })})
 public class RdfStatement implements Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = RDF.OBJECT)
-    private URI object;
+    @OWLObjectProperty(iri = RDF.SUBJECT)
+    private URI subject;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = RDF.PREDICATE)
     private URI relation;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = RDF.SUBJECT)
-    private URI subject;
+    @OWLObjectProperty(iri = RDF.OBJECT)
+    private URI object;
 
     public RdfStatement() {
     }
 
-    public RdfStatement(URI object, URI relation, URI subject) {
-        this.object = object;
-        this.relation = relation;
+    public RdfStatement(URI subject, URI relation, URI object) {
         this.subject = subject;
-    }
-
-    public URI getObject() {
-        return object;
-    }
-
-    public void setObject(URI object) {
+        this.relation = relation;
         this.object = object;
+    }
+
+    public URI getSubject() {
+        return subject;
+    }
+
+    public void setSubject(URI subject) {
+        this.subject = subject;
     }
 
     public URI getRelation() {
@@ -81,11 +81,11 @@ public class RdfStatement implements Serializable {
         this.relation = relation;
     }
 
-    public URI getSubject() {
-        return subject;
+    public URI getObject() {
+        return object;
     }
 
-    public void setSubject(URI subject) {
-        this.subject = subject;
+    public void setObject(URI object) {
+        this.object = object;
     }
 }

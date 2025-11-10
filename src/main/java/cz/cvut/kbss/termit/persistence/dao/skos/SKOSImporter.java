@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
+import cz.cvut.kbss.termit.exception.importing.MissingLanguageTagException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -68,7 +69,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static cz.cvut.kbss.termit.util.Utils.getLanguageTagsPerProperties;
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
@@ -128,13 +128,8 @@ public class SKOSImporter implements VocabularyImporter {
         }
         LOG.debug("Vocabulary import started.");
         parseDataFromStreams(mediaType, inputStreams);
-        LOG.debug("Checking that only language-tagged literals are provided.");
-
-        final Set<String> languageTags = getLanguageTagsPerProperties(model, MULTILINGUAL_PROPERTIES);
-        if (languageTags.contains("")) {
-            throw new IllegalArgumentException(
-                    "Each value of the following properties must have a non-empty language tag: " + MULTILINGUAL_PROPERTIES);
-        }
+        validateTermLabels();
+        validateRequiredLanguageTags();
 
         glossaryIri = resolveGlossaryIriFromImportedData(model);
         LOG.trace("Importing glossary {}.", glossaryIri);
@@ -167,6 +162,43 @@ public class SKOSImporter implements VocabularyImporter {
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
+    }
+
+    private void validateTermLabels() {
+        LOG.debug("Checking terms have labels.");
+        model.stream().filter(s -> RDF.TYPE.equals(s.getPredicate()) && SKOS.CONCEPT.equals(s.getObject()))
+             .forEach(s -> {
+                 final Resource term = s.getSubject();
+                 final Set<Statement> labels = model.filter(term, SKOS.PREF_LABEL, null);
+                 if (labels.isEmpty()) {
+                     final VocabularyImportException ex = new VocabularyImportException("Term " + term + " has no label.",
+                                                         "error.vocabulary.import.skos.missingLabel");
+                     ex.addParameter("term", term.stringValue());
+                     throw ex;
+                 }
+             });
+    }
+
+    /**
+     * Checks that all values of multilingual properties of all terms have a language tag.
+     *
+     * @throws MissingLanguageTagException if a value of a multilingual property is missing a language tag
+     */
+    private void validateRequiredLanguageTags() {
+        LOG.debug("Checking that only language-tagged literals are provided.");
+        model.stream()
+             .filter(statement -> MULTILINGUAL_PROPERTIES.contains(statement.getPredicate().stringValue()))
+             .filter(statement -> statement.getObject().isLiteral())
+             .forEach(statement -> {
+                 if (((Literal) statement.getObject()).getLanguage().isEmpty()) {
+                     final MissingLanguageTagException ex = new MissingLanguageTagException(
+                             "Missing required language tag in " + statement,
+                             "error.vocabulary.import.skos.missingLanguageTag");
+                     ex.addParameter("term", statement.getSubject().stringValue());
+                     ex.addParameter("property", statement.getPredicate().stringValue());
+                     throw ex;
+                 }
+             });
     }
 
     private void ensureUniqueness(Vocabulary vocabulary) {
@@ -387,13 +419,15 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     /**
-     * Looks up the specified property in the glossary and loads values as a multilingual string.
-     * If no property is found, an empty multilingual string is passed to the consumer.
-     * @param property Property to look up in the glossary
-     * @param consumer Consumer to accept the multilingual string
+     * Looks up the specified property in the glossary and loads values as a multilingual string. If no property is
+     * found, an empty multilingual string is passed to the consumer.
+     *
+     * @param property        Property to look up in the glossary
+     * @param consumer        Consumer to accept the multilingual string
      * @param defaultLanguage The language to use when no language is specified in the string property
      */
-    private void handleGlossaryStringProperty(IRI property, Consumer<MultilingualString> consumer, String defaultLanguage) {
+    private void handleGlossaryStringProperty(IRI property, Consumer<MultilingualString> consumer,
+                                              String defaultLanguage) {
         final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
         final MultilingualString mls = new MultilingualString();
         values.stream().filter(s -> s.getObject().isLiteral()).forEach(s -> {
@@ -404,8 +438,9 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     /**
-     * Looks up the specified property in the glossary and loads the first value as a literal string.
-     * If no property is found, the consumer is not called.
+     * Looks up the specified property in the glossary and loads the first value as a literal string. If no property is
+     * found, the consumer is not called.
+     *
      * @param property Property to look up in the glossary
      * @param consumer Consumer to accept the literal string value if found
      * @return true if the property was found and the consumer was called, false otherwise

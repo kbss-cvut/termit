@@ -76,7 +76,7 @@ public class SearchDao {
      * Note that this version of the search excludes asset snapshots from the results.
      *
      * @param searchString The string to search by
-     * @param language The language of the {@code searchString}, {@code null} to match all languages
+     * @param language     The language of the {@code searchString}, {@code null} to match all languages
      * @return List of matching results
      * @see #fullTextSearchIncludingSnapshots(String, String)
      */
@@ -93,14 +93,14 @@ public class SearchDao {
         LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
                   wildcardString);
         return setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
-                searchString, language)
+                                    searchString, language)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();
     }
 
-    private static String adjustQueryForLanguage(String query,String language) {
+    private static String adjustQueryForLanguage(String query, String language) {
         if (language == null) {
             // BIND using unbound expression needs to be removed from the FTS query
             return query.replace("BIND (?requestedLanguageVal AS ?requestedLanguage)", "");
@@ -134,11 +134,12 @@ public class SearchDao {
      * Note that this version of the search includes asset snapshots.
      *
      * @param searchString The string to search by
-     * @param language The language of the {@code searchString}, {@code null} to match all languages
+     * @param language     The language of the {@code searchString}, {@code null} to match all languages
      * @return List of matching results
      * @see #fullTextSearchIncludingSnapshots(String, String)
      */
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString, @Nullable String language) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString,
+                                                                       @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -169,10 +170,10 @@ public class SearchDao {
         q.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
 
         q.setParameter("term", URI.create(SKOS.CONCEPT))
-                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
-                .setParameter("searchString", searchString, null);
+         .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+         .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+         .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
+         .setParameter("searchString", searchString, null);
         if (requestedLanguage != null) {
             q.setParameter("requestedLanguageVal", requestedLanguage);
         }
@@ -203,12 +204,14 @@ public class SearchDao {
             switch (p.getMatchType()) {
                 case IRI:
                     queryStr.append("FILTER (").append(variable).append(" IN (")
-                            .append(p.getValue().stream().map(v -> Utils.uriToString(URI.create(v))).collect(
+                            .append(p.getValue().stream().map(v -> Utils.uriToString(URI.create(v.toString()))).collect(
                                     Collectors.joining(","))).append("))\n");
                     break;
                 case EXACT_MATCH:
+                    // This also handles datatypes, as we transform the variable value to string and compare it with
+                    // a string representation of the parameter value (e.g., "true" for Boolean true)
                     queryStr.append("FILTER (STR(").append(variable).append(") = \"")
-                            .append(p.getValue().iterator().next()).append("\")\n");
+                            .append(p.getValue().iterator().next().toString()).append("\")\n");
                     break;
                 case SUBSTRING:
                     queryStr.append("FILTER (CONTAINS(LCASE(STR(").append(variable).append(")), LCASE(\"")

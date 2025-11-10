@@ -24,8 +24,12 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.URI;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -35,7 +39,9 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IdentifierResolverTest {
 
@@ -346,5 +352,31 @@ class IdentifierResolverTest {
         final String label = "Délka dostřiku [m]";
         final URI result = sut.generateIdentifier(namespace, label);
         assertEquals(URI.create(namespace + "/delka-dostriku-m"), result);
+    }
+
+    @ParameterizedTest
+    @MethodSource("validAbsoluteUris")
+    void isAbsoluteUriReturnsTrueForAbsoluteUri(String value) {
+        assertTrue(IdentifierResolver.isAbsoluteUri(value));
+    }
+
+    private static Stream<Arguments> validAbsoluteUris() {
+        return Stream.of(
+                Arguments.of(Vocabulary.s_c_slovnik),
+                Arguments.of("file:///test")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("nonAbsoluteUris")
+    void isAbsoluteUriReturnsFalseForNonAbsoluteUri(String value) {
+        assertFalse(IdentifierResolver.isAbsoluteUri(value));
+    }
+
+    private static Stream<Arguments> nonAbsoluteUris() {
+        return Stream.of(
+                Arguments.of("test"),
+                Arguments.of("./home/test")
+        );
     }
 }

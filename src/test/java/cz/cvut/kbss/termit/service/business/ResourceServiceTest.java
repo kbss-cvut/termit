@@ -31,9 +31,11 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -166,7 +168,7 @@ class ResourceServiceTest {
     void saveContentSavesFileContentViaDocumentManager() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
         final File file = Generator.generateFileWithId("test.html");
-        sut.saveContent(file, bis);
+        sut.saveContent(file, bis, ResourceSaveReason.UNKNOWN);
         verify(documentManager).saveFileContent(file, bis);
     }
 
@@ -174,18 +176,21 @@ class ResourceServiceTest {
     void saveContentThrowsUnsupportedAssetOperationExceptionWhenResourceIsNotFile() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class, () -> sut.saveContent(resource, bis));
+        assertThrows(UnsupportedAssetOperationException.class, () -> sut.saveContent(resource, bis, ResourceSaveReason.UNKNOWN));
         verify(documentManager, never()).saveFileContent(any(), any());
     }
 
     @Test
     void saveContentCreatesBackupBeforeSavingFileContentInDocumentManager() {
+        final ResourceSaveReason saveReason = ResourceSaveReason.REUPLOAD;
+        final BackupReason backupReason = saveReason.getBackupReason().orElseThrow();
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
         final File file = Generator.generateFileWithId("test.html");
         when(documentManager.exists(file)).thenReturn(true);
-        sut.saveContent(file, bis);
+
+        sut.saveContent(file, bis, saveReason);
         final InOrder inOrder = Mockito.inOrder(documentManager);
-        inOrder.verify(documentManager).createBackup(file);
+        inOrder.verify(documentManager).createBackup(file, backupReason);
         inOrder.verify(documentManager).saveFileContent(file, bis);
     }
 
@@ -193,9 +198,8 @@ class ResourceServiceTest {
     void saveContentDoesNotCreateBackupWhenFileDoesNotYetExist() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
         final File file = Generator.generateFileWithId("test.html");
-        when(documentManager.exists(file)).thenReturn(false);
-        sut.saveContent(file, bis);
-        verify(documentManager, never()).createBackup(file);
+        sut.saveContent(file, bis, ResourceSaveReason.UNKNOWN);
+        verify(documentManager, never()).createBackup(file, BackupReason.UNKNOWN);
         verify(documentManager).saveFileContent(file, bis);
     }
 

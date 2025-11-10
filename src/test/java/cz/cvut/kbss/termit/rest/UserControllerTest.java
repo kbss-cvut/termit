@@ -92,7 +92,7 @@ class UserControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isOk()).andReturn();
-        final List<UserAccount> result = readValue(mvcResult, new TypeReference<List<UserAccount>>() {
+        final List<UserAccount> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(users, result);
     }
@@ -186,7 +186,7 @@ class UserControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc.perform(
                 get(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/managed-assets")
                         .queryParam(Constants.QueryParams.NAMESPACE, namespace)).andReturn();
-        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
+        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(resources, result);
         verify(userService).getManagedAssets(user);

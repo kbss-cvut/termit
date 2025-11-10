@@ -18,33 +18,28 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.service.document.backup.BackupFile;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
+import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.MimeTypeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -52,56 +47,28 @@ import java.util.Optional;
 import static cz.cvut.kbss.termit.environment.Environment.loadFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@ContextConfiguration(initializers = {PropertyMockingApplicationContextInitializer.class})
-class DefaultDocumentManagerTest extends BaseServiceTestRunner {
+class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
+    @MockitoBean
+    private DocumentBackupManager backupManager;
 
-    private static final String CONTENT =
-            "<html><body><h1>Metropolitan plan</h1><p>Description of the metropolitan plan.</body></html>";
+    @MockitoBean
+    private ResourceRepositoryService resourceRepositoryService;
 
-    @Autowired
-    private Configuration configuration;
-
-    @Autowired
     private DefaultDocumentManager sut;
 
-    private Document document;
-
     @BeforeEach
-    void setUp() {
-        this.document = new Document();
-        document.setLabel("Metropolitan plan");
-        document.setUri(Generator.generateUri());
-    }
-
-    private java.io.File generateFile() throws Exception {
-        return generateFile("test", ".html", CONTENT);
-    }
-
-    private java.io.File generateDirectory() throws Exception {
-        final java.io.File dir = Files.createTempDirectory("termit").toFile();
-        dir.deleteOnExit();
-        configuration.getFile().setStorage(dir.getAbsolutePath());
-        final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
-                                                             document.getDirectoryName());
-        docDir.mkdir();
-        docDir.deleteOnExit();
-        return docDir;
-    }
-
-    private java.io.File generateFile(String filePrefix, String fileSuffix, String fileContent) throws Exception {
-        final java.io.File docDir = generateDirectory();
-        final java.io.File content = Files.createTempFile(docDir.toPath(), filePrefix, fileSuffix).toFile();
-        content.deleteOnExit();
-        Files.write(content.toPath(), Collections.singletonList(fileContent));
-        return content;
+    void setupSut() {
+        sut = new DefaultDocumentManager(configuration, backupManager, resourceRepositoryService);
     }
 
     @Test
@@ -139,11 +106,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     }
 
     private java.io.File generateFileWithoutParentDocument(File file) throws Exception {
-        final java.io.File dir = Files.createTempDirectory("termit").toFile();
-        dir.deleteOnExit();
-        configuration.getFile().setStorage(dir.getAbsolutePath());
-        final java.io.File fileDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
-                                                              file.getDirectoryName());
+        final java.io.File fileDir = documentDir.getParent().resolve(file.getDirectoryName()).toFile();
         fileDir.mkdir();
         fileDir.deleteOnExit();
         final java.io.File content = new java.io.File(fileDir + java.io.File.separator + file.getLabel());
@@ -177,6 +140,20 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void saveFileContentsUpdatesFileLastModifiedTimestamp() throws Exception {
+        final InputStream content = loadFile("data/rdfa-simple.html");
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        final Instant before = Utils.timestamp().minusSeconds(1);
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        sut.saveFileContent(file, content);
+        assertNotNull(file.getModified());
+        assertTrue(file.getModified().isAfter(before));
+    }
+
+    @Test
     void saveFileContentCreatesNewFileWhenNoneExists() throws Exception {
         final InputStream content = loadFile("data/rdfa-simple.html");
         final File file = new File();
@@ -206,46 +183,6 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         assertFalse(result.isEmpty());
     }
 
-    @Test
-    void createBackupCreatesBackupFileWithIdenticalContent() throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-        final java.io.File docDir = physicalFile.getParentFile();
-        assertNotNull(docDir.listFiles());
-        assertEquals(1, docDir.listFiles().length);
-        sut.createBackup(file);
-        assertEquals(2, docDir.listFiles().length);
-        for (java.io.File f : docDir.listFiles()) {
-            f.deleteOnExit();
-            assertEquals(CONTENT, String.join("\n", Files.readAllLines(f.toPath())));
-        }
-    }
-
-    @Test
-    void createBackupCreatesBackupOfFileWithoutExtension() throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        final java.io.File docDir = physicalFile.getParentFile();
-        final java.io.File withoutExtension = new java.io.File(
-                docDir.getAbsolutePath() + java.io.File.separator + "withoutExtension");
-        withoutExtension.deleteOnExit();
-        Files.copy(physicalFile.toPath(), withoutExtension.toPath());
-        file.setLabel(withoutExtension.getName());
-        document.addFile(file);
-        file.setDocument(document);
-        assertNotNull(docDir.listFiles());
-        sut.createBackup(file);
-        final java.io.File[] files = docDir.listFiles((d, name) -> name.startsWith("withoutExtension"));
-        assertNotNull(files);
-        assertEquals(2, files.length);
-        for (java.io.File f : files) {
-            f.deleteOnExit();
-            assertEquals(CONTENT, String.join("\n", Files.readAllLines(f.toPath())));
-        }
-    }
 
     @Test
     void existsReturnsTrueForExistingFile() throws Exception {
@@ -298,17 +235,13 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
 
     @Test
     void saveFileContentCreatesParentDirectoryWhenItDoesNotExist() throws Exception {
-        final java.io.File dir = Files.createTempDirectory("termit").toFile();
-        dir.deleteOnExit();
-        configuration.getFile().setStorage(dir.getAbsolutePath());
         final InputStream content = loadFile("data/rdfa-simple.html");
         final File file = new File();
         file.setUri(Generator.generateUri());
         file.setLabel("test.html");
         sut.saveFileContent(file, content);
-        final java.io.File physicalFile = new java.io.File(
-                dir.getAbsolutePath() + java.io.File.separator + file.getDirectoryName() + java.io.File.separator +
-                        file.getLabel());
+        final java.io.File physicalFile =
+                documentDir.getParent().resolve(file.getDirectoryName()).resolve(file.getLabel()).toFile();
         assertTrue(physicalFile.exists());
         physicalFile.getParentFile().deleteOnExit();
         physicalFile.deleteOnExit();
@@ -316,53 +249,18 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
 
     @Test
     void resolveFileSanitizesFileLabelToEnsureValidFileName() throws Exception {
-        final java.io.File dir = Files.createTempDirectory("termit").toFile();
-        dir.deleteOnExit();
-        configuration.getFile().setStorage(dir.getAbsolutePath());
         final File file = new File();
         file.setUri(Generator.generateUri());
         final String label = "Zákon 130/2002";
         file.setLabel(label);
         sut.saveFileContent(file, new ByteArrayInputStream(CONTENT.getBytes()));
 
-        final java.io.File physicalFile = new java.io.File(
-                dir.getAbsolutePath() + java.io.File.separator + file.getDirectoryName() + java.io.File.separator +
-                        IdentifierResolver.sanitizeFileName(file.getLabel()));
+        String sanitizedName = IdentifierResolver.sanitizeFileName(file.getLabel());
+        final java.io.File physicalFile =
+                documentDir.getParent().resolve(file.getDirectoryName()).resolve(sanitizedName).toFile();
         assertTrue(physicalFile.exists());
         physicalFile.getParentFile().deleteOnExit();
         physicalFile.deleteOnExit();
-    }
-
-    @Test
-    void createBackupSanitizesFileLabelToEnsureValidFileName() throws Exception {
-        final java.io.File dir = Files.createTempDirectory("termit").toFile();
-        dir.deleteOnExit();
-        configuration.getFile().setStorage(dir.getAbsolutePath());
-        final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
-                                                             document.getDirectoryName());
-        docDir.mkdir();
-        docDir.deleteOnExit();
-        final File file = new File();
-        file.setUri(Generator.generateUri());
-        final String label = "Zákon 130/2002";
-        file.setLabel(label);
-        document.addFile(file);
-        file.setDocument(document);
-        final java.io.File content = new java.io.File(docDir, IdentifierResolver.sanitizeFileName(label));
-        content.deleteOnExit();
-        Files.write(content.toPath(), CONTENT.getBytes());
-        sut.createBackup(file);
-
-        final java.io.File[] files = docDir.listFiles();
-        assertNotNull(files);
-        assertEquals(2, files.length);
-        for (java.io.File f : files) {
-            try {
-                assertThat(f.getName(), startsWith(IdentifierResolver.sanitizeFileName(label)));
-            } finally {
-                f.deleteOnExit();
-            }
-        }
     }
 
     @Test
@@ -400,27 +298,11 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         document.addFile(file);
         file.setDocument(document);
 
-        createTestBackups(physicalFile);
+        createTestBackups(file);
         final java.io.File docDir = physicalFile.getParentFile();
         assertThat(docDir.list().length, greaterThan(0));
         sut.remove(file);
         assertEquals(0, docDir.list().length);
-    }
-
-    private List<java.io.File> createTestBackups(java.io.File file) throws Exception {
-        final List<java.io.File> backupFiles = new ArrayList<>(3);
-        for (int i = 0; i < 3; i++) {
-            final String path = file.getAbsolutePath();
-            final String newPath = path + DefaultDocumentManager.BACKUP_NAME_SEPARATOR + DefaultDocumentManager.BACKUP_TIMESTAMP_FORMAT.format(
-                    Instant.ofEpochMilli(System.currentTimeMillis() - (i + 1) * 10000));
-            final java.io.File target = new java.io.File(newPath);
-            Files.copy(file.toPath(), target.toPath());
-            backupFiles.add(target);
-            target.deleteOnExit();
-        }
-        // So that the oldest is first
-        Collections.reverse(backupFiles);
-        return backupFiles;
     }
 
     @Test
@@ -429,7 +311,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         file.setLabel("test-file.html");
         file.setUri(Generator.generateUri());
         final java.io.File physicalFile = generateFileWithoutParentDocument(file);
-        createTestBackups(physicalFile);
+        createTestBackups(file);
 
         final java.io.File parentDir = physicalFile.getParentFile();
         final java.io.File[] files = parentDir.listFiles();
@@ -515,8 +397,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         file.setLabel("newFileName");
 
         sut.onFileRename(new FileRenameEvent(file, oldName, file.getLabel()));
-        final java.io.File docDir = new java.io.File(
-                configuration.getFile().getStorage() + java.io.File.separator + file.getDirectoryName());
+        final java.io.File docDir = documentDir.resolve(file.getDirectoryName()).toFile();
         assertFalse(docDir.exists());
     }
 
@@ -526,24 +407,22 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         final java.io.File physicalFile = generateFile();
         final String newName = "newFileName.html";
         file.setDocument(document);
+        file.setLabel(physicalFile.getName());
+        final List<java.io.File> backups = createTestBackups(file);
         file.setLabel(newName);
-        final List<java.io.File> backups = createTestBackups(physicalFile);
+
+        final java.io.File newFile = documentDir.resolve(file.getLabel()).toFile();
+        newFile.deleteOnExit();
 
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
         for (java.io.File backup : backups) {
-            final java.io.File newBackup = new java.io.File(
-                    configuration.getFile().getStorage() + java.io.File.separator +
-                            file.getDirectoryName() +
+            final java.io.File newBackup = new java.io.File(documentDir +
                             java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
             assertTrue(newBackup.exists());
             newBackup.deleteOnExit();
             assertFalse(backup.exists());
         }
-        final java.io.File newFile = new java.io.File(
-                configuration.getFile().getStorage() + java.io.File.separator + file.getDirectoryName() +
-                        java.io.File.separator + file.getLabel());
         assertTrue(newFile.exists());
-        newFile.deleteOnExit();
     }
 
     @Test
@@ -572,7 +451,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     @Test
     void onDocumentRenameMovesWholeDirectory() throws Exception {
         final String oldDirLabel = document.getLabel();
-        final java.io.File oldDirectory = generateDirectory();
+        final java.io.File oldDirectory = documentDir.toFile();
 
         final String newDirLabel = "mpp";
         document.setLabel(newDirLabel);
@@ -587,86 +466,22 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void getAsResourceAtTimestampReturnsBackupCreatedMostSoonAfterTimestamp() throws Exception {
+    void getAsResourceAtCallsBackupManagerAndExtractsTheBackup() throws Exception {
+        final Instant now = Utils.timestamp();
+        final Instant later = now.plusSeconds(100);
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
         document.addFile(file);
         file.setDocument(document);
 
-        final List<java.io.File> files = createTestBackups(physicalFile);
-        final java.io.File expected = files.get(Generator.randomIndex(files));
-        final String strBackupTimestamp = expected.getName().substring(
-                expected.getName().indexOf(DefaultDocumentManager.BACKUP_NAME_SEPARATOR) + 1);
-        final TemporalAccessor backupTimestamp = DefaultDocumentManager.BACKUP_TIMESTAMP_FORMAT.parse(
-                strBackupTimestamp);
-        final Instant timestamp = Instant.from(backupTimestamp).minusSeconds(5);
+        BackupFile backupFile = new BackupFile(now, physicalFile, BackupReason.UNKNOWN);
+        when(backupManager.getBackup(any(), any())).thenReturn(backupFile);
+        when(backupManager.openBackup(backupFile)).thenReturn(physicalFile);
 
-        final org.springframework.core.io.Resource result = sut.getAsResource(file, timestamp);
-        assertEquals(expected, result.getFile());
-    }
-
-    @Test
-    void getAsResourceAtTimestampReturnsOldestBackupWhenTimestampIsEpoch() throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-
-        final List<java.io.File> files = createTestBackups(physicalFile);
-        final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
-        assertEquals(files.get(0), result.getFile());
-    }
-
-    @Test
-    void getAsResourceWithTimestampReturnsCurrentFileWhenTimestampIsNow() throws Exception {
-        // Slightly back in time to prevent issues with test speed and instant comparison
-        final Instant at = Utils.timestamp().minusMillis(100);
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-
-        createTestBackups(physicalFile);
-        final org.springframework.core.io.Resource result = sut.getAsResource(file, at);
-        assertEquals(physicalFile, result.getFile());
-    }
-
-    @Test
-    void getAsResourceWithTimestampReturnsCurrentFileWhenTimestampIsInFuture() throws Exception {
-        final Instant at = Utils.timestamp().plusSeconds(100);
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-
-        createTestBackups(physicalFile);
-        final org.springframework.core.io.Resource result = sut.getAsResource(file, at);
-        assertEquals(physicalFile, result.getFile());
-    }
-
-    @Test
-    void getAsResourceWithTimestampThrowsNotFoundExceptionWhenParentDocumentDirectoryDoesNotExistOnFileSystem() {
-        final File file = Generator.generateFileWithId("test.html");
-        document.addFile(file);
-        file.setDocument(document);
-        assertThrows(NotFoundException.class, () -> sut.getAsResource(file, Utils.timestamp()));
-    }
-
-    @Test
-    void getAsResourceWithTimestampThrowsNotFoundExceptionWhenFileDoesNotExistInParentDocumentDirectoryOnFileSystem()
-            throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-        physicalFile.delete();
-
-        assertThrows(NotFoundException.class, () -> sut.getAsResource(file, Utils.timestamp()));
+        sut.getAsResource(file, later);
+        verify(backupManager).getBackup(file, later);
+        verify(backupManager).openBackup(backupFile);
     }
 
     @Test
@@ -680,54 +495,6 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         final Optional<String> result = sut.getContentType(file);
         assertTrue(result.isPresent());
         assertEquals(MediaType.TEXT_HTML_VALUE, result.get());
-    }
-
-    @Test
-    void getAsResourceAtTimestampHandlesLegacyBackupTimestampPattern() throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-
-        final String path = physicalFile.getAbsolutePath();
-        // Legacy pattern used multiple millis places
-        final String newPath = path + DefaultDocumentManager.BACKUP_NAME_SEPARATOR + DateTimeFormatter.ofPattern(
-                                                                                                              "yyyy-MM-dd_HHmmss_SSS")
-                                                                                                      .withZone(
-                                                                                                              ZoneId.systemDefault())
-                                                                                                      .format(Instant.now()
-                                                                                                                     .minusSeconds(
-                                                                                                                             10));
-        final java.io.File backup = new java.io.File(newPath);
-        Files.copy(physicalFile.toPath(), backup.toPath());
-        backup.deleteOnExit();
-        final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
-        assertEquals(backup, result.getFile());
-    }
-
-    @Test
-    void getAsResourceAtTimestampSkipsBackupFilesWithInvalidTimestampPattern() throws Exception {
-        final File file = new File();
-        final java.io.File physicalFile = generateFile();
-        file.setLabel(physicalFile.getName());
-        document.addFile(file);
-        file.setDocument(document);
-
-        final String path = physicalFile.getAbsolutePath();
-        // Legacy pattern used multiple millis places
-        final String newPath = path + DefaultDocumentManager.BACKUP_NAME_SEPARATOR + DateTimeFormatter.ofPattern(
-                                                                                                              "yyyy-MM-dd_HHmmss")
-                                                                                                      .withZone(
-                                                                                                              ZoneId.systemDefault())
-                                                                                                      .format(Instant.now()
-                                                                                                                     .minusSeconds(
-                                                                                                                             10));
-        final java.io.File backup = new java.io.File(newPath);
-        Files.copy(physicalFile.toPath(), backup.toPath());
-        backup.deleteOnExit();
-        final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
-        assertEquals(physicalFile, result.getFile());
     }
 
     @Test

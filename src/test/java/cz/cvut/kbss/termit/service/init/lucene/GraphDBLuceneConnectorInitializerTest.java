@@ -14,6 +14,8 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(Configuration.class)
 @ContextConfiguration(classes = {TestPersistenceConfig.class},
@@ -122,28 +125,22 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
     @Test
     void initializeDropsConnectorsForNonExistingLanguages() {
         final URI uri = Generator.generateUri();
-        transactional(() -> {
-            bindUriPredAndValue(em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }"), uri)
-                    .executeUpdate();
-        });
+        transactional(() -> bindUriPredAndValue(em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }"), uri)
+                .executeUpdate());
         sut.initialize();
         assertConnectorsExist(List.of("pl"));
-        transactional(() -> {
-            bindUriPredAndValue(em.createNativeQuery("DELETE WHERE { ?uri ?pred ?value }"), uri)
-                    .executeUpdate();
-        });
+        transactional(() -> bindUriPredAndValue(em.createNativeQuery("DELETE WHERE { ?uri ?pred ?value }"), uri)
+                .executeUpdate());
         sut.initialize();
     }
 
     @Test
     void initializeWontDropNonPrefixedConnectors() {
         final URI connectorUri = URI.create(Constants.LUCENE_INSTANCE_NS + "myCustomPrefix");
-        transactional(() -> {
-            em.createNativeQuery("INSERT DATA {?connectorUri ?createConnector [].}")
-                    .setParameter("connectorUri", connectorUri)
-                    .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
-                    .executeUpdate();
-        });
+        transactional(() -> em.createNativeQuery("INSERT DATA {?connectorUri ?createConnector [].}")
+                          .setParameter("connectorUri", connectorUri)
+                          .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
+                          .executeUpdate());
         sut.initialize();
         transactional(() -> {
             final int removedConnectorsCount =
@@ -159,10 +156,8 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
                 "cz,org.apache.lucene.analysis.cz.CzechAnalyzer"
     })
     void initializeSetsCorrectAnalyzerForCzech(String lang, String analyzer) {
-        transactional(() -> {
-            bindUriPredAndValue(em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }"), Generator.generateUri(), lang)
-                    .executeUpdate();
-        });
+        transactional(() -> bindUriPredAndValue(em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }"), Generator.generateUri(), lang)
+                .executeUpdate());
         sut.initialize();
         transactional(() -> {
             List<String> analyzers = em.createNativeQuery("""

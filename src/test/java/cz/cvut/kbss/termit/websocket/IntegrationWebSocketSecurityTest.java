@@ -24,6 +24,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -111,7 +112,7 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
     WebSocketHandler makeWebSocketHandler(AtomicBoolean receivedReply, AtomicBoolean receivedError) {
         return new TestWebSocketSessionHandler() {
             @Override
-            public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+            public void handleMessage(@Nonnull WebSocketSession session, WebSocketMessage<?> message) throws Exception {
                 super.handleMessage(session, message);
                 if (message instanceof TextMessage textMessage) {
                     final String command = textMessage.getPayload().split("\n")[0];

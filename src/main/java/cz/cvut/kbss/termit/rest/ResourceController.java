@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -180,12 +181,15 @@ public class ResourceController extends BaseController {
                                                  example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace,
+                                      @Parameter(description = "The reason for saving the resource")
+                                      @RequestParam(name = "reason", required = false)
+                                                 Optional<ResourceSaveReason> reason,
                                       @Parameter(description = "File with the new content.")
                                       @RequestParam(name = "file") MultipartFile attachment) {
 
         final Resource resource = getResource(localName, namespace);
         try {
-            resourceService.saveContent(resource, attachment.getInputStream());
+            resourceService.saveContent(resource, attachment.getInputStream(), reason.orElse(ResourceSaveReason.UNKNOWN));
         } catch (IOException e) {
             throw new TermItException("Unable to read file (fileName=\"" + attachment.getOriginalFilename() + "\") content from request.", e);
         }

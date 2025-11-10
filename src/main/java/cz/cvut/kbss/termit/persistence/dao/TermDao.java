@@ -93,6 +93,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     @Override
     public Optional<Term> find(URI id) {
+        Objects.requireNonNull(id);
         try {
             final Optional<Term> result = findTermVocabulary(id).map(vocabulary ->
                                                                              em.find(Term.class, id,

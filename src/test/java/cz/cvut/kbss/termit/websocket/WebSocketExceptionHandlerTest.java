@@ -22,11 +22,11 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.HashMap;
 
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 
 class WebSocketExceptionHandlerTest extends BaseWebSocketControllerTestRunner {
 
-    @MockBean
+    @MockitoBean
     VocabularySocketController controller;
 
     StompHeaderAccessor messageHeaders;

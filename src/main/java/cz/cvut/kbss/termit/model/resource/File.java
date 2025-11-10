@@ -23,15 +23,17 @@ import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.util.SupportsStorage;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.util.Objects;
+import java.time.Instant;
 import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_soubor)
@@ -45,6 +47,12 @@ public class File extends Resource implements SupportsStorage {
 
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String language;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
+    private Instant modified;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_zalohy)
+    private Instant lastBackup;
 
     @Types
     private Set<String> types;
@@ -65,6 +73,22 @@ public class File extends Resource implements SupportsStorage {
         this.language = language;
     }
 
+    public Instant getModified() {
+        return modified;
+    }
+
+    public void setModified(Instant modified) {
+        this.modified = modified;
+    }
+
+    public Instant getLastBackup() {
+        return lastBackup;
+    }
+
+    public void setLastBackup(Instant lastBackup) {
+        this.lastBackup = lastBackup;
+    }
+
     public Set<String> getTypes() {
         return types;
     }
@@ -75,13 +99,15 @@ public class File extends Resource implements SupportsStorage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (!(o instanceof File file)) {
             return false;
         }
-        return Objects.equals(getUri(), file.getUri());
+        return super.equals(file);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Override
@@ -115,5 +141,21 @@ public class File extends Resource implements SupportsStorage {
             final String labelPart = dotIndex > 0 ? getLabel().substring(0, getLabel().indexOf('.')) : getLabel();
             return IdentifierResolver.normalizeToAscii(labelPart) + '_' + getUri().hashCode();
         }
+    }
+
+    /**
+     * Sets the {@link #modified} to the current timestamp.
+     * @see Utils#timestamp()
+     */
+    public void updateModified() {
+        setModified(Utils.timestamp());
+    }
+
+    /**
+     * Sets the {@link #lastBackup} to the current timestamp.
+     * @see Utils#timestamp()
+     */
+    public void updateLastBackup() {
+        setLastBackup(Utils.timestamp());
     }
 }

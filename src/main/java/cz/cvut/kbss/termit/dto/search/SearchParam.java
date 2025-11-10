@@ -31,7 +31,7 @@ public class SearchParam {
 
     private URI property;
 
-    private Set<String> value;
+    private Set<Object> value;
 
     private MatchType matchType = MatchType.EXACT_MATCH;
 
@@ -39,7 +39,7 @@ public class SearchParam {
     }
 
     // For test purposes
-    public SearchParam(URI property, Set<String> value, MatchType matchType) {
+    public SearchParam(URI property, Set<Object> value, MatchType matchType) {
         this.property = Objects.requireNonNull(property);
         this.value = value;
         this.matchType = Objects.requireNonNull(matchType);
@@ -53,11 +53,11 @@ public class SearchParam {
         this.property = property;
     }
 
-    public Set<String> getValue() {
+    public Set<Object> getValue() {
         return value;
     }
 
-    public void setValue(Set<String> value) {
+    public void setValue(Set<Object> value) {
         this.value = value;
     }
 

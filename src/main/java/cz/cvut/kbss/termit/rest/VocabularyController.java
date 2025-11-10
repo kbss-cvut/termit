@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
@@ -161,7 +162,17 @@ public class VocabularyController extends BaseController {
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
-
+    
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},       
+               description = "Gets identifiers of vocabularies that can be imported from external sources")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers.")
+    })
+    @GetMapping(value = "/imports/available", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RdfsResource> getAvailableVocabularies(){
+        return vocabularyService.getAvailableExternalVocabularies();
+    }
+   
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets identifiers of vocabularies whose terms are in a SKOS relationship with terms from the specified vocabulary.")
     @ApiResponses({
@@ -180,8 +191,10 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new vocabulary by importing the specified SKOS glossary.")
+    @Operation(security = {
+        @SecurityRequirement(name = "bearer-key")},
+            description = "Creates a new vocabulary by importing the specified SKOS glossary"
+            + " or providing list of vocabulary iris to be downloaded from an external source")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
             @ApiResponse(responseCode = "409",
@@ -191,13 +204,26 @@ public class VocabularyController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(
             @Parameter(description = "File containing a SKOS glossary in RDF.")
-            @RequestParam(name = "file") MultipartFile file,
-            @Parameter(
-                    description = "Whether identifiers should be modified to prevent clashes with existing data.")
+            @RequestParam(name = "file", required = false) MultipartFile file,
+            @Parameter(description = "List of external SKOS vocabulary IRIs.")
+            @RequestParam(name = "vocabularyIris", required = false) List<String> vocabularyIris,
+            @Parameter(description = "Whether identifiers should be modified to prevent clashes with existing data.")
             @RequestParam(name = "rename", defaultValue = "false", required = false) boolean rename) {
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
-        LOG.debug("New vocabulary {} imported.", vocabulary);
-        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+
+        if (file != null) { // importing from file
+            final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
+            LOG.debug("New vocabulary {} imported.", vocabulary);
+            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+            
+        } else if (vocabularyIris != null) { // importing externally
+            Vocabulary vocabulary = vocabularyService.importFromExternalUris(vocabularyIris);
+            LOG.debug("Vocabulary imported from IRIs: {}", vocabularyIris.toArray());
+            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+            
+        } else {
+            LOG.error("File and vocabularyIris are both null");
+            return ResponseEntity.badRequest().build(); // no file or IRIs
+        }
     }
 
     @Operation(description = "Gets a template Excel file that can be used to import terms into TermIt")

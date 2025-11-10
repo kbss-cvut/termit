@@ -133,7 +133,7 @@ public class IdentifierResolver {
             throw new IllegalArgumentException("Must provide at least one component for identifier generation.");
         }
         final String comps = String.join("-", components);
-        if (isUri(comps)) {
+        if (isAbsoluteUri(comps)) {
             final URI tempUri = URI.create(comps);
             try {
                 return new URI(tempUri.getScheme(), tempUri.getAuthority(), tempUri.getPath(), null,
@@ -158,17 +158,19 @@ public class IdentifierResolver {
     }
 
     /**
+     * Checks if the specified value is an absolute URI.
+     *
      * @param value the URI to check
-     * @return {@code true} when the URI is prefixed with protocol ({@code http/s, ftp or file}
-     * and it is a valid {@link URI}. {@code false} otherwise
+     * @return {@code true} when the URI is prefixed with protocol ({@code http/s, ftp or file} and it is a valid
+     * {@link URI}. {@code false} otherwise
      */
-    public static boolean isUri(String value) {
+    public static boolean isAbsoluteUri(String value) {
         try {
             if (!value.matches("^(https?|ftp|file)://.+")) {
                 return false;
             }
-            URI.create(value);
-            return true;
+            final URI uri = URI.create(value);
+            return uri.isAbsolute();
         } catch (IllegalArgumentException e) {
             return false;
         }

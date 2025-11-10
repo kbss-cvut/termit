@@ -26,12 +26,14 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -49,6 +51,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @WithMockUser
 @WebMvcTest(ConfigurationController.class)
 @Import({TestRestSecurityConfig.class})
@@ -56,7 +59,7 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
 
     private static final String PATH = REST_MAPPING_PATH + "/configuration";
 
-    @MockBean
+    @MockitoBean
     private ConfigurationProvider configurationProvider;
 
     @Autowired

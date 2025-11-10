@@ -1,0 +1,235 @@
+/*
+ * TermIt
+ * Copyright (C) 2025 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package cz.cvut.kbss.termit.service.business;
+
+import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Supports importing external vocabularies from a configured SPARQL endpoint.
+ */
+@Service
+public class SparqlExternalVocabularyService implements ExternalVocabularyService, ApplicationEventPublisherAware {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SparqlExternalVocabularyService.class);
+
+    private final Configuration config;
+    private final VocabularyRepositoryService repositoryService;
+
+    private final AccessControlListService aclService;
+    private ApplicationEventPublisher eventPublisher;
+
+    private static final String LIST_AVAILABLE_VOCABULARIES_QUERY = "import/listAvailableVocabularies.rq";
+    private static final String EXPORT_FULL_VOCABULARY_QUERY = "import/exportFullVocabulary.rq";
+
+    public SparqlExternalVocabularyService(VocabularyRepositoryService repositoryService,
+                                           AccessControlListService aclService, Configuration config) {
+        this.repositoryService = repositoryService;
+        this.aclService = aclService;
+        this.config = config;
+    }
+
+    @Override
+    public List<RdfsResource> getAvailableVocabularies() {
+        List<RdfsResource> response;
+        try {
+            final Optional<SPARQLRepository> sparqlRepo = initSparqlRepository();
+            if (sparqlRepo.isEmpty()) {
+                return List.of();
+            }
+
+            try (RepositoryConnection conn = sparqlRepo.get().getConnection()) {
+                String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
+                TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
+
+                TupleQueryResult result = query.evaluate();
+                response = extractListOfAvailableVocabularies(result);
+
+            } catch (QueryEvaluationException e) {
+                LOG.error("Failed to get available vocabularies.", e);
+                response = List.of();
+            } finally {
+                sparqlRepo.get().shutDown();
+            }
+        } catch (RepositoryException ex) {
+            LOG.error("Failed to connect to external repository.", ex);
+            response = List.of();
+        }
+        return response;
+    }
+
+    private Optional<SPARQLRepository> initSparqlRepository() throws RepositoryException {
+        String sparqlEndpoint = config.getExternal().getResource();
+        if (sparqlEndpoint == null || sparqlEndpoint.isBlank()) {
+            LOG.trace("External SPARQL endpoint not specified.");
+            return Optional.empty();
+        }
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        return Optional.of(sparqlRepo);
+    }
+
+    private List<RdfsResource> extractListOfAvailableVocabularies(
+            final TupleQueryResult result) throws QueryEvaluationException {
+        List<RdfsResource> response = new ArrayList<>();
+
+        while (result.hasNext()) {
+            BindingSet line = result.next();
+            if (!line.hasBinding("slovnik")) {
+                LOG.error("Error: no slovnik binding in: {}", line);
+                continue;
+            }
+            URI uri = URI.create(line.getBinding("slovnik").getValue().stringValue());
+            Map<String, String> labels = new HashMap<>();
+
+            // add cs label if available
+            if (line.hasBinding("nazev_slovniku_cs")) {
+                labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
+            } else {
+                labels.put("cs", uri.toString());
+            }
+            // add en label if available
+            if (line.hasBinding("nazev_slovniku_en")) {
+                labels.put("en", line.getBinding("nazev_slovniku_en").getValue().stringValue());
+            } else {
+                labels.put("en", uri.toString());
+            }
+            MultilingualString label = new MultilingualString(labels);
+            response.add(new RdfsResource(uri, label, new MultilingualString(), ""));
+        }
+        return response;
+    }
+
+    @Transactional
+    @Override
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
+        Vocabulary firstImportedVocabulary = null;
+
+        for (String vocabularyIri : vocabularyIris) {
+            LOG.trace("Starting import of external vocabulary {}", vocabularyIri);
+            InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
+            if (newVocabulary != null) {
+                URI uri = URI.create(vocabularyIri);
+                Vocabulary vocabulary =
+                        repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+
+                // add types
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+
+                final AccessControlList acl = aclService.createFor(vocabulary);
+                vocabulary.setAcl(acl.getUri());
+
+                if (repositoryService.find(uri).isEmpty()) { // The vocabulary is new
+                    eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
+                }
+
+                LOG.trace("Vocabulary {} import was successful.", vocabularyIri);
+
+                if (firstImportedVocabulary == null) {
+                    firstImportedVocabulary = vocabulary;
+                }
+            }
+        }
+        return firstImportedVocabulary;
+    }
+
+    private InputStream downloadExternalVocabulary(String vocabularyIri) {
+        InputStream vocabularyFile = null;
+        try {
+            final Optional<SPARQLRepository> sparqlRepo = initSparqlRepository();
+            if (sparqlRepo.isEmpty()) {
+                throw new VocabularyImportException(
+                        "External SPARQL endpoint not specified for import of vocabulary " + vocabularyIri);
+            }
+            try {
+                RepositoryConnection conn = sparqlRepo.get().getConnection();
+
+                String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
+                GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
+
+                GraphQueryResult result = graphQuery.evaluate();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                Rio.write(result, outputStream, RDFFormat.TURTLE);
+                vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
+            } catch (QueryEvaluationException ex) {
+                LOG.error(ex.getMessage());
+            } finally {
+                sparqlRepo.get().shutDown();
+            }
+        } catch (RepositoryException ex) {
+            LOG.error(ex.getMessage());
+        }
+        return vocabularyFile;
+    }
+
+    @Scheduled(cron = "${termit.external.reloadCron:0 0 0 * * *}")
+    @Transactional
+    @Override
+    public void reloadExternalVocabularies() {
+        LOG.debug("Reloading externally imported vocabularies.");
+        List<String> externalVocabularies = repositoryService.findAll().stream()
+                                                             .filter((t) -> t.getTypes().contains(
+                                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
+                                                             .map((t) -> t.getUri().toString())
+                                                             .toList();
+
+        importFromExternalUris(externalVocabularies);
+    }
+
+    @Override
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+}
