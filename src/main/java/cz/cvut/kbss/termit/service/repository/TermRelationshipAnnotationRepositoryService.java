@@ -1,10 +1,12 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.dao.meta.TermRelationshipAnnotationDao;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.readonly.TermRelationshipAnnotationService;
+import jakarta.validation.Validator;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +22,13 @@ public class TermRelationshipAnnotationRepositoryService implements TermRelation
 
     private final TermRelationshipAnnotationDao dao;
 
-    public TermRelationshipAnnotationRepositoryService(TermService termService, TermRelationshipAnnotationDao dao) {
+    private final Validator validator;
+
+    public TermRelationshipAnnotationRepositoryService(TermService termService, TermRelationshipAnnotationDao dao,
+                                                       Validator validator) {
         this.termService = termService;
         this.dao = dao;
+        this.validator = validator;
     }
 
     @Transactional(readOnly = true)
@@ -36,6 +42,10 @@ public class TermRelationshipAnnotationRepositoryService implements TermRelation
     @Transactional
     @Override
     public void updateAnnotation(@NotNull URI termId, @NotNull TermRelationshipAnnotation annotation) {
-        // TODO
+        if (!termService.exists(termId)) {
+            throw NotFoundException.create(Term.class, termId);
+        }
+        BaseRepositoryService.validate(annotation, validator);
+        dao.updateTermRelationshipAnnotation(annotation);
     }
 }
