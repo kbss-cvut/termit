@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -27,6 +26,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
@@ -198,8 +198,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Retrieves all terms from the specified vocabulary and its imports (transitive)
-     * in a flat structure.
+     * Retrieves all terms from the specified vocabulary and its imports (transitive) in a flat structure.
      *
      * @param vocabulary Base vocabulary for the vocabulary import closure
      * @param pageSpec   Page specification
@@ -281,8 +280,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds all terms that match the specified search string in the specified
-     * vocabulary and returns them in a flat structure.
+     * Finds all terms that match the specified search string in the specified vocabulary and returns them in a flat
+     * structure.
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
@@ -300,7 +299,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Finds all terms whose label matches the searchString.
      *
      * @param searchString string to search the label by
-     * @param pageSpec Page specifying result number and position
+     * @param pageSpec     Page specifying result number and position
      * @return Matching terms
      */
     public List<TermDto> findAll(String searchString, Pageable pageSpec) {
@@ -345,7 +344,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param pageSpec     Page specification
      * @return Matching terms in a flat structure
      */
-    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary,
+                                                          Pageable pageSpec) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
@@ -696,5 +696,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             consolidateAttributes(t);
             return t;
         }).orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
+    }
+
+    /**
+     * Checks whether a term with the specified identifier exists in the repository.
+     *
+     * @param termId Term identifier
+     * @return {@code} true if a term with such id exists, {@code false} otherwise
+     */
+    public boolean exists(URI termId) {
+        return repositoryService.exists(termId);
     }
 }

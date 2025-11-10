@@ -10,6 +10,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -31,9 +32,11 @@ import java.util.Set;
 @OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/TermRelationshipAnnotation")
 public class TermRelationshipAnnotation implements Serializable {
 
+    @NotNull
     @OWLObjectProperty(iri = RDF.SUBJECT)
     private RdfStatement relationship;
 
+    @NotNull
     @OWLObjectProperty(iri = RDF.PREDICATE)
     private URI attribute;
 
