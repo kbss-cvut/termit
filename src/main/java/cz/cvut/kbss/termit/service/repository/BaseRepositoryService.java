@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
  * which is used by the CRUD methods implemented by this base class.
  * <p>
  * In order to minimize chances of messing up the transactional behavior, subclasses *should not* override the main CRUD
- * methods and instead should provide custom business logic by overriding the helper hooks such as {@link
- * #prePersist(HasIdentifier)}.
+ * methods and instead should provide custom business logic by overriding the helper hooks such as
+ * {@link #prePersist(HasIdentifier)}.
  *
  * @param <T> Domain object type managed by this service
  */
@@ -285,6 +285,18 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @throws ValidationException In case the instance is not valid
      */
     protected void validate(T instance) {
+        validate(instance, validator);
+    }
+
+    /**
+     * Validates the specified instance, using the specified validator.
+     *
+     * @param instance  The instance to validate
+     * @param validator Validator to use for validation
+     * @param <T>       Type of the instance to validate
+     * @throws ValidationException In case the instance is not valid
+     */
+    protected static <T> void validate(T instance, Validator validator) {
         final ValidationResult<T> validationResult = ValidationResult.of(validator.validate(instance));
         if (!validationResult.isValid()) {
             throw new ValidationException(validationResult);
@@ -300,7 +312,8 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      */
     protected void validateUri(URI uri) throws InvalidIdentifierException {
         if (uri != null && !IdentifierResolver.isAbsoluteUri(uri.toString())) {
-            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter("uri", uri.toString());
+            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter(
+                    "uri", uri.toString());
         }
     }
 }
