@@ -1,12 +1,14 @@
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dc: <http://purl.org/dc/terms/>
 
 INSERT {
     GRAPH ?vocabularySnapshot {
     ?vocabularySnapshot a pdp:verze-slovníku ;
               pdp:je-verzí-slovníku ?vocabulary ;
               pdp:má-datum-a-čas-vytvoření-verze ?created ;
+              dc:creator ?author ;
               pdp:má-glosář ?glossarySnapshot ;
               pdp:má-model ?modelSnapshot ;
               pdp:importuje-slovník ?importedSnapshot ;

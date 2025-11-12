@@ -24,6 +24,9 @@ import cz.cvut.kbss.termit.service.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import cz.cvut.kbss.termit.workspace.EditableVocabulariesHolder;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.environment.Environment;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,6 +38,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @TestConfiguration
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -58,5 +63,20 @@ public class TestPersistenceConfig {
     @Bean
     public RepositoryContextValidator repositoryContextValidator() {
         return new NoopRepositoryContextValidator();
+    }
+
+    @Bean
+    @Primary
+    public SecurityUtils securityUtils() {
+        SecurityUtils securityUtils = mock(SecurityUtils.class);
+        when(securityUtils.getCurrentUser()).thenAnswer(invocation -> {
+            UserAccount currentUser = Environment.getCurrentUser();
+            if (currentUser == null) {
+                throw new IllegalStateException("No current user set in test environment");
+            }
+            return currentUser;
+        });
+        when(securityUtils.isAuthenticated()).thenAnswer(invocation -> Environment.getCurrentUser() != null);
+        return securityUtils;
     }
 }

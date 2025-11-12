@@ -34,13 +34,13 @@ import java.util.Optional;
  *
  * @param <T> Asset type
  */
-public class AssetSnapshotLoader<T extends Asset<?>> {
+public abstract class AssetSnapshotLoader<T extends Asset<?>> {
 
-    private final EntityManager em;
+    protected final EntityManager em;
 
-    private final URI assetType;
+    protected final URI assetType;
 
-    private final URI snapshotType;
+    protected final URI snapshotType;
 
     public AssetSnapshotLoader(EntityManager em, URI assetType, URI snapshotType) {
         this.em = em;
@@ -48,26 +48,7 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
         this.snapshotType = snapshotType;
     }
 
-    public List<Snapshot> findSnapshots(T asset) {
-        Objects.requireNonNull(asset);
-        try {
-            return em.createNativeQuery("SELECT ?s ?created ?asset ?type WHERE { " +
-                                                "?s a ?snapshotType ; " +
-                                                "?hasCreated ?created ; " +
-                                                "?versionOf ?source . " +
-                                                "BIND (?source as ?asset) . " +
-                                                "BIND (?snapshotType as ?type) . " +
-                                                "} ORDER BY DESC(?created)",
-                                        "Snapshot")
-                     .setParameter("snapshotType", snapshotType)
-                     .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
-                     .setParameter("source", asset).getResultList();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
+    public abstract List<Snapshot> findSnapshots(T asset);
 
     public Optional<T> findVersionValidAt(T asset, Instant at) {
         Objects.requireNonNull(asset);
@@ -80,8 +61,8 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                                                             "?hasCreated ?created . " +
                                                             "FILTER (?created <= ?at) " +
                                                             "} ORDER BY DESC(?created)",
-                                                    (Class<T>) asset.getClass())
-                                       .setMaxResults(1)
+                                                    assetClass())
+                                 .setMaxResults(1)
                                  .setParameter("type", assetType)
                                  .setParameter("snapshotType", snapshotType)
                                  .setParameter("hasCreated",
@@ -97,4 +78,6 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
             throw new PersistenceException(e);
         }
     }
+
+    protected abstract Class<T> assetClass();
 }

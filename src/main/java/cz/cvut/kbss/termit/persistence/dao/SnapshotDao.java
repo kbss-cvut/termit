@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -51,11 +52,17 @@ public class SnapshotDao {
     public Optional<Snapshot> find(URI uri) {
         Objects.requireNonNull(uri);
         try {
-            return Optional.of((Snapshot) em.createNativeQuery("SELECT DISTINCT ?s ?created ?asset ?type WHERE { " +
+            return Optional.of((Snapshot) em.createNativeQuery("SELECT DISTINCT ?s ?created ?asset ?type ?author ?authorFirstName ?authorLastName ?authorUsername WHERE { " +
                                                                        "?id a ?snapshotType ; " +
                                                                        "a ?type ; " +
                                                                        "?versionOf ?asset ; " +
                                                                        "?hasCreated ?created . " +
+                                                                       "OPTIONAL { " +
+                                                                       "  ?id ?creator ?author . " +
+                                                                       "  ?author ?firstName ?authorFirstName ; " +
+                                                                       "          ?lastName ?authorLastName ; " +
+                                                                       "          ?accountName ?authorUsername . " +
+                                                                       "} " +
                                                                        "FILTER (?type in (?supportedTypes)) " +
                                                                        "BIND (?id as ?s)" +
                                                                        "}", "Snapshot")
@@ -64,6 +71,14 @@ public class SnapshotDao {
                                             .setParameter("versionOf", URI.create(Vocabulary.s_p_je_verzi))
                                             .setParameter("hasCreated",
                                                           URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                                            .setParameter("creator",
+                                                          URI.create(DC.Terms.CREATOR))
+                                            .setParameter("firstName",
+                                                          URI.create(Vocabulary.s_p_ma_krestni_jmeno))
+                                            .setParameter("lastName",
+                                                          URI.create(Vocabulary.s_p_ma_prijmeni))
+                                            .setParameter("accountName",
+                                                          URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
                                             .setParameter("supportedTypes", SNAPSHOT_TYPES)
                                             .getSingleResult());
         } catch (NoResultException e) {
