@@ -575,7 +575,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         }).collect(Collectors.toList());
 
         final List<Snapshot> result = sut.findSnapshots(vocabulary);
-        assertEquals(result.size(), snapshots.size());
+        assertEquals(snapshots.size(), result.size());
         assertThat(result, containsSameEntities(snapshots));
     }
 

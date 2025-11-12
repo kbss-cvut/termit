@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.persistence.snapshot;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
@@ -35,13 +34,13 @@ import java.util.Optional;
  *
  * @param <T> Asset type
  */
-public class AssetSnapshotLoader<T extends Asset<?>> {
+public abstract class AssetSnapshotLoader<T extends Asset<?>> {
 
-    private final EntityManager em;
+    protected final EntityManager em;
 
-    private final URI assetType;
+    protected final URI assetType;
 
-    private final URI snapshotType;
+    protected final URI snapshotType;
 
     public AssetSnapshotLoader(EntityManager em, URI assetType, URI snapshotType) {
         this.em = em;
@@ -49,44 +48,7 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
         this.snapshotType = snapshotType;
     }
 
-    public List<Snapshot> findSnapshots(T asset) {
-        Objects.requireNonNull(asset);
-        try {
-            return em.createNativeQuery("SELECT ?s ?created ?asset ?type ?author ?authorFirstName ?authorLastName ?authorUsername WHERE { " +
-                                                "?s a ?snapshotType ; " +
-                                                "?hasCreated ?created ; " +
-                                                "?versionOf ?source . " +
-                                                "{?s ?hasAuthor ?author .} " +
-                                                "UNION" +
-                                                " {?s ?pdp_je_pojmem_ze_slovniku ?vocSnapshot . ?vocSnapshot ?hasAuthor ?author . } " +
-                                                "BIND (?source as ?asset) . " +
-                                                "BIND (?snapshotType as ?type) . " +
-                                                "OPTIONAL { " +
-                                                "  ?author ?firstName ?authorFirstName ; " +
-                                                "          ?lastName ?authorLastName ; " +
-                                                "          ?accountName ?authorUsername . " +
-                                                "} " +
-                                                "} ORDER BY DESC(?created)",
-                                        "Snapshot")
-                     .setParameter("snapshotType", snapshotType)
-                     .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("hasAuthor",
-                                   URI.create(DC.Terms.CREATOR))
-                     .setParameter("pdp_je_pojmem_ze_slovniku",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                     .setParameter("firstName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
-                     .setParameter("lastName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni))
-                     .setParameter("accountName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uzivatelske_jmeno))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
-                     .setParameter("source", asset).getResultList();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
+    public abstract List<Snapshot> findSnapshots(T asset);
 
     public Optional<T> findVersionValidAt(T asset, Instant at) {
         Objects.requireNonNull(asset);
@@ -99,8 +61,8 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                                                             "?hasCreated ?created . " +
                                                             "FILTER (?created <= ?at) " +
                                                             "} ORDER BY DESC(?created)",
-                                                    (Class<T>) asset.getClass())
-                                       .setMaxResults(1)
+                                                    assetClass())
+                                 .setMaxResults(1)
                                  .setParameter("type", assetType)
                                  .setParameter("snapshotType", snapshotType)
                                  .setParameter("hasCreated",
@@ -116,4 +78,6 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
             throw new PersistenceException(e);
         }
     }
+
+    protected abstract Class<T> assetClass();
 }

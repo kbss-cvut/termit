@@ -44,7 +44,7 @@ import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
-import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
+import cz.cvut.kbss.termit.persistence.snapshot.VocabularySnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -448,15 +448,12 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
-        return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)).findSnapshots(vocabulary);
+        return new VocabularySnapshotLoader(em).findSnapshots(vocabulary);
     }
 
     @Override
     public Optional<Vocabulary> findVersionValidAt(Vocabulary vocabulary, Instant at) {
-        return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
-                .findVersionValidAt(vocabulary, at);
+        return new VocabularySnapshotLoader(em).findVersionValidAt(vocabulary, at);
     }
 
     /**
@@ -530,23 +527,23 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                 SELECT DISTINCT ?subject ?relation ?object WHERE {
                                                         ?term a ?termType;
                                                             ?inVocabulary ?vocabulary .
-
+                                                
                                                         {
                                                            ?term ?relation ?secondTerm .
                                                            ?secondTerm a ?termType;
                                                                ?inVocabulary ?secondVocabulary .
-
+                                                
                                                            BIND(?term as ?subject)
                                                            BIND(?secondTerm as ?object)
                                                         } UNION {
                                                            ?secondTerm ?relation ?term .
                                                            ?secondTerm a ?termType;
                                                                ?inVocabulary ?secondVocabulary .
-
+                                                
                                                            BIND(?secondTerm as ?subject)
                                                            BIND(?term as ?object)
                                                         }
-
+                                                
                                                         FILTER(?relation IN (?deniedRelations))
                                                         FILTER(?subject != ?object)
                                                         FILTER(?secondVocabulary != ?vocabulary)
@@ -600,7 +597,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     public String getPrimaryLanguage(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
-            return em.createQuery("SELECT v.primaryLanguage FROM Vocabulary v WHERE v.uri = :vocabularyUri", String.class)
+            return em.createQuery("SELECT v.primaryLanguage FROM Vocabulary v WHERE v.uri = :vocabularyUri",
+                                  String.class)
                      .setParameter("vocabularyUri", vocabularyUri)
                      .getSingleResult();
         } catch (RuntimeException e) {
