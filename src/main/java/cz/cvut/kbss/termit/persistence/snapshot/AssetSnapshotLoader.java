@@ -56,9 +56,9 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                                                 "?s a ?snapshotType ; " +
                                                 "?hasCreated ?created ; " +
                                                 "?versionOf ?source . " +
-                                                "OPTIONAL {?s ?hasAuthor ?vAuthor .} " +
-                                                "OPTIONAL {?s ?pdp_je_pojmem_ze_slovniku ?vocSnapshot . ?vocSnapshot ?hasAuthor ?tAuthor . } " +
-                                                "BIND (COALESCE(?vAuthor, ?tAuthor) as ?author) . " +
+                                                "{?s ?hasAuthor ?author .} " +
+                                                "UNION" +
+                                                " {?s ?pdp_je_pojmem_ze_slovniku ?vocSnapshot . ?vocSnapshot ?hasAuthor ?author . } " +
                                                 "BIND (?source as ?asset) . " +
                                                 "BIND (?snapshotType as ?type) . " +
                                                 "OPTIONAL { " +
