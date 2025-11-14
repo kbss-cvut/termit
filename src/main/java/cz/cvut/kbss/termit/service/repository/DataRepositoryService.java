@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
@@ -138,8 +139,14 @@ public class DataRepositoryService {
     private static void validate(CustomAttribute attribute) {
         assert attribute.getDomain() != null;
         final String strDomain = attribute.getDomain().toString();
-        if (!SKOS.CONCEPT.equals(strDomain) && !Vocabulary.s_c_slovnik.equals(strDomain)) {
+        if (!SKOS.CONCEPT.equals(strDomain) && !Vocabulary.s_c_slovnik.equals(strDomain) && !RDF.STATEMENT.equals(strDomain)) {
             throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
+        }
+
+        if (RDF.STATEMENT.equals(strDomain)) {
+            if (attribute.getAnnotatedRelationships() == null || attribute.getAnnotatedRelationships().isEmpty()) {
+                throw new ValidationException("Custom attribute with rdf:Statement domain must specify applicable properties.");
+            }
         }
         if (attribute.getLabel() == null || attribute.getLabel().isEmpty()) {
             throw new ValidationException("Custom attribute must have a label.");
