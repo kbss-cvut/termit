@@ -9,6 +9,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
+import java.util.Set;
 
 @Context(CustomAttribute.CONTEXT)
 @OWLClass(iri = Vocabulary.s_c_vlastni_atribut)
@@ -21,6 +22,9 @@ public class CustomAttribute extends RdfsResource {
 
     @OWLAnnotationProperty(iri = RDFS.RANGE)
     private URI range;
+
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_as_relationship)
+    private Set<URI> annotatedRelationships;
 
     public CustomAttribute() {
     }
@@ -44,5 +48,13 @@ public class CustomAttribute extends RdfsResource {
 
     public void setRange(URI range) {
         this.range = range;
+    }
+
+    public Set<URI> getAnnotatedRelationships() {
+        return annotatedRelationships;
+    }
+
+    public void setAnnotatedRelationships(Set<URI> annotatedRelationships) {
+        this.annotatedRelationships = annotatedRelationships;
     }
 }
