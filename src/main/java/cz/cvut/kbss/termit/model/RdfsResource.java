@@ -50,6 +50,10 @@ import java.util.Set;
                                                                                      @VariableResult(name = "comment",
                                                                                                      type = LangString.class),
                                                                                      @VariableResult(name = "type",
+                                                                                                     type = String.class),
+                                                                                     @VariableResult(name = "domain",
+                                                                                                     type = String.class),
+                                                                                     @VariableResult(name = "range",
                                                                                                      type = String.class)
                                                                              })})
 @OWLClass(iri = RDFS.RESOURCE)
@@ -64,6 +68,12 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
     @OWLAnnotationProperty(iri = RDFS.COMMENT)
     private MultilingualString comment;
 
+    @OWLAnnotationProperty(iri = RDFS.DOMAIN)
+    private URI domain;
+
+    @OWLAnnotationProperty(iri = RDFS.RANGE)
+    private URI range;
+
     @Types
     private Set<String> types;
 
@@ -71,6 +81,10 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
     }
 
     public RdfsResource(URI uri, LangString label, LangString comment, String type) {
+        this(uri, label, comment, type, null, null);
+    }
+
+    public RdfsResource(URI uri, LangString label, LangString comment, String type, String domain, String range) {
         this.uri = uri;
         if (label != null) {
             this.label = MultilingualString.create(label.getValue(), label.getLanguage().orElse(null));
@@ -79,6 +93,8 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
             this.comment = MultilingualString.create(comment.getValue(), comment.getLanguage().orElse(null));
         }
         this.types = new HashSet<>(Collections.singleton(type));
+        this.domain = domain != null && !domain.startsWith("_:") ? URI.create(domain) : null;
+        this.range = range != null && !range.startsWith("_:") ? URI.create(range) : null;
     }
 
     public RdfsResource(URI uri, MultilingualString label, MultilingualString comment, String type) {
@@ -95,6 +111,8 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
         if (other.comment != null) {
             this.comment = new MultilingualString(other.comment.getValue());
         }
+        this.domain = other.domain;
+        this.range = other.range;
         this.types = new HashSet<>(Utils.emptyIfNull(other.types));
     }
 
@@ -122,6 +140,22 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
 
     public void setComment(MultilingualString comment) {
         this.comment = comment;
+    }
+
+    public URI getDomain() {
+        return domain;
+    }
+
+    public void setDomain(URI domain) {
+        this.domain = domain;
+    }
+
+    public URI getRange() {
+        return range;
+    }
+
+    public void setRange(URI range) {
+        this.range = range;
     }
 
     @Override

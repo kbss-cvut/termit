@@ -83,15 +83,28 @@ public class DataDao {
      * @return List of properties, ordered by label
      */
     public List<RdfsResource> findAllProperties() {
-        final List<RdfsResource> result = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
+        final List<RdfsResource> result = em.createNativeQuery("SELECT ?x ?label ?comment ?type ?domain ?range WHERE {" +
                                                                        "BIND (?property as ?type)" +
                                                                        "?x a ?type ." +
                                                                        "OPTIONAL { ?x ?hasLabel ?label . }" +
                                                                        "OPTIONAL { ?x ?hasComment ?comment . }" +
+                                                                       "OPTIONAL { " +
+                                                                       "    { ?x ?hasDomain ?domain . }" +
+                                                                       "    UNION" +
+                                                                       "    { ?x ?subPropertyOf+ ?parent . ?parent ?hasDomain ?domain . }" +
+                                                                       "}" +
+                                                                       "OPTIONAL { " +
+                                                                       "    { ?x ?hasRange ?range . }" +
+                                                                       "    UNION" +
+                                                                       "    { ?x ?subPropertyOf+ ?parent . ?parent ?hasRange ?range . }" +
+                                                                       "}" +
                                                                        "}", "RdfsResource")
                                             .setParameter("property", URI.create(RDF.PROPERTY))
                                             .setParameter("hasLabel", RDFS_LABEL)
-                                            .setParameter("hasComment", URI.create(RDFS.COMMENT)).getResultList();
+                                            .setParameter("hasComment", URI.create(RDFS.COMMENT))
+                                            .setParameter("subPropertyOf", URI.create(RDFS.SUB_PROPERTY_OF))
+                                            .setParameter("hasDomain", URI.create(RDFS.DOMAIN))
+                                            .setParameter("hasRange", URI.create(RDFS.RANGE)).getResultList();
         return consolidateTranslations(result);
     }
 
