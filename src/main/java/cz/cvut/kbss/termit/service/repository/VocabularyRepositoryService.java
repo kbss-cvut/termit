@@ -100,6 +100,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
+    @Transactional(readOnly = true)
     // Cache only if all vocabularies are editable
     @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
     @Override

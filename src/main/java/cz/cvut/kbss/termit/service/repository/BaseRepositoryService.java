@@ -71,6 +71,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @return List of all matching instances
      */
+    @Transactional(readOnly = true)
     public List<DTO> findAll() {
         final List<T> loaded = getPrimaryDao().findAll();
         return loaded.stream().map(this::postLoad).map(this::mapToDto).collect(Collectors.toList());
@@ -91,6 +92,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @return {@link Optional} with the loaded object or an empty one
      * @see #findRequired(URI)
      */
+    @Transactional(readOnly = true)
     public Optional<T> find(URI id) {
         return getPrimaryDao().find(id).map(this::postLoad);
     }
@@ -108,6 +110,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @return Entity reference
      * @throws NotFoundException If no matching instance is found
      */
+    @Transactional(readOnly = true)
     public T getReference(URI id) {
         if (exists(id)) {
             return getPrimaryDao().getReference(id);
@@ -126,6 +129,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @throws NotFoundException If no matching instance is found
      * @see #find(URI)
      */
+    @Transactional(readOnly = true)
     public T findRequired(URI id) {
         return find(id).orElseThrow(() -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
     }

@@ -81,25 +81,29 @@ public class AccessControlListRepositoryService implements AccessControlListServ
         this.aclConfig = config.getAcl();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public AccessControlList findRequired(URI id) {
         return dao.find(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public AccessControlList getReference(URI id) {
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(key = "#p0.uri", unless = "#result == null")
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<AccessControlListDto> findForAsDto(HasIdentifier subject) {
-        return findFor(subject).map(dtoMapper::accessControlListToDto);
+        return dao.findFor(subject).map(dtoMapper::accessControlListToDto);
     }
 
     @CachePut(key = "#p0.uri")
