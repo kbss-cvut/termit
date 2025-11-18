@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.dto.meta;
 
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
@@ -40,7 +41,7 @@ public class TermRelationshipAnnotation implements Serializable {
     @OWLObjectProperty(iri = RDF.PREDICATE)
     private URI attribute;
 
-    @OWLObjectProperty(iri = RDF.OBJECT)
+    @OWLAnnotationProperty(iri = RDF.OBJECT)
     private Set<Object> value;
 
     public TermRelationshipAnnotation() {
