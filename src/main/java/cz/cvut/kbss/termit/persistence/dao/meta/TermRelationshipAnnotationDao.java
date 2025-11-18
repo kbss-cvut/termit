@@ -99,15 +99,19 @@ public class TermRelationshipAnnotationDao {
     private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSkosSymmetricProperties(Term term) {
         final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
                 URI.create(RDF.STATEMENT));
+        // Must use FILTER for ?attribute and ?predicate because setting the value directly results in VALUES clause
+        // (which is there because ?subject is projected out of the query)
+        // causing incorrect query results, because mismatch in the number of items in VALUES meant UNDEF was used.
         return (List<TermRelationshipAnnotation>) em.createNativeQuery(
                                                             """
                                                                     SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
                                                                     GRAPH ?g { << ?object ?predicate ?subject >> ?attribute ?value . }
                                                                     FILTER (?attribute IN (?atts))
+                                                                    FILTER (?predicate IN (?symmetricSkosProps))
                                                                     FILTER NOT EXISTS { ?object a ?termSnapshot . }
                                                                     }""", "TermRelationshipAnnotation")
                                                     .setParameter("subject", term)
-                                                    .setParameter("predicate", SYMMETRIC_SKOS_PROPERTIES)
+                                                    .setParameter("symmetricSkosProps", SYMMETRIC_SKOS_PROPERTIES)
                                                     .setParameter("atts", annotationProperties)
                                                     .setParameter("termSnapshot",
                                                                   URI.create(Vocabulary.s_c_verze_pojmu))
