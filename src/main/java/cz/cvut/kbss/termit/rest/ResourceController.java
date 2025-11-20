@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.FileBackupDto;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -366,6 +367,26 @@ public class ResourceController extends BaseController {
         final Resource resource = resourceService
                 .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
         return resourceService.getChanges(resource, new ChangeRecordFilterDto());
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets all available backups for the resource.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resource backups."),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
+    @GetMapping(value = "/{localName}/backups")
+    public ResponseEntity<List<FileBackupDto>> getBackups(
+            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final Resource resource = getResource(localName, namespace);
+        final List<FileBackupDto> dtos = resourceService.getBackupFiles(resource).stream()
+                .map(FileBackupDto::new).toList();
+        return ResponseEntity.ok(dtos);
     }
 
     /**

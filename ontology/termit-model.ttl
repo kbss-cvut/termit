@@ -361,4 +361,11 @@ termit-pojem:má-datum-a-čas-poslední-zálohy
         rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> ;
         rdfs:range          xsd:dateTime .
 
+termit-pojem:popis-zálohy-souboru
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
 
+termit-pojem:má-důvod-zálohy
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         termit-pojem:popis-zálohy-souboru ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .

@@ -698,3 +698,27 @@ termit-pojem:má-datum-a-čas-poslední-zálohy
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has date and time of the last backup"@en , "Má datum a čas poslední zálohy"@cs .
+
+termit-pojem:popis-zálohy-souboru
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "File backup description"@en , "Popis zálohy souboru"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "Describes a file backup created at a specific time for a specific reason."@en ,
+                "Popisuje zálohu souboru vytvořenou v určitém čase z určitého důvodu."@cs .
+
+termit-pojem:má-důvod-zálohy
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has backup reason"@en , "Má důvod zálohy"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "Specifies the reason why a file backup was created."@en ,
+                "Určuje důvod, proč byla záloha souboru vytvořena."@cs .
