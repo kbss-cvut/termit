@@ -37,6 +37,8 @@ import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.backup.BackupFile;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -78,6 +80,8 @@ public class ResourceService
 
     private final DocumentManager documentManager;
 
+    private final DocumentBackupManager documentBackupManager;
+
     private final TextAnalysisService textAnalysisService;
 
     private final VocabularyService vocabularyService;
@@ -90,10 +94,12 @@ public class ResourceService
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
+                           DocumentBackupManager documentBackupManager,
                            TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
                            ChangeRecordService changeRecordService, Configuration config) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
+        this.documentBackupManager = documentBackupManager;
         this.textAnalysisService = textAnalysisService;
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
@@ -388,5 +394,16 @@ public class ResourceService
     @Override
     public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Lists all backups available for the specified {@code asset}.
+     * @param asset The file whose backups to list
+     * @return the list of all backups
+     */
+    public List<BackupFile> getBackupFiles(Resource asset) {
+        verifyFileOperationPossible(asset, "Listing file backups");
+        final File file = (File) asset;
+        return documentBackupManager.getBackups(file, null);
     }
 }
