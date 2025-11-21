@@ -159,8 +159,12 @@ public class DataRepositoryService {
         final CustomAttribute existing = dataDao.findCustomAttribute(attribute.getUri())
                                                 .orElseThrow(() -> NotFoundException.create(
                                                         CustomAttribute.class, attribute.getUri()));
+        validate(attribute);
         existing.setLabel(attribute.getLabel());
         existing.setComment(attribute.getComment());
+        existing.setDomain(attribute.getDomain());
+        existing.setRange(attribute.getRange());
+        existing.setAnnotatedRelationships(attribute.getAnnotatedRelationships());
         LOG.debug("Updating custom attribute {}", existing);
     }
 
