@@ -67,7 +67,7 @@ public class TermRelationshipAnnotationController extends BaseController {
     @PatchMapping(value = "/terms/{localName}/relationship-annotations",
                   consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addRelationshipAnnotation(
+    public void updateRelationshipAnnotation(
             @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
