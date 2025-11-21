@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.persistence.dao.meta;
 
-import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -146,32 +145,38 @@ public class TermRelationshipAnnotationDao {
      * @return Actual asserted statement and its repository context
      */
     private Pair<RdfStatement, URI> resolveActualContextAndStatement(RdfStatement statement) {
-        try {
-            final Object result = em.createNativeQuery("SELECT ?ss ?p ?oo ?g WHERE {" +
-                                                               "{" +
-                                                               "GRAPH ?g {" +
-                                                               "?s ?p ?o ." +
-                                                               "BIND(?s AS ?ss)" +
-                                                               "BIND(?o AS ?oo)" +
-                                                               "} } UNION {" +
-                                                               "GRAPH ?g {" +
-                                                               "?o ?p ?s ." +
-                                                               "BIND(?o AS ?ss)" +
-                                                               "BIND(?s AS ?oo)" +
-                                                               "} } }")
-                                    .setParameter("s", statement.getSubject())
-                                    .setParameter("p", statement.getRelation())
-                                    .setParameter("o", statement.getObject()).getSingleResult();
-            assert result instanceof Object[];
-            final Object[] resultRow = (Object[]) result;
-            assert resultRow.length == 4;
-            return new Pair<>(new RdfStatement((URI) resultRow[0], (URI) resultRow[1], (URI) resultRow[2]),
-                              (URI) resultRow[3]);
-        } catch (NoResultException e) {
-            LOG.error("Could not find statement {} or its inverse when resolving term relationship annotation context.",
-                      statement, e);
-            throw new TermRelationshipAnnotationException("Did not find statement " + statement + " or its inverse.");
+        final List<Object> resultList = em.createNativeQuery("SELECT ?ss ?p ?oo ?g WHERE {" +
+                                                                     "{" +
+                                                                     "GRAPH ?g {" +
+                                                                     "?s ?p ?o ." +
+                                                                     "BIND(?s AS ?ss)" +
+                                                                     "BIND(?o AS ?oo)" +
+                                                                     "} } UNION {" +
+                                                                     "GRAPH ?g {" +
+                                                                     "?o ?p ?s ." +
+                                                                     "BIND(?o AS ?ss)" +
+                                                                     "BIND(?s AS ?oo)" +
+                                                                     "} } }")
+                                          .setParameter("s", statement.getSubject())
+                                          .setParameter("p", statement.getRelation())
+                                          .setParameter("o", statement.getObject()).getResultList();
+        if (resultList.isEmpty()) {
+            LOG.error(
+                    "Could not find statement {} or its inverse when resolving term relationship annotation context.",
+                    statement);
+            throw new TermRelationshipAnnotationException(
+                    "Did not find statement " + statement + " or its inverse.");
+        } else if (resultList.size() > 1) {
+            LOG.warn(
+                    "Both statement {} and its inverse are explicitly stated in the data. Using the provided statement for relationship annotation.",
+                    statement);
+            return new Pair<>(statement, (URI) ((Object[]) resultList.get(0))[3]);
         }
+        assert resultList.get(0) instanceof Object[];
+        final Object[] resultRow = (Object[]) resultList.get(0);
+        assert resultRow.length == 4;
+        return new Pair<>(new RdfStatement((URI) resultRow[0], (URI) resultRow[1], (URI) resultRow[2]),
+                          (URI) resultRow[3]);
     }
 
     /**
