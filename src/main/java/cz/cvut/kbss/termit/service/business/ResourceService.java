@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.document.AnnotationGenerator;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
@@ -56,6 +57,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
@@ -91,13 +93,16 @@ public class ResourceService
 
     private final Configuration config;
 
+    private final AnnotationGenerator annotationGenerator;
+
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
                            DocumentBackupManager documentBackupManager,
                            TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
-                           ChangeRecordService changeRecordService, Configuration config) {
+                           ChangeRecordService changeRecordService, Configuration config,
+                           AnnotationGenerator annotationGenerator) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
         this.documentBackupManager = documentBackupManager;
@@ -105,6 +110,7 @@ public class ResourceService
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
         this.config = config;
+        this.annotationGenerator = annotationGenerator;
     }
 
     /**
@@ -422,6 +428,11 @@ public class ResourceService
         verifyFileOperationPossible(resource, "Restoring file backups");
         final File file = (File) resource;
         BackupFile backupFile = documentBackupManager.getBackup(file, backupTimestamp);
-        documentBackupManager.restoreBackup(file, backupFile);
+        final java.io.File physicalFile = documentBackupManager.restoreBackup(file, backupFile);
+        try (FileInputStream fis = new FileInputStream(physicalFile)) {
+            annotationGenerator.generateAnnotations(fis, file);
+        } catch (Exception e) {
+            throw new TermItException("Unable to resolve occurrences for restored backup", e);
+        }
     }
 }

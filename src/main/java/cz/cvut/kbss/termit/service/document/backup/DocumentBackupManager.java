@@ -4,7 +4,6 @@ import cz.cvut.kbss.termit.exception.BackupManagerException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.document.AnnotationGenerator;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,13 +43,10 @@ public class DocumentBackupManager {
     private static final Logger LOG = LoggerFactory.getLogger(DocumentBackupManager.class);
     private final Path storageDirectory;
     private final ResourceRepositoryService resourceRepositoryService;
-    private final AnnotationGenerator annotationGenerator;
 
-    public DocumentBackupManager(Configuration config, ResourceRepositoryService resourceRepositoryService,
-                                 AnnotationGenerator annotationGenerator) {
+    public DocumentBackupManager(Configuration config, ResourceRepositoryService resourceRepositoryService) {
         this.storageDirectory = Path.of(config.getFile().getStorage());
         this.resourceRepositoryService = resourceRepositoryService;
-        this.annotationGenerator = annotationGenerator;
     }
 
     /**
@@ -258,19 +253,27 @@ public class DocumentBackupManager {
     /**
      * Restores the given backup file of the file resource.
      * Backups the original contents if needed.
+     * <p>
+     * <b>Does not resolve occurrences in the restored file.</b>
      * @param fileResource the file resource
      * @param backupFile the backup to restore
+     * @return The physical file replaced with the backup.
      */
     @Transactional
-    public void restoreBackup(File fileResource, BackupFile backupFile) {
+    public java.io.File restoreBackup(File fileResource, BackupFile backupFile) {
         // create backup if the file was modified since the last backup
         if (fileResource.getModified().isAfter(fileResource.getLastBackup())) {
             createBackup(fileResource, BackupReason.BACKUP_RESTORE);
         }
 
-        // resolve annotations in the backup and save it to the current resource file
-        try (FileInputStream fis = new FileInputStream(backupFile.file())) {
-            annotationGenerator.generateAnnotations(fis, fileResource);
+        // resolve the physical file which will be replaced
+        final java.io.File currentFile = DocumentFileUtils.resolveTermitFile(storageDirectory, fileResource, false);
+
+        try {
+            // restore the backup
+            final java.io.File decompressedBackup = decompressFile(backupFile.file());
+            Files.copy(decompressedBackup.toPath(), currentFile.toPath());
+            return currentFile;
         } catch (Exception e) {
             throw new BackupManagerException("Unable to restore backup.", e);
         }
