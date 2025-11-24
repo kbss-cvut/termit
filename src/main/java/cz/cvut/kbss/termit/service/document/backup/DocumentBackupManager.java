@@ -241,7 +241,7 @@ public class DocumentBackupManager {
 
         Collections.sort(backupTimestamps);
         for (Instant timestamp : backupTimestamps) {
-            if (timestamp.isAfter(at)) {
+            if (timestamp.equals(at) || timestamp.isAfter(at)) {
                 return backupMap.get(timestamp);
             }
         }
@@ -271,7 +271,7 @@ public class DocumentBackupManager {
 
         try {
             // restore the backup
-            final java.io.File decompressedBackup = decompressFile(backupFile.file());
+            final java.io.File decompressedBackup = openBackup(backupFile);
             Files.copy(decompressedBackup.toPath(), currentFile.toPath());
             return currentFile;
         } catch (Exception e) {

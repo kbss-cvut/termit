@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.BaseDocumentTestRunner;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
+import org.apache.commons.compress.compressors.bzip2.BZip2Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,6 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -366,6 +368,57 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         BackupFile backupFile = new BackupFile(Instant.now(), physicalFile, BackupReason.UNKNOWN);
         java.io.File extractedFile = sut.openBackup(backupFile);
         final List<String> backupLines = Files.readAllLines(extractedFile.toPath());
+        final String result = String.join("\n", backupLines);
+        assertEquals(CONTENT, result);
+    }
+
+    @Test
+    void getBackupReturnsBackupWithEqualTimestamp() {
+        final File fileResource = new File();
+        final java.io.File originalFile = generateFile();
+        fileResource.setLabel(originalFile.getName());
+        document.addFile(fileResource);
+        fileResource.setDocument(document);
+        fileResource.setModified(Utils.timestamp());
+
+        // prepare a backup
+        sut.createBackup(fileResource, BackupReason.UNKNOWN);
+
+        final BackupFile backupFile = sut.getBackup(fileResource, Instant.EPOCH);
+        final BackupFile sameBackup = sut.getBackup(fileResource, backupFile.timestamp());
+
+        assertNotNull(backupFile);
+        assertEquals(backupFile, sameBackup);
+        assertTrue(BZip2Utils.isCompressedFileName(backupFile.file().getName()));
+    }
+
+    @Test
+    void restoreBackupRestoresTheBackupContents() throws Exception {
+        final File fileResource = new File();
+        final java.io.File originalFile = generateFile();
+        fileResource.setLabel(originalFile.getName());
+        document.addFile(fileResource);
+        fileResource.setDocument(document);
+        fileResource.setModified(Utils.timestamp());
+
+        final Instant backupTimestamp = Utils.timestamp().minusSeconds(1);
+        // prepare a backup
+        sut.createBackup(fileResource, BackupReason.UNKNOWN);
+
+        BackupFile backupFile = sut.getBackup(fileResource, backupTimestamp);
+        assertNotNull(backupFile);
+        assertTrue(backupFile.file().isFile());
+        assertTrue(BZip2Utils.isCompressedFileName(backupFile.file().getName()));
+
+        // delete the original temporary file
+        Files.delete(originalFile.toPath());
+        assertFalse(originalFile.exists());
+
+        sut.restoreBackup(fileResource, backupFile);
+        assertTrue(originalFile.isFile());
+
+        // check file contents
+        final List<String> backupLines = Files.readAllLines(originalFile.toPath());
         final String result = String.join("\n", backupLines);
         assertEquals(CONTENT, result);
     }

@@ -32,16 +32,20 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
+import cz.cvut.kbss.termit.service.document.AnnotationGenerator;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.backup.BackupFile;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import org.assertj.core.util.Files;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,6 +78,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
@@ -93,6 +98,12 @@ class ResourceServiceTest {
 
     @Mock
     private DocumentManager documentManager;
+
+    @Mock
+    private AnnotationGenerator annotationGenerator;
+
+    @Mock
+    private DocumentBackupManager documentBackupManager;
 
     @Mock
     private TextAnalysisService textAnalysisService;
@@ -557,5 +568,31 @@ class ResourceServiceTest {
         when(textAnalysisService.supportsLanguage(file)).thenReturn(false);
         assertThrows(UnsupportedTextAnalysisLanguageException.class, () -> sut.runTextAnalysis(file, Set.of(vocabulary.getUri())));
         verify(textAnalysisService).supportsLanguage(file);
+    }
+
+    @Test
+    void restoreBackupRestoresTheCorrectBackup() {
+        final java.io.File restoredBackupFile = Files.newTemporaryFile();
+        final File file = Generator.generateFileWithId("test.hml");
+        file.setDocument(Generator.generateDocumentWithId());
+        final Instant backupInstant = Utils.timestamp();
+        final BackupFile backupFile = new BackupFile(backupInstant, Files.newTemporaryFile(), BackupReason.UNKNOWN);
+        when(documentBackupManager.getBackup(eq(file), eq(backupInstant))).thenReturn(backupFile);
+        when(documentBackupManager.restoreBackup(eq(file), eq(backupFile))).thenReturn(restoredBackupFile);
+        sut.restoreBackup(file, backupInstant);
+        verify(documentBackupManager).restoreBackup(eq(file), eq(backupFile));
+    }
+
+    @Test
+    void restoreBackupGeneratesAnnotations() {
+        final java.io.File restoredBackupFile = Files.newTemporaryFile();
+        final File file = Generator.generateFileWithId("test.hml");
+        file.setDocument(Generator.generateDocumentWithId());
+        final Instant backupInstant = Utils.timestamp();
+        final BackupFile backupFile = new BackupFile(backupInstant, Files.newTemporaryFile(), BackupReason.UNKNOWN);
+        when(documentBackupManager.getBackup(eq(file), eq(backupInstant))).thenReturn(backupFile);
+        when(documentBackupManager.restoreBackup(eq(file), eq(backupFile))).thenReturn(restoredBackupFile);
+        sut.restoreBackup(file, backupInstant);
+        verify(annotationGenerator).generateAnnotations(any(), eq(file));
     }
 }
