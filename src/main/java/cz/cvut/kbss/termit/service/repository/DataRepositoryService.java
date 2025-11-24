@@ -161,6 +161,7 @@ public class DataRepositoryService {
                                                         CustomAttribute.class, attribute.getUri()));
         existing.setLabel(attribute.getLabel());
         existing.setComment(attribute.getComment());
+        existing.setAnnotatedRelationships(attribute.getAnnotatedRelationships());
         LOG.debug("Updating custom attribute {}", existing);
     }
 
