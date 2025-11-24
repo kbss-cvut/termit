@@ -96,11 +96,6 @@ public class AnnotationGenerator {
                 LOG.trace("Resolving term occurrences for {}.", source);
                 occurrenceResolver.findTermOccurrences(toSave::put);
                 LOG.trace("Finished resolving term occurrences for {}.", source);
-                LOG.trace("Saving term occurrences for {}.", source);
-                if (source instanceof File sourceFile) {
-                    saveAnnotatedContent(sourceFile, occurrenceResolver.getContent());
-                }
-                LOG.trace("Term occurrences saved for {}.", source);
             } finally {
                 finished.set(true);
             }
@@ -124,6 +119,9 @@ public class AnnotationGenerator {
                 throw re;
             }
             throw new TermItException(e);
+        }
+        if (source instanceof File sourceFile) {
+            saveAnnotatedContent(sourceFile, occurrenceResolver.getContent());
         }
     }
 
