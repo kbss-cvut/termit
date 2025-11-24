@@ -58,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -405,5 +406,22 @@ public class ResourceService
         verifyFileOperationPossible(asset, "Listing file backups");
         final File file = (File) asset;
         return documentBackupManager.getBackups(file, null);
+    }
+
+    /**
+     * Restores a backup for the given resource from the given timestamp.
+     * If no backup was created at the exact timestamp, the closest newest backup is restored.
+     *
+     * @param resource the resource for which the backup should be restored; must be a {@link File}
+     * @param backupTimestamp the timestamp of the desired backup to restore
+     */
+    @Transactional
+    public void restoreBackup(Resource resource, Instant backupTimestamp) {
+        Objects.requireNonNull(resource);
+        Objects.requireNonNull(backupTimestamp);
+        verifyFileOperationPossible(resource, "Restoring file backups");
+        final File file = (File) resource;
+        BackupFile backupFile = documentBackupManager.getBackup(file, backupTimestamp);
+        documentBackupManager.restoreBackup(file, backupFile);
     }
 }

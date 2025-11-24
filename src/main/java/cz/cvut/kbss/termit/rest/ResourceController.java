@@ -389,6 +389,28 @@ public class ResourceController extends BaseController {
         return ResponseEntity.ok(dtos);
     }
 
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Restores backup from the given timestamp.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Backup restoration started"),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
+    @PostMapping(value = "/{localName}/backups/restore")
+    public ResponseEntity<Void> restoreBackup(
+            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Timestamp of the backup to restore")
+            @RequestParam(name = "Backup timestamp") Instant backupTimestamp
+    ) {
+        final Resource resource = getResource(localName, namespace);
+        resourceService.restoreBackup(resource, backupTimestamp);
+        return ResponseEntity.accepted().build();
+    }
+
     /**
      * A couple of constants for the {@link ResourceController} API documentation.
      */
