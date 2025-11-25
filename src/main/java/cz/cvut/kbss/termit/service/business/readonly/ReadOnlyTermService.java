@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -60,12 +61,24 @@ public class ReadOnlyTermService {
         return termService.findAll(vocabulary, pageSpec);
     }
 
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAllFlat(vocabulary, pageSpec);
+    }
+
     public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         return termService.findAll(searchString, vocabulary, pageSpec);
     }
 
+    public List<FlatTermDto> findAllFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAllFlat(searchString, vocabulary, pageSpec);
+    }
+
     public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         return termService.findAllIncludingImported(searchString, vocabulary, pageSpec);
+    }
+
+    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {

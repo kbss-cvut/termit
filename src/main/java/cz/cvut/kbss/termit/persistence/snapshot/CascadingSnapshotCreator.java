@@ -19,8 +19,10 @@ package cz.cvut.kbss.termit.persistence.snapshot;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
@@ -53,14 +55,18 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
 
     private final VocabularyRelationshipResolver relationshipResolver;
 
+    private final SecurityUtils securityUtils;
+
     private final String snapshotVocabularyQuery;
     private final String snapshotTermQuery;
 
     public CascadingSnapshotCreator(Configuration configuration, EntityManager em,
-                                    VocabularyRelationshipResolver relationshipResolver) {
+                                    VocabularyRelationshipResolver relationshipResolver,
+                                    SecurityUtils securityUtils) {
         super(configuration);
         this.em = em;
         this.relationshipResolver = relationshipResolver;
+        this.securityUtils = securityUtils;
         this.snapshotVocabularyQuery = Utils.loadQuery("snapshot/vocabulary.ru");
         this.snapshotTermQuery = Utils.loadQuery("snapshot/term.ru");
     }
@@ -69,13 +75,15 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         LOG.info("Creating snapshot of {}.", vocabulary);
+        final User currentUser = securityUtils.getCurrentUser().toUser();
         final Set<URI> toSnapshot = resolveVocabulariesToSnapshot(vocabulary);
         toSnapshot.forEach(v -> {
-            snapshotVocabulary(v);
+            snapshotVocabulary(v, currentUser.getUri());
             snapshotTerms(v);
         });
         final Snapshot snapshot = new Snapshot(snapshotUri(vocabulary.getUri()), timestamp, vocabulary.getUri(),
                                                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        snapshot.setAuthor(currentUser);
         LOG.debug("Snapshot created: {}", snapshot);
         return snapshot;
     }
@@ -93,12 +101,13 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
         return toSnapshot;
     }
 
-    private void snapshotVocabulary(URI vocabulary) {
+    private void snapshotVocabulary(URI vocabulary, URI author) {
         LOG.trace("Creating snapshot of vocabulary {} with identifier {}.", uriToString(vocabulary),
                   uriToString(snapshotUri(vocabulary)));
         em.createNativeQuery(snapshotVocabularyQuery).setParameter("vocabulary", vocabulary)
           .setParameter("suffix", getSnapshotSuffix())
           .setParameter("created", timestamp)
+          .setParameter("author", author)
           .executeUpdate();
     }
 

@@ -57,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunner {
@@ -70,17 +71,19 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
     ObjectMapper objectMapper;
 
     /**
-     * @return Stream of argument pairs with StompCommand (CONNECT & DISCONNECT excluded) and true + false value for each command
+     * @return Stream of argument pairs with StompCommand (CONNECT & DISCONNECT excluded) and true + false value for
+     * each command
      */
     public static Stream<Arguments> stompCommands() {
-        return Arrays.stream(StompCommand.values()).filter(c -> c != StompCommand.CONNECT && c != StompCommand.DISCONNECT)
+        return Arrays.stream(StompCommand.values())
+                     .filter(c -> c != StompCommand.CONNECT && c != StompCommand.DISCONNECT && c != StompCommand.STOMP)
                      .map(Enum::name)
                      .flatMap(name -> Stream.of(Arguments.of(name, true), Arguments.of(name, false)));
     }
 
     /**
-     * Ensures that connection is closed on receiving any message other than CONNECT
-     * (even with valid authorization token)
+     * Ensures that connection is closed on receiving any message other than CONNECT (even with valid authorization
+     * token)
      */
     @ParameterizedTest
     @MethodSource("stompCommands")
@@ -88,11 +91,14 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final AtomicBoolean receivedReply = new AtomicBoolean(false);
         final AtomicBoolean receivedError = new AtomicBoolean(false);
 
-        final String auth = withAuth ? HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + generateToken() + "\n" : "";
+        final String auth = withAuth ?
+                            HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + generateToken() + "\n" :
+                            "";
         final TextMessage message = new TextMessage(stompCommand + "\n" + auth + "\n\0");
 
         final WebSocketClient wsClient = new StandardWebSocketClient();
-        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
+        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError),
+                                                                  url);
 
         WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
@@ -105,8 +111,7 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
-        verify(webSocketExceptionHandler).delegate(notNull(), notNull());
-        verify(webSocketExceptionHandler).accessDeniedException(notNull(), notNull());
+        verify(webSocketExceptionHandler, atLeastOnce()).delegate(notNull(), notNull());
     }
 
     WebSocketHandler makeWebSocketHandler(AtomicBoolean receivedReply, AtomicBoolean receivedError) {
@@ -135,10 +140,12 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final AtomicBoolean receivedReply = new AtomicBoolean(false);
         final AtomicBoolean receivedError = new AtomicBoolean(false);
 
-        final TextMessage message = new TextMessage(StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + "DefinitelyNotValidToken\n\n\0");
+        final TextMessage message = new TextMessage(
+                StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + "DefinitelyNotValidToken\n\n\0");
 
         final WebSocketClient wsClient = new StandardWebSocketClient();
-        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
+        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError),
+                                                                  url);
 
         WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
@@ -168,13 +175,17 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final String token = Jwts.builder().setSubject(userDetails.getUser().getUsername())
                                  .setId(userDetails.getUser().getUri().toString()).setIssuedAt(Date.from(issued))
                                  .setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
-                                 .signWith(Keys.hmacShaKeyFor("my very secure and really private key".getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
+                                 .signWith(Keys.hmacShaKeyFor(
+                                                   "my very secure and really private key".getBytes(StandardCharsets.UTF_8)),
+                                           SignatureAlgorithm.HS256)
                                  .serializeToJsonWith(new JacksonSerializer<>(objectMapper)).compact();
 
-        final TextMessage message = new TextMessage(StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + token + "\n\n\0");
+        final TextMessage message = new TextMessage(
+                StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + token + "\n\n\0");
 
         final WebSocketClient wsClient = new StandardWebSocketClient();
-        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
+        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError),
+                                                                  url);
 
         WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 

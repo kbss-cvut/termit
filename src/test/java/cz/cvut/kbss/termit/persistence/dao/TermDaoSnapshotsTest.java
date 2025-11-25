@@ -74,7 +74,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         }).collect(Collectors.toList());
 
         final List<Snapshot> result = sut.findSnapshots(term);
-        assertEquals(result.size(), snapshots.size());
+        assertEquals(snapshots.size(), result.size());
         assertThat(result, containsSameEntities(snapshots));
     }
 

@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -128,10 +129,15 @@ class DataRepositoryServiceTest {
         final CustomAttribute updated = new CustomAttribute(existing.getUri(),
                                                             MultilingualString.create("Updated attribute", "en"),
                                                             MultilingualString.create("Updated description", "en"));
-
+        updated.setDomain(URI.create(SKOS.CONCEPT));
+        updated.setRange(URI.create("http://www.w3.org/2001/XMLSchema#string"));
+        updated.setAnnotatedRelationships(Set.of(URI.create("http://example.org/property")));
 
         sut.updateCustomAttribute(updated);
         assertEquals(updated.getLabel(), existing.getLabel());
         assertEquals(updated.getComment(), existing.getComment());
+        assertEquals(updated.getDomain(), existing.getDomain());
+        assertEquals(updated.getRange(), existing.getRange());
+        assertEquals(updated.getAnnotatedRelationships(), existing.getAnnotatedRelationships());
     }
 }

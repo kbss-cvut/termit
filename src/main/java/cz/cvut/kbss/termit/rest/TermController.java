@@ -154,7 +154,6 @@ public class TermController extends BaseController {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
-
             if (flat) {
                 return ResponseEntity.ok(includeImported ?
                                          termService.findAllFlatIncludingImported(searchString, vocabulary,
@@ -172,7 +171,6 @@ public class TermController extends BaseController {
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
-
             if (flat) {
                 return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary,
                                                                                                     createPageRequest(

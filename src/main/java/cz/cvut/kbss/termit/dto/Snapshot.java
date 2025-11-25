@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.dto;
 
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
@@ -25,6 +26,8 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
+import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -43,7 +46,10 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
                                                               @VariableResult(name = "s", type = URI.class),
                                                               @VariableResult(name = "created", type = Instant.class),
                                                               @VariableResult(name = "asset", type = URI.class),
-                                                              @VariableResult(name = "type", type = String.class)
+                                                              @VariableResult(name = "type", type = String.class),
+                                                              @VariableResult(name = "author", type = URI.class),
+                                                              @VariableResult(name = "authorFirstName", type = String.class),
+                                                              @VariableResult(name = "authorLastName", type = String.class)
                                                       })})
 @OWLClass(iri = Vocabulary.s_c_verze_objektu)
 public class Snapshot implements HasIdentifier, HasTypes, Serializable {
@@ -57,17 +63,33 @@ public class Snapshot implements HasIdentifier, HasTypes, Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_je_verzi)
     private URI versionOf;
 
+    @OWLObjectProperty(iri = DC.Terms.CREATOR, fetch = FetchType.EAGER)
+    private User author;
+
     @Types
     private Set<String> types;
 
     public Snapshot() {
     }
 
+    /**
+     * Backward compatible constructor without author info.
+     */
     public Snapshot(URI uri, Instant created, URI asset, String type) {
+        this(uri, created, asset, type, null, null, null);
+    }
+
+    public Snapshot(URI uri, Instant created, URI asset, String type, URI authorUri, String authorFirstName, String authorLastName) {
         this.uri = uri;
         this.created = created;
         this.versionOf = asset;
         this.types = Collections.singleton(type);
+        if (authorUri != null) {
+            this.author = new User();
+            this.author.setUri(authorUri);
+            this.author.setFirstName(authorFirstName);
+            this.author.setLastName(authorLastName);
+        }
     }
 
     @Override
@@ -94,6 +116,14 @@ public class Snapshot implements HasIdentifier, HasTypes, Serializable {
 
     public void setVersionOf(URI versionOf) {
         this.versionOf = versionOf;
+    }
+
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
     }
 
     @Override
