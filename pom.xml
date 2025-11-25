@@ -34,8 +34,6 @@
         <cz.cvut.kbss.jopa.version>2.7.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.15.6</cz.cvut.kbss.jsonld.version>
 
-        <!-- Default value for deployment type property which should otherwise specified on command line -->
-        <deployment>DEV</deployment>
         <packaging>jar</packaging>
     </properties>
 
