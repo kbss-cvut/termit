@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -58,6 +59,23 @@ public class TermRelationshipAnnotationController extends BaseController {
             @RequestParam String namespace) {
         final URI termUri = resolveIdentifier(namespace, localName);
         return service.findAllForSubject(termUri);
+    }
+
+    @Operation(security = @SecurityRequirement(name = "bearer-key"),
+               description = "Gets info about term relationships that are annotated by the specified term.")
+    @ApiResponse(responseCode = "200", description = "List of annotated term relationships.")
+    @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    @GetMapping(value = "/terms/{localName}/annotated-relationships",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<AnnotatedTermRelationship> getAnnotatedRelationships(
+            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam String namespace) {
+        final URI termUri = resolveIdentifier(namespace, localName);
+        return service.findAnnotatedRelationships(termUri);
     }
 
     @Operation(security = @SecurityRequirement(name = "bearer-key"),

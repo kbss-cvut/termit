@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
+import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import jakarta.annotation.Nonnull;
 
@@ -21,6 +22,15 @@ public interface TermRelationshipAnnotationService {
      */
     @Nonnull
     List<TermRelationshipAnnotation> findAllForSubject(@Nonnull URI termId);
+
+    /**
+     * Gets info about term relationships that are annotated by the specified term.
+     *
+     * @param termId Term identifier
+     * @return List of annotated term relationships
+     */
+    @Nonnull
+    List<AnnotatedTermRelationship> findAnnotatedRelationships(@Nonnull URI termId);
 
     /**
      * Updates annotation of the relationship specified by the provided {@link TermRelationshipAnnotation} instance.
