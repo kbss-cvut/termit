@@ -5,6 +5,8 @@ import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
 import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.exception.TermRelationshipAnnotationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -24,15 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 @Repository
@@ -86,7 +82,7 @@ public class TermRelationshipAnnotationDao {
                                                     .setParameter("subject", term)
                                                     .setParameter("attribute", annotationProperties)
                                                     .getResultStream()
-                                                    .collect(new TermRelatioinshipAnnotationCollector());
+                                                    .collect(new TermRelationshipAnnotationCollector());
     }
 
     /**
@@ -115,7 +111,7 @@ public class TermRelationshipAnnotationDao {
                                                     .setParameter("termSnapshot",
                                                                   URI.create(Vocabulary.s_c_verze_pojmu))
                                                     .getResultStream()
-                                                    .collect(new TermRelatioinshipAnnotationCollector());
+                                                    .collect(new TermRelationshipAnnotationCollector());
     }
 
     /**
@@ -226,48 +222,28 @@ public class TermRelationshipAnnotationDao {
     }
 
     /**
-     * Combines instances of {@link TermRelationshipAnnotation} that share the same relationship and attribute.
+     * Retrieves information about term relationships that are annotated with the specified term (including the
+     * annotation property).
+     *
+     * @param term Term used to annotate
+     * @return List of annotated term relationships
      */
-    private static class TermRelatioinshipAnnotationCollector
-            implements Collector<TermRelationshipAnnotation, List<TermRelationshipAnnotation>, List<TermRelationshipAnnotation>> {
-
-        @Override
-        public Supplier<List<TermRelationshipAnnotation>> supplier() {
-            return ArrayList::new;
-        }
-
-        @Override
-        public BiConsumer<List<TermRelationshipAnnotation>, TermRelationshipAnnotation> accumulator() {
-            return (lst, ann) -> {
-                if (lst.isEmpty()) {
-                    lst.add(ann);
-                }
-                final TermRelationshipAnnotation lastItem = lst.get(lst.size() - 1);
-                if (Objects.equals(lastItem.getRelationship(), ann.getRelationship()) && Objects.equals(
-                        lastItem.getAttribute(), ann.getAttribute())) {
-                    lastItem.getValue().addAll(ann.getValue());
-                } else {
-                    lst.add(ann);
-                }
-            };
-        }
-
-        @Override
-        public BinaryOperator<List<TermRelationshipAnnotation>> combiner() {
-            return (a, b) -> {
-                a.addAll(b);
-                return a;
-            };
-        }
-
-        @Override
-        public Function<List<TermRelationshipAnnotation>, List<TermRelationshipAnnotation>> finisher() {
-            return Function.identity();
-        }
-
-        @Override
-        public Set<Characteristics> characteristics() {
-            return Set.of(Characteristics.IDENTITY_FINISH);
-        }
+    @Nonnull
+    public List<AnnotatedTermRelationship> getRelationshipsAnnotatedByTerm(@Nonnull Term term) {
+        Objects.requireNonNull(term);
+        return em.createNativeQuery("SELECT ?subject ?predicate ?object ?annotationProperty WHERE {" +
+                                            "GRAPH ?g {" +
+                                            "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
+                                            "} }")
+                 .setParameter("value", term).getResultStream().map(obj -> {
+                    assert obj instanceof Object[];
+                    final Object[] row = (Object[]) obj;
+                    final URI subject = (URI) row[0];
+                    final URI predicate = (URI) row[1];
+                    final URI object = (URI) row[2];
+                    final URI annotationProperty = (URI) row[3];
+                    return new AnnotatedTermRelationship(em.find(TermInfo.class, subject), predicate,
+                                                         em.find(TermInfo.class, object), annotationProperty);
+                }).toList();
     }
 }

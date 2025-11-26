@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
@@ -37,6 +38,14 @@ public class TermRelationshipAnnotationRepositoryService implements TermRelation
         Objects.requireNonNull(termId);
         final Term t = termService.findRequired(termId);
         return dao.findAllForSubject(t);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public @NotNull List<AnnotatedTermRelationship> findAnnotatedRelationships(@NotNull URI termId) {
+        Objects.requireNonNull(termId);
+        final Term t = termService.findRequired(termId);
+        return dao.getRelationshipsAnnotatedByTerm(t);
     }
 
     @Transactional
