@@ -45,6 +45,7 @@ import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -422,6 +423,7 @@ public class ResourceService
      * @param backupTimestamp the timestamp of the desired backup to restore
      */
     @Transactional
+    @Throttle(value = "{#resource.getUri()}")
     public void restoreBackup(Resource resource, Instant backupTimestamp) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(backupTimestamp);

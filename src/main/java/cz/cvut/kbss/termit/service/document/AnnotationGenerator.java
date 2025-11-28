@@ -23,7 +23,6 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,9 +67,9 @@ public class AnnotationGenerator {
      *
      * @param content Content of file with identified term occurrences
      * @param source  Source file of the annotated document
+     * @implNote Note that this operation might be time-consuming and so the caller should be running asynchronously.
      */
     @Transactional
-    @Throttle(value = "{source.getUri()}", name = "documentAnnotationGeneration")
     public void generateAnnotations(InputStream content, File source) {
         final TermOccurrenceResolver occurrenceResolver = findResolverFor(source);
         LOG.debug("Resolving annotations of file {}.", source);
