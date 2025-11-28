@@ -272,7 +272,7 @@ public class DocumentBackupManager {
         try {
             // restore the backup
             final java.io.File decompressedBackup = openBackup(backupFile);
-            Files.copy(decompressedBackup.toPath(), currentFile.toPath());
+            Files.copy(decompressedBackup.toPath(), currentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return currentFile;
         } catch (Exception e) {
             throw new BackupManagerException("Unable to restore backup.", e);
