@@ -409,6 +409,7 @@ public class ResourceService
      * @param asset The file whose backups to list
      * @return the list of all backups
      */
+    @PreAuthorize("@resourceAuthorizationService.canModify(#asset)")
     public List<BackupFile> getBackupFiles(Resource asset) {
         verifyFileOperationPossible(asset, "Listing file backups");
         final File file = (File) asset;
@@ -424,6 +425,7 @@ public class ResourceService
      */
     @Transactional
     @Throttle(value = "{#resource.getUri()}")
+    @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
     public void restoreBackup(Resource resource, Instant backupTimestamp) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(backupTimestamp);
