@@ -64,6 +64,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -470,9 +471,11 @@ class ResourceControllerTest extends BaseControllerTestRunner {
 
     private List<BackupFile> generateEmptyBackups() {
         final int backupsCount = 7;
+        Instant timestamp = Utils.timestamp();
         final List<BackupFile> backups = new ArrayList<>(backupsCount);
         for (int i = 0; i < backupsCount; i++) {
-            backups.add(new BackupFile(Instant.now(), null, BackupReason.UNKNOWN));
+            timestamp = timestamp.plusSeconds(10);
+            backups.add(new BackupFile(timestamp, null, BackupReason.UNKNOWN));
         }
         return backups;
     }
@@ -500,6 +503,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     void getBackupsReturnsPagedListOfBackupFiles() throws Exception {
         final File file = generateFile();
         final List<BackupFile> backups = generateEmptyBackups();
+        backups.sort(Comparator.comparing(BackupFile::timestamp).reversed());
         final int page = 5;
         final int pageSize = 1;
         final FileBackupDto expectedDto = new FileBackupDto(backups.get(page));
