@@ -401,7 +401,7 @@ public class ResourceController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Resource backups."),
             @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
-    @GetMapping(value = "/{localName}/backups")
+    @GetMapping(value = "/{localName}/backups", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<FileBackupDto>> getBackups(
             @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)

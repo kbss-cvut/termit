@@ -431,6 +431,8 @@ public class ResourceService
         final File file = (File) resource;
         BackupFile backupFile = documentBackupManager.getBackup(file, backupTimestamp);
         final java.io.File physicalFile = documentBackupManager.restoreBackup(file, backupFile);
+        // dropping occurrences from database, otherwise they would be considered during annotation generation
+        repositoryService.removeOccurrencesTargeting(resource);
         try (FileInputStream fis = new FileInputStream(physicalFile)) {
             annotationGenerator.generateAnnotations(fis, file);
         } catch (Exception e) {

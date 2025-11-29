@@ -132,4 +132,9 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     public long getLastModified() {
         return resourceDao.getLastModified();
     }
+
+    @Transactional
+    public void removeOccurrencesTargeting(Resource target) {
+        termOccurrenceDao.removeAll(target);
+    }
 }
