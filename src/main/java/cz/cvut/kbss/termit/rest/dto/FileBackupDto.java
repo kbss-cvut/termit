@@ -17,11 +17,11 @@ import java.util.Objects;
  */
 @NonEntity
 @OWLClass(iri = Vocabulary.s_c_popis_zalohy_souboru)
-public final class FileBackupDto {
+public class FileBackupDto {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
-    private final Instant timestamp;
+    private Instant timestamp;
     @OWLDataProperty(iri = Vocabulary.s_p_ma_duvod_zalohy)
-    private final BackupReason backupReason;
+    private BackupReason backupReason;
 
     /**
      * @param timestamp    the timestamp at which the backup was created
@@ -30,6 +30,10 @@ public final class FileBackupDto {
     public FileBackupDto(Instant timestamp, BackupReason backupReason) {
         this.timestamp = timestamp;
         this.backupReason = backupReason;
+    }
+
+    protected FileBackupDto() {
+        // default constructor and setters for deserialization
     }
 
     public FileBackupDto(BackupFile backupFile) {
@@ -42,6 +46,14 @@ public final class FileBackupDto {
 
     public BackupReason getBackupReason() {
         return backupReason;
+    }
+
+    protected void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    protected void setBackupReason(BackupReason backupReason) {
+        this.backupReason = backupReason;
     }
 
     @Override
