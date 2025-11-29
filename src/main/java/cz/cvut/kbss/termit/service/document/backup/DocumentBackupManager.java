@@ -210,7 +210,7 @@ public class DocumentBackupManager {
      */
     private BackupFile parseBackupFileName(java.io.File file) {
         if (!file.getName().contains(DocumentFileUtils.BACKUP_NAME_SEPARATOR)) {
-            return new BackupFile(Utils.timestamp(), file, BackupReason.UNKNOWN);
+            return null;
         }
         String strTimestamp = file.getName()
                                   .substring(file.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1);

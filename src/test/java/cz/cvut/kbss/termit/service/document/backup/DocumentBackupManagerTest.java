@@ -306,7 +306,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         file.setLabel(physicalFile.getName());
         document.addFile(file);
         file.setDocument(document);
-        int expectedBackups = 1; // +1 for the original file
+        int expectedBackups = 0;
         // generate backups for all reasons
         for (BackupReason reason : BackupReason.values()) {
             createTestBackups(file, reason);
@@ -320,8 +320,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     @ParameterizedTest
     @MethodSource(BACKUP_REASON_VALUES_METHOD_SIGNATURE)
     void getBackupsReturnsOnlyBackupsWithGivenReason(BackupReason reasonFilter) throws Exception {
-        // add 1 for unknown reason for the original file
-        final int expectedBackups = 3 + (reasonFilter == BackupReason.UNKNOWN ? 1 : 0);
+        final int expectedBackups = 3;
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
