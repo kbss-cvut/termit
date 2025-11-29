@@ -421,4 +421,26 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         final String result = String.join("\n", backupLines);
         assertEquals(CONTENT, result);
     }
+
+    @Test
+    void restoreBackupDoesNotCreateBackupIfTheFileWasNotModifiedSinceLastBackupRestoration() {
+        final File fileResource = new File();
+        final java.io.File originalFile = generateFile();
+        fileResource.setLabel(originalFile.getName());
+        document.addFile(fileResource);
+        fileResource.setDocument(document);
+        fileResource.setModified(Utils.timestamp());
+
+        sut.createBackup(fileResource, BackupReason.UNKNOWN);
+        assertNotNull(fileResource.getLastBackup());
+
+        assertTrue(fileResource.getModified().isBefore(fileResource.getLastBackup()));
+
+        BackupFile backupFile = sut.getBackup(fileResource, Instant.EPOCH);
+        assertNotNull(backupFile);
+
+        assertEquals(1, sut.getBackups(fileResource, null).size());
+        sut.restoreBackup(fileResource, backupFile);
+        assertEquals(1, sut.getBackups(fileResource, null).size());
+    }
 }
