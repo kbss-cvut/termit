@@ -57,11 +57,14 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner {
     @Autowired
     private DescriptorFactory descriptorFactory;
 
+    @Autowired
+    private DataDao dataDao;
+
     private SearchDao sut;
 
     @BeforeEach
     void setUp() {
-        sut = new SearchDao(em);
+        sut = new SearchDao(em, dataDao);
 
         if (!initialized) {
             user = Generator.generateUserWithId();
