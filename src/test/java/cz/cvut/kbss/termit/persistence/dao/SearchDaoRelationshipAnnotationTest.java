@@ -96,13 +96,15 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
                 em.persist(termC, descriptorFactory.termDescriptor(termC));
                 em.persist(annotatingTerm, descriptorFactory.termDescriptor(annotatingTerm));
                 em.persist(customAttribute);
-
+            });
+            transactional(() -> {
+                // Separate transaction to prevent issues with TermInfo vs. Term in the same persistence context
                 termA.addRelatedTerm(new TermInfo(termB));
                 em.merge(termA, descriptorFactory.termDescriptor(termA));
 
                 addRelationshipAnnotation(termA.getUri(), URI.create(SKOS.RELATED), termB.getUri(),
-                                         customAttribute.getUri(), annotatingTerm.getUri(),
-                                         vocabulary.getUri());
+                                          customAttribute.getUri(), annotatingTerm.getUri(),
+                                          vocabulary.getUri());
             });
             initialized = true;
         }
