@@ -29,6 +29,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +179,7 @@ public class DocumentBackupManager {
      *
      * @param file   backed up file
      * @param reason reason for which backups are returned, or {@code null}
-     * @return List of available backups
+     * @return List of available backups sorted descending (the newest first)
      */
     public List<BackupFile> getBackups(File file, BackupReason reason) {
         java.io.File directory = storageDirectory.resolve(file.getDirectoryName()).toFile();
@@ -194,7 +195,7 @@ public class DocumentBackupManager {
         if (reason != null) {
             filesStream = filesStream.filter(b -> reason.equals(b.backupReason()));
         }
-        return filesStream.toList();
+        return filesStream.sorted(Comparator.comparing(BackupFile::timestamp).reversed()).toList();
     }
 
     /**
@@ -269,10 +270,12 @@ public class DocumentBackupManager {
         // resolve the physical file which will be replaced
         final java.io.File currentFile = DocumentFileUtils.resolveTermitFile(storageDirectory, fileResource, false);
 
+        LOG.info("Restoring backup file {} to {}", backupFile.file(), currentFile);
         try {
             // restore the backup
             final java.io.File decompressedBackup = openBackup(backupFile);
             Files.copy(decompressedBackup.toPath(), currentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            LOG.info("Successfully restored backup {} to {}", backupFile.file(), currentFile);
             return currentFile;
         } catch (Exception e) {
             throw new BackupManagerException("Unable to restore backup.", e);

@@ -340,6 +340,31 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     }
 
     @Test
+    void getBackupsReturnsBackupsSortedInDescendingOrder() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        // generate backups for all reasons
+        for (BackupReason reason : BackupReason.values()) {
+            createTestBackups(file, reason);
+        }
+
+        List<BackupFile> backups = sut.getBackups(file, null);
+        assertTrue(backups.size() > 1);
+
+        BackupFile previous = backups.get(0);
+        for (int i = 1; i < backups.size(); i++) {
+            BackupFile current = backups.get(i);
+            // previous is equal or newer then the current one
+            assertFalse(previous.timestamp().isBefore(current.timestamp()));
+            previous = current;
+        }
+        assertTrue(backups.get(0).timestamp().isAfter(previous.timestamp()));
+    }
+
+    @Test
     void openBackupOpensCompressedBackup() throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
