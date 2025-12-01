@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.FileBackupDto;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.AnnotationGenerator;
@@ -410,10 +411,10 @@ public class ResourceService
      * @return the list of all backups
      */
     @PreAuthorize("@resourceAuthorizationService.canModify(#asset)")
-    public List<BackupFile> getBackupFiles(Resource asset) {
+    public List<FileBackupDto> getBackupFiles(Resource asset) {
         verifyFileOperationPossible(asset, "Listing file backups");
         final File file = (File) asset;
-        return documentBackupManager.getBackups(file, null);
+        return documentBackupManager.getBackups(file, null).stream().map(FileBackupDto::new).toList();
     }
 
     /**
@@ -434,7 +435,9 @@ public class ResourceService
         BackupFile backupFile = documentBackupManager.getBackup(file, backupTimestamp);
         final java.io.File physicalFile = documentBackupManager.restoreBackup(file, backupFile);
         // dropping occurrences from database, otherwise they would be considered during annotation generation
+        LOG.debug("Removing all occurrences for file overwritten by a backup");
         repositoryService.removeOccurrencesTargeting(resource);
+        LOG.debug("Generating annotations for the restored backup");
         try (FileInputStream fis = new FileInputStream(physicalFile)) {
             annotationGenerator.generateAnnotations(fis, file);
         } catch (Exception e) {

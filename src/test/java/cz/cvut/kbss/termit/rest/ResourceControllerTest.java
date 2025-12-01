@@ -483,7 +483,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Test
     void getBackupCountReturnsCountOfBackupsInHeader() throws Exception {
         final File file = generateFile();
-        final List<BackupFile> backups = generateEmptyBackups();
+        final List<FileBackupDto> backups = generateEmptyBackups().stream().map(FileBackupDto::new).toList();
         final int backupsCount = backups.size();
         when(resourceServiceMock.getBackupFiles(eq(file))).thenReturn(backups);
 
@@ -502,11 +502,12 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Test
     void getBackupsReturnsPagedListOfBackupFiles() throws Exception {
         final File file = generateFile();
-        final List<BackupFile> backups = generateEmptyBackups();
-        backups.sort(Comparator.comparing(BackupFile::timestamp).reversed());
+        final List<FileBackupDto> backups = generateEmptyBackups().stream().map(FileBackupDto::new)
+                                                  .sorted(Comparator.comparing(FileBackupDto::getTimestamp).reversed())
+                                                  .toList();
         final int page = 5;
         final int pageSize = 1;
-        final FileBackupDto expectedDto = new FileBackupDto(backups.get(page));
+        final FileBackupDto expectedDto = backups.get(page);
 
         when(resourceServiceMock.getBackupFiles(eq(file))).thenReturn(backups);
 

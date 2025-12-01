@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
-import cz.cvut.kbss.termit.service.document.backup.BackupFile;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -68,7 +67,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -422,10 +420,9 @@ public class ResourceController extends BaseController {
         pageable = pageable.withPage(page);
 
         final List<FileBackupDto> dtos = resourceService.getBackupFiles(resource).stream()
-                .sorted(Comparator.comparing(BackupFile::timestamp).reversed())
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .map(FileBackupDto::new).toList();
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
