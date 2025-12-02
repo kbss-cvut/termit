@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -86,12 +87,12 @@ public class DataDao {
         final List<RdfsResource> result = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
                                                                        "BIND (?property as ?type)" +
                                                                        "?x a ?type ." +
-                                                                       "OPTIONAL { ?x ?has-label ?label . }" +
-                                                                       "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                                                       "OPTIONAL { ?x ?hasLabel ?label . }" +
+                                                                       "OPTIONAL { ?x ?hasComment ?comment . }" +
                                                                        "}", "RdfsResource")
                                             .setParameter("property", URI.create(RDF.PROPERTY))
-                                            .setParameter("has-label", RDFS_LABEL)
-                                            .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
+                                            .setParameter("hasLabel", RDFS_LABEL)
+                                            .setParameter("hasComment", URI.create(RDFS.COMMENT)).getResultList();
         return consolidateTranslations(result);
     }
 
@@ -121,7 +122,26 @@ public class DataDao {
     public List<CustomAttribute> findAllCustomAttributes() {
         return em.createQuery("SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
                               CustomAttribute.class)
-                 .setDescriptor(new EntityDescriptor(URI.create(CustomAttribute.CONTEXT)))
+                 .setDescriptor(descriptor())
+                 .getResultList();
+    }
+
+    private static Descriptor descriptor() {
+        return new EntityDescriptor(URI.create(CustomAttribute.CONTEXT));
+    }
+
+    /**
+     * Finds all user-defined attributes with the specified domain.
+     *
+     * @param domain Property domain
+     * @return List of matching custom attributes
+     */
+    public List<CustomAttribute> findAllCustomAttributesByDomain(URI domain) {
+        return em.createQuery(
+                         "SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p WHERE p.domain = :domain ORDER BY p.label",
+                         CustomAttribute.class)
+                 .setParameter("domain", domain)
+                 .setDescriptor(descriptor())
                  .getResultList();
     }
 
@@ -154,11 +174,11 @@ public class DataDao {
                 em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
                                              "BIND (?id AS ?x)" +
                                              "?x a ?type ." +
-                                             "OPTIONAL { ?x ?has-label ?label .}" +
-                                             "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                             "OPTIONAL { ?x ?hasLabel ?label .}" +
+                                             "OPTIONAL { ?x ?hasComment ?comment . }" +
                                              "}", "RdfsResource").setParameter("id", id)
-                  .setParameter("has-label", RDFS_LABEL)
-                  .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList());
+                  .setParameter("hasLabel", RDFS_LABEL)
+                  .setParameter("hasComment", URI.create(RDFS.COMMENT)).getResultList());
         if (resources.isEmpty()) {
             return Optional.empty();
         }
@@ -185,9 +205,8 @@ public class DataDao {
     /**
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
-     * Note that the label has to have language tag matching the language of the vocabulary (if available),
-     * the configured persistence unit language
-     * or no language tag at all (matching tag is preferred).
+     * Note that the label has to have language tag matching the language of the vocabulary (if available), the
+     * configured persistence unit language or no language tag at all (matching tag is preferred).
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
      * @return Matching resource identifier (if found)
@@ -201,9 +220,9 @@ public class DataDao {
      * <p>
      * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
      *
-     * @param id Resource ({@link RDFS#RESOURCE}) identifier
-     * @param language Label language, if null, the vocabulary language is used when available,
-     *                 otherwise the configured persistence unit language is used instead.
+     * @param id       Resource ({@link RDFS#RESOURCE}) identifier
+     * @param language Label language, if null, the vocabulary language is used when available, otherwise the configured
+     *                 persistence unit language is used instead.
      * @return Matching resource identifier (if found)
      */
     public Optional<String> getLabel(URI id, @Nullable String language) {
@@ -211,7 +230,7 @@ public class DataDao {
         if (!id.isAbsolute()) {
             return Optional.of(id.toString());
         }
-        String languageOptionalPattern = "";
+        String languageOptionalPattern;
         final boolean languageSpecified = language != null;
         if (languageSpecified) {
             // only bind parameter value to the ?labelLanguage variable if the parameter value is present
@@ -220,25 +239,25 @@ public class DataDao {
         } else {
             // if the language was not provided, try to find vocabulary & the entity language
             languageOptionalPattern = insertVocabularyPattern("?x") +
-                                      insertLanguagePattern("?x");
+                    insertLanguagePattern("?x");
         }
 
         TypedQuery<String> query = em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
-                                        "{?x ?has-label ?label .}" +
-                                        "UNION" +
-                                        "{?x ?has-title ?label .}" +
-                                        "BIND (str(?label) as ?strippedLabel )." +
-                                        languageOptionalPattern +
-                                        "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
-                                        "BIND (COALESCE(" +
-                                        "   ?labelLanguage," + // requested language
-                                        "   ?language," + // resolved vocabulary language
-                                        "   ?instanceLanguage) AS ?labelLanguage) ." +
-                                        "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
-                                String.class)
-                             .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
-                             .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                             .setParameter("instanceLanguageVal", config.getLanguage());
+                                                                "{?x ?hasLabel ?label .}" +
+                                                                "UNION" +
+                                                                "{?x ?hasTitle ?label .}" +
+                                                                "BIND (str(?label) as ?strippedLabel )." +
+                                                                languageOptionalPattern +
+                                                                "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
+                                                                "BIND (COALESCE(" +
+                                                                "   ?labelLanguage," + // requested language
+                                                                "   ?language," + // resolved vocabulary language
+                                                                "   ?instanceLanguage) AS ?labelLanguage) ." +
+                                                                "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
+                                                        String.class)
+                                     .setParameter("x", id).setParameter("hasLabel", RDFS_LABEL)
+                                     .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
+                                     .setParameter("instanceLanguageVal", config.getLanguage());
         if (languageSpecified) {
             query.setParameter("labelLanguageVal", language, null);
         } else {

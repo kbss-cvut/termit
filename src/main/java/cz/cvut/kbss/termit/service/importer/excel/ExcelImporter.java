@@ -64,8 +64,8 @@ import java.util.Set;
  * The importer processes all sheets in the workbook, skipping any sheets that do not match the expected format. The
  * format is given by column labels available currently in Czech and English (all other languages should use English
  * column labels). It is expected that each sheet contains the same terms in the same order. Sheet name should
- * correspond to language in English. Term identifiers may be specified in the sheet, but if they do not correspond to
- * the target vocabulary, they will be adjusted.
+ * correspond to the language in English. Term identifiers may be specified in the sheet, but if they do not correspond
+ * to the target vocabulary, they will be adjusted.
  * <p>
  * The importer removes any existing terms that appear in the sheet and would thus be overwritten.
  * <p>
@@ -134,7 +134,7 @@ public class ExcelImporter implements VocabularyImporter {
                     }
                     final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
                             new LocalizedSheetImporter.Services(termService, languageService),
-                            prefixMap, terms);
+                            prefixMap, terms, targetVocabulary);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
@@ -232,6 +232,7 @@ public class ExcelImporter implements VocabularyImporter {
     }
 
     private void persistNewTerms(List<Term> terms, Vocabulary targetVocabulary, Set<TermRelationship> rawDataToInsert) {
+        terms.forEach(Term::splitExternalAndInternalParents);
         // Ensure all parents are saved before we start adding children
         terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
              .forEach(root -> {
@@ -260,7 +261,7 @@ public class ExcelImporter implements VocabularyImporter {
                 () -> NotFoundException.create(Vocabulary.class, vocabularyIri));
         LOG.debug("Importing translations for terms in vocabulary {}.", vocabularyIri);
         try {
-            final List<Term> terms = readTermsFromSheet(data);
+            final List<Term> terms = readTermsFromSheet(data, targetVocabulary);
             terms.forEach(t -> {
                 identifyTermByLabelIfNecessary(t, targetVocabulary);
                 final Optional<Term> existingTerm = termService.find(t.getUri());
@@ -295,7 +296,7 @@ public class ExcelImporter implements VocabularyImporter {
         }
     }
 
-    private List<Term> readTermsFromSheet(@Nonnull ImportInput data) throws IOException {
+    private List<Term> readTermsFromSheet(@Nonnull ImportInput data, Vocabulary targetVocabulary) throws IOException {
         List<Term> terms = Collections.emptyList();
         for (InputStream input : data.data()) {
             final Workbook workbook = new XSSFWorkbook(input);
@@ -309,7 +310,7 @@ public class ExcelImporter implements VocabularyImporter {
                 }
                 final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
                         new LocalizedSheetImporter.Services(termService, languageService),
-                        prefixMap, terms);
+                        prefixMap, terms, targetVocabulary);
                 terms = sheetImporter.resolveTermsFromSheet(sheet);
             }
         }

@@ -37,7 +37,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,7 +50,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,7 +60,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 class UtilsTest {
-    private static final char DECIMAL_SEPARATOR = DecimalFormatSymbols.getInstance(Locale.getDefault(Locale.Category.FORMAT))
+    private static final char DECIMAL_SEPARATOR = DecimalFormatSymbols.getInstance(
+                                                                              Locale.getDefault(Locale.Category.FORMAT))
                                                                       .getDecimalSeparator();
     private static final String BASE = "BASE";
 
@@ -175,26 +178,6 @@ class UtilsTest {
     }
 
     @Test
-    public void getLanguageTagsPerPropertiesReturnsCorrectLanguageTags() {
-        final Model model = new LinkedHashModel();
-        final ValueFactory f = SimpleValueFactory.getInstance();
-        final String namespace = "https://example.org/";
-        final String p1 = namespace + "p1";
-        final String p2 = namespace + "p2";
-        final IRI iriA = f.createIRI(namespace, "a");
-        final IRI iriP1 = f.createIRI(p1);
-        final IRI iriP2 = f.createIRI(p2);
-        model.add(iriA, iriP1, f.createLiteral("a label cs", "cs"));
-        model.add(iriA, iriP2, f.createLiteral("a label"));
-
-        final Set<String> expected = Stream.of("cs", "").collect(Collectors.toSet());
-        final Set<String> actual = Utils.getLanguageTagsPerProperties(model,
-                                                                      Stream.of(p1, p2).collect(Collectors.toSet()));
-
-        assertEquals(expected, actual);
-    }
-
-    @Test
     void trimReturnsEmptyStringForNullInput() {
         assertEquals("", Utils.trim(null));
     }
@@ -276,5 +259,13 @@ class UtilsTest {
     @CsvSource("4368, 4.37, 5000, 5.00, 2100, 2.10")
     void millisToStringConvertsSpecifiedValueToSecondsAndRounds(long millis, String expected) {
         assertEquals(expected.replace('.', DECIMAL_SEPARATOR), Utils.millisToString(millis));
+    }
+
+    @Test
+    void resolveContentTypeRecognizesTtlWhenPrefixIsWithoutAtSign() throws IOException {
+        final MultipartFile mf = new MockMultipartFile("mock-aviation-safety-skos.ttl", UtilsTest.class.getClassLoader()
+                                                                                                       .getResourceAsStream(
+                                                                                                               "data/mock-aviation-safety-skos.ttl"));
+        assertEquals("text/turtle", Utils.resolveContentType(mf));
     }
 }

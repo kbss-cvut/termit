@@ -88,16 +88,25 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = "searchString", required = false) String searchString,
                             @Parameter(description = "Whether to include terms from imported vocabularies.")
                             @RequestParam(name = "includeImported", required = false) boolean includeImported,
+                            @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
+                                @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
                             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
                             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
                             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
                             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         if (searchString != null) {
+            if (flat) {
+                return includeImported ? termService.findAllFlatIncludingImported(searchString, vocabulary,
+                                                                                 createPageRequest(pageSize, pageNo)) :
+                                   termService.findAllFlat(searchString, vocabulary,
+                                                          createPageRequest(pageSize, pageNo));
+            }
             return includeImported ? termService.findAllIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
                    termService.findAll(searchString, vocabulary, createPageRequest(pageSize, pageNo));
         }
-        return termService.findAll(vocabulary, createPageRequest(pageSize, pageNo));
+        return flat ? termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)) :
+                   termService.findAll(vocabulary, createPageRequest(pageSize, pageNo));
     }
 
     private Vocabulary getVocabulary(String fragment, Optional<String> namespace) {

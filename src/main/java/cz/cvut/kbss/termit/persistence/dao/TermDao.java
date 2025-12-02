@@ -40,7 +40,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.util.Cache;
-import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
+import cz.cvut.kbss.termit.persistence.snapshot.TermSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -93,6 +93,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     @Override
     public Optional<Term> find(URI id) {
+        Objects.requireNonNull(id);
         try {
             final Optional<Term> result = findTermVocabulary(id).map(vocabulary ->
                                                                              em.find(Term.class, id,
@@ -1104,14 +1105,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     @Override
     public List<Snapshot> findSnapshots(Term asset) {
-        return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu)).findSnapshots(asset);
+        return new TermSnapshotLoader(em).findSnapshots(asset);
     }
 
     @Override
     public Optional<Term> findVersionValidAt(Term asset, Instant at) {
-        return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
+        return new TermSnapshotLoader(em)
                 .findVersionValidAt(asset, at).map(t -> {
                     postLoad(t);
                     return t;

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -38,10 +39,11 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
+public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner {
     private static final String[] TYPES = {"http://onto.fel.cvut.cz/ontologies/ufo/event",
                                            "http://onto.fel.cvut.cz/ontologies/ufo/object",
                                            "http://onto.fel.cvut.cz/ontologies/ufo/relator"};
+    private static final String INTEGER_PROPERTY = cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT + "/custom-attribute/integerProperty";
     private static boolean initialized = false;
     private static User user;
 
@@ -55,11 +57,14 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
     @Autowired
     private DescriptorFactory descriptorFactory;
 
+    @Autowired
+    private DataDao dataDao;
+
     private SearchDao sut;
 
     @BeforeEach
     void setUp() {
-        sut = new SearchDao(em);
+        sut = new SearchDao(em, dataDao);
 
         if (!initialized) {
             user = Generator.generateUserWithId();
@@ -94,7 +99,8 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
             term.setNotations(Set.of(String.valueOf(
                     Constants.LETTERS.charAt(Generator.randomInt(0, Constants.LETTERS.length())))));
             term.setExamples(Set.of(MultilingualString.create(b ? "Matching" : "Unknown" + " example " + i,
-                    Environment.LANGUAGE)));
+                                                              Environment.LANGUAGE)));
+            term.setProperties(Map.of(INTEGER_PROPERTY, Set.of(i)));
             terms.add(term);
         }
         terms.sort(Comparator.comparing(Environment::getPrimaryLabel));
@@ -117,7 +123,7 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
     @Test
     void facetedTermSearchReturnsTermsMatchingIriSearchParamWithSpecifiedTypes() {
         final SearchParam param = new SearchParam(URI.create(RDF.TYPE.stringValue()), Set.of(TYPES[0], TYPES[1]),
-                MatchType.IRI);
+                                                  MatchType.IRI);
         final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param), Constants.DEFAULT_PAGE_SPEC);
         assertFalse(result.isEmpty());
         result.forEach(r -> assertThat(r.getTypes(), anyOf(hasItem(TYPES[0]), hasItem(TYPES[1]))));
@@ -126,8 +132,8 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
     @Test
     void facetedTermSearchReturnsTermsMatchingExactMatchSearchParamWithSpecifiedValue() {
         final SearchParam param = new SearchParam(URI.create(SKOS.NOTATION),
-                Set.of(terms.get(0).getNotations().iterator().next()),
-                MatchType.EXACT_MATCH);
+                                                  Set.of(terms.get(0).getNotations().iterator().next()),
+                                                  MatchType.EXACT_MATCH);
         final List<Term> matchingTerms = terms.stream()
                                               .filter(t -> !Collections.disjoint(t.getNotations(), param.getValue()))
                                               .collect(Collectors.toList());
@@ -141,8 +147,8 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
         final Term sample = Generator.randomElement(terms);
         final String sampleValue = sample.getExamples().iterator().next().get().substring(0, 4);
         final SearchParam param = new SearchParam(URI.create(SKOS.EXAMPLE),
-                Set.of(sampleValue),
-                MatchType.SUBSTRING);
+                                                  Set.of(sampleValue),
+                                                  MatchType.SUBSTRING);
         final List<Term> matchingTerms = terms.stream().filter(t -> t.getExamples().iterator().next().get()
                                                                      .startsWith(sampleValue))
                                               .collect(Collectors.toList());
@@ -154,16 +160,16 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
     @Test
     void facetedTermSearchReturnsResultsMatchingMultipleSearchParameters() {
         final SearchParam typeParam = new SearchParam(URI.create(RDF.TYPE.stringValue()), Set.of(TYPES[0], TYPES[1]),
-                MatchType.IRI);
+                                                      MatchType.IRI);
         final SearchParam substringParam = new SearchParam(URI.create(SKOS.EXAMPLE),
-                Set.of("matching"),
-                MatchType.SUBSTRING);
+                                                           Set.of("matching"),
+                                                           MatchType.SUBSTRING);
         final List<Term> matchingTerms = terms.stream().filter(t -> t.getExamples().iterator().next().get()
                                                                      .startsWith("Matching") && (t.hasType(
                                                       TYPES[0]) || t.hasType(TYPES[1])))
                                               .collect(Collectors.toList());
         final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(typeParam, substringParam),
-                Constants.DEFAULT_PAGE_SPEC);
+                                                                       Constants.DEFAULT_PAGE_SPEC);
         assertThat(result, containsSameEntities(matchingTerms));
     }
 
@@ -180,5 +186,20 @@ public class SearchDaoFacetedSearchTest extends BaseDaoTestRunner{
         final List<FacetedSearchResult> resultTwo = sut.facetedTermSearch(Set.of(searchParam), pageTwo);
         assertEquals(terms.size() / 2, resultTwo.size());
         assertThat(resultOne, not(containsSameEntities(resultTwo)));
+    }
+
+    @Test
+    void facetedTermSearchHandlesCorrectlyDatatypesForExactMatch() {
+        final Term expected = Generator.randomElement(terms);
+        final Integer paramValue = (Integer) expected.getProperties().get(INTEGER_PROPERTY).iterator().next();
+
+        final SearchParam searchParam = new SearchParam(
+                URI.create(INTEGER_PROPERTY), Set.of(paramValue), MatchType.EXACT_MATCH
+        );
+
+        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(searchParam),
+                                                                       Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(1, result.size());
+        assertEquals(expected.getUri(), result.get(0).getUri());
     }
 }

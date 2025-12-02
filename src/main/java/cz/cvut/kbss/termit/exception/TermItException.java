@@ -36,7 +36,7 @@ public class TermItException extends RuntimeException {
      * <p>
      * This identifier can be used by the UI to display a corresponding localized error message.
      */
-    protected String messageId;
+    protected final String messageId;
 
     /**
      * Exception related information

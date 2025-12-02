@@ -40,6 +40,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -420,5 +421,25 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         assertEquals(newDescription, result.getDescription());
         assertEquals(2, result.getFiles().size());
         assertTrue(result.getFiles().contains(fileTwo));
+    }
+
+    @Test
+    void findFilesToBackupReturnsFilesModifiedAfterLastBackup() {
+        final List<File> modifiedAfterBackup = new ArrayList<>();
+        final Document document = Generator.generateDocumentWithId();
+        transactional(() -> em.persist(document));
+        Generator.generateDocumentFilesWithBackupTimestamps(document)
+                 .forEach(file -> {
+                     transactional(() -> em.persist(file));
+                     if (file.getModified().isAfter(file.getLastBackup())) {
+                         modifiedAfterBackup.add(file);
+                     }
+                 });
+
+        List<File> files = sut.findModifiedFilesAfterLastBackup();
+
+        assertFalse(files.isEmpty());
+        assertEquals(modifiedAfterBackup.size(), files.size());
+        assertTrue(files.containsAll(modifiedAfterBackup));
     }
 }

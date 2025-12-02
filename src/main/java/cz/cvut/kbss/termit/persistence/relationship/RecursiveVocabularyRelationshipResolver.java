@@ -25,11 +25,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +58,7 @@ public class RecursiveVocabularyRelationshipResolver implements VocabularyRelati
     public Set<URI> getRelatedVocabularies(@Nonnull URI vocabulary) {
         Objects.requireNonNull(vocabulary);
         final Set<URI> result = new HashSet<>();
-        final Stack<URI> toProcess = new Stack<>();
+        final Deque<URI> toProcess = new ArrayDeque<>();
         toProcess.add(vocabulary);
         final List<URI> toSkipRecursion = getClassificationVocabularies(vocabulary);
         while (!toProcess.isEmpty()) {

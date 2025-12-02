@@ -45,9 +45,6 @@ import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
-import org.apache.tika.Tika;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -58,7 +55,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
@@ -103,6 +100,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
+    @Transactional(readOnly = true)
     // Cache only if all vocabularies are editable
     @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
     @Override
@@ -251,7 +249,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
         Objects.requireNonNull(file);
         try {
-            String contentType = resolveContentType(file);
+            String contentType = Utils.resolveContentType(file);
             return importers.importVocabulary(
                     new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument),
                     new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
@@ -262,20 +260,13 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    private static String resolveContentType(MultipartFile file) throws IOException {
-        Metadata metadata = new Metadata();
-        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
-        metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
-        return new Tika().detect(file.getInputStream(), metadata);
-    }
-
     @CacheEvict(allEntries = true)
     @Transactional
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(file);
         try {
-            String contentType = resolveContentType(file);
+            String contentType = Utils.resolveContentType(file);
             return importers.importVocabulary(
                     new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
                     new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
@@ -286,12 +277,27 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
+    @CacheEvict(allEntries = true)
+    @Transactional
+    public Vocabulary importVocabulary(URI vocabularyIri, String contentType, InputStream inputStream) {
+        Objects.requireNonNull(vocabularyIri);
+        Objects.requireNonNull(inputStream);
+        try {
+            return importers.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
+                    new VocabularyImporter.ImportInput(contentType, inputStream));
+        } catch (VocabularyImportException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
+        }
+    }
     @Transactional
     public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(file);
         try {
-            String contentType = resolveContentType(file);
+            String contentType = Utils.resolveContentType(file);
             return importers.importTermTranslations(vocabularyIri, new VocabularyImporter.ImportInput(contentType,
                                                                                                       file.getInputStream()));
         } catch (VocabularyImportException e) {

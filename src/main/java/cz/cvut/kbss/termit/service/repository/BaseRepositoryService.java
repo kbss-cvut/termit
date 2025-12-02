@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
  * which is used by the CRUD methods implemented by this base class.
  * <p>
  * In order to minimize chances of messing up the transactional behavior, subclasses *should not* override the main CRUD
- * methods and instead should provide custom business logic by overriding the helper hooks such as {@link
- * #prePersist(HasIdentifier)}.
+ * methods and instead should provide custom business logic by overriding the helper hooks such as
+ * {@link #prePersist(HasIdentifier)}.
  *
  * @param <T> Domain object type managed by this service
  */
@@ -71,6 +71,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @return List of all matching instances
      */
+    @Transactional(readOnly = true)
     public List<DTO> findAll() {
         final List<T> loaded = getPrimaryDao().findAll();
         return loaded.stream().map(this::postLoad).map(this::mapToDto).collect(Collectors.toList());
@@ -91,6 +92,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @return {@link Optional} with the loaded object or an empty one
      * @see #findRequired(URI)
      */
+    @Transactional(readOnly = true)
     public Optional<T> find(URI id) {
         return getPrimaryDao().find(id).map(this::postLoad);
     }
@@ -108,6 +110,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @return Entity reference
      * @throws NotFoundException If no matching instance is found
      */
+    @Transactional(readOnly = true)
     public T getReference(URI id) {
         if (exists(id)) {
             return getPrimaryDao().getReference(id);
@@ -126,6 +129,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @throws NotFoundException If no matching instance is found
      * @see #find(URI)
      */
+    @Transactional(readOnly = true)
     public T findRequired(URI id) {
         return find(id).orElseThrow(() -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
     }
@@ -281,6 +285,18 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @throws ValidationException In case the instance is not valid
      */
     protected void validate(T instance) {
+        validate(instance, validator);
+    }
+
+    /**
+     * Validates the specified instance, using the specified validator.
+     *
+     * @param instance  The instance to validate
+     * @param validator Validator to use for validation
+     * @param <T>       Type of the instance to validate
+     * @throws ValidationException In case the instance is not valid
+     */
+    protected static <T> void validate(T instance, Validator validator) {
         final ValidationResult<T> validationResult = ValidationResult.of(validator.validate(instance));
         if (!validationResult.isValid()) {
             throw new ValidationException(validationResult);
@@ -292,11 +308,12 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param uri the uri to validate
      * @throws cz.cvut.kbss.termit.exception.InvalidIdentifierException when the URI is invalid
-     * @see cz.cvut.kbss.termit.service.IdentifierResolver#isUri(String)
+     * @see cz.cvut.kbss.termit.service.IdentifierResolver#isAbsoluteUri(String)
      */
     protected void validateUri(URI uri) throws InvalidIdentifierException {
-        if (uri != null && !IdentifierResolver.isUri(uri.toString())) {
-            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter("uri", uri.toString());
+        if (uri != null && !IdentifierResolver.isAbsoluteUri(uri.toString())) {
+            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter(
+                    "uri", uri.toString());
         }
     }
 }

@@ -23,6 +23,9 @@ import com.vladsch.flexmark.util.ast.Node;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
+import org.apache.tika.Tika;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -34,6 +37,7 @@ import org.eclipse.rdf4j.model.util.Values;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -265,21 +269,6 @@ public class Utils {
     }
 
     /**
-     * Lists all distinct language tags that occur in literals which are objects of the given properties.
-     *
-     * @param model the model to look into
-     * @param props set of property IRIs
-     * @return set of language tags
-     */
-    public static Set<String> getLanguageTagsPerProperties(final Model model, final Set<String> props) {
-        return model.stream()
-                    .filter(statement -> props.contains(statement.getPredicate().stringValue()))
-                    .filter(statement -> statement.getObject().isLiteral())
-                    .map(statement -> ((Literal) statement.getObject()).getLanguage().orElse(""))
-                    .collect(Collectors.toSet());
-    }
-
-    /**
      * Extracts translations of values of the specified property of the specified subject.
      *
      * @param subject  Subject whose property values to extract
@@ -436,5 +425,20 @@ public class Utils {
         final float seconds = (float) millis / 1000;
         final DecimalFormat df = new DecimalFormat("0.00");
         return df.format(seconds);
+    }
+
+    /**
+     * Uses Apache Tika to resolve the content type of the specified file.
+     *
+     * @param file File to resolve the content type of
+     * @return Content type of the file (e.g., "text/turtle")
+     * @throws IOException If the file cannot be read
+     */
+    public static String resolveContentType(MultipartFile file) throws IOException {
+        Objects.requireNonNull(file);
+        Metadata metadata = new Metadata();
+        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getOriginalFilename());
+        metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
+        return new Tika().detect(file.getInputStream(), metadata);
     }
 }

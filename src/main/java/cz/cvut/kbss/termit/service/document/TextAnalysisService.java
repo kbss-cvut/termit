@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -169,7 +170,7 @@ public class TextAnalysisService {
             if (result.isEmpty()) {
                 return;
             }
-            documentManager.createBackup(file);
+            documentManager.createBackup(file, BackupReason.TEXT_ANALYSIS);
             try (final InputStream is = result.get().getInputStream()) {
                 annotationGenerator.generateAnnotations(is, file);
             }
@@ -440,6 +441,9 @@ public class TextAnalysisService {
                                                                            new ParameterizedTypeReference<>() {
                                                                            });
                 this.supportedLanguages = response.getBody();
+                if (supportedLanguages == null) {
+                    this.supportedLanguages = Set.of();
+                }
                 LOG.trace("Text analysis supported languages: {}", supportedLanguages);
             } catch (RuntimeException e) {
                 LOG.error("Unable to get list of supported languages from text analysis service at '{}'.",

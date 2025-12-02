@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.VocabularySnapshotDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -30,6 +31,7 @@ import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -42,6 +44,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
@@ -83,6 +86,7 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
+
 /**
  * Business logic concerning vocabularies.
  * <p>
@@ -97,6 +101,8 @@ public class VocabularyService
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
 
     private final VocabularyRepositoryService repositoryService;
+
+    private final ExternalVocabularyService externalVocabularyService;
 
     private final ChangeRecordService changeRecordService;
 
@@ -117,6 +123,7 @@ public class VocabularyService
     private ApplicationEventPublisher eventPublisher;
 
     public VocabularyService(VocabularyRepositoryService repositoryService,
+                             ExternalVocabularyService externalVocabularyService,
                              ChangeRecordService changeRecordService,
                              @Lazy TermService termService,
                              VocabularyContextMapper contextMapper,
@@ -126,6 +133,7 @@ public class VocabularyService
                              VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
+        this.externalVocabularyService = externalVocabularyService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
@@ -159,27 +167,39 @@ public class VocabularyService
     }
 
     /**
-     * @return {@link cz.cvut.kbss.termit.dto.VocabularyDto}
+     * @return {@link cz.cvut.kbss.termit.dto.VocabularyDto} or {@link cz.cvut.kbss.termit.dto.VocabularySnapshotDto}
      */
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> find(URI id) {
-        return repositoryService.find(id).map(v -> {
-            // Enhance vocabulary data with info on current user's access level
-            final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(v);
-            dto.setAccessLevel(getAccessLevel(v));
-            return dto;
-        });
+        return repositoryService.find(id).map(this::toDto);
     }
 
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary findRequired(URI id) {
-        // Enhance vocabulary data with info on current user's access level
-        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(
-                repositoryService.findRequired(id));
-        dto.setAccessLevel(getAccessLevel(dto));
+        return toDto(repositoryService.findRequired(id));
+    }
+
+    private Vocabulary toDto(Vocabulary v) {
+        final cz.cvut.kbss.termit.dto.VocabularyDto dto;
+        if (v.isSnapshot()) {
+            final VocabularySnapshotDto snapshotDto = new VocabularySnapshotDto(v);
+            loadFullAuthorInfo(snapshotDto);
+            dto = snapshotDto;
+        } else {
+            dto = new cz.cvut.kbss.termit.dto.VocabularyDto(v);
+        }
+        dto.setAccessLevel(getAccessLevel(v));
         return dto;
+    }
+
+    private void loadFullAuthorInfo(VocabularySnapshotDto snapshotDto) {
+        if (snapshotDto.getAuthor() != null && snapshotDto.getAuthor().getFirstName() == null) {
+            context.getBean(UserRepositoryService.class)
+                   .find(snapshotDto.getAuthor().getUri())
+                   .ifPresent(snapshotDto::setAuthor);
+        }
     }
 
     @Override
@@ -252,6 +272,26 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
     public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary) {
         return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
+    }
+
+    /**
+     * Gets a list of available vocabularies for import from the configured external source.
+     *
+     * @return list of available vocabularies
+     */
+    public List<RdfsResource> getAvailableExternalVocabularies() {
+        return externalVocabularyService.getAvailableVocabularies();
+    }
+
+    /**
+     * Imports vocabularies with the specified identifiers from an external source.
+     *
+     * @param vocabularyIris List of
+     * @return first imported Vocabulary
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) {
+        return externalVocabularyService.importFromExternalUris(vocabularyIris);
     }
 
     /**

@@ -24,11 +24,13 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -50,16 +52,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * This tests only the security aspect of {@link UserController}. Functionality is tested in {@link
  * UserControllerTest}.
  */
+@Execution(ExecutionMode.SAME_THREAD)
 @WebMvcTest(UserController.class)
 @Import({TestRestSecurityConfig.class})
 class UserControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String BASE_URL = REST_MAPPING_PATH + "/users";
 
-    @MockBean
+    @MockitoBean
     private IdentifierResolver idResolver;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Autowired

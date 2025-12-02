@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
@@ -191,19 +192,23 @@ public class ResourceService
      *
      * @param resource Domain resource associated with the content
      * @param content  Resource content
+     * @param saveReason Reason for saving the file content
      * @throws UnsupportedAssetOperationException If content saving is not supported for the specified resource
      */
     @Transactional
     @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
-    public void saveContent(Resource resource, InputStream content) {
+    public void saveContent(Resource resource, InputStream content, ResourceSaveReason saveReason) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(content);
+        Objects.requireNonNull(saveReason);
         verifyFileOperationPossible(resource, "Content saving");
         LOG.trace("Saving new content of resource {}.", resource);
         final File file = (File) resource;
-        if (documentManager.exists(file)) {
-            documentManager.createBackup(file);
-        }
+        saveReason.getBackupReason().ifPresent(backupReason -> {
+            if (documentManager.exists(file)) {
+                documentManager.createBackup(file, backupReason);
+            }
+        });
         documentManager.saveFileContent(file, content);
     }
 
@@ -255,6 +260,7 @@ public class ResourceService
             throw new TermItException("Document " + doc + " does not have a vocabulary.");
         }
         final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
+        file.updateModified();
         repositoryService.persist(file, vocabulary);
         repositoryService.update(doc);
     }

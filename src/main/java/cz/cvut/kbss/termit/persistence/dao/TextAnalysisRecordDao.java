@@ -61,7 +61,8 @@ public class TextAnalysisRecordDao {
                     "?x a ?type ;" +
                     "?hasResource ?resource ;" +
                     "?hasDateCreated ?dateCreated ." +
-                    "} ORDER BY DESC(?dateCreated) LIMIT 1", TextAnalysisRecord.class)
+                    "} ORDER BY DESC(?dateCreated)", TextAnalysisRecord.class)
+                                       .setMaxResults(1)
                                  .setParameter("type", URI.create(
                                          "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-o-textové-analýze"))
                                  .setParameter("hasResource", URI.create(

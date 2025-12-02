@@ -36,6 +36,8 @@ import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +70,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @ActiveProfiles("test")
 @EnableAutoConfiguration
 @EnableTransactionManagement
@@ -125,22 +128,22 @@ public abstract class BaseWebSocketIntegrationTestRunner {
     protected class TestWebSocketSessionHandler implements WebSocketHandler {
 
         @Override
-        public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        public void afterConnectionEstablished(@Nonnull WebSocketSession session) {
             LOG.info("WebSocket connection established");
         }
 
         @Override
-        public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+        public void handleMessage(@Nonnull WebSocketSession session, WebSocketMessage<?> message) throws Exception {
             LOG.info("WebSocket message received: {}", message.getPayload());
         }
 
         @Override
-        public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        public void handleTransportError(@Nonnull WebSocketSession session, @Nonnull Throwable exception) {
             LOG.error("WebSocket transport error", exception);
         }
 
         @Override
-        public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
+        public void afterConnectionClosed(@Nonnull WebSocketSession session, @Nonnull CloseStatus closeStatus) {
             LOG.info("WebSocket connection closed");
         }
 
@@ -155,7 +158,7 @@ public abstract class BaseWebSocketIntegrationTestRunner {
         private final AtomicReference<Throwable> exception = new AtomicReference<>();
 
         @Override
-        public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+        public void afterConnected(@Nonnull StompSession session, @Nonnull StompHeaders connectedHeaders) {
             super.afterConnected(session, connectedHeaders);
             LOG.info("STOMP session connected");
         }

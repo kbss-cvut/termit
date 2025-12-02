@@ -54,9 +54,9 @@ import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "acls")
 @Service
-public class RepositoryAccessControlListService implements AccessControlListService {
+public class AccessControlListRepositoryService implements AccessControlListService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RepositoryAccessControlListService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AccessControlListRepositoryService.class);
 
     private final AccessControlListDao dao;
 
@@ -70,7 +70,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
 
     private final Configuration.ACL aclConfig;
 
-    public RepositoryAccessControlListService(AccessControlListDao dao, ChangeRecordService changeRecordService,
+    public AccessControlListRepositoryService(AccessControlListDao dao, ChangeRecordService changeRecordService,
                                               UserRoleRepositoryService userRoleService,
                                               DtoMapper dtoMapper, SecurityUtils securityUtils, Configuration config) {
         this.dao = dao;
@@ -81,25 +81,29 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         this.aclConfig = config.getAcl();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public AccessControlList findRequired(URI id) {
         return dao.find(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public AccessControlList getReference(URI id) {
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(key = "#p0.uri", unless = "#result == null")
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<AccessControlListDto> findForAsDto(HasIdentifier subject) {
-        return findFor(subject).map(dtoMapper::accessControlListToDto);
+        return dao.findFor(subject).map(dtoMapper::accessControlListToDto);
     }
 
     @CachePut(key = "#p0.uri")
@@ -125,14 +129,14 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                            .forEach(u -> acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, u)));
         // Add record with configured access level for reader and editor user roles
         final List<UserRole> roles = userRoleService.findAll();
-        roles.stream().filter(RepositoryAccessControlListService::isFullUser)
+        roles.stream().filter(AccessControlListRepositoryService::isFullUser)
              .findAny().ifPresent(
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultEditorAccessLevel(), editor)));
         roles.stream()
-             .filter(RepositoryAccessControlListService::isRestricted)
+             .filter(AccessControlListRepositoryService::isRestricted)
              .findAny().ifPresent(
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
-        roles.stream().filter(RepositoryAccessControlListService::isAnonymous)
+        roles.stream().filter(AccessControlListRepositoryService::isAnonymous)
                 .findAny().ifPresent(
                         anonymous -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultAnonymousAccessLevel(), anonymous)));
     }

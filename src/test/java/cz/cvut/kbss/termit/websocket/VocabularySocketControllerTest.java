@@ -27,13 +27,13 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,10 +48,10 @@ import static org.mockito.Mockito.when;
 
 class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
 
-    @MockBean
+    @MockitoBean
     VocabularyService vocabularyService;
 
-    @SpyBean
+    @MockitoSpyBean
     VocabularySocketController sut;
 
     Vocabulary vocabulary;

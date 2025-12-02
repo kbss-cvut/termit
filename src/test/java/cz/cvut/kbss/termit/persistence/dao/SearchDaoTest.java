@@ -49,11 +49,14 @@ class SearchDaoTest {
     @Mock
     private Query queryMock;
 
+    @Mock
+    private DataDao dataDaoMock;
+
     private SearchDao sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new SearchDao(emMock);
+        this.sut = new SearchDao(emMock, dataDaoMock);
         sut.loadQueries();
     }
 

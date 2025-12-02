@@ -37,6 +37,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
@@ -66,8 +68,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-class RepositoryAccessControlListServiceTest {
+class AccessControlListRepositoryServiceTest {
 
     @Mock
     private AccessControlListDao dao;
@@ -86,7 +89,7 @@ class RepositoryAccessControlListServiceTest {
                                                             new Configuration());
 
     @InjectMocks
-    private RepositoryAccessControlListService sut;
+    private AccessControlListRepositoryService sut;
 
     @Test
     void addRecordLoadsTargetAccessControlListAddsSpecifiedRecordToItAndUpdatesIt() {

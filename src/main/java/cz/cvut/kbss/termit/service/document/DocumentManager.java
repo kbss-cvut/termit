@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.document;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 
 import java.io.InputStream;
@@ -90,7 +91,7 @@ public interface DocumentManager {
      * @param file File to backup
      * @throws NotFoundException If the file cannot be found
      */
-    void createBackup(File file);
+    void createBackup(File file, BackupReason reason);
 
     /**
      * Checks whether content for the specified file exists.

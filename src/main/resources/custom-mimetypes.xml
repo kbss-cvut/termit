@@ -6,5 +6,8 @@
         <magic priority="70">
             <match value="@prefix" type="stringignorecase" offset="0" />
         </magic>
+        <magic priority="60">
+            <match value="prefix" type="stringignorecase" offset="0" />
+        </magic>
     </mime-type>
 </mime-info>

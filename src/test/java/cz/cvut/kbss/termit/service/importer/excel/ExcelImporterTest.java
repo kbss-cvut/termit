@@ -21,11 +21,12 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.importing.ReferencedTermInUnrelatedVocabularyException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
@@ -810,5 +811,97 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertTrue(Utils.emptyIfNull(captor.getValue().getParentTerms()).isEmpty());
+    }
+
+    @Test
+    void importSupportsReferencingParentFromVocabularyImportedByTargetVocabulary() {
+        initVocabularyResolution();
+        final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
+        vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
+        final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
+        referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setGlossary(Generator.generateUri());
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-external-parents-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        final Term resultTerm = captor.getValue();
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
+    }
+
+    @Test
+    void importThrowsReferencedTermInUnrelatedVocabularyExceptionWhenReferencedExternalParentIsFromUnrelatedVocabulary() {
+        initVocabularyResolution();
+        final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
+        final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
+        referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setGlossary(Generator.generateUri());
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+
+        final ReferencedTermInUnrelatedVocabularyException ex = assertThrows(
+                ReferencedTermInUnrelatedVocabularyException.class, () -> sut.importVocabulary(
+                        new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                        new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                           Environment.loadFile(
+                                                                   "data/import-with-external-parents-en.xlsx"))));
+        assertEquals("error.vocabulary.import.excel.externalParentUnrelatedVocabulary", ex.getMessageId());
+    }
+
+    @Test
+    void importSupportsExternalParentWithSameLabelAsImportedTerm() {
+        initVocabularyResolution();
+        final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
+        vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
+        final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
+        referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setGlossary(Generator.generateUri());
+        referencedParent.setLabel(MultilingualString.create("Building", "en"));
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-external-parents-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        final Term resultTerm = captor.getValue();
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
+    }
+
+    @Test
+    void importSupportsMultipleColumnsPerPluralAttribute() {
+        initVocabularyResolution();
+        when(termService.exists(any())).thenReturn(false);
+        when(termService.exists(URI.create("http://example.com/another-vocabulary/terms/relatedMatch"))).thenReturn(
+                true);
+        when(termService.exists(
+                URI.create("http://example.com/another-vocabulary/terms/anotherRelatedMatch"))).thenReturn(true);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-multicolumn-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> termCaptor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(termCaptor.capture(), eq(vocabulary));
+        final ArgumentCaptor<Collection<Quad>> quadsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(dataDao).insertRawData(quadsCaptor.capture());
+        assertEquals(2, quadsCaptor.getValue().size());
+        assertEquals(List.of(new Quad(termCaptor.getAllValues().get(0).getUri(), URI.create(SKOS.RELATED_MATCH),
+                                      URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
+                                      vocabulary.getUri()),
+                             (new Quad(termCaptor.getAllValues().get(0).getUri(), URI.create(SKOS.RELATED_MATCH),
+                                       URI.create("http://example.com/another-vocabulary/terms/anotherRelatedMatch"),
+                                       vocabulary.getUri()))),
+                     quadsCaptor.getValue());
     }
 }

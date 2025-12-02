@@ -22,12 +22,13 @@ import cz.cvut.kbss.termit.environment.config.TestWebSocketConfig;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
-import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +36,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.AbstractSubscribableChannel;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Map;
@@ -51,6 +52,7 @@ import java.util.UUID;
 import static cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate.MESSAGE_IDENTIFIER_HEADER;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -62,16 +64,13 @@ public abstract class BaseWebSocketControllerTestRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseWebSocketControllerTestRunner.class);
 
-    @SpyBean
+    @MockitoSpyBean
     protected WebSocketExceptionHandler webSocketExceptionHandler;
 
-    @SpyBean
-    protected StompExceptionHandler stompExceptionHandler;
-
-    @MockBean
+    @MockitoBean
     protected IdentifierResolver identifierResolver;
 
-    @MockBean
+    @MockitoBean
     protected LongRunningTasksRegistry longRunningTasksRegistry;
 
     /**
@@ -115,7 +114,7 @@ public abstract class BaseWebSocketControllerTestRunner {
 
     @AfterEach
     protected void runnerAfterEach() {
-        verifyNoMoreInteractions(webSocketExceptionHandler, stompExceptionHandler);
+        verifyNoMoreInteractions(webSocketExceptionHandler);
     }
 
     /**

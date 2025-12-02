@@ -65,6 +65,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -547,5 +548,32 @@ public class Generator {
         result.add(ar);
 
         return result;
+    }
+
+    /**
+     * Generates {@link File Files} with different modification and last backup timestamps.
+     * Generated files are linked to the provided document.
+     * @param document the document to which the files should be added
+     * @return generated files
+     */
+    public static List<File> generateDocumentFilesWithBackupTimestamps(Document document) {
+        Instant now = Instant.now().minusSeconds(1);
+        return Map.of(now.minus(25, ChronoUnit.HOURS), now.minus(24, ChronoUnit.HOURS),
+                   now.minus(23, ChronoUnit.HOURS), now.minus(25, ChronoUnit.HOURS),
+                   now.minusSeconds(10), now.minus(1, ChronoUnit.MINUTES),
+                   Instant.EPOCH, now.minus(5, ChronoUnit.DAYS))
+                .entrySet().stream().map(entry -> {
+               final Instant modified = entry.getKey();
+               final Instant lastBackup = entry.getValue();
+
+               File file = new File();
+               file.setLabel("documentFile" + randomInt());
+               document.addFile(file);
+               file.setDocument(document);
+               file.setUri(Generator.generateUri());
+               file.setModified(modified);
+               file.setLastBackup(lastBackup);
+               return file;
+           }).toList();
     }
 }

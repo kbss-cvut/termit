@@ -61,7 +61,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @JsonIgnore
     @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" +
             """
-            SELECT ?lang WHERE {
+            SELECT DISTINCT ?lang WHERE {
                 ?vocabulary dcterms:language ?lang .
             }
             """)
