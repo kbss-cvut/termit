@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.service.document.backup.BackupFile;
 import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -16,11 +17,11 @@ import java.util.Objects;
  * with a {@link #backupReason}
  */
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_popis_zalohy_souboru)
+@OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/popis-zálohy-souboru")
 public class FileBackupDto {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
     private Instant timestamp;
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_duvod_zalohy)
+    @OWLDataProperty(iri = DC.Terms.DESCRIPTION)
     private BackupReason backupReason;
 
     /**
