@@ -425,7 +425,7 @@ public class ResourceService
      * @param backupTimestamp the timestamp of the desired backup to restore
      */
     @Transactional
-    @Throttle(value = "{#resource.getUri()}")
+    @Throttle(value = "{#resource.getUri()}", name = "restoreBackup")
     @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
     public void restoreBackup(Resource resource, Instant backupTimestamp) {
         Objects.requireNonNull(resource);
