@@ -265,6 +265,8 @@ public class DocumentBackupManager {
         // create backup if the file was modified since the last backup
         if (fileResource.getModified().isAfter(fileResource.getLastBackup())) {
             createBackup(fileResource, BackupReason.BACKUP_RESTORE);
+        } else {
+            LOG.debug("Skipping backup creation when restoring a backup, no changes have been made since the last backup of file {}", fileResource.getUri());
         }
 
         // resolve the physical file which will be replaced
