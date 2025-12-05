@@ -10,7 +10,6 @@ INSERT {
               pdp:má-datum-a-čas-vytvoření-verze ?created ;
               dc:creator ?author ;
               pdp:má-glosář ?glossarySnapshot ;
-              pdp:má-model ?modelSnapshot ;
               pdp:importuje-slovník ?importedSnapshot ;
               ?y ?z .
     ?glossarySnapshot a pdp:glosář ;
@@ -19,16 +18,11 @@ INSERT {
               skos:hasTopConcept ?topConceptSnapshot ;
               pdp:je-verzí-glosáře ?glossary ;
               pdp:má-datum-a-čas-vytvoření-verze ?created .
-    ?modelSnapshot a pdp:model ;
-                      a pdp:verze-modelu ;
-              pdp:je-verzí-modelu ?model ;
-              pdp:má-datum-a-čas-vytvoření-verze ?created .
     }
 } WHERE {
     GRAPH ?context {
     ?vocabulary a pdp:slovník ;
                 pdp:má-glosář ?glossary ;
-                pdp:má-model ?model ;
                 ?y ?z .
         OPTIONAL {
             ?glossary skos:hasTopConcept ?topConcept .
@@ -39,8 +33,7 @@ INSERT {
     }
     BIND (IRI(CONCAT(str(?vocabulary), ?suffix)) as ?vocabularySnapshot)
     BIND (IRI(CONCAT(str(?glossary), ?suffix)) as ?glossarySnapshot)
-    BIND (IRI(CONCAT(str(?model), ?suffix)) as ?modelSnapshot)
     BIND (IRI(CONCAT(str(?topConcept), ?suffix)) as ?topConceptSnapshot)
     BIND (IRI(CONCAT(str(?imported), ?suffix)) as ?importedSnapshot)
-    FILTER (?y NOT IN (pdp:má-glosář, pdp:má-model, pdp:popisuje-dokument, pdp:importuje-slovník, owl:imports))
+    FILTER (?y NOT IN (pdp:má-glosář, pdp:popisuje-dokument, pdp:importuje-slovník, owl:imports))
 }
