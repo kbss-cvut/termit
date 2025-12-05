@@ -55,7 +55,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesDiscoversChangeInSingularLiteralAttribute() {
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getModel().setUri(Generator.generateUri());
         original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
         changed.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
@@ -71,7 +70,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Vocabulary clone = new Vocabulary();
         clone.setUri(original.getUri());
         clone.setDescription(original.getDescription());
-        clone.setModel(original.getModel());
         clone.setGlossary(original.getGlossary());
         clone.setLabel(original.getLabel());
         clone.setPrimaryLanguage(original.getPrimaryLanguage());
@@ -82,7 +80,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesDiscoversInSingularReferenceAttribute() {
         // Note: This does not normally happen, it simulates possible changes in model when assets would have singular references to other objects
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getModel().setUri(Generator.generateUri());
         original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
         changed.setGlossary(new Glossary());
@@ -275,7 +272,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularLiteralAttribute() {
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getModel().setUri(Generator.generateUri());
         original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
         changed.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
@@ -291,7 +287,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularReferenceAttribute() {
         // Note: This does not normally happen, it simulates possible changes in model when assets would have singular references to other objects
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getModel().setUri(Generator.generateUri());
         original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
         changed.setGlossary(new Glossary());
