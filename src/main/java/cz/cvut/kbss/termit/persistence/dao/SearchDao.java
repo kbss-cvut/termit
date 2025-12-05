@@ -19,10 +19,13 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -55,11 +58,14 @@ public class SearchDao {
     private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
     static final char LUCENE_WILDCARD = '*';
+
     private final EntityManager em;
+    private final DataDao dataDao;
     protected String ftsQuery;
 
-    public SearchDao(EntityManager em) {
+    public SearchDao(EntityManager em, DataDao dataDao) {
         this.em = em;
+        this.dataDao = dataDao;
     }
 
     @PostConstruct
@@ -194,10 +200,24 @@ public class SearchDao {
         Objects.requireNonNull(searchParams);
         Objects.requireNonNull(pageSpec);
         LOG.trace("Running faceted term search for search parameters: {}", searchParams);
+
+        final List<SearchParam> relationshipAnnotationParams = searchParams.stream()
+                .filter(p -> p.getProperty().toString().equals(Vocabulary.s_p_as_relationship))
+                .toList();
+        final List<SearchParam> regularParams = searchParams.stream()
+                .filter(p -> !p.getProperty().toString().equals(Vocabulary.s_p_as_relationship))
+                .toList();
+
         final StringBuilder queryStr = new StringBuilder(
                 "SELECT DISTINCT ?t WHERE { ?t a ?term ; ?hasLabel ?label .\n");
+
         int i = 0;
-        for (SearchParam p : searchParams) {
+
+        for (SearchParam p : relationshipAnnotationParams) {
+            queryStr.append(buildRelationshipAnnotationQuery(p, i++));
+        }
+
+        for (SearchParam p : regularParams) {
             final String variable = "?v" + i++;
             queryStr.append("?t ").append(Utils.uriToString(p.getProperty())).append(" ").append(variable)
                     .append(" . ");
@@ -227,5 +247,60 @@ public class SearchDao {
                  .setFirstResult((int) pageSpec.getOffset())
                  .setMaxResults(pageSpec.getPageSize())
                  .getResultList();
+    }
+
+    /**
+     * Builds a SPARQL query fragment for searching terms by relationship annotations.
+     * <p>
+     * Searches for terms that are subjects or objects in relationships annotated with the specified values.
+     * Uses RDF-star syntax to query annotated triples.
+     *
+     * @param param Search parameter with annotation values
+     * @param variableIndex Index for generating unique variable names
+     * @return SPARQL query fragment
+     */
+    private String buildRelationshipAnnotationQuery(SearchParam param, int variableIndex) {
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
+                URI.create(RDF.STATEMENT));
+
+        if (annotationProperties.isEmpty()) {
+            LOG.debug("No custom attributes with domain rdf:Statement found for relationship annotation search");
+            return "";
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        final String valueVar = "?v" + variableIndex;
+        final String subjectVar = "?s" + variableIndex;
+        final String predicateVar = "?p" + variableIndex;
+        final String objectVar = "?o" + variableIndex;
+        final String annotationPropVar = "?ap" + variableIndex;
+
+        final String annotationPropertiesFilter = annotationProperties.stream()
+                .map(ap -> Utils.uriToString(ap.getUri()))
+                .collect(Collectors.joining(","));
+
+        sb.append("{\n");
+        sb.append("  { << ?t ").append(predicateVar).append(" ").append(objectVar).append(" >> ")
+          .append(annotationPropVar).append(" ").append(valueVar).append(" . }\n");
+        sb.append("  UNION\n");
+        sb.append("  { << ").append(subjectVar).append(" ").append(predicateVar).append(" ?t >> ")
+          .append(annotationPropVar).append(" ").append(valueVar).append(" .\n");
+        sb.append("    FILTER NOT EXISTS { ").append(subjectVar).append(" a ?snapshot . }\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+
+        sb.append("FILTER (").append(annotationPropVar).append(" IN (").append(annotationPropertiesFilter).append("))\n");
+
+        if (param.getMatchType() == MatchType.IRI) {
+            sb.append("FILTER (").append(valueVar).append(" IN (")
+              .append(param.getValue().stream()
+                      .map(v -> Utils.uriToString(URI.create(v.toString())))
+                      .collect(Collectors.joining(","))).append("))\n");
+        } else {
+            sb.append("FILTER (STR(").append(valueVar).append(") = \"")
+              .append(param.getValue().iterator().next().toString()).append("\")\n");
+        }
+
+        return sb.toString();
     }
 }

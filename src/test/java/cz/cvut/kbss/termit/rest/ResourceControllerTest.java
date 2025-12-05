@@ -29,16 +29,20 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.FileBackupDto;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
+import cz.cvut.kbss.termit.service.document.backup.BackupFile;
+import cz.cvut.kbss.termit.service.document.backup.BackupReason;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +64,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -462,5 +467,63 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         assertEquals(HTML_CONTENT, resultContent);
         assertEquals(MediaType.TEXT_HTML_VALUE, mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_TYPE));
         verify(resourceServiceMock).getContent(file, new ResourceRetrievalSpecification(Optional.empty(), true));
+    }
+
+    private List<BackupFile> generateEmptyBackups() {
+        final int backupsCount = 7;
+        Instant timestamp = Utils.timestamp();
+        final List<BackupFile> backups = new ArrayList<>(backupsCount);
+        for (int i = 0; i < backupsCount; i++) {
+            timestamp = timestamp.plusSeconds(10);
+            backups.add(new BackupFile(timestamp, null, BackupReason.UNKNOWN));
+        }
+        return backups;
+    }
+
+    @Test
+    void getBackupCountReturnsCountOfBackupsInHeader() throws Exception {
+        final File file = generateFile();
+        final List<FileBackupDto> backups = generateEmptyBackups().stream().map(FileBackupDto::new).toList();
+        final int backupsCount = backups.size();
+        when(resourceServiceMock.getBackupFiles(eq(file))).thenReturn(backups);
+
+        when(identifierResolverMock.resolveIdentifier(any(), eq(FILE_NAME)))
+                .thenReturn(file.getUri());
+        when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
+
+        final HttpServletResponse response = mockMvc.perform(head(PATH + "/" + FILE_NAME + "/backups"))
+                                                     .andExpect(status().isOk()).andReturn().getResponse();
+
+        final String countHeader = response.getHeader(Constants.X_TOTAL_COUNT_HEADER);
+        assertNotNull(countHeader);
+        assertEquals(String.valueOf(backupsCount), countHeader);
+    }
+
+    @Test
+    void getBackupsReturnsPagedListOfBackupFiles() throws Exception {
+        final File file = generateFile();
+        final List<FileBackupDto> backups = generateEmptyBackups().stream().map(FileBackupDto::new)
+                                                  .sorted(Comparator.comparing(FileBackupDto::getTimestamp).reversed())
+                                                  .toList();
+        final int page = 5;
+        final int pageSize = 1;
+        final FileBackupDto expectedDto = backups.get(page);
+
+        when(resourceServiceMock.getBackupFiles(eq(file))).thenReturn(backups);
+
+        when(identifierResolverMock.resolveIdentifier(any(), eq(FILE_NAME)))
+                .thenReturn(file.getUri());
+        when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/backups")
+                                                   .param("page", String.valueOf(page))
+                                                   .param("pageSize", String.valueOf(pageSize)))
+                                           .andExpect(status().isOk()).andReturn();
+
+        final List<FileBackupDto> result = readValue(mvcResult, new TypeReference<>() {
+        });
+
+        assertEquals(pageSize, result.size());
+        assertEquals(expectedDto,  result.get(0));
     }
 }

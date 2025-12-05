@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jsonld.ConfigParam;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
@@ -106,6 +107,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         final JsonLdModule jsonLdModule = new JsonLdModule();
         jsonLdModule.configure(cz.cvut.kbss.jsonld.ConfigParam.SCAN_PACKAGE, "cz.cvut.kbss.termit");
+        jsonLdModule.configure(ConfigParam.ASSUME_TARGET_TYPE, "true");
         jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
         mapper.registerModule(jsonLdModule);
         mapper.registerModule(new JavaTimeModule());

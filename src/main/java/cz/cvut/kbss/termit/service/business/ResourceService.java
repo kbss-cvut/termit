@@ -32,16 +32,21 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.dto.FileBackupDto;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.document.AnnotationGenerator;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.backup.BackupFile;
+import cz.cvut.kbss.termit.service.document.backup.DocumentBackupManager;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +59,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -78,6 +85,8 @@ public class ResourceService
 
     private final DocumentManager documentManager;
 
+    private final DocumentBackupManager documentBackupManager;
+
     private final TextAnalysisService textAnalysisService;
 
     private final VocabularyService vocabularyService;
@@ -86,18 +95,24 @@ public class ResourceService
 
     private final Configuration config;
 
+    private final AnnotationGenerator annotationGenerator;
+
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
+                           DocumentBackupManager documentBackupManager,
                            TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
-                           ChangeRecordService changeRecordService, Configuration config) {
+                           ChangeRecordService changeRecordService, Configuration config,
+                           AnnotationGenerator annotationGenerator) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
+        this.documentBackupManager = documentBackupManager;
         this.textAnalysisService = textAnalysisService;
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
         this.config = config;
+        this.annotationGenerator = annotationGenerator;
     }
 
     /**
@@ -388,5 +403,45 @@ public class ResourceService
     @Override
     public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Lists all backups available for the specified {@code asset}.
+     * @param asset The file whose backups to list
+     * @return the list of all backups
+     */
+    @PreAuthorize("@resourceAuthorizationService.canModify(#asset)")
+    public List<FileBackupDto> getBackupFiles(Resource asset) {
+        verifyFileOperationPossible(asset, "Listing file backups");
+        final File file = (File) asset;
+        return documentBackupManager.getBackups(file, null).stream().map(FileBackupDto::new).toList();
+    }
+
+    /**
+     * Restores a backup for the given resource from the given timestamp.
+     * If no backup was created at the exact timestamp, the closest newest backup is restored.
+     *
+     * @param resource the resource for which the backup should be restored; must be a {@link File}
+     * @param backupTimestamp the timestamp of the desired backup to restore
+     */
+    @Transactional
+    @Throttle(value = "{#resource.getUri()}", name = "restoreBackup")
+    @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
+    public void restoreBackup(Resource resource, Instant backupTimestamp) {
+        Objects.requireNonNull(resource);
+        Objects.requireNonNull(backupTimestamp);
+        verifyFileOperationPossible(resource, "Restoring file backups");
+        final File file = (File) resource;
+        BackupFile backupFile = documentBackupManager.getBackup(file, backupTimestamp);
+        final java.io.File physicalFile = documentBackupManager.restoreBackup(file, backupFile);
+        // dropping occurrences from database, otherwise they would be considered during annotation generation
+        LOG.debug("Removing all occurrences for file overwritten by a backup");
+        repositoryService.removeOccurrencesTargeting(resource);
+        LOG.debug("Generating annotations for the restored backup");
+        try (FileInputStream fis = new FileInputStream(physicalFile)) {
+            annotationGenerator.generateAnnotations(fis, file);
+        } catch (Exception e) {
+            throw new TermItException("Unable to resolve occurrences for restored backup", e);
+        }
     }
 }

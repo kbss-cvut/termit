@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>4.2.1</version>
+    <version>4.3.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -28,14 +28,12 @@
 
     <properties>
         <java.version>17</java.version>
-        <org.apache.tika.tika-core.version>3.0.0</org.apache.tika.tika-core.version>
+        <org.apache.tika.tika-core.version>3.2.2</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.6.2</org.mapstruct.version>
         <org.springdoc.version>2.8.5</org.springdoc.version>
         <cz.cvut.kbss.jopa.version>2.7.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.15.6</cz.cvut.kbss.jsonld.version>
 
-        <!-- Default value for deployment type property which should otherwise specified on command line -->
-        <deployment>DEV</deployment>
         <packaging>jar</packaging>
     </properties>
 

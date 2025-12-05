@@ -369,4 +369,24 @@ class DataDaoTest extends BaseDaoTestRunner {
         assertEquals(2, result.size());
         assertThat(result, hasItems(pOne, pTwo));
     }
+
+    @Test
+    void findAllCustomAttributesByDomainReturnsCustomAttributesWithSpecifiedDomain() {
+        final CustomAttribute pOne = new CustomAttribute(Generator.generateUri(),
+                                                         MultilingualString.create("Attribute one", "en"), null);
+        pOne.setDomain(URI.create(Vocabulary.s_c_slovnik));
+        pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        final CustomAttribute pTwo = new CustomAttribute(Generator.generateUri(),
+                                                         MultilingualString.create("Attribute two", "en"), null);
+        pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pTwo.setRange(URI.create(XSD.BOOLEAN));
+        transactional(() -> {
+            em.persist(pOne);
+            em.persist(pTwo);
+        });
+
+        final List<CustomAttribute> result = sut.findAllCustomAttributesByDomain(URI.create(
+                cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        assertEquals(List.of(pTwo), result);
+    }
 }

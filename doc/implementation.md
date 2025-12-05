@@ -21,7 +21,7 @@ annotations. Use it to verify input data. See `User` and its validation in `Base
 TermIt is preconfigured to run against a local GraphDB repository at `http://locahost:7200/repositories/termit`. This
 can be changed by updating `application.yml`.
 
-### User vs UserAccount
+### User vs. UserAccount
 
 `User` is a domain class used for domain functions, mostly for resource provenance (author, last editor). It does not
 support password.
@@ -30,13 +30,8 @@ support password.
 
 ### JMX
 
-A JMX bean called `AppAdminBean` was added to the application. Currently, it supports invalidation of application
-caches. The bean's name is set during Maven build. In case multiple deployments of TermIt are running on the same
-application server, it is necessary to provide different names for it. A Maven property with default value _DEV_ was
-introduced for it. To specify a different value, pass a command line parameter to Maven, so the build call might look as
-follows:
-
-`mvn clean package -B -P production "-Ddeployment=DEV"`
+A JMX bean called `AppAdminBean` is published by TermIt. It provides several maintenance functions, such as invalidating
+the application caches.
 
 ### Fulltext Search
 

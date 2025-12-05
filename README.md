@@ -95,6 +95,10 @@ TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/
   we wrote about TermIt
     - Cite as _Křemen P, Med M., Blaško M., Saeeda L., Ledvinka M. and Buzek A. (2024). TermIt: Managing Normative
       Thesauri’. Semantic Web. DOI: 10.3233/SW-243547_
+- [TermIt: Managing Domain Terminologies](https://ceur-ws.org/Vol-4064/SEMDEV-paper1.pdf) - a short demo paper we
+  wrote about TermIt
+    - Cite as _Ledvinka M., Blaško M., Med M. (2025). TermIt: Managing Domain Terminologies. SEMANTiCS (Posters, Demos,
+      Workshops & Tutorials)_
 
 ## Getting TermIt
 

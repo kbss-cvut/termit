@@ -21,6 +21,8 @@ import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
@@ -41,6 +43,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+
+@Execution(ExecutionMode.SAME_THREAD)
 // intentionally not enabling test profile
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(SpringExtension.class)
@@ -68,11 +72,6 @@ class ThrottleAspectBeanTest {
             Runnable task = invocation.getArgument(0, Runnable.class);
             return new ScheduledFutureTask<>(task, null);
         });
-    }
-
-    @Test
-    void throttleAspectIsCreated() {
-        assertNotNull(throttleAspect);
     }
 
     @Test
