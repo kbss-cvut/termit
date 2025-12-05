@@ -28,7 +28,6 @@ import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -137,7 +136,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
-        initGlossaryAndModel(instance);
+        initGlossary(instance);
         initDocument(instance);
         initPreferredNamespace(instance);
         if (instance.getDocument() != null) {
@@ -145,15 +144,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    private void initGlossaryAndModel(Vocabulary vocabulary) {
+    private void initGlossary(Vocabulary vocabulary) {
         final String iriBase = vocabulary.getUri().toString();
         if (vocabulary.getGlossary() == null) {
             vocabulary.setGlossary(new Glossary());
             vocabulary.getGlossary().setUri(idResolver.generateIdentifier(iriBase, config.getGlossary().getFragment()));
-        }
-        if (vocabulary.getModel() == null) {
-            vocabulary.setModel(new Model());
-            vocabulary.getModel().setUri(idResolver.generateIdentifier(iriBase, Constants.DEFAULT_MODEL_IRI_COMPONENT));
         }
     }
 

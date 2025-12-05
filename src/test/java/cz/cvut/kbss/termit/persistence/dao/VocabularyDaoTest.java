@@ -34,7 +34,6 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -190,7 +189,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void updateWorksCorrectlyInContextsForDocumentVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.setModel(new Model());
         final Document doc = new Document();
         doc.setLabel("test-document");
         doc.setUri(Generator.generateUri());
@@ -553,14 +551,13 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void removeCascadesOperationToGlossaryAndModel() {
+    void removeCascadesOperationToGlossary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, descriptor));
 
         transactional(() -> sut.remove(vocabulary));
         assertNull(em.find(Glossary.class, vocabulary.getGlossary().getUri()));
-        assertNull(em.find(Model.class, vocabulary.getModel().getUri()));
     }
 
     @Test
@@ -586,9 +583,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Glossary glossaryStub = new Glossary();
         glossaryStub.setUri(URI.create(vocabulary.getGlossary().getUri().toString() + "/version/" + strTimestamp));
         stub.setGlossary(glossaryStub);
-        final Model modelStub = new Model();
-        modelStub.setUri(URI.create(vocabulary.getModel().getUri().toString() + "/version/" + strTimestamp));
-        stub.setModel(modelStub);
         stub.setLabel(vocabulary.getLabel());
         stub.setDescription(vocabulary.getDescription());
         stub.setPrimaryLanguage(vocabulary.getPrimaryLanguage());

@@ -72,12 +72,6 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
                        fetch = FetchType.EAGER)
     private Glossary glossary;
 
-    @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_model,
-                       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-                       fetch = FetchType.EAGER)
-    private Model model;
-
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
 
@@ -156,14 +150,6 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
 
     public void setGlossary(Glossary glossary) {
         this.glossary = glossary;
-    }
-
-    public Model getModel() {
-        return model;
-    }
-
-    public void setModel(Model model) {
-        this.model = model;
     }
 
     public Set<URI> getImportedVocabularies() {

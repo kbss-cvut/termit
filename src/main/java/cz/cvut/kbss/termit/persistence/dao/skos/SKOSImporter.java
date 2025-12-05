@@ -368,7 +368,6 @@ public class SKOSImporter implements VocabularyImporter {
         final Glossary glossary = new Glossary();
         glossary.setUri(URI.create(newGlossaryIri));
         vocabulary.setGlossary(glossary);
-        vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
         setVocabularyPrimaryLanguageFromGlossary(vocabulary);
         setVocabularyLabelFromGlossary(vocabulary);
         setVocabularyDescriptionFromGlossary(vocabulary);

@@ -38,7 +38,6 @@ import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -146,14 +145,13 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void persistCreatesGlossaryAndModelInstances() {
+    void persistCreatesGlossary() {
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(Generator.generateUri());
         setPrimaryLabel(vocabulary, "TestVocabulary");
         sut.persist(vocabulary);
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result.getGlossary());
-        assertNotNull(result.getModel());
     }
 
     @Test
@@ -419,20 +417,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void persistGeneratesModelIriBasedOnVocabularyIri() {
-        final String label = "Test vocabulary " + System.currentTimeMillis();
-        final Vocabulary vocabulary = new Vocabulary();
-        setPrimaryLabel(vocabulary, label);
-        sut.persist(vocabulary);
-        assertNotNull(vocabulary.getUri());
-        assertNotNull(vocabulary.getModel());
-
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
-        assertEquals(vocabulary.getUri() + "/" + Constants.DEFAULT_MODEL_IRI_COMPONENT,
-                     result.getModel().getUri().toString());
-    }
-
-    @Test
     void findVersionValidAtThrowsNotFoundExceptionWhenNoValidSnapshotExists() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
@@ -458,10 +442,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
         final Vocabulary update = new Vocabulary(vocabulary.getUri());
-        update.setModel(vocabulary.getModel());
         update.setGlossary(vocabulary.getGlossary());
         setPrimaryLabel(update, "Updated label");
-        // Intentionally leave ACL null, this is how it would arrive from the client
+        // Intentionally leave ACL null; this is how it would arrive from the client
 
         transactional(() -> sut.update(update));
 
