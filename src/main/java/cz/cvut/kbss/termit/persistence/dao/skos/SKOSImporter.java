@@ -412,7 +412,6 @@ public class SKOSImporter implements VocabularyImporter {
                                                 "error.vocabulary.import.skos.vocabularyIriEqualsGlossaryIri");
         }
         vocabulary.setGlossary(glossary);
-        vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
         setVocabularyPrimaryLanguageFromGlossary(vocabulary);
         setVocabularyLabelFromGlossary(vocabulary);
         setVocabularyDescriptionFromGlossary(vocabulary);
