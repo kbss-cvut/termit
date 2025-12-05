@@ -82,13 +82,6 @@ public class Constants {
     public static final Double SCORE_THRESHOLD = 0.49;
 
     /**
-     * Default identifier component for {@link cz.cvut.kbss.termit.model.Model}.
-     * <p>
-     * This component is appended to the containing vocabulary identifier to form the model identifier.
-     */
-    public static final String DEFAULT_MODEL_IRI_COMPONENT = "model";
-
-    /**
      * Default identifier component for {@link cz.cvut.kbss.termit.model.resource.Document}.
      * <p>
      * This component is appended to the containing vocabulary identifier to form the document identifier.

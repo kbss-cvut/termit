@@ -39,7 +39,6 @@ public class VocabularyDto extends Vocabulary {
         setDescription(source.getDescription());
         setPrimaryLanguage(source.getPrimaryLanguage());
         setGlossary(source.getGlossary());
-        setModel(source.getModel());
         setDocument(source.getDocument());
         setImportedVocabularies(source.getImportedVocabularies());
         setProperties(source.getProperties());
