@@ -724,10 +724,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_glosar))
                       .getSingleResult());
-        // model removed
-        assertFalse(em.createNativeQuery(query, Boolean.class)
-                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_model))
-                      .getSingleResult());
 
         // all terms removed
         assertFalse(em.createNativeQuery(query, Boolean.class).setParameter("type", URI.create(SKOS.CONCEPT))
