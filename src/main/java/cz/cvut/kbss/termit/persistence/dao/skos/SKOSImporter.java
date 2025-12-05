@@ -401,7 +401,6 @@ public class SKOSImporter implements VocabularyImporter {
             throw new VocabularyImportException("Vocabulary IRI cannot be equal to glossary IRI.",
                                                 "error.vocabulary.import.skos.vocabularyIriEqualsGlossaryIri");
         }
-        vocabulary.setGlossary(glossary);
         setVocabularyPrimaryLanguageFromGlossary(vocabulary);
         setVocabularyLabel(vocabulary);
         setVocabularyDescription(vocabulary);
@@ -410,7 +409,7 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyPrimaryLanguageFromGlossary(Vocabulary vocabulary) {
-        boolean languageSet = resolvePrimaryLanguageFromVocabularyAndGlossary(vocabulary);
+        boolean languageSet = handleGlossaryLiteralStringProperty(vocabulary::setPrimaryLanguage);
         if (!languageSet) {
             AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
             handleStringStringProperty(glossaryIri, DCTERMS.TITLE, labelRef::set, config.getPersistence()
@@ -483,21 +482,21 @@ public class SKOSImporter implements VocabularyImporter {
 
     /**
      * Looks up the language property in the vocabulary and/or glossary and sets it as the primary language.
+     * Looks up {@literal dcterms:language} in the glossary, loads the first value as string and passes it to the
+     * provided consumer.
      *
-     * @param vocabulary Vocabulary being imported
-     * @return true if the language was found and set, false otherwise
+     * @param consumer Consumer to accept the literal string value if found
+     * @return true if the property was found and the consumer was called, false otherwise
      */
-    private boolean resolvePrimaryLanguageFromVocabularyAndGlossary(Vocabulary vocabulary) {
-        final Set<Statement> vocabularyLanguage = model.filter(vf.createIRI(vocabulary.getUri()
-                                                                                      .toString()), DCTERMS.LANGUAGE,
-                                                               null);
-        final Set<Statement> glossaryLanguage = model.filter(glossaryIri, DCTERMS.LANGUAGE, null);
-        return Stream.concat(vocabularyLanguage.stream(), glossaryLanguage.stream())
+
+    private boolean handleGlossaryLiteralStringProperty(Consumer<String> consumer) {
+        final Set<Statement> values = model.filter(glossaryIri, DCTERMS.LANGUAGE, null);
+        return values.stream()
                      .filter(s -> s.getObject().isLiteral()).findFirst()
                      .map(s -> (Literal) s.getObject())
                      .map(Literal::getLabel)
                      .map(value -> {
-                         vocabulary.setPrimaryLanguage(value);
+                         consumer.accept(value);
                          return true;
                      })
                      .orElse(false);
