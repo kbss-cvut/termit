@@ -171,8 +171,9 @@ public class SKOSImporter implements VocabularyImporter {
                  final Resource term = s.getSubject();
                  final Set<Statement> labels = model.filter(term, SKOS.PREF_LABEL, null);
                  if (labels.isEmpty()) {
-                     final VocabularyImportException ex = new VocabularyImportException("Term " + term + " has no label.",
-                                                         "error.vocabulary.import.skos.missingLabel");
+                     final VocabularyImportException ex = new VocabularyImportException(
+                             "Term " + term + " has no label.",
+                             "error.vocabulary.import.skos.missingLabel");
                      ex.addParameter("term", term.stringValue());
                      throw ex;
                  }
@@ -376,7 +377,7 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyPrimaryLanguageFromGlossary(Vocabulary vocabulary) {
-        boolean languageSet = handleGlossaryLiteralStringProperty(DCTERMS.LANGUAGE, vocabulary::setPrimaryLanguage);
+        boolean languageSet = handleGlossaryLiteralStringProperty(vocabulary::setPrimaryLanguage);
         if (!languageSet) {
             AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
             handleGlossaryStringProperty(DCTERMS.TITLE, labelRef::set, config.getPersistence().getLanguage());
@@ -437,15 +438,14 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     /**
-     * Looks up the specified property in the glossary and loads the first value as a literal string. If no property is
-     * found, the consumer is not called.
+     * Looks up {@literal dcterms:language} in the glossary, loads the first value as string and passes it to the
+     * provided consumer.
      *
-     * @param property Property to look up in the glossary
      * @param consumer Consumer to accept the literal string value if found
      * @return true if the property was found and the consumer was called, false otherwise
      */
-    private boolean handleGlossaryLiteralStringProperty(IRI property, Consumer<String> consumer) {
-        final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
+    private boolean handleGlossaryLiteralStringProperty(Consumer<String> consumer) {
+        final Set<Statement> values = model.filter(getGlossaryUri(), DCTERMS.LANGUAGE, null);
         return values.stream()
                      .filter(s -> s.getObject().isLiteral()).findFirst()
                      .map(s -> (Literal) s.getObject())
