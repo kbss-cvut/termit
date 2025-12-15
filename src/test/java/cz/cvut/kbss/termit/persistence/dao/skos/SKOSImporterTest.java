@@ -643,4 +643,34 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                          ex.getParameters().get("term"));
         });
     }
+
+    @Test
+    void importThrowsExceptionWhenVocabularyIdentifierEqualsGlossaryIdentifier() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            final VocabularyImportException ex = assertThrows(
+                    VocabularyImportException.class,
+                    () -> sut.importVocabulary(new VocabularyImporter.ImportConfiguration(true, null, persister),
+                                               new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                                                                  new ByteArrayInputStream("""
+                                                                                                                   @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+                                                                                                                   @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+                                                                                                                   
+                                                                                                                   <http://example.com/vocabulary> a <http://www.w3.org/2004/02/skos/core#ConceptScheme> ;
+                                                                                                                           <http://purl.org/dc/terms/language>
+                                                                                                                                   "en";
+                                                                                                                           <http://purl.org/dc/terms/title>
+                                                                                                                                   "Test vocabulary"@en .
+                                                                                                                   
+                                                                                                                   <http://example.com/vocabulary/pojem/user>
+                                                                                                                           a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+                                                                                                                           <http://www.w3.org/2004/02/skos/core#inScheme>
+                                                                                                                                   <http://example.com/vocabulary> ;
+                                                                                                                           <http://www.w3.org/2004/02/skos/core#prefLabel>
+                                                                                                                                   "User"@en .
+                                                                                                                   """.getBytes(
+                                                                                          StandardCharsets.UTF_8)))));
+            assertEquals("error.vocabulary.import.skos.vocabularyIriEqualsGlossaryIri", ex.getMessageId());
+        });
+    }
 }
