@@ -18,14 +18,24 @@
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
 import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
+import cz.cvut.kbss.termit.security.JwtSubjectClaimToUserDetailsConverter;
+import cz.cvut.kbss.termit.security.JwtUserDetailsValidator;
 import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.security.PatToUserDetailsConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
-import cz.cvut.kbss.termit.security.TermitJwtDecoder;
+import cz.cvut.kbss.termit.security.UsernameToUserDetailsConverter;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +43,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,7 +53,14 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -54,8 +72,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
 @Configuration
@@ -80,6 +102,8 @@ public class SecurityConfig {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
+    private final SecretKey jwtSecretKey;
+
     @Autowired
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           AuthenticationSuccess authenticationSuccessHandler,
@@ -93,10 +117,15 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
         this.config = config;
+        // TODO algorithm as security constant
+        this.jwtSecretKey = Utils.isBlank(config.getJwt()
+                                                .getSecretKey()) ?
+                Keys.secretKeyFor(SignatureAlgorithm.forName(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM)) :
+                Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, TermitJwtDecoder jwtDecoder) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
         LOG.debug("Using internal security mechanisms.");
         final AuthenticationManager authManager = buildAuthenticationManager(http);
         final PathPatternRequestMatcher.Builder matcher = PathPatternRequestMatcher.withDefaults();
@@ -166,8 +195,41 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * @return {@link DefaultJOSEObjectTypeVerifier} accepting {@code JWT} and {@code JWT+AT} token types
+     */
+    public static void setJWSTypeVerifier(ConfigurableJWTProcessor<SecurityContext> configurer) {
+        configurer.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(
+                JOSEObjectType.JWT, new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN), null));
+    }
+
+    public static OAuth2TokenValidator<Jwt> jwtValidator() {
+        return new DelegatingOAuth2TokenValidator<>(List.of(
+                // checks token expiration with default clockSkew 60s
+                new JwtTimestampValidator(),
+                // validates user details loaded into the token
+                new JwtUserDetailsValidator()
+        ));
+    }
+
+    private Converter<Map<String, Object>, Map<String, Object>> claimSetConverter() {
+        return MappedJwtClaimSetConverter.withDefaults(Map.of())
+                                         .andThen(
+                                                 new JwtSubjectClaimToUserDetailsConverter(
+                                                         new UsernameToUserDetailsConverter(userDetailsService),
+                                                         new PatToUserDetailsConverter()
+                                                 )
+                                         );
+    }
+
     @Bean
-    public TermitJwtDecoder jwtDecoder() {
-        return new TermitJwtDecoder(jwtUtils, userDetailsService);
+    public JwtDecoder jwtDecoder() {
+        final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey)
+                                                         .macAlgorithm(MacAlgorithm.from(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM))
+                                                         .jwtProcessorCustomizer(SecurityConfig::setJWSTypeVerifier)
+                                                         .build();
+        decoder.setJwtValidator(jwtValidator());
+        decoder.setClaimSetConverter(claimSetConverter());
+        return decoder;
     }
 }
