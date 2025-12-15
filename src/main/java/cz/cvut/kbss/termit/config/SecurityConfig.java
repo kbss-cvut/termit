@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.PatToUserDetailsConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.security.UsernameToUserDetailsConverter;
+import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -97,6 +98,7 @@ public class SecurityConfig {
     private final JwtUtils jwtUtils;
 
     private final TermItUserDetailsService userDetailsService;
+    private final PersonalAccessTokenService personalAccessTokenService;
 
     private final ObjectMapper objectMapper;
 
@@ -109,15 +111,16 @@ public class SecurityConfig {
                           AuthenticationSuccess authenticationSuccessHandler,
                           AuthenticationFailureHandler authenticationFailureHandler,
                           JwtUtils jwtUtils, TermItUserDetailsService userDetailsService,
+                          PersonalAccessTokenService personalAccessTokenService,
                           ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
         this.authenticationProvider = authenticationProvider;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
+        this.personalAccessTokenService = personalAccessTokenService;
         this.objectMapper = objectMapper;
         this.config = config;
-        // TODO algorithm as security constant
         this.jwtSecretKey = Utils.isBlank(config.getJwt()
                                                 .getSecretKey()) ?
                 Keys.secretKeyFor(SignatureAlgorithm.forName(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM)) :
@@ -217,7 +220,7 @@ public class SecurityConfig {
                                          .andThen(
                                                  new JwtSubjectClaimToUserDetailsConverter(
                                                          new UsernameToUserDetailsConverter(userDetailsService),
-                                                         new PatToUserDetailsConverter()
+                                                         new PatToUserDetailsConverter(personalAccessTokenService)
                                                  )
                                          );
     }

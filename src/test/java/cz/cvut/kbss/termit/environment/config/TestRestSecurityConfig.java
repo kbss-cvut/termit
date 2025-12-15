@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.security.AuthenticationFailure;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -78,5 +79,10 @@ public class TestRestSecurityConfig {
     @Bean
     public ThreadPoolTaskScheduler longRunningTaskScheduler() {
         return mock(ThreadPoolTaskScheduler.class);
+    }
+
+    @Bean
+    public PersonalAccessTokenService personalAccessTokenService() {
+        return mock(PersonalAccessTokenService.class);
     }
 }

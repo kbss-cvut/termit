@@ -25,7 +25,7 @@ public class JwtSubjectClaimToUserDetailsConverter implements Converter<Map<Stri
     @Override
     public Map<String, Object> convert(Map<String, Object> source) {
         final Object claim = source.get(SecurityConstants.JWT_TYP_CLAIM);
-        Converter<Object, UserDetails> converter = usernameToUserDetailsConverter;
+        Converter<Object, ? extends UserDetails> converter = usernameToUserDetailsConverter;
         if (Constants.MediaType.JWT_ACCESS_TOKEN.equals(claim)) {
             converter = patToUserDetailsConverter;
         }
@@ -33,7 +33,7 @@ public class JwtSubjectClaimToUserDetailsConverter implements Converter<Map<Stri
         return convertWith(converter, source);
     }
 
-    private Map<String, Object> convertWith(Converter<Object, UserDetails> converter, Map<String, Object> source) {
+    private Map<String, Object> convertWith(Converter<Object, ? extends UserDetails> converter, Map<String, Object> source) {
         final Object claimValue = source.get(Claims.SUBJECT);
         if (claimValue != null) {
             final Map<String, Object> mappedClaims = new HashMap<>(source);

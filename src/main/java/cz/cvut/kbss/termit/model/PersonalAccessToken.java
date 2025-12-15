@@ -1,0 +1,69 @@
+package cz.cvut.kbss.termit.model;
+
+import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+
+import java.io.Serializable;
+import java.net.URI;
+import java.time.Instant;
+import java.time.LocalDate;
+
+@OWLClass(iri = Vocabulary.s_c_osobni_pristupovy_token)
+public class PersonalAccessToken implements HasIdentifier, Serializable {
+    @Id
+    private URI uri;
+
+    @NotNull
+    @ParticipationConstraints(nonEmpty = true)
+    @OWLDataProperty(iri = Vocabulary.s_p_sioc_has_owner)
+    private UserAccount owner;
+
+    @Future
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
+    private LocalDate expirationDate;
+
+    @Past
+    @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
+    private Instant lastUsed;
+
+    @Override
+    public URI getUri() {
+        return uri;
+    }
+
+    @Override
+    public void setUri(URI uri) {
+        this.uri = uri;
+    }
+
+    public UserAccount getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UserAccount owner) {
+        this.owner = owner;
+    }
+
+    public LocalDate getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(LocalDate expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public Instant getLastUsed() {
+        return lastUsed;
+    }
+
+    public void setLastUsed(Instant lastUsed) {
+        this.lastUsed = lastUsed;
+    }
+}
