@@ -37,6 +37,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import java.io.IOException;
@@ -64,10 +65,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private final ObjectMapper objectMapper;
 
-    private final TermitJwtDecoder jwtDecoder;
+    private final JwtDecoder jwtDecoder;
 
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils, ObjectMapper objectMapper,
-                                  TermitJwtDecoder jwtDecoder) {
+                                  JwtDecoder jwtDecoder) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
         this.objectMapper = objectMapper;

@@ -244,6 +244,12 @@ public class Constants {
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";
+        /**
+         * JWT for access token.
+         * The JWT standard suggests to omit the {@code application/} prefix.
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC9068</a>
+         */
+        public static final String JWT_ACCESS_TOKEN = "AT+JWT";
 
         private MediaType() {
             throw new AssertionError();
