@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.model;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -14,6 +15,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_osobni_pristupovy_token)
 public class PersonalAccessToken implements HasIdentifier, Serializable {
@@ -22,7 +24,7 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_sioc_has_owner)
+    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner)
     private UserAccount owner;
 
     @Future
@@ -65,5 +67,16 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     public void setLastUsed(Instant lastUsed) {
         this.lastUsed = lastUsed;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof PersonalAccessToken that)) return false;
+        return Objects.equals(uri, that.uri);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uri);
     }
 }
