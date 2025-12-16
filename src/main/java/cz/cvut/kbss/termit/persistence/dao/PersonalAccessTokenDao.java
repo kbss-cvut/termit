@@ -20,7 +20,7 @@ public class PersonalAccessTokenDao extends BaseDao<PersonalAccessToken> {
         try {
             return em.createQuery("SELECT DISTINCT token FROM " + type.getSimpleName() + " token WHERE token.owner = :userAccount", type)
                     .setParameter("userAccount", userAccount)
-                     .getResultList();
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
