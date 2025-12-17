@@ -77,8 +77,7 @@ public class OAuth2SecurityConfig {
         final PathPatternRequestMatcher.Builder matcher = PathPatternRequestMatcher.withDefaults();
         http.oauth2ResourceServer(
                     (auth) -> auth.jwt((jwt) -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
-            .authorizeHttpRequests((auth) -> auth.requestMatchers(matcher.matcher("/rest/query")).permitAll()
-                                                 .requestMatchers(matcher.matcher("/**")).permitAll())
+            .authorizeHttpRequests((auth) -> auth.requestMatchers(matcher.matcher("/**")).permitAll())
             .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
