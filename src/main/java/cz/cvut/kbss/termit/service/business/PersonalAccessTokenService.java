@@ -35,16 +35,16 @@ public class PersonalAccessTokenService {
     }
 
     /**
-     * Finds the user account associated with the given token.
+     * Finds the user account associated with the given valid token.
      * @param tokenUri The identifier of the token
-     * @return Associated user account or null if the token was not found
+     * @return Associated user account
      * @throws TokenExpiredException when the token is expired
      */
-    public UserAccount findUserAccountByTokenId(URI tokenUri) {
+    public UserAccount findUserAccountByValidTokenId(URI tokenUri) {
         return repositoryService.find(tokenUri)
                                 .map(this::ensureTokenValid)
                                 .map(PersonalAccessToken::getOwner)
-                                .orElse(null);
+                                .orElseThrow();
     }
 
     /**
@@ -83,7 +83,7 @@ public class PersonalAccessTokenService {
         Objects.requireNonNull(token);
         Objects.requireNonNull(token.getUri());
         Objects.requireNonNull(token.getOwner());
-        if (LocalDate.now().isAfter(token.getExpirationDate())) {
+        if (token.getExpirationDate() != null && LocalDate.now().isAfter(token.getExpirationDate())) {
             throw new TokenExpiredException("Personal access token expired");
         }
         return token;

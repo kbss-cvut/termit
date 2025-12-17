@@ -30,7 +30,7 @@ public class PatToUserDetailsConverter implements Converter<Object, TermItUserDe
             } else if (source instanceof String uri) {
                 patIdentifier = URI.create(uri);
             }
-            UserAccount userAccount = accessTokenService.findUserAccountByTokenId(patIdentifier);
+            UserAccount userAccount = accessTokenService.findUserAccountByValidTokenId(patIdentifier);
             Objects.requireNonNull(userAccount, "No user account found for the specified PAT");
             return new TermItUserDetails(userAccount);
         } catch (Exception e) {

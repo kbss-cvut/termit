@@ -21,20 +21,13 @@ public class PersonalAccessTokenDaoTest extends BaseDaoTestRunner {
     @Autowired
     private PersonalAccessTokenDao sut;
 
-    private PersonalAccessToken createToken(UserAccount user) {
-        PersonalAccessToken token = new PersonalAccessToken();
-        token.setUri(Generator.generateUri());
-        token.setOwner(user);
-        transactional(() -> em.persist(token));
-        return token;
-    }
-
     private List<PersonalAccessToken> createTokens(UserAccount user) {
         final int toCreate = 5;
         List<PersonalAccessToken> tokens = new ArrayList<>(toCreate);
         for (int i = 0; i < toCreate; i++) {
-            tokens.add(createToken(user));
+            tokens.add(Generator.generatePersonalAccessToken(user));
         }
+        transactional(() -> sut.persist(tokens));
         return tokens;
     }
 
