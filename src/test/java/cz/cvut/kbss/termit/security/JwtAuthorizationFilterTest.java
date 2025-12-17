@@ -101,8 +101,6 @@ class JwtAuthorizationFilterTest {
 
     private JwtAuthorizationFilter sut;
 
-    private TermitJwtDecoder termitJwtDecoder;
-
     private final Instant tokenIssued = JwtUtils.issueTimestamp();
 
     @BeforeEach
@@ -111,7 +109,7 @@ class JwtAuthorizationFilterTest {
         this.objectMapper = Environment.getObjectMapper();
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
-        this.termitJwtDecoder = new TermitJwtDecoder(jwtUtilsSpy, detailsServiceMock);
+        final TermitJwtDecoder termitJwtDecoder = new TermitJwtDecoder(jwtUtilsSpy, detailsServiceMock);
         this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, objectMapper, termitJwtDecoder);
     }
 
