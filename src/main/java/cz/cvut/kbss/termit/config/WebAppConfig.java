@@ -28,6 +28,7 @@ import cz.cvut.kbss.jsonld.ConfigParam;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
+import cz.cvut.kbss.termit.metric.UserRequestCounterInterceptor;
 import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.security.model.LoginStatus;
@@ -46,7 +47,9 @@ import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import jakarta.annotation.Nonnull;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -59,6 +62,7 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -71,6 +75,19 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Value("${application.version:development}")
     private String version;
+
+    private final UserRequestCounterInterceptor requestCounterInterceptor;
+
+    public WebAppConfig(@Autowired(required = false) UserRequestCounterInterceptor requestCounterInterceptor) {
+        this.requestCounterInterceptor = requestCounterInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(@Nonnull InterceptorRegistry registry) {
+        if (requestCounterInterceptor != null) {
+            registry.addInterceptor(requestCounterInterceptor);
+        }
+    }
 
     /**
      * Creates an {@link ObjectMapper} for processing regular JSON.

@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -55,6 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Execution(ExecutionMode.SAME_THREAD)
 @WebMvcTest(UserController.class)
 @Import({TestRestSecurityConfig.class})
+@ActiveProfiles("test")
 class UserControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String BASE_URL = REST_MAPPING_PATH + "/users";
