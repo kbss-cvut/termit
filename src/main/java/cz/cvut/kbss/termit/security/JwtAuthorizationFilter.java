@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.rest.LanguageController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -128,7 +129,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
         // Public API endpoints are not secured, so there is no need to check for token.
         // This resolves issues with public API requests containing expired/invalid JWT being rejected
         return PUBLIC_ENDPOINTS.stream().anyMatch(pattern -> request.getRequestURI().contains(pattern));
