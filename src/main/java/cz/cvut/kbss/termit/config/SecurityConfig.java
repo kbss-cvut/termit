@@ -98,8 +98,7 @@ public class SecurityConfig {
         LOG.debug("Using internal security mechanisms.");
         final AuthenticationManager authManager = buildAuthenticationManager(http);
         final PathPatternRequestMatcher.Builder matcher = PathPatternRequestMatcher.withDefaults();
-        http.authorizeHttpRequests((auth) -> auth.requestMatchers(matcher.matcher("/rest/query")).permitAll()
-                                                 .requestMatchers(matcher.matcher("/**")).permitAll())
+        http.authorizeHttpRequests((auth) -> auth.requestMatchers(matcher.matcher("/**")).permitAll())
             .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .exceptionHandling(ehc -> ehc.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
