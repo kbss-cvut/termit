@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
+import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -575,5 +576,12 @@ public class Generator {
                file.setLastBackup(lastBackup);
                return file;
            }).toList();
+    }
+
+    public static PersonalAccessToken generatePersonalAccessToken(UserAccount owner) {
+        PersonalAccessToken token = new PersonalAccessToken();
+        token.setUri(Generator.generateUri());
+        token.setOwner(owner);
+        return token;
     }
 }
