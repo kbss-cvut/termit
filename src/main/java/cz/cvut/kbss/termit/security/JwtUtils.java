@@ -239,7 +239,7 @@ public class JwtUtils {
     public String generatePAT(PersonalAccessToken newToken) {
         final Instant issued = issueTimestamp();
         final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
-        Date expiration = Date.from(Instant.MAX);
+        Date expiration = new Date(Long.MAX_VALUE);
         if (newToken.getExpirationDate() != null) {
             expiration = Date.from(Instant.from(newToken.getExpirationDate()));
         }

@@ -27,7 +27,7 @@ public class JwtSubjectClaimToUserDetailsConverter implements Converter<Map<Stri
     public Map<String, Object> convert(Map<String, Object> source) {
         final Object claim = source.get(JoseHeaderNames.TYP);
         Converter<Object, ? extends UserDetails> converter = usernameToUserDetailsConverter;
-        if (Constants.MediaType.JWT_ACCESS_TOKEN.equals(claim)) {
+        if (claim instanceof String type && Constants.MediaType.JWT_ACCESS_TOKEN.equalsIgnoreCase(type)) {
             converter = patToUserDetailsConverter;
         }
 
