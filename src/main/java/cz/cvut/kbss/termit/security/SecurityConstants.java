@@ -53,12 +53,6 @@ public class SecurityConstants {
     public static final String JWT_ROLE_CLAIM = "role";
 
     /**
-     * JWT claim used to store the type of the JWT token.
-     * The claim in the body is a copy of the {@code typ} header.
-     */
-    public static final String JWT_TYP_CLAIM = "typ";
-
-    /**
      * Default algorithm used for JWT private key
      */
     public static final String JWT_DEFAULT_KEY_ALGORITHM = "HS256";

@@ -35,7 +35,7 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
     }
 
     @Override
-    public PersonalAccessTokenDto mapToDto(PersonalAccessToken entity) {
+    protected PersonalAccessTokenDto mapToDto(PersonalAccessToken entity) {
         return dtoMapper.personalAccessTokenToDto(entity);
     }
 
