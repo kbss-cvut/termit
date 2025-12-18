@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.service.repository.PersonalAccessTokenRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.stereotype.Service;
@@ -18,11 +19,13 @@ import java.util.Objects;
 public class PersonalAccessTokenService {
     private final PersonalAccessTokenRepositoryService repositoryService;
     private final SecurityUtils securityUtils;
+    private final JwtUtils jwtUtils;
 
     public PersonalAccessTokenService(PersonalAccessTokenRepositoryService repositoryService,
-                                      SecurityUtils securityUtils) {
+                                      SecurityUtils securityUtils, JwtUtils jwtUtils) {
         this.repositoryService = repositoryService;
         this.securityUtils = securityUtils;
+        this.jwtUtils = jwtUtils;
     }
 
     /**
@@ -52,14 +55,14 @@ public class PersonalAccessTokenService {
      * @param expirationDate Expiration date or null for unlimited lifetime.
      * @return The created personal access token
      */
-    public PersonalAccessTokenDto create(LocalDate expirationDate) {
+    public String create(LocalDate expirationDate) {
         final UserAccount currentUser = securityUtils.getCurrentUser();
         final PersonalAccessToken newToken = new PersonalAccessToken();
         newToken.setExpirationDate(expirationDate);
         newToken.setOwner(currentUser);
 
         repositoryService.persist(newToken);
-        return repositoryService.mapToDto(newToken);
+        return jwtUtils.generatePAT(newToken);
     }
 
     /**

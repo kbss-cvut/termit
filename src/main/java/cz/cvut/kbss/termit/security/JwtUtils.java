@@ -21,9 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.IncompleteJwtException;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
+import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -42,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -226,5 +229,27 @@ public class JwtUtils {
         } catch (ExpiredJwtException e) {
             return e.getClaims().getIssuedAt().toInstant();
         }
+    }
+
+    /**
+     * Generates Access Token JWT.
+     * @param newToken The token to generate
+     * @return The token value
+     */
+    public String generatePAT(PersonalAccessToken newToken) {
+        final Instant issued = issueTimestamp();
+        final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
+        Date expiration = Date.from(Instant.MAX);
+        if (newToken.getExpirationDate() != null) {
+            expiration = Date.from(Instant.from(newToken.getExpirationDate()));
+        }
+        return Jwts.builder().setSubject(newToken.getUri().toString())
+                   .setIssuedAt(Date.from(issued))
+                   .setExpiration(expiration)
+                   .setHeaderParam(JoseHeaderNames.TYP,  type)
+                   .claim(JoseHeaderNames.TYP, type)
+                   .signWith(key, SIGNATURE_ALGORITHM)
+                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                   .compact();
     }
 }
