@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,10 +50,10 @@ public class PersonalAccessTokenController extends BaseController{
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Creates a new token for the current user.")
-    @ApiResponse(responseCode = "200", description = "Token created.")
+    @ApiResponse(responseCode = "200", description = "The created token value.")
     @ApiResponse(responseCode = "400", description = "Invalid token parameters supplied.")
-    @GetMapping(value = PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public PersonalAccessTokenDto create(
+    @PostMapping(value = PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public String create(
             @Parameter(description = "Expiration date for the new token.")
             Optional<LocalDate> token) {
         return service.create(token.orElse(null));
