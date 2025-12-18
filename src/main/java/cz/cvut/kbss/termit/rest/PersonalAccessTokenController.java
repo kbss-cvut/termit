@@ -28,7 +28,7 @@ import java.util.Optional;
 
 @Tag(name = "Personal Access Tokens", description = "Personal Access Tokens management API")
 @RestController
-@RequestMapping(UserController.PATH)
+@RequestMapping(PersonalAccessTokenController.PATH)
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class PersonalAccessTokenController extends BaseController{
     public static final String PATH = UserController.PATH + UserController.CURRENT_USER_PATH + "/tokens";
@@ -43,7 +43,7 @@ public class PersonalAccessTokenController extends BaseController{
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Lists all personal tokens for the current user.")
     @ApiResponse(responseCode = "200", description = "List of personal access tokens.")
-    @GetMapping(value = PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<PersonalAccessTokenDto> listPersonalAccessTokens() {
         return service.findAllForCurrentUser();
     }
@@ -52,7 +52,7 @@ public class PersonalAccessTokenController extends BaseController{
                description = "Creates a new token for the current user.")
     @ApiResponse(responseCode = "200", description = "The created token value.")
     @ApiResponse(responseCode = "400", description = "Invalid token parameters supplied.")
-    @PostMapping(value = PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public String create(
             @Parameter(description = "Expiration date for the new token.")
             Optional<LocalDate> token) {
@@ -63,7 +63,7 @@ public class PersonalAccessTokenController extends BaseController{
                description = "Deletes token with the specified identifier from the current user.")
     @ApiResponse(responseCode = "200", description = "Token deleted.")
     @ApiResponse(responseCode = "404", description = "Token not found.")
-    @DeleteMapping(PATH + "/{localName}")
+    @DeleteMapping("/{localName}")
     public void delete(
             @Parameter(description = "Local name of the token to delete.")
             @PathVariable String localName) {

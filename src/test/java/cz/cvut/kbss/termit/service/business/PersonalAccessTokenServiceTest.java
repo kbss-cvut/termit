@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.service.repository.PersonalAccessTokenRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,11 +37,14 @@ public class PersonalAccessTokenServiceTest {
     @Mock
     private SecurityUtils securityUtils;
 
+    @Mock
+    private JwtUtils jwtUtils;
+
     private UserAccount currentUser;
 
     @BeforeEach
     void setUp() {
-        sut = new PersonalAccessTokenService(repositoryService, securityUtils);
+        sut = new PersonalAccessTokenService(repositoryService, securityUtils, jwtUtils);
         currentUser = Generator.generateUserAccount();
     }
 
