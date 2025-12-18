@@ -88,7 +88,6 @@ public class JwtUtils {
     public String generateToken(UserAccount user, Collection<? extends GrantedAuthority> authorities) {
         final Instant issued = issueTimestamp();
         return Jwts.builder().setSubject(user.getUsername())
-                   .setId(user.getUri().toString())
                    .setIssuedAt(Date.from(issued))
                    .setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
