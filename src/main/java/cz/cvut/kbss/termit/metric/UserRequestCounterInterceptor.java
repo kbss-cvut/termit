@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.metric;
 
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Constants;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.Nonnull;
@@ -30,6 +31,9 @@ public class UserRequestCounterInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response,
                              @Nonnull Object handler) {
+        if (!request.getRequestURI().contains(Constants.REST_MAPPING_PATH)) {
+            return true;
+        }
         if (securityUtils.isAuthenticated()) {
             final UserAccount account = securityUtils.getCurrentUser();
             Counter.builder("app.user.requests").description("HTTP requests per user")

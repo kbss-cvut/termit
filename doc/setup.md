@@ -130,3 +130,11 @@ TermIt will automatically configure its security accordingly (it is using Spring
 `ConditionalOnProperty`](https://www.baeldung.com/spring-conditionalonproperty)).
 
 **Note that termit-ui needs to be configured for matching authentication mode.**
+
+### Monitoring
+
+TermIt can be monitored using [Prometheus](https://prometheus.io/). The monitoring endpoint is `/actuator/prometheus`.
+
+The actuator username (defaults to `actuator`) and password have to be configured in `application.yml` (or passed in
+using environment variables). Basic authentication should be used to access it.
+The `/actuator/health` endpoint is accessible without authentication.

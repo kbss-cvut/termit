@@ -4,7 +4,7 @@ management:
     endpoints:
         web:
             exposure:
-                include: "health", "metrics"
+                include: "health, info, metrics, prometheus"
     info:
         java:
             enabled: true
