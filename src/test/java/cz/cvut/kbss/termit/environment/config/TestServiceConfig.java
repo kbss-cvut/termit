@@ -17,10 +17,12 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.selector.Selector;
+import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
 import cz.cvut.kbss.termit.service.init.lucene.IndexedLanguagesProvider;
@@ -29,6 +31,7 @@ import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
@@ -52,6 +55,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @TestConfiguration
+@Import(JwtUtils.class)
 @ComponentScan(basePackages = "cz.cvut.kbss.termit.service")
 public class TestServiceConfig {
 
@@ -113,5 +117,10 @@ public class TestServiceConfig {
     @Bean
     public IndexedLanguagesProvider indexedLanguagesProvider() {
         return Set::of;
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return Environment.getObjectMapper();
     }
 }
