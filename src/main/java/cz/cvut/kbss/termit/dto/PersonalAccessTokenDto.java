@@ -17,6 +17,9 @@ public class PersonalAccessTokenDto implements HasIdentifier {
     @Id
     private URI uri;
 
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    private Instant created;
+
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
     private LocalDate expirationDate;
 
@@ -47,5 +50,13 @@ public class PersonalAccessTokenDto implements HasIdentifier {
 
     public void setLastUsed(Instant lastUsed) {
         this.lastUsed = lastUsed;
+    }
+
+    public Instant getCreated() {
+        return created;
+    }
+
+    public void setCreated(Instant created) {
+        this.created = created;
     }
 }
