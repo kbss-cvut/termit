@@ -2,11 +2,14 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken_;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -52,11 +56,12 @@ public class PersonalAccessTokenController extends BaseController{
                description = "Creates a new token for the current user.")
     @ApiResponse(responseCode = "200", description = "The created token value.")
     @ApiResponse(responseCode = "400", description = "Invalid token parameters supplied.")
-    @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(produces = {"application/"+Constants.MediaType.JWT_ACCESS_TOKEN})
     public String create(
             @Parameter(description = "Expiration date for the new token.")
-            Optional<LocalDate> token) {
-        return service.create(token.orElse(null));
+                    @RequestParam("expiration")
+            Optional<LocalDate> expiration) {
+        return service.create(expiration.orElse(null));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -67,6 +72,9 @@ public class PersonalAccessTokenController extends BaseController{
     public void delete(
             @Parameter(description = "Local name of the token to delete.")
             @PathVariable String localName) {
+        if (Utils.isBlank(localName)) {
+            throw new InvalidParameterException("Invalid local name");
+        }
         final URI tokenUri = resolveIdentifier(PersonalAccessToken_.entityClassIRI.toString(), localName);
         service.delete(tokenUri);
     }

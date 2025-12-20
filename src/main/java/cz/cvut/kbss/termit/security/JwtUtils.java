@@ -51,6 +51,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -241,7 +242,7 @@ public class JwtUtils {
         final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
         Date expiration = new Date(Long.MAX_VALUE);
         if (newToken.getExpirationDate() != null) {
-            expiration = Date.from(Instant.from(newToken.getExpirationDate()));
+            expiration = Date.from(newToken.getExpirationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
         }
         return Jwts.builder().setSubject(newToken.getUri().toString())
                    .setIssuedAt(Date.from(issued))
