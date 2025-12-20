@@ -34,9 +34,6 @@ import cz.cvut.kbss.termit.security.UsernameToUserDetailsConverter;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Utils;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,8 +70,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -104,8 +99,6 @@ public class SecurityConfig {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
-    private final SecretKey jwtSecretKey;
-
     @Autowired
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           AuthenticationSuccess authenticationSuccessHandler,
@@ -121,10 +114,6 @@ public class SecurityConfig {
         this.personalAccessTokenService = personalAccessTokenService;
         this.objectMapper = objectMapper;
         this.config = config;
-        this.jwtSecretKey = Utils.isBlank(config.getJwt()
-                                                .getSecretKey()) ?
-                Keys.secretKeyFor(SignatureAlgorithm.forName(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM)) :
-                Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     @Bean
@@ -227,7 +216,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey)
+        final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtUtils.getJwtSigningKey())
                                                          .macAlgorithm(MacAlgorithm.from(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM))
                                                          .jwtProcessorCustomizer(SecurityConfig::setJWSTypeVerifier)
                                                          .build();

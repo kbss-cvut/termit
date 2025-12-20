@@ -47,9 +47,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -64,13 +64,14 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+    static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+            SignatureAlgorithm.forName(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM);
 
     private final ObjectMapper objectMapper;
 
     private final JwtParser jwtParser;
 
-    private final Key key;
+    private final SecretKey key;
 
     @Autowired
     public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
@@ -81,6 +82,10 @@ public class JwtUtils {
         this.jwtParser = Jwts.parserBuilder().setSigningKey(key)
                              .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
                              .build();
+    }
+
+    public SecretKey getJwtSigningKey() {
+        return key;
     }
 
     /**
