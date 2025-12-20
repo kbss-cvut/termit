@@ -14,10 +14,15 @@ import cz.cvut.kbss.termit.rest.UserController;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.jackson.io.JacksonSerializer;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
@@ -25,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -32,11 +38,21 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
+import static cz.cvut.kbss.termit.security.JwtUtils.SIGNATURE_ALGORITHM;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,6 +90,9 @@ public class RestAuthenticationStackTest {
     @Autowired
     private JwtUtils validJwtUtils;
 
+    @Autowired
+    private Configuration configuration;
+
     @MockitoBean
     private UserAccountDao userAccountDao;
 
@@ -88,9 +107,7 @@ public class RestAuthenticationStackTest {
     void setUp() {
         plainPassword = "secretPassword";
 
-        staticUser = new UserAccount();
-        staticUser.setFirstName("testFirstName");
-        staticUser.setLastName("testLastName");
+        staticUser = Generator.generateUserAccount();
         staticUser.setUsername("testUsername");
         staticUser.setPassword(passwordEncoder.encode(plainPassword));
         staticUser.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/test-static-user"));
@@ -99,9 +116,13 @@ public class RestAuthenticationStackTest {
         patToken.setUri(Generator.generateUri());
         patToken.setOwner(staticUser);
 
-        when(userAccountDao.findByUsername(eq(staticUser.getUsername()))).thenReturn(Optional.of(staticUser));
-        when(userAccountDao.find(eq(staticUser.getUri()))).thenReturn(Optional.of(staticUser));
-        when(userAccountDao.update(any())).then(invocation -> staticUser);
+        setUserToContext(staticUser);
+    }
+
+    private void setUserToContext(UserAccount account) {
+        when(userAccountDao.findByUsername(eq(account.getUsername()))).thenReturn(Optional.of(account));
+        when(userAccountDao.find(eq(account.getUri()))).thenReturn(Optional.of(account));
+        when(userAccountDao.update(any())).then(invocation -> account);
     }
 
     private JwtUtils getInvalidKeyJwtUtils() {
@@ -119,13 +140,50 @@ public class RestAuthenticationStackTest {
         return SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generateToken(staticUser, List.of());
     }
 
-    private String generateValidPAT() {
+    private String generateValidPat() {
         return SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generatePAT(patToken);
     }
 
-    private String generatePATWithInvalidSignature() {
+    private String generatePatWithInvalidSignature() {
         JwtUtils invalidKeyJwtUtils = getInvalidKeyJwtUtils();
         return SecurityConstants.JWT_TOKEN_PREFIX + invalidKeyJwtUtils.generatePAT(patToken);
+    }
+
+    private SecretKey getValidSecretKey() {
+        return Keys.hmacShaKeyFor(configuration.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * @see JwtUtils#generateToken(UserAccount, Collection)
+     * @return JWT token for {@link #staticUser} with expiration in the past
+     */
+    private String generateExpiredJwt() {
+        final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
+        final String token = Jwts.builder().setSubject(staticUser.getUsername())
+                                 .setIssuedAt(Date.from(issued))
+                                 .setExpiration(Date.from(issued.plus(1, ChronoUnit.DAYS)))
+                                 .signWith(getValidSecretKey(), SIGNATURE_ALGORITHM)
+                                 .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                                 .compact();
+        return SecurityConstants.JWT_TOKEN_PREFIX + token;
+    }
+
+    /**
+     * @see JwtUtils#generatePAT(PersonalAccessToken)
+     * @return PAT JWT token for {@link #staticUser} from {@link #patToken} with expiration in the past.
+     */
+    private String generateExpiredPat() {
+        final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
+        final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
+        final Date expiration = Date.from(issued.plus(1, ChronoUnit.DAYS));
+        return Jwts.builder().setSubject(patToken.getUri().toString())
+                   .setIssuedAt(Date.from(issued))
+                   .setExpiration(expiration)
+                   .setHeaderParam(JoseHeaderNames.TYP,  type)
+                   .claim(JoseHeaderNames.TYP, type)
+                   .signWith(getValidSecretKey(), SIGNATURE_ALGORITHM)
+                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                   .compact();
     }
 
     private ResultActions makeRequestWithJwt(String authToken) throws Exception {
@@ -146,7 +204,7 @@ public class RestAuthenticationStackTest {
         return authToken;
     }
 
-    private String requestPAT(String userJWT) throws Exception {
+    private String requestPat(String userJWT) throws Exception {
         MvcResult result = mockMvc.perform(post(Constants.REST_MAPPING_PATH + PersonalAccessTokenController.PATH)
                                           .header(HttpHeaders.AUTHORIZATION, userJWT))
                 .andExpect(status().isOk())
@@ -156,6 +214,9 @@ public class RestAuthenticationStackTest {
         return SecurityConstants.JWT_TOKEN_PREFIX + patToken;
     }
 
+    /**
+     * Login endpoint provides valid user JWT on successful authentication.
+     */
     @Test
     void validLoginReturnsValidUserJwtInAuthorizationHeader() throws Exception {
         String authToken = performLogin();
@@ -177,8 +238,12 @@ public class RestAuthenticationStackTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * Validates that create PAT rest endpoint
+     * generates new valid token which works for authentication of the owner.
+     */
     @Test
-    void createPATCreatesValidPAT() throws Exception {
+    void createPatGeneratesValidPat() throws Exception {
         AtomicReference<PersonalAccessToken> createdToken = new AtomicReference<>();
         // store created token on persist
         doAnswer(i -> {
@@ -196,9 +261,9 @@ public class RestAuthenticationStackTest {
         }).when(patDao).find(any());
 
         final String userJWT = performLogin();
-        final String PAT = requestPAT(userJWT);
+        final String pat = requestPat(userJWT);
 
-        MvcResult result = makeRequestWithJwt(PAT)
+        MvcResult result = makeRequestWithJwt(pat)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -208,16 +273,69 @@ public class RestAuthenticationStackTest {
     }
 
     @Test
-    void PATWithInvalidSignatureIsRejected() throws Exception {
-        makeRequestWithJwt(generatePATWithInvalidSignature())
+    void patWithInvalidSignatureIsRejected() throws Exception {
+        makeRequestWithJwt(generatePatWithInvalidSignature())
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void PATWithValidSignatureIsAccepted() throws Exception {
-        String validPAT = generateValidPAT();
+    void patWithValidSignatureIsAccepted() throws Exception {
+        String validPat = generateValidPat();
         when(patDao.find(patToken.getUri())).thenReturn(Optional.of(patToken));
-        makeRequestWithJwt(validPAT)
+        makeRequestWithJwt(validPat)
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void expiredJwtIsRejected() throws Exception {
+        makeRequestWithJwt(generateExpiredJwt())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void expiredPatJwtIsRejected() throws Exception {
+        makeRequestWithJwt(generateExpiredPat())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void validPatJwtForExpiredPatIsRejected() throws Exception {
+        final String patJwt = generateValidPat();
+        patToken.setExpirationDate(LocalDate.now().minusDays(2));
+        makeRequestWithJwt(patJwt)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void validPatJwtForNonExistingPatIsRejected() throws Exception {
+        PersonalAccessToken token = new PersonalAccessToken();
+        token.setUri(Generator.generateUri());
+        token.setOwner(staticUser);
+        // token not known to the application
+        final String patJwt = SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generatePAT(token);
+        makeRequestWithJwt(patJwt)
+                .andExpect(status().isUnauthorized());
+    }
+
+    static UserAccount customizeAccount(Consumer<UserAccount> customizer) {
+        UserAccount account = Generator.generateUserAccount();
+        customizer.accept(account);
+        return account;
+    }
+
+    static Stream<UserAccount> invalidUserAccountSource() {
+        return Stream.of(
+                customizeAccount(UserAccount::lock),
+                customizeAccount(UserAccount::disable)
+        );
+    }
+    
+    @ParameterizedTest
+    @MethodSource("invalidUserAccountSource")
+    void validJwtAndPatAreRejectedForInvalidUserAccount(UserAccount userAccount) throws Exception {
+        setUserToContext(userAccount);
+        final String token = SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generateToken(userAccount, List.of());
+        makeRequestWithJwt(token)
+                .andExpect(status().isUnauthorized());
     }
 }
