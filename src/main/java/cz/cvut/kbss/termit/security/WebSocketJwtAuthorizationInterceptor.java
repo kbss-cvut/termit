@@ -17,6 +17,9 @@
  */
 package cz.cvut.kbss.termit.security;
 
+import cz.cvut.kbss.termit.security.model.AuthenticationToken;
+import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
@@ -27,9 +30,10 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
@@ -86,11 +90,13 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
 
         try {
             Authentication authenticationResult = jwtAuthenticationProvider.authenticate(authenticationRequest);
-            if (authenticationResult != null && authenticationResult.isAuthenticated()) {
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                context.setAuthentication(authenticationResult);
-                SecurityContextHolder.setContext(context);
-                stompHeaderAccessor.setUser(authenticationResult);
+            if (authenticationResult != null &&
+                    authenticationResult.isAuthenticated() &&
+                    authenticationResult.getPrincipal() instanceof Jwt jwt &&
+                    jwt.getClaim(JwtClaimNames.SUB) instanceof TermItUserDetails userDetails
+            ) {
+                AuthenticationToken authToken = SecurityUtils.setCurrentUser(userDetails);
+                stompHeaderAccessor.setUser(authToken);
                 return; // all ok
             }
             throw new OAuth2AuthenticationException("Authentication failed");
