@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.model;
 
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
@@ -24,7 +25,8 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner)
+    // with lazy the account is just not loaded for some reason
+    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner, fetch = FetchType.EAGER)
     private UserAccount owner;
 
     @NotNull

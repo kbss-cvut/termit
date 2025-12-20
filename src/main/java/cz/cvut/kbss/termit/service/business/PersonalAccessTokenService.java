@@ -73,9 +73,9 @@ public class PersonalAccessTokenService {
      * @throws AuthorizationException when attempted to delete the token from a different user
      */
     public void delete(URI tokenUri) {
-        Objects.requireNonNull(tokenUri);
+        Objects.requireNonNull(tokenUri, "Token URI must not be null");
         final PersonalAccessToken token = repositoryService.findRequired(tokenUri);
-        Objects.requireNonNull(token.getOwner());
+        Objects.requireNonNull(token.getOwner(), "Token owner must not be null");
         final UserAccount currentUser = securityUtils.getCurrentUser();
         if (currentUser.equals(token.getOwner())) {
             repositoryService.remove(token);
@@ -85,9 +85,9 @@ public class PersonalAccessTokenService {
     }
 
     public PersonalAccessToken ensureTokenValid(PersonalAccessToken token) {
-        Objects.requireNonNull(token);
-        Objects.requireNonNull(token.getUri());
-        Objects.requireNonNull(token.getOwner());
+        Objects.requireNonNull(token, "Token must not be null");
+        Objects.requireNonNull(token.getUri(), "Token URI must not be null");
+        Objects.requireNonNull(token.getOwner(), "Token owner must not be null");
         if (token.getExpirationDate() != null && LocalDate.now().isAfter(token.getExpirationDate())) {
             throw new TokenExpiredException("Personal access token expired");
         }
