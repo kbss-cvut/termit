@@ -40,7 +40,7 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
     }
 
     private URI generateId() {
-        final URI newId = PersonalAccessToken_.entityClassIRI.toURI().resolve(UUID.randomUUID().toString());
+        final URI newId = URI.create(PersonalAccessToken_.entityClassIRI.toString() + "/" + UUID.randomUUID());
         if (exists(newId)) {
             throw ResourceExistsException.create(PersonalAccessToken.class.getSimpleName(), newId);
         }
@@ -52,7 +52,7 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
         instance.setUri(generateId());
         super.prePersist(instance);
     }
-
+// TODO: implement updating last used timestamp
     @Transactional(readOnly = true)
     public List<PersonalAccessTokenDto> findAllByUserAccount(UserAccount userAccount) {
         return dao.findAllByUserAccount(userAccount).stream().map(this::mapToDto).toList();
