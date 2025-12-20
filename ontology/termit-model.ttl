@@ -364,6 +364,6 @@ termit-pojem:má-datum-a-čas-poslední-zálohy
 termit-pojem:osobní-přístupový-token
         a                   <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
 
-termit-pojem:ma-datum-expirace
+termit-pojem:má-datum-expirace
         a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
         rdfs:range          xsd:date .

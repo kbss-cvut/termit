@@ -27,6 +27,11 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner)
     private UserAccount owner;
 
+    @NotNull
+    @ParticipationConstraints(nonEmpty = true)
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    private Instant created;
+
     @Future
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
     private LocalDate expirationDate;
@@ -51,6 +56,14 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     public void setOwner(UserAccount owner) {
         this.owner = owner;
+    }
+
+    public Instant getCreated() {
+        return created;
+    }
+
+    public void setCreated(Instant created) {
+        this.created = created;
     }
 
     public LocalDate getExpirationDate() {

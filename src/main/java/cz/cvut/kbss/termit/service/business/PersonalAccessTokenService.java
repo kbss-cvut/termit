@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.service.repository.PersonalAccessTokenRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -58,6 +59,7 @@ public class PersonalAccessTokenService {
     public String create(LocalDate expirationDate) {
         final UserAccount currentUser = securityUtils.getCurrentUser();
         final PersonalAccessToken newToken = new PersonalAccessToken();
+        newToken.setCreated(Utils.timestamp());
         newToken.setExpirationDate(expirationDate);
         newToken.setOwner(currentUser);
 
