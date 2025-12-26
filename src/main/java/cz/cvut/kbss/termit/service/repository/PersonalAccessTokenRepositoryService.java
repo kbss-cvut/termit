@@ -52,7 +52,7 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
         instance.setUri(generateId());
         super.prePersist(instance);
     }
-// TODO: implement updating last used timestamp
+
     @Transactional(readOnly = true)
     public List<PersonalAccessTokenDto> findAllByUserAccount(UserAccount userAccount) {
         return dao.findAllByUserAccount(userAccount).stream().map(this::mapToDto).toList();

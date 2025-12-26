@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.security;
 
+import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
@@ -30,8 +31,10 @@ public class PatToUserDetailsConverter implements Converter<Object, TermItUserDe
             } else if (source instanceof String uri) {
                 patIdentifier = URI.create(uri);
             }
-            UserAccount userAccount = accessTokenService.findUserAccountByValidTokenId(patIdentifier);
+            final PersonalAccessToken token = accessTokenService.findValid(patIdentifier);
+            final UserAccount userAccount = token.getOwner();
             Objects.requireNonNull(userAccount, "No user account found for the specified PAT");
+            accessTokenService.updateLastUsed(token);
             return new TermItUserDetails(userAccount);
         } catch (Exception e) {
             LOG.trace("Failed to resolve PAT {} to UserDetails with error: {}", source, e.getMessage());
