@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cvut.kbss.termit.config.SecurityConfig;
+import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
@@ -133,7 +133,7 @@ class JwtAuthorizationFilterTest {
         final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(signingKey)
                                                          .macAlgorithm(MacAlgorithm.HS256)
                                                          .validateType(false)
-                                                         .jwtProcessorCustomizer(SecurityConfig::setJWSTypeVerifier)
+                                                         .jwtProcessorCustomizer(JwtConfig::setJWSTypeVerifier)
                                                          .build();
         decoder.setJwtValidator(jwtValidator());
         decoder.setClaimSetConverter(jwtClaimSetConverter());

@@ -17,17 +17,9 @@
  */
 package cz.cvut.kbss.termit.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
-import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
 import cz.cvut.kbss.termit.security.JwtSubjectClaimToUserDetailsConverter;
-import cz.cvut.kbss.termit.security.JwtUserDetailsValidator;
-import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.PatToUserDetailsConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.security.UsernameToUserDetailsConverter;
@@ -51,17 +43,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -72,7 +57,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
@@ -90,30 +74,28 @@ public class SecurityConfig {
 
     private final AuthenticationFailureHandler authenticationFailureHandler;
 
-    private final JwtUtils jwtUtils;
-
     private final TermItUserDetailsService userDetailsService;
     private final PersonalAccessTokenService personalAccessTokenService;
 
-    private final ObjectMapper objectMapper;
-
     private final cz.cvut.kbss.termit.util.Configuration config;
+
+    private final JwtConfig jwtConfig;
 
     @Autowired
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           AuthenticationSuccess authenticationSuccessHandler,
                           AuthenticationFailureHandler authenticationFailureHandler,
-                          JwtUtils jwtUtils, TermItUserDetailsService userDetailsService,
+                          TermItUserDetailsService userDetailsService,
                           PersonalAccessTokenService personalAccessTokenService,
-                          ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
+                          cz.cvut.kbss.termit.util.Configuration config,
+                          JwtConfig jwtConfig) {
         this.authenticationProvider = authenticationProvider;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
-        this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
         this.personalAccessTokenService = personalAccessTokenService;
-        this.objectMapper = objectMapper;
         this.config = config;
+        this.jwtConfig = jwtConfig;
     }
 
     @Bean
@@ -129,7 +111,7 @@ public class SecurityConfig {
                                   .logoutSuccessHandler(authenticationSuccessHandler))
             .authenticationManager(authManager)
             .addFilter(authenticationFilter(authManager))
-            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, objectMapper, jwtDecoder));
+            .addFilter(jwtConfig.jwtAuthorizationFilter(authManager, jwtDecoder));
         return http.build();
     }
 
@@ -140,8 +122,7 @@ public class SecurityConfig {
     }
 
     private JwtAuthenticationFilter authenticationFilter(AuthenticationManager authenticationManager) {
-        final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager,
-                                                                                         jwtUtils);
+        final JwtAuthenticationFilter authenticationFilter = jwtConfig.jwtAuthenticationFilter(authenticationManager);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.LOGIN_PATH);
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);
@@ -151,17 +132,9 @@ public class SecurityConfig {
     /**
      * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
      */
-    @Bean
+    @Bean(name = SecurityConstants.DEFAULT_JWT_AUTHENTICATION_PROVIDER_BEAN_NAME)
     public JwtAuthenticationProvider jwtAuthenticationProvider(JwtDecoder jwtDecoder) {
-        final JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        authoritiesConverter.setAuthorityPrefix(""); // this removes default "SCOPE_" prefix
-        // otherwise, all granted authorities would have this prefix
-        // (like "SCOPE_ROLE_RESTRICTED_USER", we want just ROLE_...)
-        final JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
-        final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
-        provider.setJwtAuthenticationConverter(converter);
-        return provider;
+        return jwtConfig.jwtAuthenticationProvider(jwtDecoder);
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
@@ -187,23 +160,6 @@ public class SecurityConfig {
         return source;
     }
 
-    /**
-     * @return {@link DefaultJOSEObjectTypeVerifier} accepting {@code JWT} and {@code JWT+AT} token types
-     */
-    public static void setJWSTypeVerifier(ConfigurableJWTProcessor<SecurityContext> configurer) {
-        configurer.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(
-                JOSEObjectType.JWT, new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN), null));
-    }
-
-    public static OAuth2TokenValidator<Jwt> jwtValidator() {
-        return new DelegatingOAuth2TokenValidator<>(List.of(
-                // checks token expiration with default clockSkew 60s
-                new JwtTimestampValidator(),
-                // validates user details loaded into the token
-                new JwtUserDetailsValidator()
-        ));
-    }
-
     private Converter<Map<String, Object>, Map<String, Object>> claimSetConverter() {
         return MappedJwtClaimSetConverter.withDefaults(Map.of())
                                          .andThen(
@@ -216,12 +172,9 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtUtils.getJwtSigningKey())
-                                                         .macAlgorithm(MacAlgorithm.from(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM))
-                                                         .jwtProcessorCustomizer(SecurityConfig::setJWSTypeVerifier)
-                                                         .build();
-        decoder.setJwtValidator(jwtValidator());
+        NimbusJwtDecoder decoder = jwtConfig.jwtDecoder();
         decoder.setClaimSetConverter(claimSetConverter());
+        decoder.setJwtValidator(JwtConfig.jwtValidator());
         return decoder;
     }
 }
