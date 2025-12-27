@@ -146,7 +146,7 @@ class JwtAuthorizationFilterTest {
         this.objectMapper = Environment.getObjectMapper();
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
-        this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, objectMapper, jwtDecoder());
+        this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, objectMapper);
     }
 
     @AfterEach
