@@ -34,10 +34,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimNames;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import java.io.IOException;
@@ -65,14 +64,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private final ObjectMapper objectMapper;
 
-    private final JwtDecoder jwtDecoder;
-
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils, ObjectMapper objectMapper,
-                                  JwtDecoder jwtDecoder) {
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils, ObjectMapper objectMapper) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
         this.objectMapper = objectMapper;
-        this.jwtDecoder = jwtDecoder;
     }
 
     @Override
@@ -85,10 +80,11 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
         final String authToken = authHeader.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
         try {
-            Jwt jwt = jwtDecoder.decode(authToken);
-            final Object principal = jwt.getClaim(JwtClaimNames.SUB);
-            if (principal instanceof TermItUserDetails existingDetails) {
-                SecurityUtils.setCurrentUser(existingDetails);
+            Authentication authentication = getAuthenticationManager()
+                    .authenticate(new BearerTokenAuthenticationToken(authToken));
+            final TermItUserDetails principal = SecurityUtils.extractUserDetails(authentication);
+            if (principal != null) {
+                SecurityUtils.setCurrentUser(principal);
                 refreshToken(authToken, response);
                 chain.doFilter(request, response);
             } else {

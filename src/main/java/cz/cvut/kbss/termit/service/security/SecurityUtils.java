@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
@@ -83,6 +84,17 @@ public class SecurityUtils {
 
         final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
         return userDetails.getUser();
+    }
+
+    public static TermItUserDetails extractUserDetails(Authentication authentication) {
+        if (authentication.getDetails() instanceof TermItUserDetails userDetails) {
+            return userDetails;
+        }
+        if (authentication.getPrincipal() instanceof Jwt jwt &&
+                jwt.getClaim(JwtClaimNames.SUB) instanceof TermItUserDetails userDetails) {
+            return userDetails;
+        }
+        return null;
     }
 
     private UserAccount resolveAccountFromOAuthPrincipal(SecurityContext context) {
