@@ -41,12 +41,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -57,6 +57,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -101,9 +102,6 @@ class JwtAuthorizationFilterTest {
     private FilterChain chainMock;
 
     @Mock
-    private AuthenticationManager authManagerMock;
-
-    @Mock
     private TermItUserDetailsService detailsServiceMock;
 
     private JwtUtils jwtUtilsSpy;
@@ -128,7 +126,6 @@ class JwtAuthorizationFilterTest {
                 Map.of(Claims.SUBJECT, new UsernameToUserDetailsConverter(detailsServiceMock)));
     }
 
-    @Bean
     public JwtDecoder jwtDecoder() {
         final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(signingKey)
                                                          .macAlgorithm(MacAlgorithm.HS256)
@@ -140,13 +137,17 @@ class JwtAuthorizationFilterTest {
         return decoder;
     }
 
+    public AuthenticationManager authenticationManager(JwtDecoder jwtDecoder) {
+        return new ProviderManager(new JwtAuthenticationProvider(jwtDecoder));
+    }
+
     @BeforeEach
     void setUp() {
         this.user = Generator.generateUserAccount();
         this.objectMapper = Environment.getObjectMapper();
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
-        this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, objectMapper);
+        this.sut = new JwtAuthorizationFilter(authenticationManager(jwtDecoder()), jwtUtilsSpy, objectMapper);
     }
 
     @AfterEach
