@@ -706,7 +706,7 @@ termit-pojem:osobní-přístupový-token
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "Terminal term state"@en , "Koncový stav pojmu"@cs .
+                "Personal access token"@en , "Osobní přístupový token"@cs .
 
 termit-pojem:má-datum-expirace
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
