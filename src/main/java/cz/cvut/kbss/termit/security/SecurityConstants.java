@@ -53,6 +53,11 @@ public class SecurityConstants {
     public static final String JWT_ROLE_CLAIM = "role";
 
     /**
+     * Default algorithm used for JWT private key
+     */
+    public static final String JWT_DEFAULT_KEY_ALGORITHM = "HS256";
+
+    /**
      * Delimiter used to separate roles in a JWT.
      */
     public static final String JWT_ROLE_DELIMITER = "-";

@@ -698,3 +698,21 @@ termit-pojem:má-datum-a-čas-poslední-zálohy
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has date and time of the last backup"@en , "Má datum a čas poslední zálohy"@cs .
+
+termit-pojem:osobní-přístupový-token
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Personal access token"@en , "Osobní přístupový token"@cs .
+
+termit-pojem:má-datum-expirace
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has expiration date"@en , "Má datum expirace"@cs .

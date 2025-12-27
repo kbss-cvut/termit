@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
-import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
 import cz.cvut.kbss.termit.dto.acl.AccessHolderDto;
@@ -28,6 +28,8 @@ import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
+import cz.cvut.kbss.termit.model.PersonalAccessToken;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
@@ -58,6 +60,8 @@ public abstract class DtoMapper {
     public abstract AccessControlListDto accessControlListToDto(AccessControlList acl);
 
     public abstract PasswordChangeRequestDto passwordChangeRequestToDto(PasswordChangeRequest request);
+
+    public abstract PersonalAccessTokenDto personalAccessTokenToDto(PersonalAccessToken token);
 
     public AccessControlRecordDto accessControlRecordToDto(AccessControlRecord<?> record) {
         final AccessControlRecordDto dto = new AccessControlRecordDto();

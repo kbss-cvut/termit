@@ -107,7 +107,6 @@ class JwtUtilsTest {
                                   .parseClaimsJws(token)
                                   .getBody();
         assertEquals(user.getUsername(), claims.getSubject());
-        assertEquals(user.getUri().toString(), claims.getId());
         assertThat(claims.getExpiration(), greaterThan(claims.getIssuedAt()));
         if (!authorities.isEmpty()) {
             assertTrue(claims.containsKey(SecurityConstants.JWT_ROLE_CLAIM));

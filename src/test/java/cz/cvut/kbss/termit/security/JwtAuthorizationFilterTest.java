@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
@@ -27,6 +28,7 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -44,15 +46,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
@@ -88,22 +102,44 @@ class JwtAuthorizationFilterTest {
     private FilterChain chainMock;
 
     @Mock
-    private AuthenticationManager authManagerMock;
-
-    @Mock
     private TermItUserDetailsService detailsServiceMock;
 
     private JwtUtils jwtUtilsSpy;
 
     private ObjectMapper objectMapper;
 
-    private Key signingKey;
+    private SecretKey signingKey;
 
     private JwtAuthorizationFilter sut;
 
-    private TermitJwtDecoder termitJwtDecoder;
-
     private final Instant tokenIssued = JwtUtils.issueTimestamp();
+
+    private OAuth2TokenValidator<Jwt> jwtValidator() {
+        return new DelegatingOAuth2TokenValidator<>(List.of(
+                new JwtTimestampValidator(),
+                new JwtUserDetailsValidator()
+        ));
+    }
+
+    private MappedJwtClaimSetConverter jwtClaimSetConverter() {
+        return MappedJwtClaimSetConverter.withDefaults(
+                Map.of(Claims.SUBJECT, new UsernameToUserDetailsConverter(detailsServiceMock)));
+    }
+
+    public JwtDecoder jwtDecoder() {
+        final NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(signingKey)
+                                                         .macAlgorithm(MacAlgorithm.HS256)
+                                                         .validateType(false)
+                                                         .jwtProcessorCustomizer(JwtConfig::setJWSTypeVerifier)
+                                                         .build();
+        decoder.setJwtValidator(jwtValidator());
+        decoder.setClaimSetConverter(jwtClaimSetConverter());
+        return decoder;
+    }
+
+    public AuthenticationManager authenticationManager(JwtDecoder jwtDecoder) {
+        return new ProviderManager(new JwtAuthenticationProvider(jwtDecoder));
+    }
 
     @BeforeEach
     void setUp() {
@@ -111,8 +147,7 @@ class JwtAuthorizationFilterTest {
         this.objectMapper = Environment.getObjectMapper();
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
-        this.termitJwtDecoder = new TermitJwtDecoder(jwtUtilsSpy, detailsServiceMock);
-        this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, objectMapper, termitJwtDecoder);
+        this.sut = new JwtAuthorizationFilter(authenticationManager(jwtDecoder()), jwtUtilsSpy, objectMapper);
     }
 
     @AfterEach
@@ -183,10 +218,12 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalReturnsUnauthorizedWhenTokenIsExpired() throws Exception {
+        final Instant issued = Instant.now().minusSeconds(1000);
+        final Instant expiration = issued.plusSeconds(10);
         final String token = Jwts.builder().setSubject(user.getUsername())
                                  .setId(user.getUri().toString())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(new Date(System.currentTimeMillis() - 10000))
+                                 .setIssuedAt(Date.from(issued))
+                                 .setExpiration(Date.from(expiration))
                                  .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
@@ -232,7 +269,7 @@ class JwtAuthorizationFilterTest {
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
         final ErrorInfo errorInfo = objectMapper.readValue(mockResponse.getContentAsString(), ErrorInfo.class);
         assertNotNull(errorInfo);
-        assertThat(errorInfo.getMessage(), containsString("missing"));
+        assertThat(errorInfo.getMessage(), containsString("Invalid JWT token contents"));
     }
 
     @Test

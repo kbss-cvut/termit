@@ -21,13 +21,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.IncompleteJwtException;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
+import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -42,12 +45,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JoseHeaderNames;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,13 +66,14 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+    static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+            SignatureAlgorithm.forName(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM);
 
     private final ObjectMapper objectMapper;
 
     private final JwtParser jwtParser;
 
-    private final Key key;
+    private final SecretKey key;
 
     @Autowired
     public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
@@ -79,6 +86,10 @@ public class JwtUtils {
                              .build();
     }
 
+    public SecretKey getJwtSigningKey() {
+        return key;
+    }
+
     /**
      * Generates a JSON Web Token for the specified authenticated user.
      *
@@ -86,15 +97,8 @@ public class JwtUtils {
      * @return Generated JWT hash
      */
     public String generateToken(UserAccount user, Collection<? extends GrantedAuthority> authorities) {
-        final Instant issued = issueTimestamp();
-        return Jwts.builder().setSubject(user.getUsername())
-                   .setId(user.getUri().toString())
-                   .setIssuedAt(Date.from(issued))
-                   .setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
-                   .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
-                   .signWith(key, SIGNATURE_ALGORITHM)
-                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
-                   .compact();
+        return prebuildJwt(user.getUsername(), user.getUri(), authorities, null)
+                .compact();
     }
 
     static Instant issueTimestamp() {
@@ -167,7 +171,7 @@ public class JwtUtils {
         }
     }
 
-    private static List<GrantedAuthority> mapClaimToAuthorities(String claim) {
+    public static List<GrantedAuthority> mapClaimToAuthorities(String claim) {
         if (claim == null) {
             return Collections.emptyList();
         }
@@ -198,34 +202,39 @@ public class JwtUtils {
     }
 
     /**
-     * Gets URI of the user represented by the specified token.
-     * <p>
-     * Note that it is expected
-     *
-     * @param token JSON Web Token
-     * @return User identifier
+     * Builds common JWT parts.
+     * Generate the string token with {@link JwtBuilder#compact()}.
+     * @param subject The subject claim
+     * @param expiration The token expiration or null to use default session length
+     * @return JwtBuilder with common parts set
      */
-    public URI getUserUri(String token) {
-        try {
-            final Claims claims = parseClaims(token).getBody();
-            return URI.create(claims.getId());
-        } catch (ExpiredJwtException e) {
-            return URI.create(e.getClaims().getId());
+    private JwtBuilder prebuildJwt(String subject, URI userId, Collection<? extends GrantedAuthority> authorities, Date expiration) {
+        final Instant issued = issueTimestamp();
+        if (expiration == null) {
+            expiration = Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT));
         }
+        return Jwts.builder().setSubject(subject)
+                   .setIssuedAt(Date.from(issued))
+                   .setExpiration(expiration)
+                   .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
+                   .claim(JwtClaimNames.JTI, userId.toString())
+                   .signWith(key, SIGNATURE_ALGORITHM)
+                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper));
     }
 
     /**
-     * Retrieves timestamp when the specified token was issued.
-     *
-     * @param token JSON Web Token
-     * @return Timestamp of token issue
+     * Generates Access Token JWT.
+     * @param newToken The token to generate
+     * @return The token value
      */
-    public Instant getTokenIssueTimestamp(String token) {
-        try {
-            final Claims claims = parseClaims(token).getBody();
-            return claims.getIssuedAt().toInstant();
-        } catch (ExpiredJwtException e) {
-            return e.getClaims().getIssuedAt().toInstant();
+    public String generatePAT(PersonalAccessToken newToken) {
+        final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
+        Date expiration = new Date(Long.MAX_VALUE);
+        if (newToken.getExpirationDate() != null) {
+            expiration = Date.from(newToken.getExpirationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
         }
+        return prebuildJwt(newToken.getUri().toString(), newToken.getOwner().getUri(), List.of(), expiration)
+                .setHeaderParam(JoseHeaderNames.TYP,  type)
+                .compact();
     }
 }

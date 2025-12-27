@@ -25,12 +25,13 @@ import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -45,6 +46,7 @@ import java.util.Objects;
  */
 @Service
 public class SecurityUtils {
+    private static final AccountStatusUserDetailsChecker userDetailsChecker = new AccountStatusUserDetailsChecker();
 
     private final UserDetailsService userDetailsService;
 
@@ -82,6 +84,22 @@ public class SecurityUtils {
 
         final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
         return userDetails.getUser();
+    }
+
+    /**
+     * Attempts to extract {@link TermItUserDetails} from authentication object.
+     * @param authentication the authentication with user details
+     * @return the extracted object or null
+     */
+    public static TermItUserDetails extractUserDetails(Authentication authentication) {
+        if (authentication.getDetails() instanceof TermItUserDetails userDetails) {
+            return userDetails;
+        }
+        if (authentication.getPrincipal() instanceof Jwt jwt &&
+                jwt.getClaim(JwtClaimNames.SUB) instanceof TermItUserDetails userDetails) {
+            return userDetails;
+        }
+        return null;
     }
 
     private UserAccount resolveAccountFromOAuthPrincipal(SecurityContext context) {
@@ -158,14 +176,21 @@ public class SecurityUtils {
      * Verifies that the specified user is enabled and not locked.
      *
      * @param user User to check
+     * @see AccountStatusUserDetailsChecker
      */
     public static void verifyAccountStatus(UserAccount user) {
         Objects.requireNonNull(user);
-        if (user.isLocked()) {
-            throw new LockedException("Account of user " + user + " is locked.");
-        }
-        if (!user.isEnabled()) {
-            throw new DisabledException("Account of user " + user + " is disabled.");
-        }
+        verifyUserDetailsStatus(new TermItUserDetails(user));
+    }
+
+    /**
+     * Verifies that the specified user is enabled and not locked.
+     *
+     * @param userDetails UserDetails to check
+     * @see AccountStatusUserDetailsChecker
+     */
+    public static void verifyUserDetailsStatus(UserDetails userDetails) {
+        Objects.requireNonNull(userDetails);
+        userDetailsChecker.check(userDetails);
     }
 }
