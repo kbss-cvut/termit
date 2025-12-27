@@ -582,6 +582,7 @@ public class Generator {
         PersonalAccessToken token = new PersonalAccessToken();
         token.setUri(Generator.generateUri());
         token.setOwner(owner);
+        token.setCreated(Utils.timestamp());
         return token;
     }
 }

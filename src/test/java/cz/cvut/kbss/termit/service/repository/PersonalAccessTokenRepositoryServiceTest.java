@@ -37,8 +37,7 @@ public class PersonalAccessTokenRepositoryServiceTest extends BaseServiceTestRun
 
     @Test
     public void persistGeneratesId() {
-        PersonalAccessToken token = new PersonalAccessToken();
-        token.setOwner(Generator.generateUserAccountWithPassword());
+        PersonalAccessToken token = Generator.generatePersonalAccessToken(Generator.generateUserAccount());
 
         doNothing().when(tokenDao).persist(notNull(PersonalAccessToken.class));
         sut.persist(token);
