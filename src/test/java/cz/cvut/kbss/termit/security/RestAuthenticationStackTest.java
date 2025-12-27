@@ -47,9 +47,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.security.JwtUtils.SIGNATURE_ALGORITHM;
@@ -57,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -112,10 +115,9 @@ public class RestAuthenticationStackTest {
         staticUser.setPassword(passwordEncoder.encode(plainPassword));
         staticUser.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/test-static-user"));
 
-        patToken = new PersonalAccessToken();
-        patToken.setUri(Generator.generateUri());
-        patToken.setOwner(staticUser);
+        patToken = Generator.generatePersonalAccessToken(staticUser);
 
+        mockExistingToken(() -> patToken);
         setUserToContext(staticUser);
     }
 
@@ -211,7 +213,26 @@ public class RestAuthenticationStackTest {
                 .andReturn();
         String patToken = result.getResponse().getContentAsString();
         assertFalse(Utils.isBlank(patToken));
-        return SecurityConstants.JWT_TOKEN_PREFIX + patToken;
+        return patToken;
+    }
+
+    private void mockExistingToken(Supplier<PersonalAccessToken> existingToken) {
+        doAnswer(i -> i.getArgument(0, PersonalAccessToken.class))
+                .when(patDao).update(any(PersonalAccessToken.class));
+        doAnswer(i -> {
+            final URI existingUri = Optional.ofNullable(existingToken.get())
+                                            .map(PersonalAccessToken::getUri)
+                                            .orElse(null);
+            return Objects.equals(existingUri, i.getArgument(0));
+        }).when(patDao).exists(notNull());
+        doAnswer(i -> {
+            PersonalAccessToken ref = existingToken.get();
+            URI requestURI = i.getArgument(0, URI.class);
+            if (requestURI.equals(ref.getUri())) {
+                return Optional.of(ref);
+            }
+            return Optional.empty();
+        }).when(patDao).find(any());
     }
 
     /**
@@ -245,20 +266,12 @@ public class RestAuthenticationStackTest {
     @Test
     void createPatGeneratesValidPat() throws Exception {
         AtomicReference<PersonalAccessToken> createdToken = new AtomicReference<>();
+        mockExistingToken(createdToken::get);
         // store created token on persist
         doAnswer(i -> {
             createdToken.set(i.getArgument(0, PersonalAccessToken.class));
             return null;
         }).when(patDao).persist(any(PersonalAccessToken.class));
-        // on find, return persisted token if ID matches
-        doAnswer(i -> {
-            PersonalAccessToken ref = createdToken.get();
-            URI requestURI = i.getArgument(0, URI.class);
-            if (requestURI.equals(ref.getUri())) {
-                return Optional.of(ref);
-            }
-            return Optional.empty();
-        }).when(patDao).find(any());
 
         final String userJWT = performLogin();
         final String pat = requestPat(userJWT);
@@ -280,9 +293,7 @@ public class RestAuthenticationStackTest {
 
     @Test
     void patWithValidSignatureIsAccepted() throws Exception {
-        String validPat = generateValidPat();
-        when(patDao.find(patToken.getUri())).thenReturn(Optional.of(patToken));
-        makeRequestWithJwt(validPat)
+        makeRequestWithJwt(generateValidPat())
                 .andExpect(status().isOk());
     }
 
@@ -311,6 +322,7 @@ public class RestAuthenticationStackTest {
         PersonalAccessToken token = new PersonalAccessToken();
         token.setUri(Generator.generateUri());
         token.setOwner(staticUser);
+        mockExistingToken(() -> token);
         // token not known to the application
         final String patJwt = SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generatePAT(token);
         makeRequestWithJwt(patJwt)

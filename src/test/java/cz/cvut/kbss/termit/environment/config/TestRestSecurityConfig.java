@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.environment.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.security.AuthenticationFailure;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.mock;
  * cz.cvut.kbss.termit.rest.UserController}).
  */
 @TestConfiguration
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtConfig.class})
 @EnableConfigurationProperties(Configuration.class)
 public class TestRestSecurityConfig {
 

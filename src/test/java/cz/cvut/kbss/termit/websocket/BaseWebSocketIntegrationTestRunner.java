@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.websocket;
 
 import cz.cvut.kbss.termit.config.AppConfig;
+import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.config.WebAppConfig;
 import cz.cvut.kbss.termit.config.WebSocketConfig;
@@ -79,7 +80,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @EnableConfigurationProperties({Configuration.class})
 @ContextConfiguration(
         classes = {TestConfig.class, TestPersistenceConfig.class, TestServiceConfig.class, AppConfig.class,
-                   SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class},
+                   SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class,
+                   JwtConfig.class},
         initializers = {ConfigDataApplicationContextInitializer.class})
 @ComponentScan(
         {"cz.cvut.kbss.termit.security", "cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"})
