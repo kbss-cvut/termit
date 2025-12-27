@@ -84,11 +84,11 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         try {
             final TermItUserDetails principal = authenticate(authToken)
                     .orElseThrow(() -> new JwtException("Invalid JWT token contents"));
-            if (principal != null) {
-                SecurityUtils.setCurrentUser(principal);
-                refreshToken(authToken, response);
-                chain.doFilter(request, response);
-            }
+
+            SecurityUtils.setCurrentUser(principal);
+            refreshToken(authToken, response);
+            chain.doFilter(request, response);
+
         } catch (JwtException | org.springframework.security.oauth2.jwt.JwtException | InvalidBearerTokenException e) {
             if (shouldAllowThroughUnauthenticated(request)) {
                 chain.doFilter(request, response);

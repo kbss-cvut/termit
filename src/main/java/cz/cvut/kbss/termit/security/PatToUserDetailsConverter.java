@@ -13,6 +13,9 @@ import org.springframework.core.convert.converter.Converter;
 import java.net.URI;
 import java.util.Objects;
 
+/**
+ * Converts personal access token identifier ({@code source}) into {@link TermItUserDetails}.
+ */
 public class PatToUserDetailsConverter implements Converter<Object, TermItUserDetails> {
     private static final Logger LOG = LoggerFactory.getLogger(PatToUserDetailsConverter.class);
     private final PersonalAccessTokenService accessTokenService;
@@ -26,10 +29,10 @@ public class PatToUserDetailsConverter implements Converter<Object, TermItUserDe
     public TermItUserDetails convert(@Nonnull Object source) {
         try {
             URI patIdentifier = null;
-            if (source instanceof URI) {
-                patIdentifier = (URI) source;
-            } else if (source instanceof String uri) {
-                patIdentifier = URI.create(uri);
+            if (source instanceof URI uriSource) {
+                patIdentifier = uriSource;
+            } else if (source instanceof String stringSource) {
+                patIdentifier = URI.create(stringSource);
             }
             final PersonalAccessToken token = accessTokenService.findValid(patIdentifier);
             final UserAccount userAccount = token.getOwner();

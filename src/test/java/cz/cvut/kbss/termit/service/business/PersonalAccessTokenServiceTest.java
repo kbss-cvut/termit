@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
-import cz.cvut.kbss.termit.exception.TokenExpiredException;
+import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.JwtUtils;
@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -44,7 +45,9 @@ public class PersonalAccessTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        sut = new PersonalAccessTokenService(repositoryService, securityUtils, jwtUtils);
+        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.afterPropertiesSet();
+        sut = new PersonalAccessTokenService(repositoryService, securityUtils, jwtUtils, validator);
         currentUser = Generator.generateUserAccount();
     }
 
@@ -82,32 +85,32 @@ public class PersonalAccessTokenServiceTest {
     public void ensureTokenValidThrowsForExpiredToken() {
         PersonalAccessToken token = Generator.generatePersonalAccessToken(currentUser);
         token.setExpirationDate(LocalDate.now().minusDays(1));
-        assertThrows(TokenExpiredException.class, () -> sut.ensureTokenValid(token));
+        assertThrows(JwtException.class, () -> sut.ensureTokenValid(token));
     }
 
     @Test
     public void ensureTokenValidThrowsForTokenWithoutOwner() {
         PersonalAccessToken token = Generator.generatePersonalAccessToken(currentUser);
         token.setOwner(null);
-        assertThrows(NullPointerException.class, () -> sut.ensureTokenValid(token));
+        assertThrows(JwtException.class, () -> sut.ensureTokenValid(token));
     }
 
     @Test
-    public void findUserAccountByValidTokenIdReturnsUserAccountForValidToken() {
+    public void findValidReturnsUserAccountForValidToken() {
         PersonalAccessToken token = Generator.generatePersonalAccessToken(currentUser);
         when(repositoryService.find(token.getUri())).thenReturn(Optional.of(token));
 
-        final UserAccount result = sut.findUserAccountByValidTokenId(token.getUri());
-        assertEquals(currentUser, result);
+        final PersonalAccessToken result = sut.findValid(token.getUri());
+        assertEquals(token, result);
     }
 
     @Test
-    public void findUserAccountByValidTokenIdThrowsForExpiredToken() {
+    public void findValidThrowsForExpiredToken() {
         PersonalAccessToken token = Generator.generatePersonalAccessToken(currentUser);
         when(repositoryService.find(token.getUri())).thenReturn(Optional.of(token));
         token.setExpirationDate(LocalDate.now().minusDays(1));
 
-        assertThrows(TokenExpiredException.class, () -> sut.findUserAccountByValidTokenId(token.getUri()));
+        assertThrows(JwtException.class, () -> sut.findValid(token.getUri()));
     }
 
     @Test

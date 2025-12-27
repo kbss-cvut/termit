@@ -76,6 +76,7 @@ public class TestServiceConfig {
     }
 
     @Bean
+    @Primary
     public LocalValidatorFactoryBean validatorFactoryBean() {
         return new LocalValidatorFactoryBean();
     }

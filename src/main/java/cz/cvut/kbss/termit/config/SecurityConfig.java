@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.config;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
 import cz.cvut.kbss.termit.security.JwtTypeDelegatingAuthenticationProvider;
-import cz.cvut.kbss.termit.security.PatAuthenticationConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.security.UsernameToUserDetailsConverter;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
@@ -29,7 +28,6 @@ import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -115,13 +113,11 @@ public class SecurityConfig {
      * and TermIt's internal {@link JwtDecoder} for PAT authentication.
      */
     @Bean
-    public JwtTypeDelegatingAuthenticationProvider authenticationProvider(@Qualifier("jwtDecoder") JwtDecoder jwtDecoder,
-                                                                          @Qualifier("patDecoder") JwtDecoder patDecoder) {
+    public JwtTypeDelegatingAuthenticationProvider authenticationProvider(JwtDecoder jwtDecoder) {
         final JwtAuthenticationProvider defaultProvider = jwtConfig.jwtAuthenticationProvider(jwtDecoder);
-        final JwtAuthenticationProvider patAuthenticationProvider = jwtConfig.jwtAuthenticationProvider(patDecoder);
-        patAuthenticationProvider.setJwtAuthenticationConverter(new PatAuthenticationConverter());
+        final JwtAuthenticationProvider patProvider = jwtConfig.patAuthenticationProvider(personalAccessTokenService);
 
-        return new JwtTypeDelegatingAuthenticationProvider(defaultProvider, patAuthenticationProvider);
+        return new JwtTypeDelegatingAuthenticationProvider(defaultProvider, patProvider);
     }
 
     private JwtAuthenticationFilter authenticationFilter(AuthenticationManager authenticationManager) {
@@ -163,10 +159,5 @@ public class SecurityConfig {
         ));
         decoder.setJwtValidator(jwtConfig.jwtValidator());
         return decoder;
-    }
-
-    @Bean
-    public JwtDecoder patDecoder() {
-        return jwtConfig.patDecoder(personalAccessTokenService);
     }
 }

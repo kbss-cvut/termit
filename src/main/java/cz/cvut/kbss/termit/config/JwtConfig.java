@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
 import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
 import cz.cvut.kbss.termit.security.JwtUserDetailsValidator;
 import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.security.PatAuthenticationConverter;
 import cz.cvut.kbss.termit.security.PatToUserDetailsConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
@@ -105,6 +106,16 @@ public class JwtConfig {
         final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
         provider.setJwtAuthenticationConverter(converter);
         return provider;
+    }
+
+    /**
+     * Constructs {@link JwtAuthenticationProvider} for PAT authentication
+     */
+    public JwtAuthenticationProvider patAuthenticationProvider(PersonalAccessTokenService personalAccessTokenService) {
+        final JwtAuthenticationProvider patAuthenticationProvider =
+                jwtAuthenticationProvider(patDecoder(personalAccessTokenService));
+        patAuthenticationProvider.setJwtAuthenticationConverter(new PatAuthenticationConverter());
+        return patAuthenticationProvider;
     }
 
     /**
