@@ -39,6 +39,10 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
         return dtoMapper.personalAccessTokenToDto(entity);
     }
 
+    /**
+     * Generates non-sequential identifier for PAT using {@link UUID}.
+     * @return the generated identifier
+     */
     private URI generateId() {
         final URI newId = URI.create(PersonalAccessToken_.entityClassIRI.toString() + "/" + UUID.randomUUID());
         if (exists(newId)) {
@@ -53,6 +57,11 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
         super.prePersist(instance);
     }
 
+    /**
+     * Resolves all PAT tokens associated with the given user account.
+     * @param userAccount the user account
+     * @return All existing tokens for the user account (including expired tokens)
+     */
     @Transactional(readOnly = true)
     public List<PersonalAccessTokenDto> findAllByUserAccount(UserAccount userAccount) {
         return dao.findAllByUserAccount(userAccount).stream().map(this::mapToDto).toList();

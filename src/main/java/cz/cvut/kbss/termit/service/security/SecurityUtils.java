@@ -86,6 +86,11 @@ public class SecurityUtils {
         return userDetails.getUser();
     }
 
+    /**
+     * Attempts to extract {@link TermItUserDetails} from authentication object.
+     * @param authentication the authentication with user details
+     * @return the extracted object or null
+     */
     public static TermItUserDetails extractUserDetails(Authentication authentication) {
         if (authentication.getDetails() instanceof TermItUserDetails userDetails) {
             return userDetails;

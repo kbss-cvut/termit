@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.config;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.JwtTypeDelegatingAuthenticationProvider;
-import cz.cvut.kbss.termit.security.PatAuthenticationConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.util.oidc.OidcGrantedAuthoritiesExtractor;
@@ -111,11 +110,9 @@ public class OAuth2SecurityConfig {
         final JwtAuthenticationProvider defaultProvider = new JwtAuthenticationProvider(jwtDecoder);
         defaultProvider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
 
-        final JwtAuthenticationProvider patAuthenticationProvider =
-                jwtConfig.jwtAuthenticationProvider(jwtConfig.patDecoder(personalAccessTokenService));
-        patAuthenticationProvider.setJwtAuthenticationConverter(new PatAuthenticationConverter());
+        final JwtAuthenticationProvider patProvider = jwtConfig.patAuthenticationProvider(personalAccessTokenService);
 
-        return new JwtTypeDelegatingAuthenticationProvider(defaultProvider, patAuthenticationProvider);
+        return new JwtTypeDelegatingAuthenticationProvider(defaultProvider, patProvider);
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
