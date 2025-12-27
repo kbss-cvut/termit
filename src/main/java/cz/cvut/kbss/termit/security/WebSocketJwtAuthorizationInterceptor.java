@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.security;
 
 import jakarta.annotation.Nonnull;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -27,7 +26,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,11 +47,10 @@ import org.springframework.util.StringUtils;
 @Component
 public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor {
 
-    private final AuthenticationProvider authenticationProvider;
+    private final AuthenticationManager authenticationManager;
 
-    public WebSocketJwtAuthorizationInterceptor(@Qualifier(SecurityConstants.DEFAULT_JWT_AUTHENTICATION_PROVIDER_BEAN_NAME)
-                                                AuthenticationProvider authenticationProvider) {
-        this.authenticationProvider = authenticationProvider;
+    public WebSocketJwtAuthorizationInterceptor(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -88,7 +86,7 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
         BearerTokenAuthenticationToken authenticationRequest = new BearerTokenAuthenticationToken(token);
 
         try {
-            Authentication authenticationResult = authenticationProvider.authenticate(authenticationRequest);
+            Authentication authenticationResult = authenticationManager.authenticate(authenticationRequest);
             if (authenticationResult != null && authenticationResult.isAuthenticated()) {
                 SecurityContext context = SecurityContextHolder.createEmptyContext();
                 context.setAuthentication(authenticationResult);
