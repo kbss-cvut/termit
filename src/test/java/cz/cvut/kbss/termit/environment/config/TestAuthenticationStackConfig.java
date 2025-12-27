@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.TermItApplication;
+import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.rest.HealthController;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
@@ -17,11 +18,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * This config initializes the whole application,
- * since we want to test the security stack as it is configured for production
- */
-@Import({TermItApplication.class})
+
+@Import({TermItApplication.class, JwtConfig.class})
 @EnableAutoConfiguration
 @TestConfiguration
 public class TestAuthenticationStackConfig {

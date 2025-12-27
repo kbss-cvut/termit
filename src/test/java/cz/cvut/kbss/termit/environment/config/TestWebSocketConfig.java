@@ -43,7 +43,7 @@ import org.springframework.messaging.simp.annotation.support.SimpAnnotationMetho
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.support.AbstractSubscribableChannel;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
@@ -119,7 +119,7 @@ public class TestWebSocketConfig
     }
 
     @Bean
-    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor(JwtAuthenticationProvider jwtAuthenticationProvider) {
-        return new WebSocketJwtAuthorizationInterceptor(jwtAuthenticationProvider);
+    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor(AuthenticationManager authenticationManager) {
+        return new WebSocketJwtAuthorizationInterceptor(authenticationManager);
     }
 }

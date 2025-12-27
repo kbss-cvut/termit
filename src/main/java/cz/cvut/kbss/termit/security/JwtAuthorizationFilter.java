@@ -36,12 +36,14 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
@@ -80,17 +82,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
         final String authToken = authHeader.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
         try {
-            Authentication authentication = getAuthenticationManager()
-                    .authenticate(new BearerTokenAuthenticationToken(authToken));
-            final TermItUserDetails principal = SecurityUtils.extractUserDetails(authentication);
+            final TermItUserDetails principal = authenticate(authToken)
+                    .orElseThrow(() -> new JwtException("Invalid JWT token contents"));
             if (principal != null) {
                 SecurityUtils.setCurrentUser(principal);
                 refreshToken(authToken, response);
                 chain.doFilter(request, response);
-            } else {
-                throw new JwtException("Invalid JWT token contents");
             }
-        } catch (JwtException | org.springframework.security.oauth2.jwt.JwtException e) {
+        } catch (JwtException | org.springframework.security.oauth2.jwt.JwtException | InvalidBearerTokenException e) {
             if (shouldAllowThroughUnauthenticated(request)) {
                 chain.doFilter(request, response);
             } else {
@@ -99,6 +98,13 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         } catch (DisabledException | LockedException | UsernameNotFoundException e) {
             unauthorizedRequest(request, response, e);
         }
+    }
+
+    private Optional<TermItUserDetails> authenticate(String token) {
+        final Authentication authentication = getAuthenticationManager().authenticate(new BearerTokenAuthenticationToken(token));
+
+        return Optional.ofNullable(authentication)
+                .map(SecurityUtils::extractUserDetails);
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)

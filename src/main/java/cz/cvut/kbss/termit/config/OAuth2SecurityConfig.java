@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.config;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.JwtTypeDelegatingAuthenticationProvider;
-import cz.cvut.kbss.termit.security.PatToUserDetailsConverter;
+import cz.cvut.kbss.termit.security.PatAuthenticationConverter;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.util.oidc.OidcGrantedAuthoritiesExtractor;
@@ -34,7 +34,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -42,10 +41,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
@@ -55,8 +51,11 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collection;
-import java.util.Map;
 
+/**
+ * @see <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html">Spring security OAuth resource server</a>
+ * @see <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html">Spring security OAuth resource server JWT</a>
+ */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "oidc")
 @Configuration
 @EnableWebSecurity
@@ -102,22 +101,19 @@ public class OAuth2SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configures {@link JwtTypeDelegatingAuthenticationProvider} using the default spring security {@link JwtDecoder}
+     * and TermIt's internal {@link JwtDecoder} for PAT authentication.
+     */
     @Bean
-    public AuthenticationManager authenticationManager(JwtTypeDelegatingAuthenticationProvider authenticationProvider) {
-        return new ProviderManager(authenticationProvider);
-    }
-
-    @Bean(name= SecurityConstants.DEFAULT_JWT_AUTHENTICATION_PROVIDER_BEAN_NAME)
     public JwtTypeDelegatingAuthenticationProvider authenticationProvider(JwtDecoder jwtDecoder,
                                                                           PersonalAccessTokenService personalAccessTokenService) {
         final JwtAuthenticationProvider defaultProvider = new JwtAuthenticationProvider(jwtDecoder);
         defaultProvider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
 
-        final NimbusJwtDecoder patDecoder = jwtConfig.jwtDecoder();
-        patDecoder.setClaimSetConverter(MappedJwtClaimSetConverter
-                .withDefaults(Map.of(JwtClaimNames.SUB, new PatToUserDetailsConverter(personalAccessTokenService))));
-
-        final JwtAuthenticationProvider patAuthenticationProvider = jwtConfig.jwtAuthenticationProvider(patDecoder);
+        final JwtAuthenticationProvider patAuthenticationProvider =
+                jwtConfig.jwtAuthenticationProvider(jwtConfig.patDecoder(personalAccessTokenService));
+        patAuthenticationProvider.setJwtAuthenticationConverter(new PatAuthenticationConverter());
 
         return new JwtTypeDelegatingAuthenticationProvider(defaultProvider, patAuthenticationProvider);
     }

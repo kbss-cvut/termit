@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JoseHeaderNames;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -96,7 +97,7 @@ public class JwtUtils {
      * @return Generated JWT hash
      */
     public String generateToken(UserAccount user, Collection<? extends GrantedAuthority> authorities) {
-        return prebuildJwt(user.getUsername(), authorities, null)
+        return prebuildJwt(user.getUsername(), user.getUri(), authorities, null)
                 .compact();
     }
 
@@ -170,7 +171,7 @@ public class JwtUtils {
         }
     }
 
-    private static List<GrantedAuthority> mapClaimToAuthorities(String claim) {
+    public static List<GrantedAuthority> mapClaimToAuthorities(String claim) {
         if (claim == null) {
             return Collections.emptyList();
         }
@@ -207,7 +208,7 @@ public class JwtUtils {
      * @param expiration The token expiration or null to use default session length
      * @return JwtBuilder with common parts set
      */
-    private JwtBuilder prebuildJwt(String subject, Collection<? extends GrantedAuthority> authorities, Date expiration) {
+    private JwtBuilder prebuildJwt(String subject, URI userId, Collection<? extends GrantedAuthority> authorities, Date expiration) {
         final Instant issued = issueTimestamp();
         if (expiration == null) {
             expiration = Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT));
@@ -216,6 +217,7 @@ public class JwtUtils {
                    .setIssuedAt(Date.from(issued))
                    .setExpiration(expiration)
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
+                   .claim(JwtClaimNames.JTI, userId.toString())
                    .signWith(key, SIGNATURE_ALGORITHM)
                    .serializeToJsonWith(new JacksonSerializer<>(objectMapper));
     }
@@ -231,10 +233,8 @@ public class JwtUtils {
         if (newToken.getExpirationDate() != null) {
             expiration = Date.from(newToken.getExpirationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
         }
-        final TermItUserDetails userDetails = new TermItUserDetails(newToken.getOwner());
-        return prebuildJwt(newToken.getUri().toString(), userDetails.getAuthorities(), expiration)
+        return prebuildJwt(newToken.getUri().toString(), newToken.getOwner().getUri(), List.of(), expiration)
                 .setHeaderParam(JoseHeaderNames.TYP,  type)
-                .claim(JoseHeaderNames.TYP, type)
                 .compact();
     }
 }
