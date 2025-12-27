@@ -59,7 +59,7 @@ public class PersonalAccessTokenController extends BaseController{
     @PostMapping(produces = {"application/"+Constants.MediaType.JWT_ACCESS_TOKEN})
     public String create(
             @Parameter(description = "Expiration date for the new token.")
-                    @RequestParam("expiration")
+            @RequestParam("expiration")
             Optional<LocalDate> expiration) {
         return service.create(expiration.orElse(null));
     }

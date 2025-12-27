@@ -12,6 +12,11 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import java.text.ParseException;
 import java.util.Optional;
 
+/**
+ * Delegates authentication to {@link #patJwtAuthenticationProvider}
+ * if the JWT token has {@link Constants.MediaType#JWT_ACCESS_TOKEN} type,
+ * otherwise delegates to {@link #defaultProvider}.
+ */
 public class JwtTypeDelegatingAuthenticationProvider implements AuthenticationProvider {
     private final AuthenticationProvider defaultProvider;
     private final JwtAuthenticationProvider patJwtAuthenticationProvider;
@@ -48,6 +53,6 @@ public class JwtTypeDelegatingAuthenticationProvider implements AuthenticationPr
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return BearerTokenAuthenticationToken.class.isAssignableFrom(authentication);
+        return BearerTokenAuthenticationToken.class.isAssignableFrom(authentication) || defaultProvider.supports(authentication);
     }
 }

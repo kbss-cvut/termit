@@ -63,11 +63,6 @@ public class SecurityConstants {
     public static final String JWT_ROLE_DELIMITER = "-";
 
     /**
-     * The name of the default authentication provider capable of authenticating JWT token.
-     */
-    public static final String DEFAULT_JWT_AUTHENTICATION_PROVIDER_BEAN_NAME = "jwtAuthenticationProvider";
-
-    /**
      * Session timeout in milliseconds. 24 hours.
      */
     public static final int SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
