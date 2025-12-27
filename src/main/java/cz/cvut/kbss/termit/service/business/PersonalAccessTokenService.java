@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -11,6 +12,7 @@ import cz.cvut.kbss.termit.service.repository.PersonalAccessTokenRepositoryServi
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.Validator;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -22,12 +24,14 @@ public class PersonalAccessTokenService {
     private final PersonalAccessTokenRepositoryService repositoryService;
     private final SecurityUtils securityUtils;
     private final JwtUtils jwtUtils;
+    private final Validator validator;
 
     public PersonalAccessTokenService(PersonalAccessTokenRepositoryService repositoryService,
-                                      SecurityUtils securityUtils, JwtUtils jwtUtils) {
+                                      SecurityUtils securityUtils, JwtUtils jwtUtils, Validator validator) {
         this.repositoryService = repositoryService;
         this.securityUtils = securityUtils;
         this.jwtUtils = jwtUtils;
+        this.validator = validator;
     }
 
     /**
@@ -49,14 +53,6 @@ public class PersonalAccessTokenService {
         return repositoryService.find(tokenUri)
                 .map(this::ensureTokenValid)
                 .orElseThrow();
-    }
-
-
-    public UserAccount findUserAccountByValidTokenId(URI tokenUri) {
-        return repositoryService.find(tokenUri)
-                                .map(this::ensureTokenValid)
-                                .map(PersonalAccessToken::getOwner)
-                                .orElseThrow();
     }
 
     /**
@@ -92,13 +88,16 @@ public class PersonalAccessTokenService {
         throw new AuthorizationException("Cannot delete token associated with a different user.");
     }
 
+    /**
+     * Ensures the PAT is valid (non-expired).
+     * @param token the token to validate
+     * @return the valid token
+     * @throws TokenExpiredException when the token is expired
+     * @throws NullPointerException when a required field is null
+     */
     public PersonalAccessToken ensureTokenValid(PersonalAccessToken token) {
-        Objects.requireNonNull(token, "Token must not be null");
-        Objects.requireNonNull(token.getUri(), "Token URI must not be null");
-        Objects.requireNonNull(token.getOwner(), "Token owner must not be null");
-        if (token.getExpirationDate() != null && LocalDate.now().isAfter(token.getExpirationDate())) {
-            throw new TokenExpiredException("Personal access token expired");
-        }
+        validator.validateObject(token)
+                .failOnError((err) -> new JwtException("Invalid PAT token: " + err));
         return token;
     }
 
