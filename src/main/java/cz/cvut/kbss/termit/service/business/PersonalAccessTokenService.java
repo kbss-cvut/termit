@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.service.repository.PersonalAccessTokenRepositoryServi
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
 import java.net.URI;
@@ -76,12 +77,13 @@ public class PersonalAccessTokenService {
      * @param tokenUri the token identifier
      * @throws AuthorizationException when attempted to delete the token from a different user
      */
+    @Transactional
     public void delete(URI tokenUri) {
         Objects.requireNonNull(tokenUri, "Token URI must not be null");
         final PersonalAccessToken token = repositoryService.findRequired(tokenUri);
         Objects.requireNonNull(token.getOwner(), "Token owner must not be null");
         final UserAccount currentUser = securityUtils.getCurrentUser();
-        if (currentUser.equals(token.getOwner())) {
+        if (token.getOwner().equals(currentUser)) {
             repositoryService.remove(token);
             return;
         }
