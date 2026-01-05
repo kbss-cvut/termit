@@ -54,9 +54,6 @@ spring:
                         enable: true
     profiles:
         active: '@spring.profiles.active@'
-javamelody:
-    init-parameters:
-        authorized-users: admin:kral0vnat3rm1t1st3
 termit:
     security:
         provider: "internal"
