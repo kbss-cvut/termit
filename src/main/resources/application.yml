@@ -60,6 +60,9 @@ javamelody:
 termit:
     security:
         provider: "internal"
+    actuator:
+        username: actuator
+        password: kral0vnat3rm1t1st3
     repository:
         url: http://localhost:7200/repositories/termit
         # if empty, repository.url will be used
