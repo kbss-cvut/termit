@@ -34,8 +34,10 @@ public class ActuatorSecurityConfig {
 
     /**
      * Actuator access password
+     *
+     * @configurationdoc.default kral0vnat3rm1t1st3
      */
-    @Value("${termit.actuator.password}")
+    @Value("${termit.actuator.password:kral0vnat3rm1t1st3}")
     private String actuatorPassword;
 
     private final PasswordEncoder passwordEncoder;
