@@ -35,7 +35,7 @@ public class ActuatorSecurityConfig {
      *
      * @configurationdoc.default actuator
      */
-    @Value("${termit.actuator.username}")
+    @Value("${termit.actuator.username:}")
     private String actuatorUsername;
 
     /**
@@ -43,7 +43,7 @@ public class ActuatorSecurityConfig {
      * <p>
      * If not provided, a random one will be generated and logged.
      */
-    @Value("${termit.actuator.password}")
+    @Value("${termit.actuator.password:}")
     private String actuatorPassword;
 
     private final PasswordEncoder passwordEncoder;
