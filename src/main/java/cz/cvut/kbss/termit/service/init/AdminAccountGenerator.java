@@ -115,7 +115,12 @@ public class AdminAccountGenerator {
         return admin;
     }
 
-    private static String generatePassword() {
+    /**
+     * Generates a random password.
+     *
+     * @return generated password
+     */
+    public static String generatePassword() {
         final StringBuilder sb = new StringBuilder(PASSWORD_LENGTH);
         final Random random = new Random();
         for (int i = 0; i < PASSWORD_LENGTH; i++) {

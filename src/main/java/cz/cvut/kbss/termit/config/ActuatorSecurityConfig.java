@@ -1,5 +1,9 @@
 package cz.cvut.kbss.termit.config;
 
+import cz.cvut.kbss.termit.service.init.AdminAccountGenerator;
+import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,20 +28,22 @@ import static org.springframework.security.core.userdetails.User.UserBuilder;
 @Profile("!test")
 public class ActuatorSecurityConfig {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ActuatorSecurityConfig.class);
+
     /**
      * Actuator access username
      *
      * @configurationdoc.default actuator
      */
-    @Value("${termit.actuator.username:actuator}")
+    @Value("${termit.actuator.username}")
     private String actuatorUsername;
 
     /**
      * Actuator access password
-     *
-     * @configurationdoc.default kral0vnat3rm1t1st3
+     * <p>
+     * If not provided, a random one will be generated and logged.
      */
-    @Value("${termit.actuator.password:kral0vnat3rm1t1st3}")
+    @Value("${termit.actuator.password}")
     private String actuatorPassword;
 
     private final PasswordEncoder passwordEncoder;
@@ -58,11 +64,19 @@ public class ActuatorSecurityConfig {
     }
 
     public UserDetailsService actuatorUserDetailsService() {
+        final String username = Utils.isBlank(actuatorUsername) ? "actuator" : actuatorUsername;
+        final String password =
+                Utils.isBlank(actuatorPassword) ? AdminAccountGenerator.generatePassword() : actuatorPassword;
+        if (Utils.isBlank(actuatorUsername) || Utils.isBlank(actuatorPassword)) {
+            LOG.info("----------------------------------------------");
+            LOG.info("Generated actuator credentials: {}/{}", username, password);
+            LOG.info("----------------------------------------------");
+        }
         // The builder will ensure the passwords are encoded before saving in memory
         UserBuilder users = User.builder();
         UserDetails actuatorUser = users
-                .username(actuatorUsername)
-                .password(passwordEncoder.encode(actuatorPassword))
+                .username(username)
+                .password(passwordEncoder.encode(password))
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(actuatorUser);
