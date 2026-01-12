@@ -46,6 +46,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 
 @Configuration
@@ -68,6 +69,7 @@ public class ServiceConfig {
                                                        .setRedirectStrategy(new DefaultRedirectStrategy())
                                                        .build();
         factory.setHttpClient(httpClient);
+        factory.setReadTimeout(Duration.ofMinutes(10L));
         restTemplate.setRequestFactory(factory);
 
         final MappingJackson2HttpMessageConverter jacksonConverter = new MappingJackson2HttpMessageConverter();
