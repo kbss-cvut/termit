@@ -171,7 +171,7 @@ class OntologicalAuthenticationProviderTest {
         when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         final LockedException ex = assertThrows(LockedException.class, () -> sut.authenticate(auth));
-        assertTrue(ex.getMessage().contains("locked"));
+        assertThat(ex.getMessage(), containsString("locked"));
     }
 
     @Test
@@ -180,6 +180,6 @@ class OntologicalAuthenticationProviderTest {
         when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         final DisabledException ex = assertThrows(DisabledException.class, () -> sut.authenticate(auth));
-        assertTrue(ex.getMessage().contains("disabled"));
+        assertThat(ex.getMessage(), containsString("disabled"));
     }
 }
