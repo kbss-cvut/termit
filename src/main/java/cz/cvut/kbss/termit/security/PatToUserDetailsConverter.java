@@ -17,7 +17,9 @@ import java.util.Objects;
  * Converts personal access token identifier ({@code source}) into {@link TermItUserDetails}.
  */
 public class PatToUserDetailsConverter implements Converter<Object, TermItUserDetails> {
+
     private static final Logger LOG = LoggerFactory.getLogger(PatToUserDetailsConverter.class);
+
     private final PersonalAccessTokenService accessTokenService;
 
     public PatToUserDetailsConverter(PersonalAccessTokenService accessTokenService) {
@@ -34,9 +36,12 @@ public class PatToUserDetailsConverter implements Converter<Object, TermItUserDe
             } else if (source instanceof String stringSource) {
                 patIdentifier = URI.create(stringSource);
             }
+
+            Objects.requireNonNull(patIdentifier, "Failed to resolve PAT identifier from the source");
             final PersonalAccessToken token = accessTokenService.findValid(patIdentifier);
             final UserAccount userAccount = token.getOwner();
             Objects.requireNonNull(userAccount, "No user account found for the specified PAT");
+
             accessTokenService.updateLastUsed(token);
             return new TermItUserDetails(userAccount);
         } catch (Exception e) {

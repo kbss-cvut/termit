@@ -35,10 +35,13 @@ import java.util.Optional;
 @RequestMapping(PersonalAccessTokenController.PATH)
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class PersonalAccessTokenController extends BaseController{
+
     public static final String PATH = UserController.PATH + UserController.CURRENT_USER_PATH + "/tokens";
+
     private final PersonalAccessTokenService service;
 
-    protected PersonalAccessTokenController(IdentifierResolver idResolver, Configuration config,
+    protected PersonalAccessTokenController(IdentifierResolver idResolver,
+                                            Configuration config,
                                             PersonalAccessTokenService service) {
         super(idResolver, config);
         this.service = service;

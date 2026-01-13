@@ -37,6 +37,7 @@ public class PersonalAccessTokenService {
 
     /**
      * Finds all personal access tokens associated with the currently logged-in user.
+     *
      * @return personal access tokens
      */
     public List<PersonalAccessTokenDto> findAllForCurrentUser() {
@@ -46,18 +47,20 @@ public class PersonalAccessTokenService {
 
     /**
      * Finds the token and ensures that its valid.
+     *
      * @param tokenUri The identifier of the token
      * @return The valid personal access token
      * @throws TokenExpiredException when the token is invalid (e.g. expired)
      */
     public PersonalAccessToken findValid(URI tokenUri) {
         return repositoryService.find(tokenUri)
-                .map(this::ensureTokenValid)
-                .orElseThrow();
+                                .map(this::ensureTokenValid)
+                                .orElseThrow();
     }
 
     /**
      * Creates a new personal access token with the specified expiration date.
+     *
      * @param expirationDate Expiration date or null for unlimited lifetime.
      * @return The created personal access token
      */
@@ -74,6 +77,7 @@ public class PersonalAccessTokenService {
 
     /**
      * Deletes token with the specified identifier associated with the current user.
+     *
      * @param tokenUri the token identifier
      * @throws AuthorizationException when attempted to delete the token from a different user
      */
@@ -92,14 +96,15 @@ public class PersonalAccessTokenService {
 
     /**
      * Ensures the PAT is valid (non-expired).
+     *
      * @param token the token to validate
      * @return the valid token
      * @throws TokenExpiredException when the token is expired
-     * @throws NullPointerException when a required field is null
+     * @throws NullPointerException  when a required field is null
      */
     public PersonalAccessToken ensureTokenValid(PersonalAccessToken token) {
         validator.validateObject(token)
-                .failOnError((err) -> new JwtException("Invalid PAT token: " + err));
+                 .failOnError((err) -> new JwtException("Invalid PAT token: " + err));
         return token;
     }
 
