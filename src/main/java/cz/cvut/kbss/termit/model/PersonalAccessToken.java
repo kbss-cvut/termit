@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.model;
 
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
@@ -9,7 +10,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.PastOrPresent;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -24,7 +25,7 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner)
+    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner, fetch = FetchType.EAGER)
     private UserAccount owner;
 
     @NotNull
@@ -36,7 +37,7 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
     private LocalDate expirationDate;
 
-    @Past
+    @PastOrPresent
     @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
     private Instant lastUsed;
 
