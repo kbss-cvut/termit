@@ -14,7 +14,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
  * to {@link UserDetails} fetched using the {@link UserDetailsService}.
  */
 public class UsernameToUserDetailsConverter implements Converter<Object, UserDetails> {
+
     private static final Logger LOG = LoggerFactory.getLogger(UsernameToUserDetailsConverter.class);
+
     private final UserDetailsService userDetailsService;
 
     public UsernameToUserDetailsConverter(UserDetailsService userDetailsService) {

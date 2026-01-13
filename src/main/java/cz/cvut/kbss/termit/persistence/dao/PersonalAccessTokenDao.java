@@ -11,7 +11,8 @@ import java.util.Objects;
 
 @Repository
 public class PersonalAccessTokenDao extends BaseDao<PersonalAccessToken> {
-    protected PersonalAccessTokenDao(EntityManager em) {
+
+    public PersonalAccessTokenDao(EntityManager em) {
         super(PersonalAccessToken.class, em);
     }
 
