@@ -4,10 +4,10 @@ import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
-import cz.cvut.kbss.termit.model.PersonalAccessToken_;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.PersonalAccessTokenDao;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
      * @return the generated identifier
      */
     private URI generateId() {
-        final URI newId = URI.create(PersonalAccessToken_.entityClassIRI.toString() + "/" + UUID.randomUUID());
+        final URI newId = URI.create(Vocabulary.s_c_osobni_pristupovy_token + "/" + UUID.randomUUID());
         if (exists(newId)) {
             throw ResourceExistsException.create(PersonalAccessToken.class.getSimpleName(), newId);
         }
