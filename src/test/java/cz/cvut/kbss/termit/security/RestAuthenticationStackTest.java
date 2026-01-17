@@ -213,7 +213,7 @@ public class RestAuthenticationStackTest {
                 .andReturn();
         String patToken = result.getResponse().getContentAsString();
         assertFalse(Utils.isBlank(patToken));
-        return patToken;
+        return SecurityConstants.JWT_TOKEN_PREFIX + patToken;
     }
 
     private void mockExistingToken(Supplier<PersonalAccessToken> existingToken) {

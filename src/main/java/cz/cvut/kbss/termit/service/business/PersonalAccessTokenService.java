@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.JwtUtils;
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.repository.PersonalAccessTokenRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
@@ -72,7 +71,7 @@ public class PersonalAccessTokenService {
         newToken.setOwner(currentUser);
 
         repositoryService.persist(newToken);
-        return SecurityConstants.JWT_TOKEN_PREFIX + jwtUtils.generatePAT(newToken);
+        return jwtUtils.generatePAT(newToken);
     }
 
     /**
