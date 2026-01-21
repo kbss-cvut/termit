@@ -66,7 +66,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
                      .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_d_sgov_pracovni_prostor_pojem_vychazi_z_verze))
                      .getSingleResult();
         } catch (NoResultException e) {
-            LOG.debug("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
+            LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
                       uriToString(vocabularyUri));
             return vocabularyUri;
         } catch (NoUniqueResultException e) {
