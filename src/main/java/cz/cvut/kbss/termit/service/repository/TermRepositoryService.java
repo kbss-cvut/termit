@@ -34,10 +34,10 @@ import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
+import cz.cvut.kbss.termit.service.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
@@ -61,28 +61,28 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private final IdentifierResolver idResolver;
 
-    private final Configuration config;
-
     private final TermDao termDao;
 
     private final OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover;
 
     private final VocabularyRepositoryService vocabularyService;
 
+    private final VocabularyNamespaceResolver namespaceResolver;
+
     private final TermOccurrenceService termOccurrenceService;
 
-    public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
-                                 Configuration config, TermDao termDao,
+    public TermRepositoryService(Validator validator, IdentifierResolver idResolver, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
                                  TermOccurrenceService termOccurrenceService,
-                                 VocabularyRepositoryService vocabularyService) {
+                                 VocabularyRepositoryService vocabularyService,
+                                 VocabularyNamespaceResolver namespaceResolver) {
         super(validator);
         this.idResolver = idResolver;
-        this.config = config;
         this.termDao = termDao;
         this.orphanedRelationshipRemover = orphanedRelationshipRemover;
         this.vocabularyService = vocabularyService;
         this.termOccurrenceService = termOccurrenceService;
+        this.namespaceResolver = namespaceResolver;
     }
 
     @Override
@@ -171,8 +171,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     private URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
-        return idResolver.generateDerivedIdentifier(vocabulary.getUri(), config.getNamespace().getTerm().getSeparator(),
-                                                    termLabel.get(vocabulary.getPrimaryLanguage()));
+        return idResolver.generateIdentifier(namespaceResolver.resolveNamespace(vocabulary.getUri()),
+                                             termLabel.get(vocabulary.getPrimaryLanguage()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
