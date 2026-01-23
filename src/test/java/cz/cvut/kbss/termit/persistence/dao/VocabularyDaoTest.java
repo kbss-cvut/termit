@@ -994,4 +994,27 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(Environment.LANGUAGE, primaryLanguage);
         assertEquals(lang, primaryLanguage2);
     }
+
+    @Test
+    void getPreferredNamespaceReturnsStoredVocabularyNamespace() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final String namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/') + 1);
+        vocabulary.setProperties(Map.of(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri, Set.of(namespace)));
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+
+        final Optional<String> result = sut.getPreferredNamespace(vocabulary.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(namespace, result.get());
+    }
+
+    @Test
+    void getPreferredNamespaceReturnsEmptyOptionalForUnknownNamespace() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+
+        final Optional<String> result = sut.getPreferredNamespace(vocabulary.getUri());
+        assertTrue(result.isEmpty());
+    }
 }

@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -48,6 +49,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.VocabularySnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -595,13 +597,37 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * @param vocabularyUri vocabulary identifier
      * @return The vocabulary primary language
      */
-    public String getPrimaryLanguage(URI vocabularyUri) {
+    public String getPrimaryLanguage(@Nonnull URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
             return em.createQuery("SELECT v.primaryLanguage FROM Vocabulary v WHERE v.uri = :vocabularyUri",
                                   String.class)
                      .setParameter("vocabularyUri", vocabularyUri)
                      .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Retrieves the preferred namespace of the vocabulary with the specified identifier.
+     * <p>
+     * The preferred namespace is used as a base for term identifiers.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Optional vocabulary preferred namespace
+     */
+    public Optional<String> getPreferredNamespace(@Nonnull URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            return Optional.of(
+                    em.createNativeQuery("SELECT ?ns WHERE { ?vocabulary ?hasPreferredNamespace ?ns . }", String.class)
+                      .setParameter("vocabulary", vocabularyUri)
+                      .setParameter("hasPreferredNamespace",
+                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri))
+                      .getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
