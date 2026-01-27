@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
+import cz.cvut.kbss.termit.service.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -67,10 +68,13 @@ public class ReadOnlyTermController extends BaseController {
 
     private final ReadOnlyTermService termService;
 
+    private final VocabularyNamespaceResolver namespaceResolver;
+
     public ReadOnlyTermController(IdentifierResolver idResolver, Configuration config,
-                                  ReadOnlyTermService termService) {
+                                  ReadOnlyTermService termService, VocabularyNamespaceResolver namespaceResolver) {
         super(idResolver, config);
         this.termService = termService;
+        this.namespaceResolver = namespaceResolver;
     }
 
     @Operation(description = "Gets terms from the vocabulary with the specified identifier.")
@@ -164,13 +168,8 @@ public class ReadOnlyTermController extends BaseController {
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
-        return idResolver.resolveIdentifier(idResolver
-                                                    .buildNamespace(
-                                                            resolveIdentifier(namespace.orElse(
-                                                                                      config.getNamespace().getVocabulary()),
-                                                                              vocabIdFragment).toString(),
-                                                            config.getNamespace().getTerm().getSeparator()),
-                                            termIdFragment);
+        final URI vocabularyUri = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), vocabIdFragment);
+        return resolveIdentifier(namespaceResolver.resolveNamespace(vocabularyUri), termIdFragment);
     }
 
     @Operation(description = "Gets the term with the specified identifier.")
