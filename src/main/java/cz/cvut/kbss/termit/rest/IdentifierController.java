@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.rest.dto.AssetType;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,9 +42,13 @@ import java.net.URI;
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class IdentifierController extends BaseController {
 
+    private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
+
     @Autowired
-    public IdentifierController(IdentifierResolver identifierResolver, Configuration config) {
+    public IdentifierController(IdentifierResolver identifierResolver, Configuration config,
+                                VocabularyNamespaceResolver vocabularyNamespaceResolver) {
         super(identifierResolver, config);
+        this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
     }
 
     /**
@@ -71,8 +76,8 @@ public class IdentifierController extends BaseController {
         return switch (assetType) {
             case TERM -> {
                 ensureContextIriIsNotNull(assetType, contextIri);
-                yield idResolver
-                        .generateDerivedIdentifier(URI.create(contextIri), cfgNamespace.getTerm().getSeparator(), name);
+                yield idResolver.generateIdentifier(
+                        vocabularyNamespaceResolver.resolveNamespace(URI.create(contextIri)), name);
             }
             case VOCABULARY -> {
                 ensureContextIriIsNull(assetType, contextIri);

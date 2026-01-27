@@ -652,8 +652,7 @@ class ExcelImporterTest {
     void importThrowsVocabularyImportExceptionWhenVocabularyAlreadyContainsTermWithSameLabelAndDifferentIdentifier() {
         initVocabularyResolution();
         when(termService.findIdentifierByLabel(any(), any(), any())).thenReturn(Optional.empty());
-        doReturn(Optional.of(URI.create(
-                vocabulary.getUri() + config.getNamespace().getTerm().getSeparator() + "/Construction"))).when(
+        doReturn(Optional.of(URI.create(vocabulary.getUri() + SEPARATOR + "/Construction"))).when(
                 termService).findIdentifierByLabel("Construction", vocabulary, Constants.DEFAULT_LANGUAGE);
 
 
