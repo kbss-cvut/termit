@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.10</version>
     </parent>
 
     <artifactId>termit</artifactId>
@@ -30,8 +30,8 @@
         <java.version>17</java.version>
         <org.apache.tika.tika-core.version>3.2.2</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.6.2</org.mapstruct.version>
-        <org.springdoc.version>2.8.5</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>2.7.2</cz.cvut.kbss.jopa.version>
+        <org.springdoc.version>2.8.15</org.springdoc.version>
+        <cz.cvut.kbss.jopa.version>2.8.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.15.6</cz.cvut.kbss.jsonld.version>
 
         <packaging>jar</packaging>
@@ -244,7 +244,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.27.1</version>
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
