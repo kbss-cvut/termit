@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -139,12 +138,12 @@ public class DocumentBackupManager {
                     // Compressed file
                     InputStream is = Files.newInputStream(file.toPath());
                     // bzip2 reads from ↑
-                    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is);
+                    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is)
             ) {
                 Files.copy(cis, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile.toFile();
-        } catch (IOException | CompressorException | NullPointerException e) {
+        } catch (IOException | NullPointerException e) {
             throw new BackupManagerException("Unable to decompress file.", e);
         }
     }
@@ -166,10 +165,10 @@ public class DocumentBackupManager {
                 // final bzip2 compressed file
                 OutputStream fos = Files.newOutputStream(compressedFilePath);
                 // bzip2 writes to ↑
-                CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos);
+                CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos)
         ) {
             Files.copy(file.toPath(), cos);
-        } catch (IOException | CompressorException | NullPointerException e) {
+        } catch (IOException | NullPointerException e) {
             throw new BackupManagerException("Unable to compress file.", e);
         }
     }

@@ -501,6 +501,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                        ?relation ?object .
                                                     FILTER(?subject != ?object) .
                                                     FILTER(?relation NOT IN (?excluded)) .
+                                                    FILTER(isIRI(?object)) .
                                                 } ORDER BY ?subject ?relation
                                                 """, "RDFStatement")
                      .setParameter("subject", vocabularyUri)

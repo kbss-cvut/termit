@@ -52,12 +52,12 @@ for more details.
 
 ## Monitoring
 
-[JavaMelody](https://github.com/javamelody/javamelody) can be used for monitoring the application and its usage. The
-data are
-available on the `/monitoring` endpoint and are secured using _basic_ authentication. Credentials are configured using
-the `javamelody.init-parameters.authorized-users`
-parameter in `application.yml` (see
-the [JavaMelody Spring Boot Starter docs](https://github.com/javamelody/javamelody/wiki/SpringBootStarter)).
+Spring Boot Actuator is used for monitoring the application and its usage. By default, Prometheus metrics are
+available on the `/actuator/prometheus`. All actuator endpoints except `/health` are secured using _basic_
+authentication. Credentials are configured using the `termit.actuator.username` (default `actuator`)
+and `termit.actuator.password` (default `kral0vnat3rm1t1st3`) parameters in `application.yml` or as environment
+variables (see
+the [Spring Boot Actuator docs](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)).
 
 ## Documentation
 

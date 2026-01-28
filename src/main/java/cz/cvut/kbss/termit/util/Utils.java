@@ -206,7 +206,7 @@ public class Utils {
         for (final String s : conceptUris) {
             if (!s.startsWith(namespace)) {
                 throw new IllegalArgumentException(
-                        "Not all Concept IRIs have the same namespace: " + conceptUri + " vs. " + namespace);
+                        "Not all Concept IRIs have the same namespace: " + s + " vs. " + namespace);
             }
         }
         return namespace;

@@ -27,6 +27,8 @@ import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
@@ -51,9 +53,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -93,8 +93,9 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                 String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
                 TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
 
-                TupleQueryResult result = query.evaluate();
-                response = extractListOfAvailableVocabularies(result);
+                try (TupleQueryResult result = query.evaluate()) {
+                    response = extractListOfAvailableVocabularies(result);
+                }
 
             } catch (QueryEvaluationException e) {
                 LOG.error("Failed to get available vocabularies.", e);
@@ -123,30 +124,29 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     private List<RdfsResource> extractListOfAvailableVocabularies(
             final TupleQueryResult result) throws QueryEvaluationException {
         List<RdfsResource> response = new ArrayList<>();
+        RdfsResource current = null;
 
         while (result.hasNext()) {
             BindingSet line = result.next();
-            if (!line.hasBinding("slovnik")) {
-                LOG.error("Error: no slovnik binding in: {}", line);
-                continue;
+            assert line.hasBinding("voc");
+            URI uri = URI.create(line.getBinding("voc").getValue().stringValue());
+            if (current == null || !uri.equals(current.getUri())) {
+                current = new RdfsResource();
+                current.setUri(uri);
+                current.setLabel(new MultilingualString());
+                response.add(current);
             }
-            URI uri = URI.create(line.getBinding("slovnik").getValue().stringValue());
-            Map<String, String> labels = new HashMap<>();
-
-            // add cs label if available
-            if (line.hasBinding("nazev_slovniku_cs")) {
-                labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
-            } else {
-                labels.put("cs", uri.toString());
+            if (line.hasBinding("label")) {
+                final Value label = line.getBinding("label").getValue();
+                assert label.isLiteral();
+                final String labelStr = label.stringValue();
+                final Optional<String> lang = ((Literal) label).getLanguage();
+                if (lang.isPresent()) {
+                    current.getLabel().set(lang.get(), labelStr);
+                } else {
+                    current.getLabel().set(labelStr);
+                }
             }
-            // add en label if available
-            if (line.hasBinding("nazev_slovniku_en")) {
-                labels.put("en", line.getBinding("nazev_slovniku_en").getValue().stringValue());
-            } else {
-                labels.put("en", uri.toString());
-            }
-            MultilingualString label = new MultilingualString(labels);
-            response.add(new RdfsResource(uri, label, new MultilingualString(), ""));
         }
         return response;
     }
@@ -157,10 +157,12 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         Vocabulary firstImportedVocabulary = null;
 
         for (String vocabularyIri : vocabularyIris) {
-            LOG.trace("Starting import of external vocabulary {}", vocabularyIri);
+            LOG.debug("Starting import of external vocabulary {}.", vocabularyIri);
+            LOG.trace("Fetching vocabulary data.");
             InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
             if (newVocabulary != null) {
                 URI uri = URI.create(vocabularyIri);
+                LOG.trace("Importing vocabulary from downloaded data.");
                 Vocabulary vocabulary =
                         repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
@@ -175,7 +177,7 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                     eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
                 }
 
-                LOG.trace("Vocabulary {} import was successful.", vocabularyIri);
+                LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
 
                 if (firstImportedVocabulary == null) {
                     firstImportedVocabulary = vocabulary;

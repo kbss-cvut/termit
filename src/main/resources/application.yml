@@ -2,10 +2,25 @@ application.version: '@project.version@'
 
 management:
     endpoints:
-        enabled-by-default: false
+        web:
+            exposure:
+                include: "health, info, metrics, prometheus"
+    info:
+        java:
+            enabled: true
+        os:
+            enabled: true
+    metrics:
+        distribution:
+            percentiles:
+              http.server.requests: 0.005,0.01,0.025,0.05,0.1,0.25,0.5,1
+            percentiles-histogram:
+              http.server.requests: true
     endpoint:
         health:
-            enabled: true
+            access: unrestricted
+        metrics:
+            access: read_only
 
 server:
     servlet:
@@ -39,9 +54,6 @@ spring:
                         enable: true
     profiles:
         active: '@spring.profiles.active@'
-javamelody:
-    init-parameters:
-        authorized-users: admin:kral0vnat3rm1t1st3
 termit:
     security:
         provider: "internal"
