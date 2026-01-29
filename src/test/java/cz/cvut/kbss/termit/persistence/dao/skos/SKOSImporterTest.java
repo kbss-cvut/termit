@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeExcepti
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -70,6 +71,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -671,6 +673,25 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                                                                                    """.getBytes(
                                                                                           StandardCharsets.UTF_8)))));
             assertEquals("error.vocabulary.import.skos.vocabularyIriEqualsGlossaryIri", ex.getMessageId());
+        });
+    }
+
+    @Test
+    void importResolvesVocabularyNamespaceFromTermIrisWhenItIsNotExplicitlySpecified() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                                                    Environment.loadFile(
+                                                                            "data/test-glossary-no-separator.ttl")));
+        });
+
+        final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
+        assertTrue(result.isPresent());
+        final List<Term> terms = em.createQuery("SELECT t FROM Term t", Term.class).getResultList();
+        terms.forEach(t -> {
+            assertThat(t.getUri().toString(), startsWith(VOCABULARY_IRI_S));
+            assertThat(t.getUri().toString(), not(containsString("/pojem")));
         });
     }
 }

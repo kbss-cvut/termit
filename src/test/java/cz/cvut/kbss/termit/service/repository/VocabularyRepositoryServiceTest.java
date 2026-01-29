@@ -176,7 +176,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(result);
         assertThat(result.getProperties().keySet(),
                    hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
-        assertEquals(Set.of(result.getUri() + config.getNamespace().getTerm().getSeparator()),
+        assertEquals(Set.of(result.getUri() + config.getNamespace().getTerm().getSeparator() + "/"),
                      result.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
     }
 

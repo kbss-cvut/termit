@@ -38,6 +38,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.MessageFormatter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporters;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -60,7 +61,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -81,18 +81,22 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final VocabularyImporters importers;
 
+    private final VocabularyNamespaceResolver namespaceResolver;
+
     private final DtoMapper dtoMapper;
 
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, EditableVocabularies editableVocabularies,
-                                       Configuration config, VocabularyImporters importers, DtoMapper dtoMapper) {
+                                       Configuration config, VocabularyImporters importers,
+                                       VocabularyNamespaceResolver namespaceResolver, DtoMapper dtoMapper) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.editableVocabularies = editableVocabularies;
         this.config = config;
         this.importers = importers;
+        this.namespaceResolver = namespaceResolver;
         this.dtoMapper = dtoMapper;
     }
 
@@ -141,7 +145,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
         initDocument(instance);
-        initPreferredNamespace(instance);
+        namespaceResolver.setVocabularyPreferredNamespace(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
         }
@@ -170,17 +174,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                 new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
                                                                                           vocabulary.getPrimaryLabel()));
         vocabulary.setDocument(doc);
-    }
-
-    private void initPreferredNamespace(Vocabulary vocabulary) {
-        if (vocabulary.getProperties() == null) {
-            vocabulary.setProperties(new HashMap<>());
-        }
-        if (!vocabulary.getProperties().containsKey(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)) {
-            vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
-                                           Set.of(vocabulary.getUri() + config.getNamespace().getTerm()
-                                                                              .getSeparator()));
-        }
     }
 
     @Override
