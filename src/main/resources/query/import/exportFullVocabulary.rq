@@ -38,8 +38,10 @@ CONSTRUCT {
 	  ?glossary dc:rights ?rights .
 	}
 	OPTIONAL {
-	  ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-		    <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+	  ?vocabulary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri .
+	}
+	OPTIONAL {
+	  ?vocabulary <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
 	}
 	OPTIONAL {
 	  ?glossary <http://purl.org/ontology/bibo/status> ?status .

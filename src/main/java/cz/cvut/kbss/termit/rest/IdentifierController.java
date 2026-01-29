@@ -21,7 +21,7 @@ import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.rest.dto.AssetType;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

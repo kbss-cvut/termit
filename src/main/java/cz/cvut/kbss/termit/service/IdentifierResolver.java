@@ -143,9 +143,7 @@ public class IdentifierResolver {
                 throw new TermItException(e);
             }
         }
-        if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
-            namespace += "/";
-        }
+        namespace = ensureNamespaceSeparatorTermination(namespace);
         final String localPart = asciiOnlyIdentifiers ? normalizeToAscii(comps) : normalize(comps);
         try {
             return URI.create(namespace + localPart);
@@ -155,6 +153,22 @@ public class IdentifierResolver {
                     e,
                     "error.identifier.invalidCharacters");
         }
+    }
+
+    /**
+     * Ensures the specified namespace ends with a separator.
+     * <p>
+     * If the namespace does not end with {@literal /} or {@literal #}, a {@literal /} is appended to it.
+     *
+     * @param namespace Namespace candidate
+     * @return Namespace ending with a separator
+     */
+    public static String ensureNamespaceSeparatorTermination(String namespace) {
+        Objects.requireNonNull(namespace);
+        if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
+            namespace += "/";
+        }
+        return namespace;
     }
 
     /**

@@ -188,7 +188,7 @@ public class Utils {
     }
 
     /**
-     * Extracts the necessary vocabulary IRI from the namespace of the current concepts.
+     * Extracts the necessary vocabulary IRI from the namespace of the specified concepts.
      *
      * @param conceptUris   set of concept IRIs
      * @param termSeparator separator between a term local name and vocabulary IRI
@@ -196,7 +196,7 @@ public class Utils {
      * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept, or the
      *                                  concept IRI is not an absolute IRI.
      */
-    public static String getVocabularyIri(final Set<String> conceptUris, String termSeparator) {
+    public static String extractVocabularyIriFromTermIris(final Set<String> conceptUris, String termSeparator) {
         if (conceptUris.isEmpty()) {
             throw new IllegalArgumentException("No namespace candidate.");
         }

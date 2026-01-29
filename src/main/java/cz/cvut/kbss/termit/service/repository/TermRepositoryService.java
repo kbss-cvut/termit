@@ -34,7 +34,7 @@ import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
-import cz.cvut.kbss.termit.service.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
