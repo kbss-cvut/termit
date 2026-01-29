@@ -64,7 +64,7 @@ public class AppAdminBean implements SelfNaming {
         this.luceneConnectorInitializer = luceneConnectorInitializer;
     }
 
-    @CacheEvict(allEntries = true, cacheNames = {"vocabularies"})
+    @CacheEvict(allEntries = true, cacheNames = {"vocabularies", "vocabularyNamespace", "acls"})
     @ManagedOperation(description = "Invalidates the application caches.")
     public void invalidateCaches() {
         LOG.info("Invalidating application caches...");
