@@ -52,7 +52,6 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -805,7 +804,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void internalAddRealtionCreatesRelation() {
+    void internalAddRelationCreatesRelation() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
         final URI relation = URI.create(SKOS.RELATED);
@@ -837,39 +836,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     /**
-     * term - relation - secondTerm
-     */
-    @ParameterizedTest
-    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
-    void getAnyExternalRelationsReturnsTermsWithOutgoingRelations(URI termRelation) {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
-
-        transactional(() -> {
-            sut.persist(vocabulary);
-            sut.persist(secondVocabulary);
-
-            em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-
-            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
-            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
-
-            Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
-        });
-
-        final List<RdfStatement> relations = sut.getTermRelations(vocabulary);
-
-        assertEquals(1, relations.size());
-        final RdfStatement relation = relations.get(0);
-        assertEquals(term.getUri(), relation.getSubject());
-        assertEquals(termRelation, relation.getRelation());
-        assertEquals(secondTerm.getUri(), relation.getObject());
-    }
-
-    /**
      * secondTerm - relation - term
      */
     @ParameterizedTest
@@ -893,54 +859,13 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
         });
 
-        final List<RdfStatement> relations = sut.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = sut.getIncomingTermRelations(vocabulary);
 
         assertEquals(1, relations.size());
         final RdfStatement relation = relations.get(0);
         assertEquals(secondTerm.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
         assertEquals(term.getUri(), relation.getObject());
-    }
-
-    /**
-     * secondTerm - relation - term<br>
-     * term - relation - secondTerm
-     */
-    @ParameterizedTest
-    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
-    void getAnyExternalRelationsReturnsTermsWithBothRelations(URI termRelation) {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
-
-        transactional(() -> {
-            sut.persist(vocabulary);
-            sut.persist(secondVocabulary);
-
-            em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-
-            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
-            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
-
-            Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
-            Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
-        });
-
-        final List<RdfStatement> relations = sut.getTermRelations(vocabulary);
-
-        assertEquals(2, relations.size());
-        relations.forEach(relation -> {
-            assertEquals(termRelation, relation.getRelation());
-            if(relation.getObject().equals(term.getUri())) {
-                assertEquals(secondTerm.getUri(), relation.getSubject());
-            } else if(relation.getObject().equals(secondTerm.getUri())) {
-                assertEquals(term.getUri(), relation.getSubject());
-            } else {
-                Assertions.fail("The Relation object is neither a term nor a secondTerm");
-            }
-        });
     }
 
     @Test
