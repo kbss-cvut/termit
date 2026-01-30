@@ -601,7 +601,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("context", context(vocabulary))
                          .setParameter("vocabulary", vocabulary.getUri())
-                         .setParameter("labelLang", config.getLanguage())
+                         .setParameter("labelLang", vocabulary.getPrimaryLanguage())
                          .setParameter("included", includeTerms)
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
@@ -766,7 +766,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                             .setParameter("vocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
                                             .setMaxResults(pageSpec.getPageSize())
                                             .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -807,7 +807,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                 .setParameter("hasLabel", LABEL_PROP)
                                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                                 .setParameter("vocabulary", vocabulary.getUri())
-                                                .setParameter("searchString", searchString, config.getLanguage())
+                                                .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
                                                 .setMaxResults(pageSpec.getPageSize())
                                                 .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -857,7 +857,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                       .setFirstResult((int) pageable.getOffset())
                                       .setMaxResults(pageable.getPageSize());
         if (!searchString.isBlank()) {
-            query.setParameter("searchString", searchString, config.getLanguage());
+            query.setParameter("searchString", searchString);
         }
         return query;
     }
@@ -916,7 +916,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                           URI.create(
                                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                             .setParameter("targetVocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
                                             .setMaxResults(pageSpec.getPageSize())
                                             .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -958,7 +958,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                               URI.create(
                                                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                                 .setParameter("targetVocabulary", vocabulary.getUri())
-                                                .setParameter("searchString", searchString, config.getLanguage())
+                                                .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
                                                 .setMaxResults(pageSpec.getPageSize())
                                                 .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -1017,7 +1017,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                      .setParameter("vocabulary", vocabulary.getUri())
                      .setParameter("searchString", label,
-                                   languageTag != null ? languageTag : config.getLanguage()).getSingleResult();
+                                   languageTag != null ? languageTag : vocabulary.getPrimaryLanguage()).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -1049,7 +1049,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                  .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                  .setParameter("vocabulary", vocabulary.getUri())
                                  .setParameter("searchString", label,
-                                               languageTag != null ? languageTag : config.getLanguage())
+                                               languageTag != null ? languageTag : vocabulary.getPrimaryLanguage())
                                  .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
