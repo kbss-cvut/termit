@@ -79,54 +79,46 @@ class UtilsTest {
     }
 
     @Test
-    public void extractVocabularyIriReturnsCorrectVocabularyIriFromTermIrisIfAllConceptsHaveTheSameNamespace() {
+    public void extractVocabularyNamespaceReturnsCorrectNamespaceFromTermIrisIfAllConceptsHaveTheSameNamespace() {
         final Set<String> conceptIris = new HashSet<>();
         final String vocabularyIri = "https://example.org";
-        final String namespace = vocabularyIri + "/pojem";
+        final String namespace = vocabularyIri + "/pojem/";
         conceptIris.add(namespace + "A");
         conceptIris.add(namespace + "B");
-        Assert.equals(vocabularyIri, Utils.extractVocabularyIriFromTermIris(conceptIris, "/pojem"));
+        Assert.equals(namespace, Utils.extractVocabularyNamespaceFromTermIris(conceptIris));
     }
 
     @Test
-    public void extractVocabularyIriReturnsCorrectVocabularyIriFromTermIrisForTermItVocabularies() {
-        final Set<String> conceptIris = new HashSet<>();
-        final String vocabularyIri = "https://example.org";
-        final String namespace = vocabularyIri + "/pojem";
-        conceptIris.add(namespace + "A");
-        Assert.equals(vocabularyIri, Utils.extractVocabularyIriFromTermIris(conceptIris, "/pojem"));
-    }
-
-    @Test
-    public void extractVocabularyIriReturnsCorrectVocabularyIriFromTermIrisForExternalSlashVocabularies() {
+    public void extractVocabularyNamespaceReturnsCorrectNamespaceFromTermIrisWithSlashSeparator() {
         final Set<String> conceptIris = new HashSet<>();
         final String vocabularyIri = "https://example.org";
         final String namespace = vocabularyIri + "/";
         conceptIris.add(namespace + "A");
-        Assert.equals(vocabularyIri, Utils.extractVocabularyIriFromTermIris(conceptIris, "/pojem"));
+        Assert.equals(namespace, Utils.extractVocabularyNamespaceFromTermIris(conceptIris));
     }
 
     @Test
-    public void extractVocabularyIriReturnsCorrectVocabularyIriFromTermIrisForExternalHashVocabularies() {
+    public void extractVocabularyNamespaceReturnsCorrectNamespaceFromTermIrisWithHashSeparator() {
         final Set<String> conceptIris = new HashSet<>();
         final String vocabularyIri = "https://example.org";
         final String namespace = vocabularyIri + "#";
         conceptIris.add(namespace + "A");
-        Assert.equals(vocabularyIri, Utils.extractVocabularyIriFromTermIris(conceptIris, "/pojem"));
+        Assert.equals(namespace, Utils.extractVocabularyNamespaceFromTermIris(conceptIris));
     }
 
     @Test
-    public void extractVocabularyIriFromTermIrisThrowsExceptionIfNoConceptIsProvided() {
+    public void extractVocabularyNamespaceFromTermIrisThrowsExceptionIfNoConceptIsProvided() {
         Assertions.assertThrows(IllegalArgumentException.class,
-                                () -> Utils.extractVocabularyIriFromTermIris(Collections.emptySet(), "/pojem"));
+                                () -> Utils.extractVocabularyNamespaceFromTermIris(Collections.emptySet()));
     }
 
     @Test
-    public void extractVocabularyIriFromTermIrisThrowsExceptionIfConceptsWithDifferentNamespacesAreProvided() {
+    public void extractVocabularyNamespaceFromTermIrisThrowsExceptionIfConceptsWithDifferentNamespacesAreProvided() {
         final Set<String> conceptIris = new HashSet<>();
         conceptIris.add("https://example.org/pojem/A");
         conceptIris.add("https://example2.org/pojem/B");
-        Assertions.assertThrows(IllegalArgumentException.class, () -> Utils.extractVocabularyIriFromTermIris(conceptIris, "/pojem"));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                                () -> Utils.extractVocabularyNamespaceFromTermIris(conceptIris));
     }
 
     @Test

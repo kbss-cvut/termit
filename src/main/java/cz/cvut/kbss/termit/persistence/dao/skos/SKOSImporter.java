@@ -105,7 +105,7 @@ public class SKOSImporter implements VocabularyImporter {
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
-    private Optional<String> namespace;
+    private String namespace;
     private IRI glossaryIri;
 
     @Autowired
@@ -278,32 +278,32 @@ public class SKOSImporter implements VocabularyImporter {
         }
     }
 
-    private Optional<String> resolveVocabularyNamespaceFromData() {
+    private String resolveVocabularyNamespaceFromData() {
         final Optional<String> ns = model.filter(null,
                                                  vf.createIRI(
                                                          cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri),
                                                  null).stream().map(s -> s.getObject().stringValue())
                                          .findFirst();
-        ns.ifPresent(s -> LOG.trace("Found preferred namespace URI: {}", s));
-        return ns;
+        ns.ifPresent(s -> LOG.trace("Found explicit preferred namespace URI: {}", s));
+        return IdentifierResolver.ensureNamespaceSeparatorTermination(ns.orElseGet(() -> {
+            final String result = Utils.extractVocabularyNamespaceFromTermIris(
+                    model.filter(null, RDF.TYPE, SKOS.CONCEPT)
+                         .stream()
+                         .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()));
+            LOG.trace("Extracted namespace {} from term identifiers.", result);
+            return result;
+        }));
     }
 
     private String resolveVocabularyIriFromImportedData() {
-        if (namespace.isPresent()) {
-            String ns = namespace.get();
-            if (ns.contains(config.getNamespace().getTerm().getSeparator())) {
-                ns = ns.substring(0, ns.indexOf(config.getNamespace().getTerm().getSeparator()));
-            }
-            if (ns.endsWith("/") || ns.endsWith("#")) {
-                return ns.substring(0, ns.length() - 1);
-            }
-            return ns;
+        String iri = namespace;
+        if (iri.contains(config.getNamespace().getTerm().getSeparator())) {
+            iri = iri.substring(0, iri.indexOf(config.getNamespace().getTerm().getSeparator()));
         }
-        return Utils.extractVocabularyIriFromTermIris(
-                model.filter(null, RDF.TYPE, SKOS.CONCEPT)
-                     .stream()
-                     .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()),
-                config.getNamespace().getTerm().getSeparator());
+        if (iri.endsWith("/") || iri.endsWith("#")) {
+            return iri.substring(0, iri.length() - 1);
+        }
+        return iri;
     }
 
     private void removeTopConceptOfAssertions() {
@@ -491,8 +491,7 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyNamespaceInfoFromData(Vocabulary vocabulary) {
-        namespaceResolver.setVocabularyPreferredNamespace(vocabulary, namespace.orElse(
-                IdentifierResolver.ensureNamespaceSeparatorTermination(vocabulary.getUri().toString())));
+        namespaceResolver.setVocabularyPreferredNamespace(vocabulary, namespace);
         final Model prefixModel = model.filter(null, vf.createIRI(
                 cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix), null);
         prefixModel.forEach(s -> {

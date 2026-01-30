@@ -48,7 +48,6 @@ public class SystemInitializer implements SmartInitializingSingleton, Ordered {
         appContext.getBean(VocabularyAccessControlListGenerator.class).generateMissingAccessControlLists();
         appContext.getBean(VocabularyAnonymousAccessControlListGenerator.class).generateMissingAccessControlLists();
         appContext.getBean(GraphDBLuceneConnectorInitializer.class).initialize();
-        appContext.getBean(VocabularyPreferredNamespaceGenerator.class).generatePreferredNamespace();
     }
 
     @Override
