@@ -128,14 +128,14 @@ public class Constants {
      * SKOS relationships between concepts from different concept schemes (glossaries).
      */
     public static final Set<URI> SKOS_CONCEPT_MATCH_RELATIONSHIPS = Stream.of(
-            SKOS.BROAD_MATCH, SKOS.NARROW_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH
+            SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH
     ).map(URI::create).collect(Collectors.toSet());
 
     /**
      * Relations between vocabularies that do not prevent vocabulary to be removed
      */
     public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
-            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku
+            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku, Vocabulary.s_p_importuje_slovnik
     ).map(URI::create).collect(Collectors.toSet());
 
     /**

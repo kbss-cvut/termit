@@ -368,7 +368,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      *                               {@code vocabulary}
      */
     private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
-        final List<RdfStatement> relations = vocabularyDao.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = vocabularyDao.getIncomingTermRelations(vocabulary);
         if (!relations.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. There are relations with other vocabularies.");
@@ -380,7 +380,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
-        return vocabularyDao.getTermRelations(vocabulary);
+        return vocabularyDao.getIncomingTermRelations(vocabulary);
     }
 
     public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
