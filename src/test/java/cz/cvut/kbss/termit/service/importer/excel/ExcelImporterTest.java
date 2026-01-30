@@ -621,7 +621,7 @@ class ExcelImporterTest {
         englishSheet.getRow(1).createCell(0).setCellValue("Construction");
         final Sheet czechSheet = input.getSheet("Czech");
         czechSheet.getRow(1).createCell(0).setCellValue("Konstrukce");
-        czechSheet.getRow(1).createCell(9).setCellValue("Publikovaný pojem");
+        czechSheet.getRow(1).createCell(10).setCellValue("Publikovaný pojem");
         czechSheet.getRow(1).createCell(5).setCellValue("Typ objektu");
         final Term type = Generator.generateTermWithId();
         type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
