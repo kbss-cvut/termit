@@ -105,7 +105,7 @@ public class IdentifierResolver {
         Objects.requireNonNull(value);
         return value.toLowerCase()
                     .trim()
-                    .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER))
+                    .replaceAll("[\\s/\\\\\\p{Z}]", Character.toString(REPLACEMENT_CHARACTER))
                     .replaceAll("[(?&$#§),\\[\\]@]", "");
     }
 
