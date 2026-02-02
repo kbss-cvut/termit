@@ -38,6 +38,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.MessageFormatter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporters;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -49,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -59,7 +61,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -80,18 +81,22 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final VocabularyImporters importers;
 
+    private final VocabularyNamespaceResolver namespaceResolver;
+
     private final DtoMapper dtoMapper;
 
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, EditableVocabularies editableVocabularies,
-                                       Configuration config, VocabularyImporters importers, DtoMapper dtoMapper) {
+                                       Configuration config, VocabularyImporters importers,
+                                       VocabularyNamespaceResolver namespaceResolver, DtoMapper dtoMapper) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.editableVocabularies = editableVocabularies;
         this.config = config;
         this.importers = importers;
+        this.namespaceResolver = namespaceResolver;
         this.dtoMapper = dtoMapper;
     }
 
@@ -102,7 +107,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Transactional(readOnly = true)
     // Cache only if all vocabularies are editable
-    @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
+    @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable",
+               cacheNames = "vocabularies")
     @Override
     public List<VocabularyDto> findAll() {
         return super.findAll();
@@ -122,7 +128,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return dtoMapper.vocabularyToVocabularyDto(entity);
     }
 
-    @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true, cacheNames = "vocabularies")
     @Override
     @Transactional
     public void persist(@Nonnull Vocabulary instance) {
@@ -139,7 +145,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
         initDocument(instance);
-        initPreferredNamespace(instance);
+        namespaceResolver.setVocabularyPreferredNamespace(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
         }
@@ -168,16 +174,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                 new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
                                                                                           vocabulary.getPrimaryLabel()));
         vocabulary.setDocument(doc);
-    }
-
-    private void initPreferredNamespace(Vocabulary vocabulary) {
-        if (vocabulary.getProperties() == null) {
-            vocabulary.setProperties(new HashMap<>());
-        }
-        if (!vocabulary.getProperties().containsKey(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)) {
-            vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
-                                          Set.of(vocabulary.getUri() + config.getNamespace().getTerm().getSeparator()));
-        }
     }
 
     @Override
@@ -209,7 +205,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#instance)")
-    @CacheEvict(allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(allEntries = true, cacheNames = "vocabularies"),
+            @CacheEvict(key = "#instance.getUri()", cacheNames = "vocabularyNamespace")
+    })
     @Override
     @Transactional
     public Vocabulary update(Vocabulary instance) {
@@ -244,7 +243,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
-    @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true, cacheNames = "vocabularies")
     @Transactional
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
         Objects.requireNonNull(file);
@@ -260,7 +259,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true, cacheNames = "vocabularies")
     @Transactional
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(vocabularyIri);
@@ -277,7 +276,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true, cacheNames = "vocabularies")
     @Transactional
     public Vocabulary importVocabulary(URI vocabularyIri, String contentType, InputStream inputStream) {
         Objects.requireNonNull(vocabularyIri);
@@ -292,6 +291,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
         }
     }
+
     @Transactional
     public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(vocabularyIri);
@@ -319,7 +319,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * </ul>
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
-    @CacheEvict(allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(allEntries = true, cacheNames = "vocabularies"),
+            @CacheEvict(key = "#instance.getUri()", cacheNames = "vocabularyNamespace")
+    })
     @Transactional
     @Override
     public void remove(Vocabulary instance) {
@@ -365,7 +368,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      *                               {@code vocabulary}
      */
     private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
-        final List<RdfStatement> relations = vocabularyDao.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = vocabularyDao.getIncomingTermRelations(vocabulary);
         if (!relations.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. There are relations with other vocabularies.");
@@ -377,7 +380,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
-        return vocabularyDao.getTermRelations(vocabulary);
+        return vocabularyDao.getIncomingTermRelations(vocabulary);
     }
 
     public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {

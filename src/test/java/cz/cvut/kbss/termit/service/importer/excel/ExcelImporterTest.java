@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.language.LanguageService;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -73,6 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -81,6 +83,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ExcelImporterTest {
+
+    private static final String SEPARATOR = "/terms";
 
     @Mock
     private VocabularyDao vocabularyDao;
@@ -108,6 +112,9 @@ class ExcelImporterTest {
     @Spy
     private IdentifierResolver idResolver = new IdentifierResolver(config);
 
+    @Mock
+    private VocabularyNamespaceResolver namespaceResolver;
+
     @InjectMocks
     private ExcelImporter sut;
 
@@ -116,7 +123,7 @@ class ExcelImporterTest {
     @BeforeEach
     void setUp() {
         this.vocabulary = Generator.generateVocabularyWithId();
-        config.getNamespace().getTerm().setSeparator("/terms");
+        vocabulary.setUri(URI.create("http://example.com"));
         config.getPersistence().setLanguage(Environment.LANGUAGE);
     }
 
@@ -155,6 +162,8 @@ class ExcelImporterTest {
     void importCreatesRootTermsWithBasicAttributesFromEnglishSheet() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        doAnswer(inv -> inv.getArgument(0).toString() + SEPARATOR).when(namespaceResolver)
+                                                                  .resolveNamespace(any(URI.class));
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -178,8 +187,7 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesRootTermsWithPluralBasicAttributesFromEnglishSheet() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -212,8 +220,7 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesRootTermsWithBasicAttributesFromMultipleTranslationSheets() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -242,8 +249,7 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesRootTermsWithPluralBasicAttributesFromMultipleTranslationSheets() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -278,8 +284,7 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesTermHierarchy() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -301,8 +306,7 @@ class ExcelImporterTest {
 
     @Test
     void importSavesRelationshipsBetweenTerms() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -322,8 +326,7 @@ class ExcelImporterTest {
 
     @Test
     void importImportsTermsWhenAnotherLanguageSheetIsEmpty() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -347,8 +350,7 @@ class ExcelImporterTest {
 
     @Test
     void importFallsBackToEnglishColumnLabelsForUnknownLanguages() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -398,9 +400,10 @@ class ExcelImporterTest {
     }
 
     private void initVocabularyResolution() {
-        vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        doAnswer(inv -> inv.getArgument(0).toString() + SEPARATOR).when(namespaceResolver)
+                                                                  .resolveNamespace(any(URI.class));
     }
 
     @Test
@@ -433,8 +436,7 @@ class ExcelImporterTest {
 
     @Test
     void importAdjustsTermIdentifiersToUseExistingVocabularyIdentifierAndSeparatorAsNamespace() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -445,10 +447,10 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
-                                                                                       vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/building"),
+                                                                                       vocabulary.getUri().toString() + SEPARATOR + "/building"),
                                                                                t.getUri())));
         assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
-                                                                                       vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/construction"),
+                                                                                       vocabulary.getUri().toString() + SEPARATOR + "/construction"),
                                                                                t.getUri())));
     }
 
@@ -506,8 +508,7 @@ class ExcelImporterTest {
 
     @Test
     void importResolvesTermStateAndTypesUsingLabels() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final Term type = Generator.generateTermWithId();
         type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
         type.setLabel(MultilingualString.create("Object Type", Constants.DEFAULT_LANGUAGE));
@@ -534,8 +535,7 @@ class ExcelImporterTest {
 
     @Test
     void importSetsConfiguredInitialTermStateWhenSheetDoesNotSpecifyIt() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final RdfsResource state = new RdfsResource(
                 URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
                 MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
@@ -587,7 +587,8 @@ class ExcelImporterTest {
 
     @Test
     void importThrowsVocabularyImportExceptionWhenSheetContainsDuplicateIdentifiers() throws Exception {
-        initVocabularyResolution();
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
         final Sheet sheet = input.getSheet("English");
         sheet.shiftColumns(0, 12, 1);
@@ -620,7 +621,7 @@ class ExcelImporterTest {
         englishSheet.getRow(1).createCell(0).setCellValue("Construction");
         final Sheet czechSheet = input.getSheet("Czech");
         czechSheet.getRow(1).createCell(0).setCellValue("Konstrukce");
-        czechSheet.getRow(1).createCell(9).setCellValue("Publikovaný pojem");
+        czechSheet.getRow(1).createCell(10).setCellValue("Publikovaný pojem");
         czechSheet.getRow(1).createCell(5).setCellValue("Typ objektu");
         final Term type = Generator.generateTermWithId();
         type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
@@ -649,11 +650,9 @@ class ExcelImporterTest {
 
     @Test
     void importThrowsVocabularyImportExceptionWhenVocabularyAlreadyContainsTermWithSameLabelAndDifferentIdentifier() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         when(termService.findIdentifierByLabel(any(), any(), any())).thenReturn(Optional.empty());
-        doReturn(Optional.of(URI.create(
-                vocabulary.getUri() + config.getNamespace().getTerm().getSeparator() + "/Construction"))).when(
+        doReturn(Optional.of(URI.create(vocabulary.getUri() + SEPARATOR + "/Construction"))).when(
                 termService).findIdentifierByLabel("Construction", vocabulary, Constants.DEFAULT_LANGUAGE);
 
 
@@ -761,6 +760,8 @@ class ExcelImporterTest {
     void importTermTranslationsUsesTermLabelToResolveIdentifierWhenExcelDoesNotContainIdentifiers() {
         vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        doAnswer(inv -> inv.getArgument(0).toString() + SEPARATOR).when(namespaceResolver)
+                                                                  .resolveNamespace(any(URI.class));
         vocabulary.setPrimaryLanguage("cs");
         final Term building = initTermBuilding();
 
@@ -837,7 +838,8 @@ class ExcelImporterTest {
 
     @Test
     void importThrowsReferencedTermInUnrelatedVocabularyExceptionWhenReferencedExternalParentIsFromUnrelatedVocabulary() {
-        initVocabularyResolution();
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());

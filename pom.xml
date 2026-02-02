@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>4.4.0</version>
+    <version>4.4.1</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>

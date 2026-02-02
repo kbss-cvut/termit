@@ -339,7 +339,7 @@ class IdentifierResolverTest {
     @Test
     void generateIdentifierThrowsInvalidIdentifierExceptionWhenComponentsContainsUnforeseenInvalidCharacters() {
         final String namespace = Vocabulary.s_c_slovnik;
-        final String label = "label with emoji \u3000"; // Ideographic space
+        final String label = "label with double quotes \"";
         assertThrows(InvalidIdentifierException.class, () -> sut.generateIdentifier(namespace, label));
     }
 

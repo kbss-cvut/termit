@@ -922,7 +922,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
      */
     @Test
     void findAllRootsReturnsTermsInMultipleLanguagesWithoutPrimaryLabelInCorrectOrder() {
-        configuration.getPersistence().setLanguage("cs");
+        configuration.getPersistence().setLanguage("en");
         persistTerms("cs", "Německo", "Čína");
         persistTerms("af", "Duitsland", "Sjina");
         persistTerms("en", "Germany", "China");
@@ -938,10 +938,10 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         }).toList();
 
         final List<String> expectedOrder = Arrays.asList(
-                "Čína", "Německo", // Czech as first, its default language
+                "China", "Germany", // English as first, its the vocabulary's primary language
                 "Duitsland", "Sjina",
+                "Čína", "Německo",
                 "Kina", "Tyskland",
-                "China", "Germany",
                 "Chiny", "Niemcy"
         );
 

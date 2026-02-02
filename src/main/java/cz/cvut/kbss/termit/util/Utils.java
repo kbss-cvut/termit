@@ -188,21 +188,22 @@ public class Utils {
     }
 
     /**
-     * Extracts the necessary vocabulary IRI from the namespace of the current concepts.
+     * Extracts the necessary vocabulary namespace from the specified concept identifiers.
+     * <p>
+     * It is assumed the vocabulary namespace is the same for all concepts.
      *
-     * @param conceptUris   set of concept IRIs
-     * @param termSeparator separator between a term local name and vocabulary IRI
-     * @return IRI of the vocabulary
-     * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept, or the
-     *                                  concept IRI is not an absolute IRI.
+     * @param conceptUris set of concept IRIs
+     * @return vocabulary namespace
+     * @throws IllegalArgumentException if the namespace is not the same in all concept IRIs, there is no concept, or
+     *                                  the concept IRI is not an absolute IRI.
      */
-    public static String getVocabularyIri(final Set<String> conceptUris, String termSeparator) {
+    public static String extractVocabularyNamespaceFromTermIris(final Set<String> conceptUris) {
         if (conceptUris.isEmpty()) {
             throw new IllegalArgumentException("No namespace candidate.");
         }
         final Iterator<String> i = conceptUris.iterator();
         final String conceptUri = i.next();
-        final String namespace = extractNamespace(termSeparator, conceptUri);
+        final String namespace = extractNamespace(conceptUri);
         for (final String s : conceptUris) {
             if (!s.startsWith(namespace)) {
                 throw new IllegalArgumentException(
@@ -212,18 +213,16 @@ public class Utils {
         return namespace;
     }
 
-    private static String extractNamespace(String termSeparator, String conceptUri) {
+    private static String extractNamespace(String conceptUri) {
         final String separator;
-        if (conceptUri.lastIndexOf(termSeparator) > 0) {
-            separator = termSeparator;
-        } else if (conceptUri.lastIndexOf("#") > 0) {
+        if (conceptUri.lastIndexOf("#") > 0) {
             separator = "#";
         } else if (conceptUri.lastIndexOf("/") > 0) {
             separator = "/";
         } else {
             throw new IllegalArgumentException("The IRI does not have a proper format: " + conceptUri);
         }
-        return conceptUri.substring(0, conceptUri.lastIndexOf(separator));
+        return conceptUri.substring(0, conceptUri.lastIndexOf(separator) + 1);
     }
 
     /**
