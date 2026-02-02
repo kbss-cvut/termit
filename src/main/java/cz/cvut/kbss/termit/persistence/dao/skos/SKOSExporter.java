@@ -80,10 +80,10 @@ public class SKOSExporter {
     /**
      * Exports glossary and terms of the specified vocabulary as a SKOS model.
      * <p>
-     * Only basic SKOS properties are exported for terms. To get all available data, use {@link
-     * #exportFullGlossary(Vocabulary)}.
+     * Only basic SKOS properties are exported for terms. To get all available data, use
+     * {@link #exportFullGlossary(Vocabulary)}.
      * <p>
-     * The exported data can be retrieved using {@link ##exportAs(ExportFormat)}.
+     * The exported data can be retrieved using {@link #exportAs(ExportFormat)}.
      *
      * @param vocabulary Vocabulary to export
      * @see #exportAs(ExportFormat)
@@ -100,7 +100,7 @@ public class SKOSExporter {
      * <p>
      * This method exports all available asserted data for each term.
      * <p>
-     * The exported data can be retrieved using {@link ##exportAs(ExportFormat)}.
+     * The exported data can be retrieved using {@link #exportAs(ExportFormat)}.
      *
      * @param vocabulary Vocabulary to export
      * @see #exportAs(ExportFormat)
@@ -135,19 +135,22 @@ public class SKOSExporter {
     }
 
     private void resolvePrefixes(IRI glossaryIri, RepositoryConnection connection) {
-        final TupleQuery tq = connection.prepareTupleQuery("SELECT ?prefix ?namespace WHERE {\n" +
-                                                                   "?glossary ?hasPreferredPrefix ?prefix ;\n" +
-                                                                   "?hasPreferredNamespace ?namespace .\n" +
-                                                                   "}");
+        final TupleQuery tq = connection.prepareTupleQuery("""
+                                                                   SELECT ?prefix ?namespace WHERE {
+                                                                   ?glossary ?hasPreferredPrefix ?prefix ;
+                                                                   ?hasPreferredNamespace ?namespace .
+                                                                   }""");
         tq.setBinding("glossary", glossaryIri);
         tq.setBinding("hasPreferredPrefix",
                       vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix));
         tq.setBinding("hasPreferredNamespace",
                       vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
-        final TupleQueryResult result = tq.evaluate();
-        while (result.hasNext()) {
-            final BindingSet binding = result.next();
-            model.setNamespace(binding.getValue("prefix").stringValue(), binding.getValue("namespace").stringValue());
+        try (final TupleQueryResult result = tq.evaluate()) {
+            while (result.hasNext()) {
+                final BindingSet binding = result.next();
+                model.setNamespace(binding.getValue("prefix").stringValue(),
+                                   binding.getValue("namespace").stringValue());
+            }
         }
         model.setNamespace(SKOS.PREFIX, SKOS.NAMESPACE);
         model.setNamespace(RDFS.PREFIX, RDFS.NAMESPACE);
@@ -206,8 +209,8 @@ public class SKOSExporter {
     }
 
     /**
-     * Exports terms referenced by terms from the previously exported glossary terms ({@link
-     * #exportGlossaryTermsWithQuery(Vocabulary, String)}) via one of the specified properties.
+     * Exports terms referenced by terms from the previously exported glossary terms
+     * ({@link #exportGlossaryTermsWithQuery(Vocabulary, String)}) via one of the specified properties.
      *
      * @param properties SKOS properties representing reference to external terms, e.g., skos:exactMatch
      */
@@ -235,8 +238,8 @@ public class SKOSExporter {
     }
 
     /**
-     * Exports metadata of glossaries containing the referenced external terms as discovered by {@link
-     * #exportReferencedTermsWithQuery(Collection, String)}.
+     * Exports metadata of glossaries containing the referenced external terms as discovered by
+     * {@link #exportReferencedTermsWithQuery(Collection, String)}.
      */
     private void exportReferencedGlossaries() {
         final Set<IRI> glossariesToExport = model.stream().filter(s -> s.getPredicate().equals(SKOS.IN_SCHEME))
@@ -268,17 +271,11 @@ public class SKOSExporter {
      */
     public byte[] exportAs(ExportFormat format) {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final RDFWriter writer;
-        switch (format) {
-            case TURTLE:
-                writer = new TurtleWriterFactory().getWriter(bos);
-                break;
-            case RDF_XML:
-                writer = new RDFXMLPrettyWriterFactory().getWriter(bos);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported SKOS export format " + format);
-        }
+        final RDFWriter writer = switch (format) {
+            case TURTLE -> new TurtleWriterFactory().getWriter(bos);
+            case RDF_XML -> new RDFXMLPrettyWriterFactory().getWriter(bos);
+            default -> throw new IllegalArgumentException("Unsupported SKOS export format " + format);
+        };
         Rio.write(model, writer);
         return bos.toByteArray();
     }
