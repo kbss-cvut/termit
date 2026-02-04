@@ -40,6 +40,12 @@ This section briefly lists the main technologies and principles used (or planned
 - CORS (for separate frontend)
 - Java bean validation (JSR 380)
 
+### Software Bill of Materials (SBOM)
+
+SBOM for TermIt can be accessed for each instance
+via [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/index.html#actuator) at
+`http://SERVER_URL/PATH/actuator/sbom/application`. It uses the [CycloneDX](https://cyclonedx.org/) format.
+
 ## Ontologies
 
 The ontology on which TermIt is based can be found in the `ontology` folder. It extends the
