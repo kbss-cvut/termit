@@ -125,6 +125,10 @@ class LocalizedSheetImporter {
             return Collections.emptyList();
         }
         findTerms(sheet);
+        if (labelToTerm.isEmpty() && !existingTerms.isEmpty()) {
+            LOG.trace("Encountered empty translation sheet '{}'.", sheet.getSheetName());
+            return existingTerms;
+        }
         int i = 1;
         for (Map.Entry<String, Term> entry : labelToTerm.entrySet()) {
             mapRowToTermAttributes(entry.getValue(), sheet.getRow(i++));
