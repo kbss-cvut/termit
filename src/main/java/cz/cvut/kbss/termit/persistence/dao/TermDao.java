@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
+import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
@@ -1083,5 +1084,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     @EventListener
     public void onEvictCache(EvictCacheEvent evt) {
         subTermsCache.evictAll();
+    }
+
+    @EventListener
+    public void onTermReferencesUpdated(TermReferencesUpdatedEvent evt) {
+        if (SKOS.NARROWER.equals(evt.getProperty()) || SKOS.NARROW_MATCH.equals(evt.getProperty())) {
+            subTermsCache.evict(evt.getTermUri());
+        }
+        // related, relatedMatch and exactMatch inverse are loaded separately and not cached
     }
 }
