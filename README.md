@@ -59,10 +59,10 @@ for more details.
 ## Monitoring
 
 Spring Boot Actuator is used for monitoring the application and its usage. By default, Prometheus metrics are
-available on the `/actuator/prometheus`. All actuator endpoints except `/health` are secured using _basic_
+available on the `/actuator/prometheus`. All actuator endpoints except `/health` and `/sbom` are secured using _basic_
 authentication. Credentials are configured using the `termit.actuator.username` (default `actuator`)
-and `termit.actuator.password` (default `kral0vnat3rm1t1st3`) parameters in `application.yml` or as environment
-variables (see
+and `termit.actuator.password` (randomly generated on startup if not configured) parameters in `application.yml` or as
+environment variables (see
 the [Spring Boot Actuator docs](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)).
 
 ## Documentation
