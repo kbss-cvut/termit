@@ -32,9 +32,9 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
-import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
@@ -117,16 +117,25 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         differentiator.differentiateExactMatchTerms(instance, original);
         orphanedRelationshipRemover.removeOrphanedInverseTermRelationships(instance, original);
         instance.splitExternalAndInternalParents();
-        pruneEmptyTranslations(instance);
+        pruneAndNormalizeTranslations(instance);
     }
 
-    private void pruneEmptyTranslations(Term instance) {
+    private void pruneAndNormalizeTranslations(Term instance) {
         assert instance != null;
         Utils.pruneBlankTranslations(instance.getLabel());
+        Utils.normalizeTranslations(instance.getLabel());
         Utils.pruneBlankTranslations(instance.getDefinition());
+        Utils.normalizeTranslations(instance.getDefinition());
         Utils.pruneBlankTranslations(instance.getDescription());
-        Utils.emptyIfNull(instance.getAltLabels()).forEach(Utils::pruneBlankTranslations);
-        Utils.emptyIfNull(instance.getHiddenLabels()).forEach(Utils::pruneBlankTranslations);
+        Utils.normalizeTranslations(instance.getDescription());
+        Utils.emptyIfNull(instance.getAltLabels()).forEach(label -> {
+            Utils.pruneBlankTranslations(label);
+            Utils.normalizeTranslations(label);
+        });
+        Utils.emptyIfNull(instance.getHiddenLabels()).forEach(label -> {
+            Utils.pruneBlankTranslations(label);
+            Utils.normalizeTranslations(label);
+        });
     }
 
     @Override
@@ -167,7 +176,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             instance.setUri(generateIdentifier(vocabulary, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
-        pruneEmptyTranslations(instance);
+        pruneAndNormalizeTranslations(instance);
     }
 
     private URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
