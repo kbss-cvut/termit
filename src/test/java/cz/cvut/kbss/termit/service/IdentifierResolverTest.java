@@ -379,4 +379,11 @@ class IdentifierResolverTest {
                 Arguments.of("./home/test")
         );
     }
+
+    @Test
+    void normalizeUnicodeCharactersNormalizesAccentedLettersToSingleUnicodeCharacter() {
+        final String input = "s omezeným vývinem tepla";  // This string represents ý by two characters
+        final String expected = "s omezeným vývinem tepla"; // This string represents ý by one character
+        assertEquals(expected, IdentifierResolver.normalizeUnicodeCharacters(input));
+    }
 }

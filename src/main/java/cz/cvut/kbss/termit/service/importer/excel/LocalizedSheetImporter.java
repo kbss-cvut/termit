@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -416,7 +415,7 @@ class LocalizedSheetImporter {
     private static String normalizeExcelString(String label) {
         label = label.trim();
         // Normalize Unicode characters and replace non-breaking spaces with regular spaces
-        label = Normalizer.normalize(label, Normalizer.Form.NFKC).replace('\u00A0', ' ');
+        label = IdentifierResolver.normalizeUnicodeCharacters(label).replace('\u00A0', ' ');
         return label;
     }
 
