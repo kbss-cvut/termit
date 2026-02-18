@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
+import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
@@ -1058,27 +1059,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    /**
-     * Gets identifiers of all terms in the specified vocabulary that have no occurrences (file or definitional).
-     *
-     * @param vocabulary Vocabulary whose terms to examine
-     * @return List of unused terms identifiers
-     */
-    public List<URI> findAllUnused(Vocabulary vocabulary) {
-        return em.createNativeQuery("SELECT DISTINCT ?term WHERE { "
-                                            + " ?term ?inVocabulary ?vocabulary . "
-                                            + " FILTER NOT EXISTS {?x ?hasTerm ?term ; "
-                                            + " ?hasTarget/?hasSource ?resource.}"
-                                            + "}",
-                                    URI.class)
-                 .setParameter("vocabulary", vocabulary.getUri())
-                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                 .setParameter("hasTerm", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_prirazenim_termu))
-                 .setParameter("hasTarget", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_cil))
-                 .setParameter("hasSource", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zdroj))
-                 .getResultList();
-    }
-
     @ModifiesData
     @Override
     public void remove(Term entity) {
@@ -1104,5 +1084,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     @EventListener
     public void onEvictCache(EvictCacheEvent evt) {
         subTermsCache.evictAll();
+    }
+
+    @EventListener
+    public void onTermReferencesUpdated(TermReferencesUpdatedEvent evt) {
+        if (SKOS.NARROWER.equals(evt.getProperty()) || SKOS.NARROW_MATCH.equals(evt.getProperty())) {
+            subTermsCache.evict(evt.getTermUri());
+        }
+        // related, relatedMatch and exactMatch inverse are loaded separately and not cached
     }
 }

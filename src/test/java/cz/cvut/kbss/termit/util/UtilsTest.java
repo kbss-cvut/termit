@@ -260,4 +260,14 @@ class UtilsTest {
                                                                                                                "data/mock-aviation-safety-skos.ttl"));
         assertEquals("text/turtle", Utils.resolveContentType(mf));
     }
+
+    @Test
+    void normalizeTranslationsNormalizesUnicodeCharactersInTranslations() {
+        final MultilingualString str = new MultilingualString();
+        str.set("cs", "omezený vývin tepla");
+        str.set("en", "limited heat production");
+        Utils.normalizeTranslations(str);
+        assertEquals("omezený vývin tepla", str.get("cs"));
+        assertEquals("limited heat production", str.get("en"));
+    }
 }

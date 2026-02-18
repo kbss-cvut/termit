@@ -56,6 +56,7 @@ public class ActuatorSecurityConfig {
     public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/actuator/**")
             .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health").permitAll()
+                                               .requestMatchers("/actuator/sbom/**").permitAll()
                                                .requestMatchers("/actuator/**").authenticated())
             .userDetailsService(actuatorUserDetailsService())
             .httpBasic(withDefaults())

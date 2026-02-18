@@ -40,6 +40,12 @@ This section briefly lists the main technologies and principles used (or planned
 - CORS (for separate frontend)
 - Java bean validation (JSR 380)
 
+### Software Bill of Materials (SBOM)
+
+SBOM for TermIt can be accessed for each instance
+via [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/index.html#actuator) at
+`http://SERVER_URL/PATH/actuator/sbom/application`. It uses the [CycloneDX](https://cyclonedx.org/) format.
+
 ## Ontologies
 
 The ontology on which TermIt is based can be found in the `ontology` folder. It extends the
@@ -53,10 +59,10 @@ for more details.
 ## Monitoring
 
 Spring Boot Actuator is used for monitoring the application and its usage. By default, Prometheus metrics are
-available on the `/actuator/prometheus`. All actuator endpoints except `/health` are secured using _basic_
+available on the `/actuator/prometheus`. All actuator endpoints except `/health` and `/sbom` are secured using _basic_
 authentication. Credentials are configured using the `termit.actuator.username` (default `actuator`)
-and `termit.actuator.password` (default `kral0vnat3rm1t1st3`) parameters in `application.yml` or as environment
-variables (see
+and `termit.actuator.password` (randomly generated on startup if not configured) parameters in `application.yml` or as
+environment variables (see
 the [Spring Boot Actuator docs](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)).
 
 ## Documentation

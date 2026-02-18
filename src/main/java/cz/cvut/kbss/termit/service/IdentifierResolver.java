@@ -103,10 +103,9 @@ public class IdentifierResolver {
      */
     public static String normalize(String value) {
         Objects.requireNonNull(value);
-        return value.toLowerCase()
-                    .trim()
-                    .replaceAll("[\\s/\\\\\\p{Z}]", Character.toString(REPLACEMENT_CHARACTER))
-                    .replaceAll("[(?&$#§),\\[\\]@]", "");
+        return normalizeUnicodeCharacters(value.toLowerCase().trim())
+                .replaceAll("[\\s/\\\\\\p{Z}]", Character.toString(REPLACEMENT_CHARACTER))
+                .replaceAll("[(?&$#§),\\[\\]@]", "");
     }
 
     /**
@@ -118,6 +117,18 @@ public class IdentifierResolver {
      */
     public static String normalizeToAscii(String value) {
         return Normalizer.normalize(normalize(value), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
+    }
+
+    /**
+     * Normalizes Unicode characters to a unified representation.
+     * <p>
+     * This ensures, for example, that accented letters are always represented by a single Unicode character.
+     *
+     * @param value The value to normalize
+     * @return Normalized value
+     */
+    public static String normalizeUnicodeCharacters(String value) {
+        return Normalizer.normalize(value, Normalizer.Form.NFC);
     }
 
     /**

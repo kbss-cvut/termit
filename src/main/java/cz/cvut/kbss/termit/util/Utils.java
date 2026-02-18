@@ -23,6 +23,7 @@ import com.vladsch.flexmark.util.ast.Node;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -386,6 +387,22 @@ public class Utils {
             return;
         }
         str.getValue().entrySet().removeIf(e -> e.getValue().isBlank());
+    }
+
+    /**
+     * Normalizes the translations in the specified {@link MultilingualString}.
+     * <p>
+     * This ensures Unicode characters are represented in the same way.
+     *
+     * @param str Multilingual string to normalize, possibly {@code null}
+     */
+    public static void normalizeTranslations(MultilingualString str) {
+        if (str == null) {
+            return;
+        }
+        str.getValue().keySet().forEach(k -> str.getValue().computeIfPresent(k,
+                                                                             (key, value) -> IdentifierResolver.normalizeUnicodeCharacters(
+                                                                                     value)));
     }
 
     /**

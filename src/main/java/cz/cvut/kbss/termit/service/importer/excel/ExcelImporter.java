@@ -19,6 +19,8 @@ package cz.cvut.kbss.termit.service.importer.excel;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -42,6 +44,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -97,9 +100,12 @@ public class ExcelImporter implements VocabularyImporter {
 
     private final EntityManager em;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     public ExcelImporter(VocabularyDao vocabularyDao, TermRepositoryService termService, DataDao dataDao,
                          LanguageService languageService, IdentifierResolver idResolver,
-                         VocabularyNamespaceResolver namespaceResolver, EntityManager em) {
+                         VocabularyNamespaceResolver namespaceResolver, EntityManager em,
+                         ApplicationEventPublisher eventPublisher) {
         this.vocabularyDao = vocabularyDao;
         this.termService = termService;
         this.dataDao = dataDao;
@@ -107,6 +113,7 @@ public class ExcelImporter implements VocabularyImporter {
         this.idResolver = idResolver;
         this.namespaceResolver = namespaceResolver;
         this.em = em;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -140,6 +147,7 @@ public class ExcelImporter implements VocabularyImporter {
                 }
                 prepareTermsForPersist(terms, targetVocabulary);
                 persistNewTerms(terms, targetVocabulary, rawDataToInsert);
+                notifyReferencingTerms(terms);
             }
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
@@ -172,14 +180,14 @@ public class ExcelImporter implements VocabularyImporter {
         final String termNamespace = namespaceResolver.resolveNamespace(vocabulary.getUri());
         if (term.getUri() == null) {
             return idResolver.generateIdentifier(termNamespace,
-                                                 term.getLabel().get(vocabulary.getPrimaryLanguage()));
+                    term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         if (term.getUri() != null && !term.getUri().toString().startsWith(termNamespace)) {
             LOG.trace(
                     "Existing term identifier {} does not correspond to the expected vocabulary term namespace {}. Adjusting the term id.",
                     Utils.uriToString(term.getUri()), termNamespace);
             return idResolver.generateIdentifier(termNamespace,
-                                                 term.getLabel().get(vocabulary.getPrimaryLanguage()));
+                    term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         return term.getUri();
     }
@@ -198,8 +206,8 @@ public class ExcelImporter implements VocabularyImporter {
         terms.stream().peek(t -> t.setUri(resolveTermIdentifierWrtVocabulary(t, targetVocabulary)))
              .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
                  final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
-                                                                                     targetVocabulary,
-                                                                                     lang);
+                         targetVocabulary,
+                         lang);
                  if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
                      throw new VocabularyImportException(
                              "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.",
@@ -234,8 +242,19 @@ public class ExcelImporter implements VocabularyImporter {
         // Insert term relationships as raw data because of possible object conflicts in the persistence context -
         // the same term being as multiple types (Term, TermInfo) in the same persistence context
         dataDao.insertRawData(rawDataToInsert.stream().map(tr -> new Quad(tr.subject().getUri(), tr.property(),
-                                                                          tr.object().getUri(),
-                                                                          targetVocabulary.getUri())).toList());
+                tr.object().getUri(),
+                targetVocabulary.getUri())).toList());
+    }
+
+    private void notifyReferencingTerms(List<Term> persistedTerms) {
+        persistedTerms.forEach(t -> {
+            Utils.emptyIfNull(t.getExternalParentTerms())
+                 .forEach(pt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, pt.getUri(), SKOS.NARROWER)));
+            Utils.emptyIfNull(t.getRelatedMatch())
+                 .forEach(rmt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, rmt.getUri(), SKOS.RELATED_MATCH)));
+            Utils.emptyIfNull(t.getExactMatchTerms())
+                 .forEach(emt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, emt.getUri(), SKOS.EXACT_MATCH)));
+        });
     }
 
     @Override
@@ -276,7 +295,7 @@ public class ExcelImporter implements VocabularyImporter {
                         "error.vocabulary.import.excel.missingIdentifierOrLabel");
             }
             t.setUri(idResolver.generateIdentifier(namespaceResolver.resolveNamespace(targetVocabulary.getUri()),
-                                                   termLabel));
+                    termLabel));
         }
     }
 

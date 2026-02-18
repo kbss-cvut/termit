@@ -4,7 +4,7 @@ management:
     endpoints:
         web:
             exposure:
-                include: "health, info, metrics, prometheus"
+                include: "health, info, sbom, metrics, prometheus"
     info:
         java:
             enabled: true
@@ -20,6 +20,8 @@ management:
         health:
             access: unrestricted
         metrics:
+            access: read_only
+        sbom:
             access: read_only
 
 server:
