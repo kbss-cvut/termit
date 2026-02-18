@@ -9,6 +9,7 @@ CONSTRUCT {
         dc:title ?label ;
         dc:description ?description ;
         dc:rights ?rights ;
+        dc:language ?language ;
         owl:imports ?imported ;
         owl:versionIRI ?versionIri ;
         <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
@@ -25,11 +26,17 @@ CONSTRUCT {
 	VALUES (?vocabulary) {(<%s>)}
 	?vocabulary pdp:má-glosář ?glossary ;
 		  dc:title ?vocabularyLabel .
+    OPTIONAL {
+      ?vocabulary dc:language ?vocabularyLanguage .
+    }
 	OPTIONAL {
 	  ?glossary dc:title ?glossaryLabel .
 	}
 	OPTIONAL {
 	  ?vocabulary dc:description ?description .
+	}
+	OPTIONAL {
+	  ?glossary dc:language ?glossaryLanguage .
 	}
 	OPTIONAL {
 	  ?glossary owl:versionIRI ?versionIri .
@@ -38,8 +45,10 @@ CONSTRUCT {
 	  ?glossary dc:rights ?rights .
 	}
 	OPTIONAL {
-	  ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-		    <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+	  ?vocabulary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri .
+	}
+	OPTIONAL {
+	  ?vocabulary <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
 	}
 	OPTIONAL {
 	  ?glossary <http://purl.org/ontology/bibo/status> ?status .
@@ -48,6 +57,7 @@ CONSTRUCT {
 	  ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
 	}
 	BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
+	BIND (COALESCE(?glossaryLanguage, ?vocabularyLanguage) AS ?language)
 
 	?term a skos:Concept ;
 	  	skos:inScheme ?glossary ;

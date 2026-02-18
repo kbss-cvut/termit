@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.BaseDocumentTestRunner;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
+import org.apache.commons.compress.compressors.bzip2.BZip2Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,6 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -304,7 +306,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         file.setLabel(physicalFile.getName());
         document.addFile(file);
         file.setDocument(document);
-        int expectedBackups = 1; // +1 for the original file
+        int expectedBackups = 0;
         // generate backups for all reasons
         for (BackupReason reason : BackupReason.values()) {
             createTestBackups(file, reason);
@@ -318,8 +320,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     @ParameterizedTest
     @MethodSource(BACKUP_REASON_VALUES_METHOD_SIGNATURE)
     void getBackupsReturnsOnlyBackupsWithGivenReason(BackupReason reasonFilter) throws Exception {
-        // add 1 for unknown reason for the original file
-        final int expectedBackups = 3 + (reasonFilter == BackupReason.UNKNOWN ? 1 : 0);
+        final int expectedBackups = 3;
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
@@ -336,6 +337,31 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         for (BackupFile backup : backups) {
             assertEquals(reasonFilter, backup.backupReason());
         }
+    }
+
+    @Test
+    void getBackupsReturnsBackupsSortedInDescendingOrder() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+        // generate backups for all reasons
+        for (BackupReason reason : BackupReason.values()) {
+            createTestBackups(file, reason);
+        }
+
+        List<BackupFile> backups = sut.getBackups(file, null);
+        assertTrue(backups.size() > 1);
+
+        BackupFile previous = backups.get(0);
+        for (int i = 1; i < backups.size(); i++) {
+            BackupFile current = backups.get(i);
+            // previous is equal or newer then the current one
+            assertFalse(previous.timestamp().isBefore(current.timestamp()));
+            previous = current;
+        }
+        assertTrue(backups.get(0).timestamp().isAfter(previous.timestamp()));
     }
 
     @Test
@@ -368,5 +394,78 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         final List<String> backupLines = Files.readAllLines(extractedFile.toPath());
         final String result = String.join("\n", backupLines);
         assertEquals(CONTENT, result);
+    }
+
+    @Test
+    void getBackupReturnsBackupWithEqualTimestamp() {
+        final File fileResource = new File();
+        final java.io.File originalFile = generateFile();
+        fileResource.setLabel(originalFile.getName());
+        document.addFile(fileResource);
+        fileResource.setDocument(document);
+        fileResource.setModified(Utils.timestamp());
+
+        // prepare a backup
+        sut.createBackup(fileResource, BackupReason.UNKNOWN);
+
+        final BackupFile backupFile = sut.getBackup(fileResource, Instant.EPOCH);
+        final BackupFile sameBackup = sut.getBackup(fileResource, backupFile.timestamp());
+
+        assertNotNull(backupFile);
+        assertEquals(backupFile, sameBackup);
+        assertTrue(BZip2Utils.isCompressedFileName(backupFile.file().getName()));
+    }
+
+    @Test
+    void restoreBackupRestoresTheBackupContents() throws Exception {
+        final File fileResource = new File();
+        final java.io.File originalFile = generateFile();
+        fileResource.setLabel(originalFile.getName());
+        document.addFile(fileResource);
+        fileResource.setDocument(document);
+        fileResource.setModified(Utils.timestamp());
+
+        final Instant backupTimestamp = Utils.timestamp().minusSeconds(1);
+        // prepare a backup
+        sut.createBackup(fileResource, BackupReason.UNKNOWN);
+
+        BackupFile backupFile = sut.getBackup(fileResource, backupTimestamp);
+        assertNotNull(backupFile);
+        assertTrue(backupFile.file().isFile());
+        assertTrue(BZip2Utils.isCompressedFileName(backupFile.file().getName()));
+
+        // delete the original temporary file
+        Files.delete(originalFile.toPath());
+        assertFalse(originalFile.exists());
+
+        sut.restoreBackup(fileResource, backupFile);
+        assertTrue(originalFile.isFile());
+
+        // check file contents
+        final List<String> backupLines = Files.readAllLines(originalFile.toPath());
+        final String result = String.join("\n", backupLines);
+        assertEquals(CONTENT, result);
+    }
+
+    @Test
+    void restoreBackupDoesNotCreateBackupIfTheFileWasNotModifiedSinceLastBackupRestoration() {
+        final File fileResource = new File();
+        final java.io.File originalFile = generateFile();
+        fileResource.setLabel(originalFile.getName());
+        document.addFile(fileResource);
+        fileResource.setDocument(document);
+        fileResource.setModified(Utils.timestamp());
+
+        sut.createBackup(fileResource, BackupReason.UNKNOWN);
+        assertNotNull(fileResource.getLastBackup());
+
+        assertTrue(fileResource.getModified().isBefore(fileResource.getLastBackup()));
+
+        BackupFile backupFile = sut.getBackup(fileResource, Instant.EPOCH);
+        assertNotNull(backupFile);
+
+        assertEquals(1, sut.getBackups(fileResource, null).size());
+        sut.restoreBackup(fileResource, backupFile);
+        assertEquals(1, sut.getBackups(fileResource, null).size());
     }
 }

@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.exception.importing.ReferencedTermInUnrelatedVocabularyException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -32,6 +33,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.language.LanguageService;
@@ -52,6 +54,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -73,6 +76,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -81,6 +85,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ExcelImporterTest {
+
+    private static final String SEPARATOR = "/terms";
 
     @Mock
     private VocabularyDao vocabularyDao;
@@ -104,9 +110,15 @@ class ExcelImporterTest {
     @Mock
     private EntityManager em;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @SuppressWarnings("unused")
     @Spy
     private IdentifierResolver idResolver = new IdentifierResolver(config);
+
+    @Mock
+    private VocabularyNamespaceResolver namespaceResolver;
 
     @InjectMocks
     private ExcelImporter sut;
@@ -116,7 +128,7 @@ class ExcelImporterTest {
     @BeforeEach
     void setUp() {
         this.vocabulary = Generator.generateVocabularyWithId();
-        config.getNamespace().getTerm().setSeparator("/terms");
+        vocabulary.setUri(URI.create("http://example.com"));
         config.getPersistence().setLanguage(Environment.LANGUAGE);
     }
 
@@ -134,58 +146,48 @@ class ExcelImporterTest {
     @Test
     void importThrowsVocabularyDoesNotExistExceptionWhenNoVocabularyIdentifierIsProvided() {
         assertThrows(VocabularyDoesNotExistException.class,
-                     () -> sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, null, prePersist),
-                                                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                                                   Environment.loadFile(
-                                                                                           "data/import-simple-en.xlsx"))));
+                () -> sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, null, prePersist),
+                        new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                Environment.loadFile(
+                                        "data/import-simple-en.xlsx"))));
     }
 
     @Test
     void importThrowsVocabularyDoesNotExistExceptionWhenVocabularyIsNotFound() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(false);
         assertThrows(VocabularyDoesNotExistException.class,
-                     () -> sut.importVocabulary(
-                             new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
-                             new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                                Environment.loadFile(
-                                                                        "data/import-simple-en.xlsx"))));
+                () -> sut.importVocabulary(
+                        new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                        new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                Environment.loadFile(
+                                        "data/import-simple-en.xlsx"))));
     }
 
     @Test
     void importCreatesRootTermsWithBasicAttributesFromEnglishSheet() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        doAnswer(inv -> inv.getArgument(0).toString() + SEPARATOR).when(namespaceResolver)
+                                                                  .resolveNamespace(any(URI.class));
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-simple-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-simple-en.xlsx")));
         assertEquals(vocabulary, result);
-        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
-        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
-        assertEquals(2, captor.getAllValues().size());
-        final Optional<Term> building = captor.getAllValues().stream()
-                                              .filter(t -> "Building".equals(t.getLabel().get("en"))).findAny();
-        assertTrue(building.isPresent());
-        assertEquals("Definition of term Building", building.get().getDefinition().get("en"));
-        assertEquals("Building scope note", building.get().getDescription().get("en"));
-        final Optional<Term> construction = captor.getAllValues().stream()
-                                                  .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
-        assertTrue(construction.isPresent());
-        assertEquals("The process of building a building", construction.get().getDefinition().get("en"));
+        verifyBasicEnglishTermsAdded();
     }
 
     @Test
     void importCreatesRootTermsWithPluralBasicAttributesFromEnglishSheet() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-plural-atts-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-plural-atts-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -212,14 +214,13 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesRootTermsWithBasicAttributesFromMultipleTranslationSheets() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-simple-en-cs.xlsx")));
+                        Environment.loadFile(
+                                "data/import-simple-en-cs.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -242,14 +243,13 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesRootTermsWithPluralBasicAttributesFromMultipleTranslationSheets() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-plural-atts-en-cs.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-plural-atts-en-cs.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -278,14 +278,13 @@ class ExcelImporterTest {
 
     @Test
     void importCreatesTermHierarchy() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-hierarchy-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-hierarchy-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> rootCaptor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(rootCaptor.capture(), eq(vocabulary));
@@ -301,14 +300,13 @@ class ExcelImporterTest {
 
     @Test
     void importSavesRelationshipsBetweenTerms() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-references-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-references-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> termCaptor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(termCaptor.capture(), eq(vocabulary));
@@ -316,21 +314,25 @@ class ExcelImporterTest {
         verify(dataDao).insertRawData(quadsCaptor.capture());
         assertEquals(1, quadsCaptor.getValue().size());
         assertEquals(List.of(new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.RELATED),
-                                      termCaptor.getAllValues().get(0).getUri(), vocabulary.getUri())),
-                     quadsCaptor.getValue());
+                        termCaptor.getAllValues().get(0).getUri(), vocabulary.getUri())),
+                quadsCaptor.getValue());
     }
 
     @Test
     void importImportsTermsWhenAnotherLanguageSheetIsEmpty() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        // Language sheet has rows but they are empty
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-en-empty-cs.xlsx")));
+                        Environment.loadFile(
+                                "data/import-en-empty-cs.xlsx")));
         assertEquals(vocabulary, result);
+        verifyBasicEnglishTermsAdded();
+    }
+
+    private void verifyBasicEnglishTermsAdded() {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertEquals(2, captor.getAllValues().size());
@@ -346,15 +348,26 @@ class ExcelImporterTest {
     }
 
     @Test
+    void importUsesTermsFromOtherSheetWhenCurrentTranslationSheetHasNoRows() {
+        // Language sheet has no rows
+        initVocabularyResolution();
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL, Environment.loadFile("data/import-en-empty-cs-no-rows.xlsx")));
+        assertEquals(vocabulary, result);
+        verifyBasicEnglishTermsAdded();
+    }
+
+    @Test
     void importFallsBackToEnglishColumnLabelsForUnknownLanguages() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-simple-de.xlsx")));
+                        Environment.loadFile(
+                                "data/import-simple-de.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -376,8 +389,8 @@ class ExcelImporterTest {
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-identifiers-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-identifiers-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -394,13 +407,14 @@ class ExcelImporterTest {
         verify(dataDao).insertRawData(quadsCaptor.capture());
         assertEquals(1, quadsCaptor.getValue().size());
         assertEquals(List.of(new Quad(construction.get().getUri(), URI.create(SKOS.RELATED),
-                                      building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
+                building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
     }
 
     private void initVocabularyResolution() {
-        vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        doAnswer(inv -> inv.getArgument(0).toString() + SEPARATOR).when(namespaceResolver)
+                                                                  .resolveNamespace(any(URI.class));
     }
 
     @Test
@@ -410,8 +424,8 @@ class ExcelImporterTest {
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-prefixed-identifiers-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-prefixed-identifiers-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -428,28 +442,27 @@ class ExcelImporterTest {
         verify(dataDao).insertRawData(quadsCaptor.capture());
         assertEquals(1, quadsCaptor.getValue().size());
         assertEquals(List.of(new Quad(construction.get().getUri(), URI.create(SKOS.RELATED),
-                                      building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
+                building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
     }
 
     @Test
     void importAdjustsTermIdentifiersToUseExistingVocabularyIdentifierAndSeparatorAsNamespace() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-identifiers-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-identifiers-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
-                                                                                       vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/building"),
-                                                                               t.getUri())));
+                        vocabulary.getUri().toString() + SEPARATOR + "/building"),
+                t.getUri())));
         assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
-                                                                                       vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/construction"),
-                                                                               t.getUri())));
+                        vocabulary.getUri().toString() + SEPARATOR + "/construction"),
+                t.getUri())));
     }
 
     @Test
@@ -467,8 +480,8 @@ class ExcelImporterTest {
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-identifiers-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-identifiers-en.xlsx")));
         assertEquals(vocabulary, result);
         verify(termService).forceRemove(existingBuilding);
         verify(termService).forceRemove(existingConstruction);
@@ -487,8 +500,8 @@ class ExcelImporterTest {
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-external-references-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-external-references-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> termCaptor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(termCaptor.capture(), eq(vocabulary));
@@ -496,18 +509,17 @@ class ExcelImporterTest {
         verify(dataDao).insertRawData(quadsCaptor.capture());
         assertEquals(2, quadsCaptor.getValue().size());
         assertEquals(List.of(new Quad(termCaptor.getAllValues().get(0).getUri(), URI.create(SKOS.RELATED_MATCH),
-                                      URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
-                                      vocabulary.getUri()),
-                             (new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.EXACT_MATCH),
-                                       URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
-                                       vocabulary.getUri()))),
-                     quadsCaptor.getValue());
+                                URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
+                                vocabulary.getUri()),
+                        (new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.EXACT_MATCH),
+                                URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
+                                vocabulary.getUri()))),
+                quadsCaptor.getValue());
     }
 
     @Test
     void importResolvesTermStateAndTypesUsingLabels() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final Term type = Generator.generateTermWithId();
         type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
         type.setLabel(MultilingualString.create("Object Type", Constants.DEFAULT_LANGUAGE));
@@ -523,8 +535,8 @@ class ExcelImporterTest {
         sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-type-state-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-type-state-en.xlsx")));
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         final Term result = captor.getValue();
@@ -534,8 +546,7 @@ class ExcelImporterTest {
 
     @Test
     void importSetsConfiguredInitialTermStateWhenSheetDoesNotSpecifyIt() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final RdfsResource state = new RdfsResource(
                 URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
                 MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
@@ -545,8 +556,8 @@ class ExcelImporterTest {
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-simple-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-simple-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -573,21 +584,22 @@ class ExcelImporterTest {
         input.write(bos);
 
         final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
-                                                          () -> sut.importVocabulary(
-                                                                  new VocabularyImporter.ImportConfiguration(false,
-                                                                                                             vocabulary.getUri(),
-                                                                                                             prePersist),
-                                                                  new VocabularyImporter.ImportInput(
-                                                                          Constants.MediaType.EXCEL,
-                                                                          new ByteArrayInputStream(
-                                                                                  bos.toByteArray()))));
+                () -> sut.importVocabulary(
+                        new VocabularyImporter.ImportConfiguration(false,
+                                vocabulary.getUri(),
+                                prePersist),
+                        new VocabularyImporter.ImportInput(
+                                Constants.MediaType.EXCEL,
+                                new ByteArrayInputStream(
+                                        bos.toByteArray()))));
         assertEquals("error.vocabulary.import.excel.duplicateLabel", ex.getMessageId());
         verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
     }
 
     @Test
     void importThrowsVocabularyImportExceptionWhenSheetContainsDuplicateIdentifiers() throws Exception {
-        initVocabularyResolution();
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
         final Sheet sheet = input.getSheet("English");
         sheet.shiftColumns(0, 12, 1);
@@ -600,14 +612,14 @@ class ExcelImporterTest {
         input.write(bos);
 
         final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
-                                                          () -> sut.importVocabulary(
-                                                                  new VocabularyImporter.ImportConfiguration(false,
-                                                                                                             vocabulary.getUri(),
-                                                                                                             prePersist),
-                                                                  new VocabularyImporter.ImportInput(
-                                                                          Constants.MediaType.EXCEL,
-                                                                          new ByteArrayInputStream(
-                                                                                  bos.toByteArray()))));
+                () -> sut.importVocabulary(
+                        new VocabularyImporter.ImportConfiguration(false,
+                                vocabulary.getUri(),
+                                prePersist),
+                        new VocabularyImporter.ImportInput(
+                                Constants.MediaType.EXCEL,
+                                new ByteArrayInputStream(
+                                        bos.toByteArray()))));
         assertEquals("error.vocabulary.import.excel.duplicateIdentifier", ex.getMessageId());
         verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
     }
@@ -620,7 +632,7 @@ class ExcelImporterTest {
         englishSheet.getRow(1).createCell(0).setCellValue("Construction");
         final Sheet czechSheet = input.getSheet("Czech");
         czechSheet.getRow(1).createCell(0).setCellValue("Konstrukce");
-        czechSheet.getRow(1).createCell(9).setCellValue("Publikovaný pojem");
+        czechSheet.getRow(1).createCell(10).setCellValue("Publikovaný pojem");
         czechSheet.getRow(1).createCell(5).setCellValue("Typ objektu");
         final Term type = Generator.generateTermWithId();
         type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
@@ -639,7 +651,7 @@ class ExcelImporterTest {
         sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   new ByteArrayInputStream(bos.toByteArray())));
+                        new ByteArrayInputStream(bos.toByteArray())));
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertThat(captor.getValue().getTypes(), hasItem(type.getUri().toString()));
@@ -649,19 +661,17 @@ class ExcelImporterTest {
 
     @Test
     void importThrowsVocabularyImportExceptionWhenVocabularyAlreadyContainsTermWithSameLabelAndDifferentIdentifier() {
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         when(termService.findIdentifierByLabel(any(), any(), any())).thenReturn(Optional.empty());
-        doReturn(Optional.of(URI.create(
-                vocabulary.getUri() + config.getNamespace().getTerm().getSeparator() + "/Construction"))).when(
+        doReturn(Optional.of(URI.create(vocabulary.getUri() + SEPARATOR + "/Construction"))).when(
                 termService).findIdentifierByLabel("Construction", vocabulary, Constants.DEFAULT_LANGUAGE);
 
 
         assertThrows(VocabularyImportException.class, () -> sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-simple-en.xlsx"))));
+                        Environment.loadFile(
+                                "data/import-simple-en.xlsx"))));
     }
 
     @Test
@@ -685,11 +695,11 @@ class ExcelImporterTest {
         sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   new ByteArrayInputStream(bos.toByteArray())));
+                        new ByteArrayInputStream(bos.toByteArray())));
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertThat(captor.getValue().getTypes(),
-                   hasItems(objectType.getUri().toString(), eventType.getUri().toString()));
+                hasItems(objectType.getUri().toString(), eventType.getUri().toString()));
     }
 
     @Test
@@ -761,6 +771,8 @@ class ExcelImporterTest {
     void importTermTranslationsUsesTermLabelToResolveIdentifierWhenExcelDoesNotContainIdentifiers() {
         vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        doAnswer(inv -> inv.getArgument(0).toString() + SEPARATOR).when(namespaceResolver)
+                                                                  .resolveNamespace(any(URI.class));
         vocabulary.setPrimaryLanguage("cs");
         final Term building = initTermBuilding();
 
@@ -778,12 +790,12 @@ class ExcelImporterTest {
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
 
         VocabularyImportException ex = assertThrows(VocabularyImportException.class,
-                                                    () -> sut.importTermTranslations(vocabulary.getUri(),
-                                                                                     new VocabularyImporter.ImportInput(
-                                                                                             Constants.MediaType.EXCEL,
-                                                                                             Environment.loadFile(
-                                                                                                     "data/import-simple-de.xlsx"))
-                                                    ));
+                () -> sut.importTermTranslations(vocabulary.getUri(),
+                        new VocabularyImporter.ImportInput(
+                                Constants.MediaType.EXCEL,
+                                Environment.loadFile(
+                                        "data/import-simple-de.xlsx"))
+                ));
         assertEquals("error.vocabulary.import.excel.missingIdentifierOrLabel", ex.getMessageId());
         verify(termService, never()).update(any());
     }
@@ -802,12 +814,12 @@ class ExcelImporterTest {
         input.write(bos);
 
         sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false,
-                                                                        vocabulary.getUri(),
-                                                                        prePersist),
-                             new VocabularyImporter.ImportInput(
-                                     Constants.MediaType.EXCEL,
-                                     new ByteArrayInputStream(
-                                             bos.toByteArray())));
+                        vocabulary.getUri(),
+                        prePersist),
+                new VocabularyImporter.ImportInput(
+                        Constants.MediaType.EXCEL,
+                        new ByteArrayInputStream(
+                                bos.toByteArray())));
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertTrue(Utils.emptyIfNull(captor.getValue().getParentTerms()).isEmpty());
@@ -826,8 +838,8 @@ class ExcelImporterTest {
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                   Environment.loadFile(
-                                                           "data/import-with-external-parents-en.xlsx")));
+                        Environment.loadFile(
+                                "data/import-with-external-parents-en.xlsx")));
         assertEquals(vocabulary, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
@@ -837,7 +849,8 @@ class ExcelImporterTest {
 
     @Test
     void importThrowsReferencedTermInUnrelatedVocabularyExceptionWhenReferencedExternalParentIsFromUnrelatedVocabulary() {
-        initVocabularyResolution();
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
@@ -848,8 +861,8 @@ class ExcelImporterTest {
                 ReferencedTermInUnrelatedVocabularyException.class, () -> sut.importVocabulary(
                         new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
                         new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                           Environment.loadFile(
-                                                                   "data/import-with-external-parents-en.xlsx"))));
+                                Environment.loadFile(
+                                        "data/import-with-external-parents-en.xlsx"))));
         assertEquals("error.vocabulary.import.excel.externalParentUnrelatedVocabulary", ex.getMessageId());
     }
 
@@ -903,5 +916,27 @@ class ExcelImporterTest {
                                        URI.create("http://example.com/another-vocabulary/terms/anotherRelatedMatch"),
                                        vocabulary.getUri()))),
                      quadsCaptor.getValue());
+    }
+
+    @Test
+    void importNotifiesExternalTermsReferencedByImportedTerms() {
+        initVocabularyResolution();
+        final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
+        vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
+        final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
+        referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setGlossary(Generator.generateUri());
+        when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
+
+        sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                        Environment.loadFile(
+                                "data/import-with-external-parents-en.xlsx")));
+        final ArgumentCaptor<TermReferencesUpdatedEvent> captor = ArgumentCaptor.forClass(TermReferencesUpdatedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+                         .anyMatch(evt -> SKOS.NARROWER.equals(evt.getProperty()) && referencedParent.getUri()
+                                                                                                     .equals(evt.getTermUri())));
     }
 }

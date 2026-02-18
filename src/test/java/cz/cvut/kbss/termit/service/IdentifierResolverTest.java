@@ -339,7 +339,7 @@ class IdentifierResolverTest {
     @Test
     void generateIdentifierThrowsInvalidIdentifierExceptionWhenComponentsContainsUnforeseenInvalidCharacters() {
         final String namespace = Vocabulary.s_c_slovnik;
-        final String label = "label with emoji \u3000"; // Ideographic space
+        final String label = "label with double quotes \"";
         assertThrows(InvalidIdentifierException.class, () -> sut.generateIdentifier(namespace, label));
     }
 
@@ -378,5 +378,12 @@ class IdentifierResolverTest {
                 Arguments.of("test"),
                 Arguments.of("./home/test")
         );
+    }
+
+    @Test
+    void normalizeUnicodeCharactersNormalizesAccentedLettersToSingleUnicodeCharacter() {
+        final String input = "s omezeným vývinem tepla";  // This string represents ý by two characters
+        final String expected = "s omezeným vývinem tepla"; // This string represents ý by one character
+        assertEquals(expected, IdentifierResolver.normalizeUnicodeCharacters(input));
     }
 }

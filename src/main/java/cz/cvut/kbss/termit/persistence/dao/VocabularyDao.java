@@ -17,8 +17,10 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.query.QueryHints;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -48,6 +50,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.VocabularySnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -488,25 +491,29 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     /**
-     * @return all relations between specified vocabulary and all other vocabularies
+     * Gets all explicit relations between specified vocabulary and other vocabularies
+     *
+     * @return List of RDF statements representing relationships
      */
     public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
         Objects.requireNonNull(vocabulary);
-        final URI vocabularyUri = vocabulary.getUri();
 
         try {
             return em.createNativeQuery("""
                                                 SELECT DISTINCT ?subject ?relation ?object {
                                                     ?subject a ?vocabularyType ;
                                                        ?relation ?object .
+                                                    ?object a ?vocabularyType .
                                                     FILTER(?subject != ?object) .
                                                     FILTER(?relation NOT IN (?excluded)) .
+                                                    FILTER(isIRI(?object)) .
                                                 } ORDER BY ?subject ?relation
                                                 """, "RDFStatement")
-                     .setParameter("subject", vocabularyUri)
+                     .setParameter("subject", vocabulary)
                      .setParameter("excluded", excludedRelations)
                      .setParameter("vocabularyType",
                                    URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
+                     .setHint(QueryHints.DISABLE_INFERENCE, true)
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -514,11 +521,15 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     /**
-     * @return all relations between terms in specified vocabulary and all terms from any other vocabulary
+     * Gets all explicit relations between any other term and terms in specified vocabulary.
+     * <p>
+     * This takes into consideration only SKOS matching properties such as exactMatch, relatedMatch and broadMatch.
+     * Moreover, only explicit relations are considered, because others are inferred from different relations.
+     * <p>
+     * We are also not interested in relations where terms from the specified vocabulary are subjects.
      */
-    public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
+    public List<RdfStatement> getIncomingTermRelations(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final URI vocabularyUri = vocabulary.getUri();
         final URI termType = URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class));
         final URI inVocabulary = URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
 
@@ -526,23 +537,12 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             return em.createNativeQuery("""
                                                 SELECT DISTINCT ?subject ?relation ?object WHERE {
                                                         ?term a ?termType;
-                                                            ?inVocabulary ?vocabulary .
-                                                
-                                                        {
-                                                           ?term ?relation ?secondTerm .
-                                                           ?secondTerm a ?termType;
+                                                           ?inVocabulary ?vocabulary .
+                                                        ?secondTerm a ?termType ;
+                                                               ?relation ?term ;
                                                                ?inVocabulary ?secondVocabulary .
-                                                
-                                                           BIND(?term as ?subject)
-                                                           BIND(?secondTerm as ?object)
-                                                        } UNION {
-                                                           ?secondTerm ?relation ?term .
-                                                           ?secondTerm a ?termType;
-                                                               ?inVocabulary ?secondVocabulary .
-                                                
-                                                           BIND(?secondTerm as ?subject)
-                                                           BIND(?term as ?object)
-                                                        }
+                                                        BIND(?secondTerm as ?subject)
+                                                        BIND(?term as ?object)
                                                 
                                                         FILTER(?relation IN (?deniedRelations))
                                                         FILTER(?subject != ?object)
@@ -552,8 +552,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                      ).setMaxResults(DEFAULT_PAGE_SIZE)
                      .setParameter("termType", termType)
                      .setParameter("inVocabulary", inVocabulary)
-                     .setParameter("vocabulary", vocabularyUri)
+                     .setParameter("vocabulary", vocabulary)
                      .setParameter("deniedRelations", SKOS_CONCEPT_MATCH_RELATIONSHIPS)
+                     .setHint(QueryHints.DISABLE_INFERENCE, true)
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -594,13 +595,37 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * @param vocabularyUri vocabulary identifier
      * @return The vocabulary primary language
      */
-    public String getPrimaryLanguage(URI vocabularyUri) {
+    public String getPrimaryLanguage(@Nonnull URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
             return em.createQuery("SELECT v.primaryLanguage FROM Vocabulary v WHERE v.uri = :vocabularyUri",
                                   String.class)
                      .setParameter("vocabularyUri", vocabularyUri)
                      .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Retrieves the preferred namespace of the vocabulary with the specified identifier.
+     * <p>
+     * The preferred namespace is used as a base for term identifiers.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Optional vocabulary preferred namespace
+     */
+    public Optional<String> getPreferredNamespace(@Nonnull URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            return Optional.of(
+                    em.createNativeQuery("SELECT ?ns WHERE { ?vocabulary ?hasPreferredNamespace ?ns . }", String.class)
+                      .setParameter("vocabulary", vocabularyUri)
+                      .setParameter("hasPreferredNamespace",
+                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri))
+                      .getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

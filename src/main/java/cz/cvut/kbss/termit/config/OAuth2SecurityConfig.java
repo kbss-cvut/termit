@@ -19,7 +19,9 @@ package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
+import cz.cvut.kbss.termit.security.JwtTypeDelegatingAuthenticationProvider;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.util.oidc.OidcGrantedAuthoritiesExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,10 +51,15 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collection;
 
+/**
+ * @see <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html">Spring security OAuth resource server</a>
+ * @see <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html">Spring security OAuth resource server JWT</a>
+ */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "oidc")
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@Order(2)
 public class OAuth2SecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(OAuth2SecurityConfig.class);
@@ -59,11 +68,14 @@ public class OAuth2SecurityConfig {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
+    private final JwtConfig jwtConfig;
+
     @Autowired
     public OAuth2SecurityConfig(AuthenticationSuccess authenticationSuccessHandler,
-                                cz.cvut.kbss.termit.util.Configuration config) {
+                                cz.cvut.kbss.termit.util.Configuration config, JwtConfig jwtConfig) {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.config = config;
+        this.jwtConfig = jwtConfig;
     }
 
     @Bean
@@ -72,13 +84,15 @@ public class OAuth2SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
         LOG.debug("Using OAuth2/OIDC security.");
         final PathPatternRequestMatcher.Builder matcher = PathPatternRequestMatcher.withDefaults();
         http.oauth2ResourceServer(
-                    (auth) -> auth.jwt((jwt) -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
-            .authorizeHttpRequests((auth) -> auth.requestMatchers(matcher.matcher("/rest/query")).permitAll()
-                                                 .requestMatchers(matcher.matcher("/**")).permitAll())
+                    (auth) -> auth
+                            .jwt((jwt) -> jwt.authenticationManager(authenticationManager)))
+            .authorizeHttpRequests(
+                    (auth) -> auth
+                            .requestMatchers(matcher.matcher("/**")).permitAll())
             .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
@@ -87,15 +101,18 @@ public class OAuth2SecurityConfig {
     }
 
     /**
-     * Supplies auth provider which is not exposed by HttpSecurity
-     *
-     * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
+     * Configures {@link JwtTypeDelegatingAuthenticationProvider} using the default spring security {@link JwtDecoder}
+     * and TermIt's internal {@link JwtDecoder} for PAT authentication.
      */
     @Bean
-    public JwtAuthenticationProvider jwtAuthenticationProvider(JwtDecoder jwtDecoder) {
-        final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
-        provider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
-        return provider;
+    public JwtTypeDelegatingAuthenticationProvider authenticationProvider(JwtDecoder jwtDecoder,
+                                                                          PersonalAccessTokenService personalAccessTokenService) {
+        final JwtAuthenticationProvider defaultProvider = new JwtAuthenticationProvider(jwtDecoder);
+        defaultProvider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
+
+        final JwtAuthenticationProvider patProvider = jwtConfig.patAuthenticationProvider(personalAccessTokenService);
+
+        return new JwtTypeDelegatingAuthenticationProvider(defaultProvider, patProvider);
     }
 
     private CorsConfigurationSource corsConfigurationSource() {

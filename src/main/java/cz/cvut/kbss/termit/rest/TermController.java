@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -87,10 +88,14 @@ public class TermController extends BaseController {
 
     private final TermService termService;
 
+    private final VocabularyNamespaceResolver namespaceResolver;
+
     @Autowired
-    public TermController(IdentifierResolver idResolver, Configuration config, TermService termService) {
+    public TermController(IdentifierResolver idResolver, Configuration config, TermService termService,
+                          VocabularyNamespaceResolver namespaceResolver) {
         super(idResolver, config);
         this.termService = termService;
+        this.namespaceResolver = namespaceResolver;
     }
 
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
@@ -389,9 +394,7 @@ public class TermController extends BaseController {
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
-        return idResolver.resolveIdentifier(idResolver.buildNamespace(
-                                                    getVocabularyUri(namespace, vocabIdFragment).toString(),
-                                                    config.getNamespace().getTerm().getSeparator()),
+        return idResolver.resolveIdentifier(namespaceResolver.resolveNamespace(getVocabularyUri(namespace, vocabIdFragment)),
                                             termIdFragment);
     }
 

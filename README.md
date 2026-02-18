@@ -40,6 +40,12 @@ This section briefly lists the main technologies and principles used (or planned
 - CORS (for separate frontend)
 - Java bean validation (JSR 380)
 
+### Software Bill of Materials (SBOM)
+
+SBOM for TermIt can be accessed for each instance
+via [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/index.html#actuator) at
+`http://SERVER_URL/PATH/actuator/sbom/application`. It uses the [CycloneDX](https://cyclonedx.org/) format.
+
 ## Ontologies
 
 The ontology on which TermIt is based can be found in the `ontology` folder. It extends the
@@ -52,12 +58,12 @@ for more details.
 
 ## Monitoring
 
-[JavaMelody](https://github.com/javamelody/javamelody) can be used for monitoring the application and its usage. The
-data are
-available on the `/monitoring` endpoint and are secured using _basic_ authentication. Credentials are configured using
-the `javamelody.init-parameters.authorized-users`
-parameter in `application.yml` (see
-the [JavaMelody Spring Boot Starter docs](https://github.com/javamelody/javamelody/wiki/SpringBootStarter)).
+Spring Boot Actuator is used for monitoring the application and its usage. By default, Prometheus metrics are
+available on the `/actuator/prometheus`. All actuator endpoints except `/health` and `/sbom` are secured using _basic_
+authentication. Credentials are configured using the `termit.actuator.username` (default `actuator`)
+and `termit.actuator.password` (randomly generated on startup if not configured) parameters in `application.yml` or as
+environment variables (see
+the [Spring Boot Actuator docs](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)).
 
 ## Documentation
 
@@ -95,6 +101,10 @@ TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/
   we wrote about TermIt
     - Cite as _Křemen P, Med M., Blaško M., Saeeda L., Ledvinka M. and Buzek A. (2024). TermIt: Managing Normative
       Thesauri’. Semantic Web. DOI: 10.3233/SW-243547_
+- [TermIt: Managing Domain Terminologies](https://ceur-ws.org/Vol-4064/SEMDEV-paper1.pdf) - a short demo paper we
+  wrote about TermIt
+    - Cite as _Ledvinka M., Blaško M., Med M. (2025). TermIt: Managing Domain Terminologies. SEMANTiCS (Posters, Demos,
+      Workshops & Tutorials)_
 
 ## Getting TermIt
 

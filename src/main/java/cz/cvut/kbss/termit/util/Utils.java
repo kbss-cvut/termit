@@ -23,6 +23,7 @@ import com.vladsch.flexmark.util.ast.Node;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -188,42 +189,41 @@ public class Utils {
     }
 
     /**
-     * Extracts the necessary vocabulary IRI from the namespace of the current concepts.
+     * Extracts the necessary vocabulary namespace from the specified concept identifiers.
+     * <p>
+     * It is assumed the vocabulary namespace is the same for all concepts.
      *
-     * @param conceptUris   set of concept IRIs
-     * @param termSeparator separator between a term local name and vocabulary IRI
-     * @return IRI of the vocabulary
-     * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept, or the
-     *                                  concept IRI is not an absolute IRI.
+     * @param conceptUris set of concept IRIs
+     * @return vocabulary namespace
+     * @throws IllegalArgumentException if the namespace is not the same in all concept IRIs, there is no concept, or
+     *                                  the concept IRI is not an absolute IRI.
      */
-    public static String getVocabularyIri(final Set<String> conceptUris, String termSeparator) {
+    public static String extractVocabularyNamespaceFromTermIris(final Set<String> conceptUris) {
         if (conceptUris.isEmpty()) {
             throw new IllegalArgumentException("No namespace candidate.");
         }
         final Iterator<String> i = conceptUris.iterator();
         final String conceptUri = i.next();
-        final String namespace = extractNamespace(termSeparator, conceptUri);
+        final String namespace = extractNamespace(conceptUri);
         for (final String s : conceptUris) {
             if (!s.startsWith(namespace)) {
                 throw new IllegalArgumentException(
-                        "Not all Concept IRIs have the same namespace: " + conceptUri + " vs. " + namespace);
+                        "Not all Concept IRIs have the same namespace: " + s + " vs. " + namespace);
             }
         }
         return namespace;
     }
 
-    private static String extractNamespace(String termSeparator, String conceptUri) {
+    private static String extractNamespace(String conceptUri) {
         final String separator;
-        if (conceptUri.lastIndexOf(termSeparator) > 0) {
-            separator = termSeparator;
-        } else if (conceptUri.lastIndexOf("#") > 0) {
+        if (conceptUri.lastIndexOf("#") > 0) {
             separator = "#";
         } else if (conceptUri.lastIndexOf("/") > 0) {
             separator = "/";
         } else {
             throw new IllegalArgumentException("The IRI does not have a proper format: " + conceptUri);
         }
-        return conceptUri.substring(0, conceptUri.lastIndexOf(separator));
+        return conceptUri.substring(0, conceptUri.lastIndexOf(separator) + 1);
     }
 
     /**
@@ -387,6 +387,22 @@ public class Utils {
             return;
         }
         str.getValue().entrySet().removeIf(e -> e.getValue().isBlank());
+    }
+
+    /**
+     * Normalizes the translations in the specified {@link MultilingualString}.
+     * <p>
+     * This ensures Unicode characters are represented in the same way.
+     *
+     * @param str Multilingual string to normalize, possibly {@code null}
+     */
+    public static void normalizeTranslations(MultilingualString str) {
+        if (str == null) {
+            return;
+        }
+        str.getValue().keySet().forEach(k -> str.getValue().computeIfPresent(k,
+                                                                             (key, value) -> IdentifierResolver.normalizeUnicodeCharacters(
+                                                                                     value)));
     }
 
     /**

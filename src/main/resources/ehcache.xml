@@ -51,5 +51,27 @@
             <heap unit="entries">1000</heap>
         </resources>
     </cache>
+    <cache alias="vocabularyNamespace">
+        <key-type>java.net.URI</key-type>
+        <value-type>java.lang.String</value-type>
+        <expiry>
+            <ttl unit="days">1</ttl>
+        </expiry>
+
+        <listeners>
+            <listener>
+                <class>cz.cvut.kbss.termit.util.CacheEventLogger</class>
+                <event-firing-mode>ASYNCHRONOUS</event-firing-mode>
+                <event-ordering-mode>UNORDERED</event-ordering-mode>
+                <events-to-fire-on>CREATED</events-to-fire-on>
+                <events-to-fire-on>EXPIRED</events-to-fire-on>
+                <events-to-fire-on>EVICTED</events-to-fire-on>
+                <events-to-fire-on>REMOVED</events-to-fire-on>
+            </listener>
+        </listeners>
+        <resources>
+            <heap unit="entries">1000</heap>
+        </resources>
+    </cache>
 
 </config>

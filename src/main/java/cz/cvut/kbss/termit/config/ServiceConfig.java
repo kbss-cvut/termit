@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
@@ -46,6 +47,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 
 @Configuration
@@ -68,6 +70,7 @@ public class ServiceConfig {
                                                        .setRedirectStrategy(new DefaultRedirectStrategy())
                                                        .build();
         factory.setHttpClient(httpClient);
+        factory.setReadTimeout(Duration.ofMinutes(10L));
         restTemplate.setRequestFactory(factory);
 
         final MappingJackson2HttpMessageConverter jacksonConverter = new MappingJackson2HttpMessageConverter();
@@ -83,6 +86,7 @@ public class ServiceConfig {
      * Provides JSR 380 validator for bean validation.
      */
     @Bean
+    @Primary
     public LocalValidatorFactoryBean validatorFactoryBean() {
         return new LocalValidatorFactoryBean();
     }

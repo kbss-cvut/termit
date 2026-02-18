@@ -19,6 +19,8 @@ package cz.cvut.kbss.termit.service.importer.excel;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -31,8 +33,8 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.ExcelVocabularyExporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.language.LanguageService;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
@@ -42,6 +44,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -93,20 +96,24 @@ public class ExcelImporter implements VocabularyImporter {
     private final LanguageService languageService;
 
     private final IdentifierResolver idResolver;
-    private final Configuration config;
+    private final VocabularyNamespaceResolver namespaceResolver;
 
     private final EntityManager em;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     public ExcelImporter(VocabularyDao vocabularyDao, TermRepositoryService termService, DataDao dataDao,
-                         LanguageService languageService, IdentifierResolver idResolver, Configuration config,
-                         EntityManager em) {
+                         LanguageService languageService, IdentifierResolver idResolver,
+                         VocabularyNamespaceResolver namespaceResolver, EntityManager em,
+                         ApplicationEventPublisher eventPublisher) {
         this.vocabularyDao = vocabularyDao;
         this.termService = termService;
         this.dataDao = dataDao;
         this.languageService = languageService;
         this.idResolver = idResolver;
-        this.config = config;
+        this.namespaceResolver = namespaceResolver;
         this.em = em;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -140,6 +147,7 @@ public class ExcelImporter implements VocabularyImporter {
                 }
                 prepareTermsForPersist(terms, targetVocabulary);
                 persistNewTerms(terms, targetVocabulary, rawDataToInsert);
+                notifyReferencingTerms(terms);
             }
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
@@ -169,34 +177,19 @@ public class ExcelImporter implements VocabularyImporter {
      * @return Term identifier
      */
     private URI resolveTermIdentifierWrtVocabulary(Term term, Vocabulary vocabulary) {
-        final String termNamespace = resolveVocabularyTermNamespace(vocabulary);
+        final String termNamespace = namespaceResolver.resolveNamespace(vocabulary.getUri());
         if (term.getUri() == null) {
-            return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
-                                                        config.getNamespace().getTerm().getSeparator(),
-                                                        term.getLabel().get(vocabulary.getPrimaryLanguage()));
+            return idResolver.generateIdentifier(termNamespace,
+                    term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         if (term.getUri() != null && !term.getUri().toString().startsWith(termNamespace)) {
             LOG.trace(
                     "Existing term identifier {} does not correspond to the expected vocabulary term namespace {}. Adjusting the term id.",
                     Utils.uriToString(term.getUri()), termNamespace);
-            return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
-                                                        config.getNamespace().getTerm().getSeparator(),
-                                                        term.getLabel().get(vocabulary.getPrimaryLanguage()));
+            return idResolver.generateIdentifier(termNamespace,
+                    term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         return term.getUri();
-    }
-
-    /**
-     * Resolves namespace for identifiers of terms in the specified vocabulary.
-     * <p>
-     * It uses the vocabulary identifier and the configured term namespace separator.
-     *
-     * @param vocabulary Vocabulary whose term identifier namespace to resolve
-     * @return Resolved namespace
-     */
-    private String resolveVocabularyTermNamespace(Vocabulary vocabulary) {
-        return idResolver.buildNamespace(vocabulary.getUri().toString(),
-                                         config.getNamespace().getTerm().getSeparator());
     }
 
     /**
@@ -213,8 +206,8 @@ public class ExcelImporter implements VocabularyImporter {
         terms.stream().peek(t -> t.setUri(resolveTermIdentifierWrtVocabulary(t, targetVocabulary)))
              .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
                  final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
-                                                                                     targetVocabulary,
-                                                                                     lang);
+                         targetVocabulary,
+                         lang);
                  if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
                      throw new VocabularyImportException(
                              "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.",
@@ -249,8 +242,19 @@ public class ExcelImporter implements VocabularyImporter {
         // Insert term relationships as raw data because of possible object conflicts in the persistence context -
         // the same term being as multiple types (Term, TermInfo) in the same persistence context
         dataDao.insertRawData(rawDataToInsert.stream().map(tr -> new Quad(tr.subject().getUri(), tr.property(),
-                                                                          tr.object().getUri(),
-                                                                          targetVocabulary.getUri())).toList());
+                tr.object().getUri(),
+                targetVocabulary.getUri())).toList());
+    }
+
+    private void notifyReferencingTerms(List<Term> persistedTerms) {
+        persistedTerms.forEach(t -> {
+            Utils.emptyIfNull(t.getExternalParentTerms())
+                 .forEach(pt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, pt.getUri(), SKOS.NARROWER)));
+            Utils.emptyIfNull(t.getRelatedMatch())
+                 .forEach(rmt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, rmt.getUri(), SKOS.RELATED_MATCH)));
+            Utils.emptyIfNull(t.getExactMatchTerms())
+                 .forEach(emt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, emt.getUri(), SKOS.EXACT_MATCH)));
+        });
     }
 
     @Override
@@ -290,9 +294,8 @@ public class ExcelImporter implements VocabularyImporter {
                         "Unable to identify terms in Excel - it contains neither term identifiers nor labels in primary language.",
                         "error.vocabulary.import.excel.missingIdentifierOrLabel");
             }
-            t.setUri(idResolver.generateDerivedIdentifier(targetVocabulary.getUri(),
-                                                          config.getNamespace().getTerm().getSeparator(),
-                                                          termLabel));
+            t.setUri(idResolver.generateIdentifier(namespaceResolver.resolveNamespace(targetVocabulary.getUri()),
+                    termLabel));
         }
     }
 

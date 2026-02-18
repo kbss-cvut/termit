@@ -24,6 +24,8 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
+import cz.cvut.kbss.termit.rest.dto.FileBackupDto;
 import cz.cvut.kbss.termit.rest.dto.ResourceSaveReason;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -31,6 +33,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +45,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -366,6 +370,82 @@ public class ResourceController extends BaseController {
         final Resource resource = resourceService
                 .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
         return resourceService.getChanges(resource, new ChangeRecordFilterDto());
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Returns the count of available backups for the resource in header " + Constants.X_TOTAL_COUNT_HEADER)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Count of available backups for the resource"),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
+    @RequestMapping(method = RequestMethod.HEAD, path = "/{localName}/backups")
+    public ResponseEntity<Void> getBackupsCount(
+            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace
+    ) {
+        final Resource resource = getResource(localName, namespace);
+        // we still need to load all backups (and parse the names) to actually get their real count
+        final int count = resourceService.getBackupFiles(resource).size();
+        return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, String.valueOf(count)).build();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets all available backups for the resource.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resource backups."),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
+    @GetMapping(value = "/{localName}/backups", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<List<FileBackupDto>> getBackups(
+            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = "pageSize", required = false, defaultValue = "-1") int pageSize
+            ) {
+        final Resource resource = getResource(localName, namespace);
+        Pageable pageable = Constants.DEFAULT_PAGE_SPEC;
+        if (pageSize > -1) {
+            pageable = Pageable.ofSize(pageSize);
+        }
+        pageable = pageable.withPage(page);
+
+        final List<FileBackupDto> dtos = resourceService.getBackupFiles(resource).stream()
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Restores backup from the given timestamp.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Backup restoration started"),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
+    @PostMapping(value = "/{localName}/backups/restore")
+    public ResponseEntity<Void> restoreBackup(
+            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Timestamp of the backup to restore")
+            @RequestParam(name = "backupTimestamp") Instant backupTimestamp
+    ) {
+        final Resource resource = getResource(localName, namespace);
+        resourceService.restoreBackup(resource, backupTimestamp);
+        return ResponseEntity.accepted().build();
     }
 
     /**

@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -29,6 +28,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,12 +138,12 @@ public class DocumentBackupManager {
                     // Compressed file
                     InputStream is = Files.newInputStream(file.toPath());
                     // bzip2 reads from ↑
-                    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is);
+                    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is)
             ) {
                 Files.copy(cis, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile.toFile();
-        } catch (IOException | CompressorException | NullPointerException e) {
+        } catch (IOException | NullPointerException e) {
             throw new BackupManagerException("Unable to decompress file.", e);
         }
     }
@@ -165,10 +165,10 @@ public class DocumentBackupManager {
                 // final bzip2 compressed file
                 OutputStream fos = Files.newOutputStream(compressedFilePath);
                 // bzip2 writes to ↑
-                CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos);
+                CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos)
         ) {
             Files.copy(file.toPath(), cos);
-        } catch (IOException | CompressorException | NullPointerException e) {
+        } catch (IOException | NullPointerException e) {
             throw new BackupManagerException("Unable to compress file.", e);
         }
     }
@@ -178,7 +178,7 @@ public class DocumentBackupManager {
      *
      * @param file   backed up file
      * @param reason reason for which backups are returned, or {@code null}
-     * @return List of available backups
+     * @return List of available backups sorted descending (the newest first)
      */
     public List<BackupFile> getBackups(File file, BackupReason reason) {
         java.io.File directory = storageDirectory.resolve(file.getDirectoryName()).toFile();
@@ -194,7 +194,7 @@ public class DocumentBackupManager {
         if (reason != null) {
             filesStream = filesStream.filter(b -> reason.equals(b.backupReason()));
         }
-        return filesStream.toList();
+        return filesStream.sorted(Comparator.comparing(BackupFile::timestamp).reversed()).toList();
     }
 
     /**
@@ -210,7 +210,7 @@ public class DocumentBackupManager {
      */
     private BackupFile parseBackupFileName(java.io.File file) {
         if (!file.getName().contains(DocumentFileUtils.BACKUP_NAME_SEPARATOR)) {
-            return new BackupFile(Utils.timestamp(), file, BackupReason.UNKNOWN);
+            return null;
         }
         String strTimestamp = file.getName()
                                   .substring(file.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1);
@@ -241,12 +241,45 @@ public class DocumentBackupManager {
 
         Collections.sort(backupTimestamps);
         for (Instant timestamp : backupTimestamps) {
-            if (timestamp.isAfter(at)) {
+            if (timestamp.equals(at) || timestamp.isAfter(at)) {
                 return backupMap.get(timestamp);
             }
         }
         LOG.warn("Unable to find version of {} valid at {}, returning current file.", file, at);
         java.io.File currentFile = DocumentFileUtils.resolveTermitFile(storageDirectory, file, true);
         return new BackupFile(Utils.timestamp(), currentFile, BackupReason.UNKNOWN);
+    }
+
+    /**
+     * Restores the given backup file of the file resource.
+     * Backups the original contents if needed.
+     * <p>
+     * <b>Does not resolve occurrences in the restored file.</b>
+     * @param fileResource the file resource
+     * @param backupFile the backup to restore
+     * @return The physical file replaced with the backup.
+     */
+    @Transactional
+    public java.io.File restoreBackup(File fileResource, BackupFile backupFile) {
+        // create backup if the file was modified since the last backup
+        if (fileResource.getModified().isAfter(fileResource.getLastBackup())) {
+            createBackup(fileResource, BackupReason.BACKUP_RESTORE);
+        } else {
+            LOG.debug("Skipping backup creation when restoring a backup, no changes have been made since the last backup of file {}", fileResource.getUri());
+        }
+
+        // resolve the physical file which will be replaced
+        final java.io.File currentFile = DocumentFileUtils.resolveTermitFile(storageDirectory, fileResource, false);
+
+        LOG.info("Restoring backup file {} to {}", backupFile.file(), currentFile);
+        try {
+            // restore the backup
+            final java.io.File decompressedBackup = openBackup(backupFile);
+            Files.copy(decompressedBackup.toPath(), currentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            LOG.info("Successfully restored backup {} to {}", backupFile.file(), currentFile);
+            return currentFile;
+        } catch (Exception e) {
+            throw new BackupManagerException("Unable to restore backup.", e);
+        }
     }
 }

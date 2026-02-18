@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.10</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>4.2.1</version>
+    <version>4.4.2</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -28,10 +28,10 @@
 
     <properties>
         <java.version>17</java.version>
-        <org.apache.tika.tika-core.version>3.0.0</org.apache.tika.tika-core.version>
+        <org.apache.tika.tika-core.version>3.2.2</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.6.2</org.mapstruct.version>
-        <org.springdoc.version>2.8.5</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>2.7.0</cz.cvut.kbss.jopa.version>
+        <org.springdoc.version>2.8.15</org.springdoc.version>
+        <cz.cvut.kbss.jopa.version>2.8.1</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.15.6</cz.cvut.kbss.jsonld.version>
 
         <packaging>jar</packaging>
@@ -101,6 +101,10 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-messaging</artifactId>
         </dependency>
@@ -109,16 +113,20 @@
             <artifactId>spring-data-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aop</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
         <!-- JWT support for Java -->
@@ -236,19 +244,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.27.1</version>
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.19.0</version>
-        </dependency>
-
-        <!-- Java Melody Monitoring -->
-        <dependency>
-            <groupId>net.bull.javamelody</groupId>
-            <artifactId>javamelody-spring-boot-starter</artifactId>
-            <version>2.5.1</version>
         </dependency>
 
         <!-- Caching -->
@@ -481,6 +482,10 @@
                         <exclude>.editorconfig</exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>de.qaware.maven</groupId>

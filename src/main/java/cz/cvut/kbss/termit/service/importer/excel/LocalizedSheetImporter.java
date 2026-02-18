@@ -125,6 +125,10 @@ class LocalizedSheetImporter {
             return Collections.emptyList();
         }
         findTerms(sheet);
+        if (labelToTerm.isEmpty() && !existingTerms.isEmpty()) {
+            LOG.trace("Encountered empty translation sheet '{}'.", sheet.getSheetName());
+            return existingTerms;
+        }
         int i = 1;
         for (Map.Entry<String, Term> entry : labelToTerm.entrySet()) {
             mapRowToTermAttributes(entry.getValue(), sheet.getRow(i++));
@@ -138,7 +142,7 @@ class LocalizedSheetImporter {
             return getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties");
         } else {
             LOG.trace("No attribute mapping found for language tag '{}', falling back to '{}'.", langTag,
-                      FALLBACK_LANGUAGE);
+                    FALLBACK_LANGUAGE);
             return getClass().getClassLoader().getResourceAsStream("attributes/" + FALLBACK_LANGUAGE + ".properties");
         }
     }
@@ -194,13 +198,13 @@ class LocalizedSheetImporter {
                 sn -> initSingularMultilingualString(term::getDescription, term::setDescription).set(langTag, sn));
         getAttributeValue(termRow, SKOS.ALT_LABEL).ifPresent(
                 al -> populatePluralMultilingualString(term::getAltLabels, term::setAltLabels,
-                                                       splitIntoMultipleValues(al)));
+                        splitIntoMultipleValues(al)));
         getAttributeValue(termRow, SKOS.HIDDEN_LABEL).ifPresent(
                 hl -> populatePluralMultilingualString(term::getHiddenLabels, term::setHiddenLabels,
-                                                       splitIntoMultipleValues(hl)));
+                        splitIntoMultipleValues(hl)));
         getAttributeValue(termRow, SKOS.EXAMPLE).ifPresent(
                 ex -> populatePluralMultilingualString(term::getExamples, term::setExamples,
-                                                       splitIntoMultipleValues(ex)));
+                        splitIntoMultipleValues(ex)));
         getAttributeValue(termRow, DC.Terms.SOURCE).ifPresent(src -> term.setSources(splitIntoMultipleValues(src)));
         getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
@@ -257,14 +261,14 @@ class LocalizedSheetImporter {
         final Term referenced = getTerm(identification, allowExternal);
         if (referenced == null) {
             LOG.warn("No term identified by '{}' found for term '{}' and relationship <{}>.", identification,
-                     subject.getLabel().get(langTag), relationship);
+                    subject.getLabel().get(langTag), relationship);
             return Optional.empty();
         }
         verifyReferencedTermFromThisOrImportedVocabulary(referenced, subject, relationship);
         if ((subject.getUri() != null && Objects.equals(referenced.getUri(), subject.getUri()))
                 || sameLabelSameVocabulary(subject, referenced)) {
             LOG.trace("Skipping self-reference for term '{}' and relationship <{}>.", subject.getLabel().get(langTag),
-                      relationship);
+                    relationship);
             return Optional.empty();
         }
         return Optional.of(referenced);
@@ -273,12 +277,12 @@ class LocalizedSheetImporter {
     private boolean sameLabelSameVocabulary(Term subject, Term referenced) {
         return Objects.equals(subject.getLabel(langTag), referenced.getLabel(langTag))
                 && (Objects.equals(targetVocabulary.getUri(),
-                                   referenced.getVocabulary()) || referenced.getVocabulary() == null);
+                referenced.getVocabulary()) || referenced.getVocabulary() == null);
     }
 
     private void verifyReferencedTermFromThisOrImportedVocabulary(Term referenced, Term subject, String relationship) {
         if (referenced.getVocabulary() != null && !Objects.equals(targetVocabulary.getUri(),
-                                                                  referenced.getVocabulary()) && Utils.emptyIfNull(
+                referenced.getVocabulary()) && Utils.emptyIfNull(
                 targetVocabulary.getImportedVocabularies()).stream().noneMatch(
                 u -> Objects.equals(referenced.getVocabulary(), u))) {
             throw new ReferencedTermInUnrelatedVocabularyException(
@@ -298,7 +302,7 @@ class LocalizedSheetImporter {
                                 new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm)));
             } catch (IllegalArgumentException e) {
                 LOG.warn("Could not create URI for value '{}' and it does not reference another term by label either",
-                         object);
+                        object);
             }
         });
     }
@@ -402,9 +406,17 @@ class LocalizedSheetImporter {
         }
         // Cell may be null, so ensure to filter such values out
         String cellValue = attributeToColumn.get(attributeIri).stream().map(row::getCell).filter(Objects::nonNull)
-                                              .map(c -> c.getStringCellValue().trim()).filter(s -> !s.isBlank())
-                                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER));
+                                            .map(c -> normalizeExcelString(c.getStringCellValue()))
+                                            .filter(s -> !s.isBlank())
+                                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER));
         return cellValue.isBlank() ? Optional.empty() : Optional.of(cellValue.trim());
+    }
+
+    private static String normalizeExcelString(String label) {
+        label = label.trim();
+        // Normalize Unicode characters and replace non-breaking spaces with regular spaces
+        label = IdentifierResolver.normalizeUnicodeCharacters(label).replace('\u00A0', ' ');
+        return label;
     }
 
     private static Set<String> splitIntoMultipleValues(String value) {

@@ -41,6 +41,8 @@ import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -50,7 +52,8 @@ import java.util.stream.Collectors;
 @PrimaryNotBlank({"label"})
 @OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
 @JsonLdAttributeOrder({"uri", "label", "description"})
-public class Vocabulary extends Asset<MultilingualString> implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
+public class Vocabulary extends Asset<MultilingualString>
+        implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
@@ -190,6 +193,29 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
         this.properties = properties;
     }
 
+    /**
+     * Adds the specified value for the specified unmapped property.
+     *
+     * @param property Property
+     * @param value    Value to add
+     */
+    public void addUnmappedPropertyValue(String property, Object value) {
+        if (properties == null) {
+            this.properties = new HashMap<>();
+        }
+        properties.computeIfAbsent(property, k -> new HashSet<>()).add(value);
+    }
+
+    /**
+     * Checks if this vocabulary's unmapped properties contain a value for the specified property.
+     *
+     * @param property Property whose value to look for
+     * @return {@code true} if a value for the specified unmapped property is set, {@code false} otherwise
+     */
+    public boolean hasUnmappedPropertyValue(String property) {
+        return properties != null && !properties.getOrDefault(property, Set.of()).isEmpty();
+    }
+
     @Override
     public Set<String> getTypes() {
         return types;
@@ -228,13 +254,13 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
 
     @Override
     public String toString() {
-        String result = "Vocabulary{"+
+        String result = "Vocabulary{" +
                 getLabel() + " "
                 + Utils.uriToString(getUri());
         try {
             result += ", glossary=" + glossary;
             if (importedVocabularies != null) {
-                result +=", importedVocabularies = [" +
+                result += ", importedVocabularies = [" +
                         importedVocabularies.stream().map(Utils::uriToString)
                                             .collect(Collectors.joining(", ")) + "]";
             }

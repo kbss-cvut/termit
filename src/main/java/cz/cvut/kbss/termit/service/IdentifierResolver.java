@@ -103,10 +103,9 @@ public class IdentifierResolver {
      */
     public static String normalize(String value) {
         Objects.requireNonNull(value);
-        return value.toLowerCase()
-                    .trim()
-                    .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER))
-                    .replaceAll("[(?&$#§),\\[\\]@]", "");
+        return normalizeUnicodeCharacters(value.toLowerCase().trim())
+                .replaceAll("[\\s/\\\\\\p{Z}]", Character.toString(REPLACEMENT_CHARACTER))
+                .replaceAll("[(?&$#§),\\[\\]@]", "");
     }
 
     /**
@@ -118,6 +117,18 @@ public class IdentifierResolver {
      */
     public static String normalizeToAscii(String value) {
         return Normalizer.normalize(normalize(value), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
+    }
+
+    /**
+     * Normalizes Unicode characters to a unified representation.
+     * <p>
+     * This ensures, for example, that accented letters are always represented by a single Unicode character.
+     *
+     * @param value The value to normalize
+     * @return Normalized value
+     */
+    public static String normalizeUnicodeCharacters(String value) {
+        return Normalizer.normalize(value, Normalizer.Form.NFC);
     }
 
     /**
@@ -143,9 +154,7 @@ public class IdentifierResolver {
                 throw new TermItException(e);
             }
         }
-        if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
-            namespace += "/";
-        }
+        namespace = ensureNamespaceSeparatorTermination(namespace);
         final String localPart = asciiOnlyIdentifiers ? normalizeToAscii(comps) : normalize(comps);
         try {
             return URI.create(namespace + localPart);
@@ -155,6 +164,22 @@ public class IdentifierResolver {
                     e,
                     "error.identifier.invalidCharacters");
         }
+    }
+
+    /**
+     * Ensures the specified namespace ends with a separator.
+     * <p>
+     * If the namespace does not end with {@literal /} or {@literal #}, a {@literal /} is appended to it.
+     *
+     * @param namespace Namespace candidate
+     * @return Namespace ending with a separator
+     */
+    public static String ensureNamespaceSeparatorTermination(String namespace) {
+        Objects.requireNonNull(namespace);
+        if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
+            namespace += "/";
+        }
+        return namespace;
     }
 
     /**
