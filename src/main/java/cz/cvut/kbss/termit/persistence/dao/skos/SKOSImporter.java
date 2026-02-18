@@ -127,7 +127,7 @@ public class SKOSImporter implements VocabularyImporter {
         Objects.requireNonNull(config);
         Objects.requireNonNull(data);
         return importVocabulary(config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(),
-                data.data());
+                                data.data());
     }
 
     private Vocabulary importVocabulary(final boolean rename,
@@ -150,11 +150,8 @@ public class SKOSImporter implements VocabularyImporter {
         insertHasTopConceptAssertions();
         removeSelfReferences();
 
-        final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
-        if (vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData)) {
-            throw new IllegalArgumentException(
-                    "Cannot import a vocabulary into an existing one with different identifier.");
-        }
+        final Optional<String> vocabularyIriFromData = resolveVocabularyIriFromImportedData();
+        validateVocabularyIriCompatibility(vocabularyIri, vocabularyIriFromData);
 
         final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri, vocabularyIriFromData);
         ensureConceptIrisAreCompatibleWithTermIt(vocabulary);
@@ -162,7 +159,7 @@ public class SKOSImporter implements VocabularyImporter {
 
         if (vocabularyIri == null) {
             LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(),
-                    vocabulary.getGlossary().getUri());
+                      vocabulary.getGlossary().getUri());
             ensureUniqueness(vocabulary);
         } else {
             clearVocabulary(vocabulary);
@@ -214,6 +211,14 @@ public class SKOSImporter implements VocabularyImporter {
                      throw ex;
                  }
              });
+    }
+
+    private static void validateVocabularyIriCompatibility(URI vocabularyIri, Optional<String> vocabularyIriFromData) {
+        if (vocabularyIri != null && vocabularyIriFromData.isPresent() && !vocabularyIri.toString().equals(
+                vocabularyIriFromData.get())) {
+            throw new IllegalArgumentException(
+                    "Cannot import a vocabulary into an existing one with different identifier.");
+        }
     }
 
     private void ensureUniqueness(Vocabulary vocabulary) {
@@ -301,15 +306,22 @@ public class SKOSImporter implements VocabularyImporter {
         }));
     }
 
-    private String resolveVocabularyIriFromImportedData() {
-        String iri = namespace;
+    private Optional<String> resolveVocabularyIriFromImportedData() {
+        final Optional<Resource> subject = model.filter(null, RDF.TYPE, vf.createIRI(
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)).subjects().stream().findFirst();
+        String iri = subject.map(Value::stringValue).orElse(namespace);
         if (iri.contains(config.getNamespace().getTerm().getSeparator())) {
             iri = iri.substring(0, iri.indexOf(config.getNamespace().getTerm().getSeparator()));
+            return Optional.of(stripTrailingSeparator(iri));
         }
-        if (iri.endsWith("/") || iri.endsWith("#")) {
-            return iri.substring(0, iri.length() - 1);
+        return Optional.empty();
+    }
+
+    private static String stripTrailingSeparator(String str) {
+        if (str.endsWith("/") || str.equals("#")) {
+            return str.substring(0, str.length() - 1);
         }
-        return iri;
+        return str;
     }
 
     private void removeTopConceptOfAssertions() {
@@ -381,12 +393,12 @@ public class SKOSImporter implements VocabularyImporter {
         }
     }
 
-    private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri, final String vocabularyIriFromData) {
+    private Vocabulary createVocabulary(boolean rename, URI vocabularyIri, Optional<String> vocabularyIriFromData) {
         URI newVocabularyIri;
         if (vocabularyIri == null) {
-            newVocabularyIri = URI.create(getFreshVocabularyIri(rename, vocabularyIriFromData));
+            newVocabularyIri = URI.create(getFreshVocabularyIri(rename, vocabularyIriFromData.orElse(namespace)));
         } else {
-            assert vocabularyIri.toString().equals(vocabularyIriFromData);
+            assert vocabularyIriFromData.isEmpty() || vocabularyIri.toString().equals(vocabularyIriFromData.get());
             newVocabularyIri = vocabularyIri;
         }
         final Vocabulary vocabulary = new Vocabulary();
@@ -397,7 +409,7 @@ public class SKOSImporter implements VocabularyImporter {
         glossary.setUri(URI.create(newGlossaryIri));
         if (Objects.equals(vocabulary.getUri(), glossary.getUri())) {
             throw new VocabularyImportException("Vocabulary IRI cannot be equal to glossary IRI.",
-                    "error.vocabulary.import.skos.vocabularyIriEqualsGlossaryIri");
+                                                "error.vocabulary.import.skos.vocabularyIriEqualsGlossaryIri");
         }
         vocabulary.setGlossary(glossary);
         vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
@@ -504,7 +516,7 @@ public class SKOSImporter implements VocabularyImporter {
             final String prefix = s.getObject().stringValue();
             LOG.trace("Found preferred namespace prefix: {}", prefix);
             vocabulary.addUnmappedPropertyValue(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix,
-                    prefix);
+                                                prefix);
         });
     }
 
