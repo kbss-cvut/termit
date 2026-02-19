@@ -149,6 +149,7 @@ public class ExcelImporter implements VocabularyImporter {
                 persistNewTerms(terms, targetVocabulary, rawDataToInsert);
                 notifyReferencingTerms(terms);
             }
+            LOG.debug("Imported {} terms into vocabulary {}.", terms.size(), targetVocabulary);
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
         }

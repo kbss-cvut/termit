@@ -21,8 +21,8 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
@@ -303,6 +303,7 @@ public class DataDao {
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         try (final RepositoryConnection con = repo.getConnection()) {
             final ValueFactory vf = con.getValueFactory();
+            con.begin();
             data.forEach(quad -> {
                 Value v = quad.object() instanceof URI ? vf.createIRI(quad.object().toString()) :
                           Rdf4jUtils.createLiteral(quad.object(), config.getLanguage(), vf);
@@ -310,6 +311,7 @@ public class DataDao {
                 con.add(vf.createIRI(quad.subject().toString()), vf.createIRI(quad.predicate().toString()), v,
                         quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
             });
+            con.commit();
         }
     }
 }
