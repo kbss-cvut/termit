@@ -18,10 +18,8 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
-import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -90,22 +88,32 @@ public class SearchController extends BaseController {
         return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies), language);
     }
 
-    @Operation(description = "Runs a faceted search using the specified search parameters over all terms.")
+    /**
+     * Runs advanced search combining full-text search with faceted filtering.
+     * If no search parameters are provided, runs full-text search on all assets.
+     * @param searchString Search string for full-text search.
+     * @param language Language for full-text search, optional.
+     * @param pageSize Page size for pagination, optional.
+     * @param pageNo Page number for pagination, optional.
+     * @param searchParams Search parameters for faceted filtering, optional.
+     * @return List of search results matching the full-text search and faceted filtering criteria.
+     */
+    @Operation(description = "Runs advanced search combining full-text search with faceted filtering.")
     @ApiResponse(responseCode = "200", description = "Search results.")
     @PreAuthorize("permitAll()")
-    @PostMapping(value = "/faceted/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
-                 consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public List<FacetedSearchResult> facetedTermSearch(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-                                                       @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
-                                                                     required = false) Integer pageSize,
-                                                       @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-                                                       @RequestParam(name = Constants.QueryParams.PAGE,
-                                                                     required = false) Integer pageNo,
-                                                       @Parameter(description = "Search parameters.")
-                                                       @RequestBody Collection<SearchParam> searchParams) {
-        if (searchParams.isEmpty()) {
-            throw new UnsupportedSearchFacetException("Search params must be provided for faceted search.");
-        }
-        return searchService.facetedTermSearch(searchParams, RestUtils.createPageRequest(pageSize, pageNo));
+    @PostMapping(value = "/advanced", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public List<FullTextSearchResult> advancedSearch(
+            @Parameter(description = "Search string.")
+            @RequestParam(name = "searchString", required = false, defaultValue = "") String searchString,
+            @Parameter(description = "Search language.")
+            @RequestParam(name = "language", required = false) String language,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
+            @Parameter(description = "Search parameters.")
+            @RequestBody Collection<SearchParam> searchParams) {
+        return searchService.advancedSearch(searchString, language, searchParams, RestUtils.createPageRequest(pageSize, pageNo));
     }
 }

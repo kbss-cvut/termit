@@ -18,11 +18,9 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
-import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostFilter;
@@ -76,24 +74,20 @@ public class SearchService {
     }
 
     /**
-     * Executes a faceted search of terms based on the specified search parameters.
-     * <p>
-     * The search parameters define facets by which terms should be searched together with corresponding search values.
-     * The search treats the parameters as conjunction, so the result has to match all the search parameters.
-     * <p>
-     * Note: cannot use full paging support, as it is not supported by Spring Security -
-     * <a href="https://github.com/spring-projects/spring-security/issues/3410">https://github.com/spring-projects/spring-security/issues/3410</a>
+     * Executes advanced search combining full text search with faceted filtering.
      *
-     * @param searchParams Search parameters
-     * @param pageSpec     Page specifying result number and position
-     * @return List of matching terms, sorted by label
+     * @param searchString String to search by for full text search
+     * @param language     The language of the {@code searchString}, {@code null} to match all languages
+     * @param searchParams Search parameters for filtering by facets.
+     * @param pageSpec     Specification of the page of results to return
+     * @return Matching results
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FacetedSearchResult> facetedTermSearch(@Nonnull Collection<SearchParam> searchParams,
-                                                       @Nonnull Pageable pageSpec) {
+    public List<FullTextSearchResult> advancedSearch(String searchString, String language,
+                                                     Collection<SearchParam> searchParams,
+                                                     Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
-        Objects.requireNonNull(pageSpec);
         searchParams.forEach(SearchParam::validate);
-        return searchDao.facetedTermSearch(searchParams, pageSpec);
+        return searchDao.advancedSearch(searchString, language, searchParams, pageSpec);
     }
 }

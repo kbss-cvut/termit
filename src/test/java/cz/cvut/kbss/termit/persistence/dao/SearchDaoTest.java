@@ -68,20 +68,20 @@ class SearchDaoTest {
     }
 
     @Test
-    void fullTextSearchUsesOneTokenSearchStringAsDisjunctionOfExactAndWildcardMatch() {
+    void fullTextSearchUsesOneTokenSearchStringAsWildcardMatch() {
         mockSearchQuery();
         final String searchString = "test";
         sut.fullTextSearch(searchString, null);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
-        final Optional<String> argument = captor.getAllValues().stream().filter(s -> s
-                .equals(searchString + " " + searchString + SearchDao.LUCENE_WILDCARD))
+        final Optional<String> argument = captor.getAllValues().stream()
+                                                .filter(s -> s.equals(searchString + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
 
     @Test
-    void fullTextSearchUsesLastTokenInMultiTokenSearchStringAsDisjunctionOfExactAndWildcardMatch() {
+    void fullTextSearchUsesLastTokenInMultiTokenSearchStringAsWildcardMatch() {
         mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
@@ -89,7 +89,7 @@ class SearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals(searchString + " " + lastToken + SearchDao.LUCENE_WILDCARD))
+                                                .filter(s -> s.equals("termOne termTwo " + lastToken + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
