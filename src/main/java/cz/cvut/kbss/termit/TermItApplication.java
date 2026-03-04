@@ -17,8 +17,9 @@
  */
 package cz.cvut.kbss.termit;
 
-import org.springframework.boot.SpringApplication;
+import cz.cvut.kbss.termit.service.init.OntologyMigrationInitializer;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -30,6 +31,7 @@ public class TermItApplication {
         // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
         // Need to call it here before any of the Spring services depending on security context holder strategy are initialized
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-        SpringApplication.run(TermItApplication.class, args);
+        new SpringApplicationBuilder(TermItApplication.class).initializers(new OntologyMigrationInitializer())
+                                                             .run(args);
     }
 }

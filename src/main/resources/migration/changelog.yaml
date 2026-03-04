@@ -1,0 +1,7 @@
+changeSets:
+    - id: 1
+      changes:
+          - type: deleteClass
+            iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/model
+          - type: deleteClass
+            iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-modelu
