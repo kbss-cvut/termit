@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -202,11 +203,13 @@ public class SearchDao {
         LOG.trace("Running faceted term search for search parameters: {}", searchParams);
 
         final List<SearchParam> relationshipAnnotationParams = searchParams.stream()
-                .filter(p -> p.getProperty().toString().equals(Vocabulary.s_p_as_relationship))
-                .toList();
+                                                                           .filter(p -> p.getProperty().toString()
+                                                                                         .equals(Vocabulary.s_p_as_relationship))
+                                                                           .toList();
         final List<SearchParam> regularParams = searchParams.stream()
-                .filter(p -> !p.getProperty().toString().equals(Vocabulary.s_p_as_relationship))
-                .toList();
+                                                            .filter(p -> !p.getProperty().toString()
+                                                                           .equals(Vocabulary.s_p_as_relationship))
+                                                            .toList();
 
         final StringBuilder queryStr = new StringBuilder(
                 "SELECT DISTINCT ?t WHERE { ?t a ?term ; ?hasLabel ?label .\n");
@@ -252,16 +255,16 @@ public class SearchDao {
     /**
      * Builds a SPARQL query fragment for searching terms by relationship annotations.
      * <p>
-     * Searches for terms that are subjects or objects in relationships annotated with the specified values.
-     * Uses RDF-star syntax to query annotated triples.
+     * Searches for terms that are subjects or objects in relationships annotated with the specified values. Uses
+     * RDF-star syntax to query annotated triples.
      *
-     * @param param Search parameter with annotation values
+     * @param param         Search parameter with annotation values
      * @param variableIndex Index for generating unique variable names
      * @return SPARQL query fragment
      */
     private String buildRelationshipAnnotationQuery(SearchParam param, int variableIndex) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
-                URI.create(RDF.STATEMENT));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT)));
 
         if (annotationProperties.isEmpty()) {
             LOG.debug("No custom attributes with domain rdf:Statement found for relationship annotation search");
@@ -276,8 +279,8 @@ public class SearchDao {
         final String annotationPropVar = "?ap" + variableIndex;
 
         final String annotationPropertiesFilter = annotationProperties.stream()
-                .map(ap -> Utils.uriToString(ap.getUri()))
-                .collect(Collectors.joining(","));
+                                                                      .map(ap -> Utils.uriToString(ap.getUri()))
+                                                                      .collect(Collectors.joining(","));
 
         sb.append("{\n");
         sb.append("  { << ?t ").append(predicateVar).append(" ").append(objectVar).append(" >> ")
@@ -289,13 +292,14 @@ public class SearchDao {
         sb.append("  }\n");
         sb.append("}\n");
 
-        sb.append("FILTER (").append(annotationPropVar).append(" IN (").append(annotationPropertiesFilter).append("))\n");
+        sb.append("FILTER (").append(annotationPropVar).append(" IN (").append(annotationPropertiesFilter)
+          .append("))\n");
 
         if (param.getMatchType() == MatchType.IRI) {
             sb.append("FILTER (").append(valueVar).append(" IN (")
               .append(param.getValue().stream()
-                      .map(v -> Utils.uriToString(URI.create(v.toString())))
-                      .collect(Collectors.joining(","))).append("))\n");
+                           .map(v -> Utils.uriToString(URI.create(v.toString())))
+                           .collect(Collectors.joining(","))).append("))\n");
         } else {
             sb.append("FILTER (STR(").append(valueVar).append(") = \"")
               .append(param.getValue().iterator().next().toString()).append("\")\n");

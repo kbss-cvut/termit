@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
+import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
@@ -70,8 +71,8 @@ public class TermRelationshipAnnotationDao {
     }
 
     private List<TermRelationshipAnnotation> findAnnotationsForSubject(Term term, URI context) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
-                URI.create(RDF.STATEMENT));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT)));
         return (List<TermRelationshipAnnotation>) em.createNativeQuery(
                                                             """
                                                                     SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
@@ -92,8 +93,8 @@ public class TermRelationshipAnnotationDao {
      * @return List of resolved annotations
      */
     private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSkosSymmetricProperties(Term term) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
-                URI.create(RDF.STATEMENT));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT)));
         // Must use FILTER for ?attribute and ?predicate because setting the value directly results in VALUES clause
         // (which is there because ?subject is projected out of the query)
         // causing incorrect query results, because mismatch in the number of items in VALUES meant UNDEF was used.
