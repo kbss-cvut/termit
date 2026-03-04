@@ -23,13 +23,18 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.model.query.criteria.CriteriaBuilder;
+import cz.cvut.kbss.jopa.model.query.criteria.CriteriaQuery;
+import cz.cvut.kbss.jopa.model.query.criteria.Root;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.persistence.dao.spec.Specification;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -58,6 +63,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
@@ -114,35 +120,25 @@ public class DataDao {
         return new ArrayList<>(map.values());
     }
 
-    /**
-     * Finds all user-defined attributes.
-     *
-     * @return List of custom attributes
-     */
-    public List<CustomAttribute> findAllCustomAttributes() {
-        return em.createQuery("SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
-                              CustomAttribute.class)
-                 .setDescriptor(descriptor())
-                 .getResultList();
-    }
-
     private static Descriptor descriptor() {
         return new EntityDescriptor(URI.create(CustomAttribute.CONTEXT));
     }
 
     /**
-     * Finds all user-defined attributes with the specified domain.
+     * Finds all user-defined attributes corresponding to the specified (optional) specifications.
      *
-     * @param domain Property domain
-     * @return List of matching custom attributes
+     * @param specification Selection specifications, optional
+     * @return List of matching custom attributes, ordered by label
      */
-    public List<CustomAttribute> findAllCustomAttributesByDomain(URI domain) {
-        return em.createQuery(
-                         "SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p WHERE p.domain = :domain ORDER BY p.label",
-                         CustomAttribute.class)
-                 .setParameter("domain", domain)
-                 .setDescriptor(descriptor())
-                 .getResultList();
+    @SafeVarargs
+    public final List<CustomAttribute> findAllCustomAttributes(Specification<CustomAttribute>... specification) {
+        final CriteriaBuilder cb = em.getCriteriaBuilder();
+        final CriteriaQuery<CustomAttribute> query = cb.createQuery(CustomAttribute.class);
+        final Root<CustomAttribute> root = query.from(CustomAttribute.class);
+        query.select(root).where(Stream.of(specification).map(s -> s.toPredicate(root, query, cb)).toList())
+             .orderBy(cb.asc(root.getAttr(
+                     CustomAttribute_.label)));
+        return em.createQuery(query).setDescriptor(descriptor()).getResultList();
     }
 
     /**
