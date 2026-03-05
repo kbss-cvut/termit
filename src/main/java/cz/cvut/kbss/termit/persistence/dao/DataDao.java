@@ -63,7 +63,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
@@ -125,16 +124,25 @@ public class DataDao {
     }
 
     /**
-     * Finds all user-defined attributes corresponding to the specified (optional) specifications.
+     * Finds all user-defined attributes.
      *
-     * @param specification Selection specifications, optional
      * @return List of matching custom attributes, ordered by label
      */
-    public List<CustomAttribute> findAllCustomAttributes(Specification<CustomAttribute>... specification) {
+    public List<CustomAttribute> findAllCustomAttributes() {
+        return findAllCustomAttributes(List.of());
+    }
+
+    /**
+     * Finds all user-defined attributes corresponding to the specified (optional) specifications.
+     *
+     * @param specifications Selection specifications, optional
+     * @return List of matching custom attributes, ordered by label
+     */
+    public List<CustomAttribute> findAllCustomAttributes(List<Specification<CustomAttribute>> specifications) {
         final CriteriaBuilder cb = em.getCriteriaBuilder();
         final CriteriaQuery<CustomAttribute> query = cb.createQuery(CustomAttribute.class);
         final Root<CustomAttribute> root = query.from(CustomAttribute.class);
-        query.select(root).where(Stream.of(specification).map(s -> s.toPredicate(root, query, cb)).toList())
+        query.select(root).where(specifications.stream().map(s -> s.toPredicate(root, query, cb)).toList())
              .orderBy(cb.asc(root.getAttr(
                      CustomAttribute_.label)));
         return em.createQuery(query).setDescriptor(descriptor()).getResultList();

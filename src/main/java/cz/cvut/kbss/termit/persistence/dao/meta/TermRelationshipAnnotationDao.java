@@ -71,8 +71,8 @@ public class TermRelationshipAnnotationDao {
     }
 
     private List<TermRelationshipAnnotation> findAnnotationsForSubject(Term term, URI context) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
-                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT)));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
         return (List<TermRelationshipAnnotation>) em.createNativeQuery(
                                                             """
                                                                     SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
@@ -93,8 +93,8 @@ public class TermRelationshipAnnotationDao {
      * @return List of resolved annotations
      */
     private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSkosSymmetricProperties(Term term) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
-                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT)));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
         // Must use FILTER for ?attribute and ?predicate because setting the value directly results in VALUES clause
         // (which is there because ?subject is projected out of the query)
         // causing incorrect query results, because mismatch in the number of items in VALUES meant UNDEF was used.

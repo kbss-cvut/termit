@@ -386,8 +386,8 @@ class DataDaoTest extends BaseDaoTestRunner {
             em.persist(pTwo);
         });
 
-        final List<CustomAttribute> result = sut.findAllCustomAttributes(
-                CustomAttributeSpecifications.hasDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT)));
+        final List<CustomAttribute> result = sut.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT))));
         assertEquals(List.of(pTwo), result);
     }
 }

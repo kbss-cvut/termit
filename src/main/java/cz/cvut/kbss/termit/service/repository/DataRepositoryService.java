@@ -89,8 +89,8 @@ public class DataRepositoryService {
     public List<CustomAttribute> findCustomAttributesByDomainAndRange(@Nonnull URI domain, @Nonnull URI range) {
         Objects.requireNonNull(domain);
         Objects.requireNonNull(range);
-        return dataDao.findAllCustomAttributes(CustomAttributeSpecifications.hasDomain(domain),
-                                               CustomAttributeSpecifications.hasRange(range));
+        return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.hasDomain(domain),
+                                               CustomAttributeSpecifications.hasRange(range)));
     }
 
     /**
