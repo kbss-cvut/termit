@@ -89,12 +89,16 @@ public class ReadOnlyTermService {
         return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
     }
 
-    public ReadOnlyTerm findRequired(URI termId) {
-        return create(termService.findRequired(termId));
+    public ReadOnlyTerm findRequired(URI id) {
+        return create(termService.findRequired(id));
     }
 
-    public TermInfo findRequiredTermInfo(URI termId) {
-        return termService.findRequiredTermInfo(termId);
+    public ReadOnlyTerm findRequiredWithPopulatedCustomAttributes(URI id) {
+        return create(termService.findRequiredWithPopulatedCustomAttributes(id));
+    }
+
+    public TermInfo findRequiredTermInfo(URI id) {
+        return termService.findRequiredTermInfo(id);
     }
 
     private ReadOnlyTerm create(final Term term) {

@@ -410,6 +410,24 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Gets a term with the specified identifier with populated custom attribute term references.
+     * <p>
+     * This means values of custom attributes that reference other terms and are by default represented only by the term
+     * identifier are replaced by {@link TermInfo} instances in the term's {@code properties} field.
+     *
+     * @param id Term identifier
+     * @return Matching term
+     * @throws NotFoundException When no matching term is found
+     */
+    @PostAuthorize("@termAuthorizationService.canRead(returnObject)")
+    public Term findRequiredWithPopulatedCustomAttributes(URI id) {
+        final Term result = repositoryService.findRequiredWithPopulatedCustomAttributes(id);
+        assert result != null;
+        consolidateAttributes(result);
+        return result;
+    }
+
+    /**
      * Gets a reference to a Term with the specified identifier.
      * <p>
      * Note that this method is not protected by ACL-based authorization and should thus not be used without some other
