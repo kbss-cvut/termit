@@ -263,8 +263,8 @@ public class SearchDao {
      * @return SPARQL query fragment
      */
     private String buildRelationshipAnnotationQuery(SearchParam param, int variableIndex) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
-                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT)));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
 
         if (annotationProperties.isEmpty()) {
             LOG.debug("No custom attributes with domain rdf:Statement found for relationship annotation search");
