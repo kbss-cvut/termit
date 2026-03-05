@@ -5,6 +5,9 @@ import cz.cvut.kbss.termit.model.CustomAttribute_;
 
 import java.net.URI;
 
+/**
+ * Contains factory methods for creating {@link Specification}s for retrieving {@link CustomAttribute} instances.
+ */
 public class CustomAttributeSpecifications {
 
     public static Specification<CustomAttribute> hasDomain(URI domain) {

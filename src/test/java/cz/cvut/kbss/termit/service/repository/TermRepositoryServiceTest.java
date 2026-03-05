@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -28,6 +29,7 @@ import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -51,6 +53,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -60,6 +63,7 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -768,7 +772,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.getGlossary().addRootTerm(toRemove);
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.getGlossary().addRootTerm(referencing);
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                                                                  new DefinitionalOccurrenceTarget(referencing));
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {
             em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
@@ -789,7 +794,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.getGlossary().addRootTerm(toRemove);
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.getGlossary().addRootTerm(referencing);
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                                                                  new DefinitionalOccurrenceTarget(referencing));
         occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {
@@ -814,5 +820,35 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             assertTrue(result.isPresent());
             assertFalse(em.contains(result.get()));
         });
+    }
+
+    @Test
+    void findRequiredWithPopulatedCustomAttributesLoadsTermAndReplacesTermReferencesWithTermInfoInstanceInUnmappedProperties() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term referenced = Generator.generateTermWithId(vocabulary.getUri());
+        final CustomAttribute customAtt = new CustomAttribute(Generator.generateUri(),
+                                                              MultilingualString.create("Test att", "en"), null);
+        customAtt.setDomain(URI.create(SKOS.CONCEPT));
+        customAtt.setRange(URI.create(SKOS.CONCEPT));
+        term.setProperties(Map.of(customAtt.getUri().toString(), Set.of(referenced.getUri())));
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(referenced, descriptorFactory.termDescriptor(referenced));
+            em.persist(customAtt, new EntityDescriptor(URI.create(CustomAttribute.CONTEXT)));
+        });
+
+        final Term result = sut.findRequiredWithPopulatedCustomAttributes(term.getUri());
+        assertNotNull(result);
+        assertThat(result.getProperties(), hasKey(customAtt.getUri().toString()));
+        assertEquals(Set.of(new TermInfo(referenced)), result.getProperties().get(customAtt.getUri().toString()));
+    }
+
+    @Test
+    void findRequiredWithPopulatedCustomAttributesReturnsRegularTermWhenItHasNoCustomAttributeTermReferences() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+
+        final Term result = sut.findRequiredWithPopulatedCustomAttributes(term.getUri());
+        assertTrue(result.getProperties().isEmpty());
     }
 }
