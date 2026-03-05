@@ -130,8 +130,7 @@ public class DataDao {
      * @param specification Selection specifications, optional
      * @return List of matching custom attributes, ordered by label
      */
-    @SafeVarargs
-    public final List<CustomAttribute> findAllCustomAttributes(Specification<CustomAttribute>... specification) {
+    public List<CustomAttribute> findAllCustomAttributes(Specification<CustomAttribute>... specification) {
         final CriteriaBuilder cb = em.getCriteriaBuilder();
         final CriteriaQuery<CustomAttribute> query = cb.createQuery(CustomAttribute.class);
         final Root<CustomAttribute> root = query.from(CustomAttribute.class);
