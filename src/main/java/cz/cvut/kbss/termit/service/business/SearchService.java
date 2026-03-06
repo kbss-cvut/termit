@@ -17,16 +17,20 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -43,34 +47,37 @@ public class SearchService {
         this.searchDao = searchDao;
     }
 
-    /**
-     * Executes full text search in assets.
-     *
-     * @param searchString String to search by
-     * @param language The language of the {@code searchString}, {@code null} to match all languages
-     * @return Matching assets
-     */
-    @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FullTextSearchResult> fullTextSearch(String searchString, String language) {
-        return searchDao.fullTextSearch(searchString, language);
-    }
 
     /**
      * Executes full text search in terms, possibly filtered by vocabularies.
+     * <p>
+     * This method now uses the advanced search internally with type and vocabulary filters.
      *
      * @param searchString String to search by
-     * @param vocabularies URIs of vocabularies to search in, or null, if all vocabularies shall be searched
+     * @param vocabularies URIs of vocabularies to search in, or empty set to search all vocabularies
      * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return Matching terms
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
     public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies, String language) {
         Objects.requireNonNull(vocabularies);
-        // Search including snapshots, as the selected vocabularies may be snapshots
-        return searchDao.fullTextSearchIncludingSnapshots(searchString, language).stream()
-                        .filter(r -> r.getTypes().contains(SKOS.CONCEPT))
-                        .filter(r -> vocabularies.contains(r.getVocabulary()))
-                        .collect(Collectors.toList());
+
+        Collection<SearchParam> searchParams = new ArrayList<>();
+        searchParams.add(new SearchParam(
+            URI.create(RDF.TYPE),
+            Set.of(SKOS.CONCEPT),
+            MatchType.IRI
+        ));
+        if (!vocabularies.isEmpty()) {
+            searchParams.add(new SearchParam(
+                URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku),
+                vocabularies.stream().map(URI::toString).collect(Collectors.toSet()),
+                MatchType.IRI
+            ));
+        }
+
+        // advancedSearch with unpaged results to maintain backwards compatibility
+        return advancedSearch(searchString, language, searchParams, Pageable.unpaged());
     }
 
     /**

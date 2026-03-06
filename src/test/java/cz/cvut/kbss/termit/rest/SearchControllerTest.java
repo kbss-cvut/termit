@@ -75,20 +75,21 @@ class SearchControllerTest extends BaseControllerTestRunner {
                         new FullTextSearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
                                                  "test", "test", 1.0));
         final String searchLanguage = "pl";
-        when(searchServiceMock.fullTextSearch(any(), any())).thenReturn(expected);
+        when(searchServiceMock.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(expected);
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts")
                                                    .param("searchString", searchString)
                                                    .param("language", searchLanguage))
                                            .andExpect(status().isOk()).andReturn();
-        final List<FullTextSearchResult> result = readValue(mvcResult, new TypeReference<List<FullTextSearchResult>>() {
+        final List<FullTextSearchResult> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(expected.size(), result.size());
         assertEquals(expected.get(0).getUri(), result.get(0).getUri());
         assertEquals(expected.get(0).getLabel(), result.get(0).getLabel());
         assertEquals(expected.get(0).getTypes(), result.get(0).getTypes());
-        verify(searchServiceMock).fullTextSearch(searchString, searchLanguage);
+        verify(searchServiceMock).advancedSearch(searchString, searchLanguage, Collections.emptyList(),
+                                                 Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -96,7 +97,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final String searchString = "test";
         mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
                .andExpect(status().isOk());
-        verify(searchServiceMock).fullTextSearch(eq(searchString), eq(null));
+        verify(searchServiceMock).advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -151,7 +152,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
         });
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getUri());
-        verify(searchServiceMock).advancedSearch(eq("test"), eq(null), eq(searchParams), eq(Constants.DEFAULT_PAGE_SPEC));
+        verify(searchServiceMock).advancedSearch("test", null, searchParams, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -169,6 +170,6 @@ class SearchControllerTest extends BaseControllerTestRunner {
                 post(PATH + "/advanced").param("searchString", "test").content(toJson(searchParams)).contentType(
                         MediaType.APPLICATION_JSON).param(Constants.QueryParams.PAGE, Integer.toString(pageNo)).param(
                         Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))).andExpect(status().isOk());
-        verify(searchServiceMock).advancedSearch(eq("test"), eq(null), eq(searchParams), eq(PageRequest.of(pageNo, pageSize)));
+        verify(searchServiceMock).advancedSearch("test", null, searchParams, PageRequest.of(pageNo, pageSize));
     }
 }

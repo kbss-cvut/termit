@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,7 +72,7 @@ class SearchDaoTest {
     void fullTextSearchUsesOneTokenSearchStringAsWildcardMatch() {
         mockSearchQuery();
         final String searchString = "test";
-        sut.fullTextSearch(searchString, null);
+        sut.advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
@@ -85,7 +86,7 @@ class SearchDaoTest {
         mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
-        sut.fullTextSearch(searchString, null);
+        sut.advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
@@ -98,7 +99,7 @@ class SearchDaoTest {
     void fullTextSearchDoesNotAddWildcardIfLastTokenAlreadyEndsWithWildcard() {
         mockSearchQuery();
         final String searchString = "test token*";
-        sut.fullTextSearch(searchString, null);
+        sut.advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream().filter(s -> s.startsWith(searchString))
@@ -109,8 +110,9 @@ class SearchDaoTest {
 
     @Test
     void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
-        final List<FullTextSearchResult> result = sut.fullTextSearch("", null);
+        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Collections.emptyList(),
+                                                                      Constants.DEFAULT_PAGE_SPEC);
         assertTrue(result.isEmpty());
-        verify(emMock, never()).createNativeQuery(anyString());
+        verify(emMock, never()).createNativeQuery(any(), anyString());
     }
 }

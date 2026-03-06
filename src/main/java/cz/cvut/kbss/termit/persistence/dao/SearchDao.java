@@ -74,63 +74,6 @@ public class SearchDao {
         this.ftsQuery = Utils.loadQuery(FTS_QUERY_FILE);
     }
 
-    /**
-     * Finds terms and vocabularies that match the specified search string.
-     * <p>
-     * The search functionality depends on the underlying repository and the index it uses. But basically the search
-     * looks for match in asset label, comment and SKOS definition (if exists).
-     * <p>
-     * Note that this version of the search excludes asset snapshots from the results.
-     *
-     * @param searchString The string to search by
-     * @param language     The language of the {@code searchString}, {@code null} to match all languages
-     * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String, String)
-     */
-    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString, @Nullable String language) {
-        return fullTextSearch(searchString, language, Pageable.unpaged());
-    }
-
-    /**
-     * Finds terms and vocabularies that match the specified search string.
-     * <p>
-     * The search functionality depends on the underlying repository and the index it uses. But basically the search
-     * looks for match in asset label, comment and SKOS definition (if exists).
-     * <p>
-     * Note that this version of the search excludes asset snapshots from the results.
-     *
-     * @param searchString The string to search by
-     * @param language     The language of the {@code searchString}, {@code null} to match all languages
-     * @param pageSpec     Specification of the page of results to return
-     * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String, String)
-     */
-    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString, @Nullable String language, Pageable pageSpec) {
-        Objects.requireNonNull(searchString);
-        if (searchString.isBlank()) {
-            return Collections.emptyList();
-        }
-
-        String query = adjustQueryForLanguage(ftsQuery, language);
-
-        final String wildcardString = addWildcard(searchString);
-        final String exactMatch = splitExactMatch(searchString);
-        LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
-                  wildcardString);
-        Query nativeQuery = setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
-                                                 searchString, language)
-                .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
-                .setParameter("wildCardSearchString", wildcardString, null)
-                .setParameter("splitExactMatch", exactMatch, null);
-
-        if (pageSpec.isPaged()) {
-            nativeQuery.setFirstResult((int) pageSpec.getOffset());
-            nativeQuery.setMaxResults(pageSpec.getPageSize());
-        }
-
-        return nativeQuery.getResultList();
-    }
-
     private static String adjustQueryForLanguage(String query, String language) {
         if (language == null) {
             // BIND using unbound expression needs to be removed from the FTS query
@@ -153,39 +96,6 @@ public class SearchDao {
         final String[] split = searchString.trim().split("\\s+");
         String s = "<em>";
         return s.concat(String.join("</em> <em>", split)).concat("</em>");
-    }
-
-    /**
-     * Finds terms and vocabularies that match the specified search string.
-     * <p>
-     * The search functionality depends on the underlying repository and the index it uses. But basically the search
-     * looks for match in asset label, comment and SKOS definition (if exists).
-     * <p>
-     * Note that this version of the search includes asset snapshots.
-     *
-     * @param searchString The string to search by
-     * @param language     The language of the {@code searchString}, {@code null} to match all languages
-     * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String, String)
-     */
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString,
-                                                                       @Nullable String language) {
-        Objects.requireNonNull(searchString);
-        if (searchString.isBlank()) {
-            return Collections.emptyList();
-        }
-        String query = adjustQueryForLanguage(queryIncludingSnapshots(), language);
-
-        final String wildcardString = addWildcard(searchString);
-        final String exactMatch = splitExactMatch(searchString);
-        LOG.trace(
-                "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
-                searchString, wildcardString);
-        return setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
-                                    searchString, language)
-                .setParameter("wildCardSearchString", wildcardString, null)
-                .setParameter("splitExactMatch", exactMatch, null)
-                .getResultList();
     }
 
     /**
@@ -335,15 +245,6 @@ public class SearchDao {
         }
 
         return nativeQuery.getResultList();
-    }
-
-    protected String queryIncludingSnapshots() {
-        // This string has to match the filter string in the query
-        return ftsQuery.replace("FILTER NOT EXISTS { ?entity a ?snapshot . }", "");
-    }
-
-    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
-        return setCommonQueryParams(q, searchString, requestedLanguage, true);
     }
 
     protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage,

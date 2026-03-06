@@ -44,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -70,7 +71,7 @@ public class SearchController extends BaseController {
                                                      @Parameter(description = "Search language. " +
                                                              "Searches in all languages if the field is omitted.")
                                                      @RequestParam(name = "language", required = false) String language) {
-        return searchService.fullTextSearch(searchString, language);
+        return searchService.advancedSearch(searchString, language, Collections.emptyList(), RestUtils.createPageRequest(null, null));
     }
 
     @Operation(description = "Runs full-text search over terms, matching their labels, definitions and scope notes.")
@@ -115,5 +116,30 @@ public class SearchController extends BaseController {
             @Parameter(description = "Search parameters.")
             @RequestBody Collection<SearchParam> searchParams) {
         return searchService.advancedSearch(searchString, language, searchParams, RestUtils.createPageRequest(pageSize, pageNo));
+    }
+
+    /**
+     * Runs a faceted search using the specified search parameters over all terms.
+     * <p>
+     * This endpoint is kept for backwards compatibility and uses the advanced search internally.
+     * @param pageSize Page size for pagination, optional.
+     * @param pageNo Page number for pagination, optional.
+     * @param searchParams Search parameters for faceted filtering.
+     * @return List of search results matching the faceted filtering criteria.
+     */
+    @Operation(description = "Runs a faceted search using the specified search parameters over all terms.")
+    @ApiResponse(responseCode = "200", description = "Search results.")
+    @PreAuthorize("permitAll()")
+    @PostMapping(value = "/faceted/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
+                 consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public List<FullTextSearchResult> facetedTermSearch(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                                                       @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
+                                                                     required = false) Integer pageSize,
+                                                       @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                                                       @RequestParam(name = Constants.QueryParams.PAGE,
+                                                                     required = false) Integer pageNo,
+                                                       @Parameter(description = "Search parameters.")
+                                                       @RequestBody Collection<SearchParam> searchParams) {
+        return searchService.advancedSearch("", null, searchParams, RestUtils.createPageRequest(pageSize, pageNo));
     }
 }

@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,7 +42,8 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.never;
@@ -56,48 +58,6 @@ class SearchServiceTest {
 
     @InjectMocks
     private SearchService sut;
-
-    @Test
-    void fullTextSearchFiltersResultsFromNonMatchingVocabularies() {
-        final String searchString = "test";
-        final URI vocabulary = Generator.generateUri();
-        final FullTextSearchResult ftsr = new FullTextSearchResult(
-                Generator.generateUri(),
-                "test",
-                "Term definition",
-                vocabulary,
-                null,
-                SKOS.CONCEPT,
-                "test",
-                "test",
-                1.0);
-        when(searchDao.fullTextSearchIncludingSnapshots(searchString, null)).thenReturn(Collections.singletonList(ftsr));
-        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.singleton(
-                Generator.generateUri()), null);
-        assertTrue(result.isEmpty());
-        verify(searchDao).fullTextSearchIncludingSnapshots(searchString, null);
-    }
-
-    @Test
-    void fullTextSearchReturnsResultsFromMatchingVocabularies() {
-        final String searchString = "test";
-        final URI vocabulary = Generator.generateUri();
-        final FullTextSearchResult ftsr = new FullTextSearchResult(
-                Generator.generateUri(),
-                "test",
-                "Term definition",
-                vocabulary,
-                Generator.generateUri(),
-                SKOS.CONCEPT,
-                "test",
-                "test",
-                1.0);
-        when(searchDao.fullTextSearchIncludingSnapshots(searchString, null)).thenReturn(Collections.singletonList(ftsr));
-        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString,
-                                                                            Collections.singleton(vocabulary), null);
-        assertEquals(Collections.singletonList(ftsr), result);
-        verify(searchDao).fullTextSearchIncludingSnapshots(searchString, null);
-    }
 
     @Test
     void advancedSearchValidatesEachSearchParamBeforeInvokingSearch() {
@@ -121,5 +81,61 @@ class SearchServiceTest {
         final List<FullTextSearchResult> result = sut.advancedSearch("test", null, Set.of(spOne), pageSpec);
         assertEquals(List.of(item), result);
         verify(searchDao).advancedSearch("test", null, Set.of(spOne), pageSpec);
+    }
+
+    @Test
+    void fullTextSearchOfTermsAddsConceptAndVocabularyFilters() {
+        final String searchString = "test";
+        final URI vocabulary = Generator.generateUri();
+        final FullTextSearchResult item = new FullTextSearchResult(
+                Generator.generateUri(),
+                "test",
+                "Term definition",
+                vocabulary,
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0);
+        when(searchDao.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
+
+        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Set.of(vocabulary), null);
+
+        assertEquals(List.of(item), result);
+        verify(searchDao).advancedSearch(eq(searchString), eq(null), argThat(params ->
+                params.size() == 2
+                        && params.stream().anyMatch(p -> p.getProperty().toString().equals(RDF.TYPE)
+                        && p.getMatchType() == MatchType.IRI
+                        && p.getValue().equals(Set.of(SKOS.CONCEPT)))
+                        && params.stream().anyMatch(p -> p.getProperty().toString().equals(Vocabulary.s_p_je_pojmem_ze_slovniku)
+                        && p.getMatchType() == MatchType.IRI
+                        && p.getValue().equals(Set.of(vocabulary.toString())))),
+                argThat(pageable -> !pageable.isPaged()));
+    }
+
+    @Test
+    void fullTextSearchOfTermsAddsOnlyConceptFilterWhenVocabularyNotSpecified() {
+        final String searchString = "test";
+        final FullTextSearchResult item = new FullTextSearchResult(
+                Generator.generateUri(),
+                "test",
+                "Term definition",
+                Generator.generateUri(),
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0);
+        when(searchDao.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
+
+        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.emptySet(), null);
+
+        assertEquals(List.of(item), result);
+        verify(searchDao).advancedSearch(eq(searchString), eq(null), argThat(params ->
+                params.size() == 1
+                        && params.stream().anyMatch(p -> p.getProperty().toString().equals(RDF.TYPE)
+                        && p.getMatchType() == MatchType.IRI
+                        && p.getValue().equals(Set.of(SKOS.CONCEPT)))),
+                argThat(pageable -> !pageable.isPaged()));
     }
 }
