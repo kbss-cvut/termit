@@ -1,0 +1,709 @@
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/term/> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit>
+        a               <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> , skos:ConceptScheme , owl:Ontology ;
+        <http://purl.org/dc/terms/created>
+                "2020-05-26" ;
+        <http://purl.org/dc/terms/creator>
+                "Martin Ledvinka" , "Michal Med" ;
+        <http://purl.org/dc/terms/title>
+                "Slovník systému TermIt"@cs , "Vocabulary of system TermIt"@en ;
+        <http://purl.org/ontology/bibo/status>
+                "Specifikace"@cs , "Specification"@en ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+                "termit" ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri>
+                "http://onto.fel.cvut.cz/ontologies/application/termit/term/" ;
+        owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/glosář> , <https://slovník.gov.cz/datový/pracovní-prostor/glosář> , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/model> , <https://slovník.gov.cz/datový/pracovní-prostor/model> , <http://rdfs.org/sioc/ns#> , <http://www.w3.org/ns/activitystreams#> , <http://purl.org/vocab/vann/> ;
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/2.0.0> .
+        # TODO Top concepts
+
+termit:definition-occurrence-target
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:occurrence-target , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Definition occurrence target"@en , "Cíl definičního výskytu"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "vyskytuje se v definici jiného pojmu"@cs ;
+        rdfs:subClassOf  termit:occurrence-target .
+
+termit:has-text-quote-prefix
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has text quote prefix"@en , "Má prefix text quote"@cs ;
+        rdfs:domain         termit:selector-text-quote ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:file-term-occurrence
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "File term occurrence"@en , "Souborový výskyt pojmu"@cs ;
+        rdfs:subClassOf  termit:term-occurrence .
+
+termit:is-term-definition-selector
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Is selector of term definition"@en , "Je selektorem definice pojmu"@cs ;
+        rdfs:domain         termit:definition-selector ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:blocked-user
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Blocked TermIt user"@en , "Zablokovaný uživatel TermItu"@cs ;
+        rdfs:subClassOf  termit:user .
+
+termit:administrator
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class, termit:user-role ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Administrator"@en , "Administrátor"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "He or she has full access to the system, including user administration."@en , "Má plný přístup k systému, včetně administrace uživatelů."@cs ;
+        rdfs:subClassOf  termit:user .
+
+termit:editor
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit:user-role ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Editor"@en , "Editor"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "He or she can view, create, edit and delete vocabularies, terms and resources. He or she can also comment on terms. He or she cannot manage users."@en , "Může prohlížet, vytvářet, měnit a mazat slovníky, pojmy a zdroje. Pojmy může rovněž komentovat. Nemůže spravovat uživatele."@cs ;
+        rdfs:subClassOf  termit:user .
+
+termit:user-role
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader> <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User role"@en , "Uživatelská role"@cs .
+
+termit:has-user-role
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader> <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has user role"@en , "Má uživatelskou roli"@cs ;
+        rdfs:domain         termit:user ;
+        rdfs:range          termit:user-role ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:configuration
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader> <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Configuration"@en , "Konfigurace"@cs .
+
+termit:has-end-position
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has end position"@en , "Má koncovou pozici"@cs ;
+        rdfs:domain         termit:selector-text-position ; # TODO
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:text-analysis-record
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Text analysis record"@en , "Záznam o textové analýze"@cs ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit:user
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "TermIt user"@en , "Uživatel TermItu"@cs ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel> .
+
+termit:has-term-definition-source
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has term definition source"@en , "Má zdroj definice pojmu"@cs ;
+        rdfs:domain         <http://www.w3.org/2004/02/skos/core#Concept> ;
+        rdfs:range          termit:term-definition-source ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:selector
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Selector"@en , "selektor"@cs ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit:has-definition-occurrence-target
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:má-cíl-výskytu , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has definition occurrence target"@en , "Má cíl definičního výskytu"@cs ;
+        rdfs:domain         termit:definition-term-occurrence ;
+        rdfs:range          termit:definition-occurrence-target ;
+        rdfs:subPropertyOf  termit-pojem:has-occurrence-target .
+
+termit:file-occurrence-target
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:occurrence-target , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "File occurrence target"@en , "Cíl souborového výskytu"@cs ;
+        rdfs:subClassOf  termit:occurrence-target .
+
+termit:selector-xpath
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:selector , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "XPath selector"@en , "Selektor XPath"@cs ;
+        rdfs:subClassOf  termit:selector .
+
+termit:has-exact-text-quote
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has exact text quote"@en , "Má přesný text quote"@cs ;
+        rdfs:domain         termit:selector-text-quote ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:definition-term-occurrence
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Definition term occurrence"@en , "Definiční výskyt pojmu"@cs ;
+        rdfs:subClassOf  termit:term-occurrence .
+
+termit:suggested-term-assignment
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:term-assignment , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Suggested term assignment"@en , "Navržené přiřazení pojmu"@cs ;
+        rdfs:subClassOf  termit:term-assignment .
+
+termit:occurrence-target
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:target , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Occurrence target"@en , "Cíl výskytu"@cs ;
+        rdfs:subClassOf  termit:target .
+
+termit:target
+        a  <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Target"@en , "Cíl"@cs ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit:is-term-assignment
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Is assignment of a term"@en , "Je přiřazením pojmu"@cs ;
+        rdfs:domain         termit:term-assignment ;
+        rdfs:range          <http://www.w3.org/2004/02/skos/core#Concept> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:definition-selector
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Definition selector"@en , "Selektor definice"@cs ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit:has-file-occurrence-target
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:has-occurrence-target , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has file occurrence target"@en , "Má cíl souborového výskytu"@cs ;
+        rdfs:domain         termit:file-term-occurrence ;
+        rdfs:range          termit:file-occurrence-target ;
+        rdfs:subPropertyOf  termit:has-occurrence-target .
+
+termit:suggested-term-occurrence
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Suggested term occurrence"@en , "Navržený výskyt pojmu"@cs ;
+        rdfs:subClassOf  termit:term-occurrence .
+
+termit:selector-text-position
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:selector , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Selector by text position"@en , "Selektor pozicí v textu"@cs ;
+        rdfs:subClassOf  termit:selector .
+
+termit:term-definition-source
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:file-term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Term definition source"@en , "Zdroj definice pojmu"@cs ;
+        rdfs:subClassOf  termit:file-term-occurrence .
+
+termit:locked-user
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Locked TermIt user"@en , "Uzamčený uživatel TermItu"@cs ;
+        rdfs:subClassOf  termit:user .
+
+termit:has-target
+        a  <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has target"@en , "Má cíl"@cs ;
+        rdfs:domain         termit:term-assignment ;
+        rdfs:range          termit:target ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:has-analysis-vocabulary
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has analysis vocabulary"@en , "Má slovník pro analýzu"@cs ;
+        rdfs:domain         termit:text-analysis-record ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:selector-fragment
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:selector , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Selector by fragment"@en , "Selektor fragmentem"@cs ;
+        rdfs:subClassOf  termit:selector .
+
+termit:has-start-position
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has start position"@en , "Má startovní pozici"@cs ;
+        rdfs:domain         termit:selector-text-position ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:has-occurrence-target
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:has-target , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has occurrence target"@en , "Má cíl výskytu"@cs ;
+        rdfs:range          termit:occurrence-target ;
+        rdfs:subPropertyOf  termit:has-target .
+
+termit:selector-css
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:selector , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CSS selector"@en , "Selektor CSS"@cs ;
+        rdfs:subClassOf  termit:selector .
+
+termit:term-assignment
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Term assignment"@en , "Přiřazení termu"@cs ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit:selector-text-quote
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:selector , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Selector by text quote"@en , "Selektor text quote"@cs ;
+        rdfs:subClassOf  termit:selector .
+
+termit:reader
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit:user-role ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Reader"@en , "Čtenář"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "He or she can list and view vocabularies and terms. He or she can also comment on terms."@en , "Může prohlížet slovníky a pojmy. Pojmy může rovněž komentovat."@cs ;
+        rdfs:subClassOf  termit:user .
+
+termit:anonymous
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit:user-role ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Anonymous"@en , "Anonym"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+        "A not logged in user"@en , "Nepřihlášený uživatel"@cs ;
+        rdfs:subClassOf  termit:user .
+
+termit:has-text-quote-suffix
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has text quote suffix"@en , "Má suffix text quote"@cs ;
+        rdfs:domain         termit:selector-text-quote ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:has-selector
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has selector"@en , "Má selektor"@cs ;
+        rdfs:domain         termit:occurrence-target ;
+        rdfs:range          termit:selector ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:has-analyzed-resource
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has analyzed resource"@en , "Má analyzovaný zdroj"@cs ;
+        rdfs:domain         termit:text-analysis-record ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:term-occurrence
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:term-assignment , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Term occurrence"@en , "Výskyt termu"@cs ;
+        rdfs:subClassOf  termit:term-assignment .
+
+termit:reaction
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Reaction"@en , "Reakce"@cs ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit:has-reaction
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has reaction"@en , "Má reakci"@cs ;
+        rdfs:domain         <http://rdfs.org/sioc/types#Comment> ;
+        rdfs:range          termit:reaction ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:is-topic-of
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Is topic of"@en , "Je tématem"@cs ;
+        owl:inverseOf   <http://rdfs.org/sioc/ns#topic> .
+
+termit:has-my-last-comment
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has my last comment"@en , "Má můj poslední komentář"@cs .
+
+termit:has-maximum-file-size
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has maximum file size"@en , "Má maximální velikost souboru"@cs ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:has-indexed-language
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has indexed language"@en , "Má indexovaný jazyk"@cs ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:has-version-separator
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has version separator"@en , "Má oddělovač verze"@cs ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:read-only
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Read-only"@en , "Pouze pro čtení"@cs .
+
+termit:external
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "External"@en , "Externí"@cs .
+
+termit:forbidden
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Forbidden"@en , "Zakázaný"@cs .
+
+termit:access-control-list
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access control list"@en , "Seznam pro řízení přístupu"@cs .
+
+termit:has-access-control-list
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access control list"@en , "Má seznam pro řízení přístupu"@cs ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> ;
+        rdfs:range          termit:access-control-list ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:access-control-record
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access control record"@en , "Záznam pro řízení přístupu"@cs .
+
+termit:user-access-control-record
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User access control record"@en , "Záznam pro řízení přístupu uživatele"@cs ;
+        rdfs:subClassOf  termit:access-control-record .
+
+termit:user-group-access-control-record
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User group access control record"@en , "Záznam pro řízení přístupu uživatelské skupiny"@cs ;
+        rdfs:subClassOf  termit:access-control-record .
+
+termit:user-role-access-control-record
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User role access control record"@en , "Záznam pro řízení přístupu uživatelské role"@cs ;
+        rdfs:subClassOf  termit:access-control-record .
+
+termit:has-access-control-record
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access control record"@en , "Má záznam pro řízení přístupu"@cs ;
+        rdfs:domain         termit:access-control-list ;
+        rdfs:range          termit:access-control-record ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:has-access-level-holder
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access level holder"@en , "Má držitele přístupových oprávnění"@cs ;
+        rdfs:domain         termit:access-control-record ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit:has-access-level
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access level"@en , "Má úroveň přístupových oprávnění"@cs ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> ;
+        rdfs:domain         termit:access-control-record ;
+        rdfs:range          termit:access-level .
+
+termit:access-level
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level"@en , "Úroveň přístupových oprávnění"@cs ;
+        owl:equivalentClass [
+                            a          owl:Class ;
+                            owl:oneOf ( <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none>
+                                      )
+                            ] .
