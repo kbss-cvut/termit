@@ -38,6 +38,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -611,7 +612,7 @@ public class VocabularyController extends BaseController {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.addAccessControlRecords(vocabulary, record);
-        LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
+        LOG.debug("Added access control record to ACL of vocabulary {}.", Utils.uriToString(identifier));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -634,7 +635,7 @@ public class VocabularyController extends BaseController {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.removeAccessControlRecord(vocabulary, record);
-        LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
+        LOG.debug("Removed access control record from ACL of vocabulary {}.", Utils.uriToString(identifier));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -664,7 +665,7 @@ public class VocabularyController extends BaseController {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.updateAccessControlLevel(vocabulary, record);
-        LOG.debug("Updated access control record {} from ACL of vocabulary {}.", record, vocabulary);
+        LOG.debug("Updated access control record {} from ACL of vocabulary {}.", record, Utils.uriToString(identifier));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
