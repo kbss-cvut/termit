@@ -281,3 +281,36 @@ changeSets:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/žádná
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/čtení
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/zápis
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úvodní-stav-pojmu
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/initial-term-state
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/koncový-stav-pojmu
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/terminal-term-state
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/požadavek-na-změnu-hesla
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/password-reset-request
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/custom-attribute
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-datum-a-čas-poslední-zálohy
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-last-backup-datetime
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/osobní-přístupový-token
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/personal-access-token
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-datum-expirace
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-expiration-date
