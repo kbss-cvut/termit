@@ -707,3 +707,116 @@ termit:access-level
                                         <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none>
                                       )
                             ] .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - None"@en , "Úroveň přístupových oprávnění - Žádná"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - Read"@en , "Úroveň přístupových oprávnění - Čtení"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ; owl:NamedIndividual ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - Write"@en , "Úroveň přístupových oprávnění - Zápis"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ; owl:NamedIndividual ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - Security"@en , "Úroveň přístupových oprávnění - Správa"@cs .
+
+termit:initial-term-state
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Initial term state"@en , "Úvodní stav pojmu"@cs ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+
+termit:terminal-term-state
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Terminal term state"@en , "Koncový stav pojmu"@cs ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+
+termit:password-reset-request
+    a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+    <http://www.w3.org/2004/02/skos/core#broader>
+            <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Password reset request"@en , "Požadavek na změnu hesla"@cs .
+
+termit:has-modeling-tool-address
+    a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:AnnotationProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+    <http://www.w3.org/2004/02/skos/core#broader>
+            <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Has modeling tool address"@en , "Má adresu modelovacího nástroje"@cs ;
+    rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit:custom-attribute
+    a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Custom attribute"@en , "Vlastní atribut"@cs ;
+    rdfs:subClassOf rdf:Property .
+
+termit:has-last-backup-datetime
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has date and time of the last backup"@en , "Má datum a čas poslední zálohy"@cs ;
+        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> ;
+        rdfs:range          xsd:dateTime .
+
+termit:personal-access-token
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Personal access token"@en , "Osobní přístupový token"@cs .
+
+termit:has-expiration-date
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has expiration date"@en , "Má datum expirace"@cs ;
+        rdfs:range          xsd:date .
