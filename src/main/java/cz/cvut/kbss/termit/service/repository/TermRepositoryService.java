@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -126,16 +127,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         assert result.getProperties() != null;
         termCustomAtts.stream().filter(ca -> result.getProperties().containsKey(ca.getUri().toString())).forEach(ca -> {
             final Set<Object> values = result.getProperties().get(ca.getUri().toString());
+            final Set<TermInfo> toAdd = new HashSet<>();
             final Iterator<Object> it = values.iterator();
             while (it.hasNext()) {
                 final Object ref = it.next();
                 if (ref instanceof URI refUri) {
                     termDao.findTermInfo(refUri).ifPresent(ti -> {
                         it.remove();
-                        values.add(ti);
+                        toAdd.add(ti);
                     });
                 }
             }
+            values.addAll(toAdd);
         });
         return result;
     }
