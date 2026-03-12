@@ -55,6 +55,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -250,7 +251,7 @@ public class WebSocketExceptionHandler {
         LOG.atWarn().setMessage("Authentication failure during message processing: {}\nMessage: {}")
            .addArgument(e.getMessage()).addArgument(message::toString).log();
 
-        if (ExceptionUtils.findCause(e, JwtException.class).isPresent()) {
+        if (ExceptionUtils.findCause(e, JwtException.class).isPresent() || ExceptionUtils.findCause(e, InvalidBearerTokenException.class).isPresent()) {
             return errorInfo(message, e);
         }
 

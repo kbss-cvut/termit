@@ -149,6 +149,7 @@ public class ExcelImporter implements VocabularyImporter {
                 persistNewTerms(terms, targetVocabulary, rawDataToInsert);
                 notifyReferencingTerms(terms);
             }
+            LOG.debug("Imported {} terms into vocabulary {}.", terms.size(), targetVocabulary);
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
         }
@@ -180,14 +181,14 @@ public class ExcelImporter implements VocabularyImporter {
         final String termNamespace = namespaceResolver.resolveNamespace(vocabulary.getUri());
         if (term.getUri() == null) {
             return idResolver.generateIdentifier(termNamespace,
-                    term.getLabel().get(vocabulary.getPrimaryLanguage()));
+                                                 term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         if (term.getUri() != null && !term.getUri().toString().startsWith(termNamespace)) {
             LOG.trace(
                     "Existing term identifier {} does not correspond to the expected vocabulary term namespace {}. Adjusting the term id.",
                     Utils.uriToString(term.getUri()), termNamespace);
             return idResolver.generateIdentifier(termNamespace,
-                    term.getLabel().get(vocabulary.getPrimaryLanguage()));
+                                                 term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         return term.getUri();
     }
@@ -206,8 +207,8 @@ public class ExcelImporter implements VocabularyImporter {
         terms.stream().peek(t -> t.setUri(resolveTermIdentifierWrtVocabulary(t, targetVocabulary)))
              .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
                  final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
-                         targetVocabulary,
-                         lang);
+                                                                                     targetVocabulary,
+                                                                                     lang);
                  if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
                      throw new VocabularyImportException(
                              "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.",
@@ -242,18 +243,21 @@ public class ExcelImporter implements VocabularyImporter {
         // Insert term relationships as raw data because of possible object conflicts in the persistence context -
         // the same term being as multiple types (Term, TermInfo) in the same persistence context
         dataDao.insertRawData(rawDataToInsert.stream().map(tr -> new Quad(tr.subject().getUri(), tr.property(),
-                tr.object().getUri(),
-                targetVocabulary.getUri())).toList());
+                                                                          tr.object().getUri(),
+                                                                          targetVocabulary.getUri())).toList());
     }
 
     private void notifyReferencingTerms(List<Term> persistedTerms) {
         persistedTerms.forEach(t -> {
             Utils.emptyIfNull(t.getExternalParentTerms())
-                 .forEach(pt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, pt.getUri(), SKOS.NARROWER)));
+                 .forEach(pt -> eventPublisher.publishEvent(
+                         new TermReferencesUpdatedEvent(this, pt.getUri(), SKOS.NARROWER)));
             Utils.emptyIfNull(t.getRelatedMatch())
-                 .forEach(rmt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, rmt.getUri(), SKOS.RELATED_MATCH)));
+                 .forEach(rmt -> eventPublisher.publishEvent(
+                         new TermReferencesUpdatedEvent(this, rmt.getUri(), SKOS.RELATED_MATCH)));
             Utils.emptyIfNull(t.getExactMatchTerms())
-                 .forEach(emt -> eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, emt.getUri(), SKOS.EXACT_MATCH)));
+                 .forEach(emt -> eventPublisher.publishEvent(
+                         new TermReferencesUpdatedEvent(this, emt.getUri(), SKOS.EXACT_MATCH)));
         });
     }
 
@@ -295,7 +299,7 @@ public class ExcelImporter implements VocabularyImporter {
                         "error.vocabulary.import.excel.missingIdentifierOrLabel");
             }
             t.setUri(idResolver.generateIdentifier(namespaceResolver.resolveNamespace(targetVocabulary.getUri()),
-                    termLabel));
+                                                   termLabel));
         }
     }
 
@@ -378,5 +382,20 @@ public class ExcelImporter implements VocabularyImporter {
      * @param object   Object term
      */
     record TermRelationship(Term subject, URI property, Term object) {
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof TermRelationship that)) {
+                return false;
+            }
+            // Use subject URI and label, because URI could be null (and Term.equals uses only URI)
+            return Objects.equals(object, that.object) && Objects.equals(subject.getLabel(), that.subject.getLabel()) &&
+                    Objects.equals(subject.getUri(), that.subject.getUri()) && Objects.equals(property, that.property);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(subject.getUri(), subject.getLabel(), property, object);
+        }
     }
 }

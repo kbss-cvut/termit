@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
+import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -75,8 +76,21 @@ public class DataRepositoryService {
      * @return List of custom properties
      */
     @Transactional(readOnly = true)
-    public List<CustomAttribute> findAllCustomProperties() {
+    public List<CustomAttribute> findAllCustomAttributes() {
         return dataDao.findAllCustomAttributes();
+    }
+
+    /**
+     * Gets all user-defined attributes with the specified domain and range.
+     *
+     * @return List of matching custom attributes
+     */
+    @Transactional(readOnly = true)
+    public List<CustomAttribute> findCustomAttributesByDomainAndRange(@Nonnull URI domain, @Nonnull URI range) {
+        Objects.requireNonNull(domain);
+        Objects.requireNonNull(range);
+        return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.hasDomain(domain),
+                                               CustomAttributeSpecifications.hasRange(range)));
     }
 
     /**
@@ -122,7 +136,8 @@ public class DataRepositoryService {
         validate(attribute);
         if (attribute.getUri() == null) {
             attribute.setUri(
-                    idResolver.generateIdentifier(config.getNamespace().getCustomAttribute(), getLabelForIdentifier(attribute)));
+                    idResolver.generateIdentifier(config.getNamespace().getCustomAttribute(),
+                                                  getLabelForIdentifier(attribute)));
         }
         LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
@@ -139,13 +154,15 @@ public class DataRepositoryService {
     private static void validate(CustomAttribute attribute) {
         assert attribute.getDomain() != null;
         final String strDomain = attribute.getDomain().toString();
-        if (!SKOS.CONCEPT.equals(strDomain) && !Vocabulary.s_c_slovnik.equals(strDomain) && !RDF.STATEMENT.equals(strDomain)) {
+        if (!SKOS.CONCEPT.equals(strDomain) && !Vocabulary.s_c_slovnik.equals(strDomain) && !RDF.STATEMENT.equals(
+                strDomain)) {
             throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
         }
 
         if (RDF.STATEMENT.equals(strDomain)) {
             if (attribute.getAnnotatedRelationships() == null || attribute.getAnnotatedRelationships().isEmpty()) {
-                throw new ValidationException("Custom attribute with rdf:Statement domain must specify applicable properties.");
+                throw new ValidationException(
+                        "Custom attribute with rdf:Statement domain must specify applicable properties.");
             }
         }
         if (attribute.getLabel() == null || attribute.getLabel().isEmpty()) {

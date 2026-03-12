@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -385,8 +386,8 @@ class DataDaoTest extends BaseDaoTestRunner {
             em.persist(pTwo);
         });
 
-        final List<CustomAttribute> result = sut.findAllCustomAttributesByDomain(URI.create(
-                cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        final List<CustomAttribute> result = sut.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT))));
         assertEquals(List.of(pTwo), result);
     }
 }
