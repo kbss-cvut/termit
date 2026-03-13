@@ -121,6 +121,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public Term findRequiredWithPopulatedCustomAttributes(@Nonnull URI id) {
         final Term result = findRequired(id);
+        termDao.detach(result);
         final URI termTypeUri = Term_.entityClassIRI.toURI();
         final List<CustomAttribute> termCustomAtts = dataService.findCustomAttributesByDomainAndRange(termTypeUri,
                                                                                                       termTypeUri);
