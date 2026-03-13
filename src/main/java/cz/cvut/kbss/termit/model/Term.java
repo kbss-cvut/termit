@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.annotations.CascadeType;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
@@ -79,7 +80,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     /**
      * Parent terms from the same vocabulary.
      */
-    @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
     private Set<Term> parentTerms;
 
     /**
@@ -88,7 +89,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
      * Represents the {@code skos:broadMatch} property.
      */
     @JsonIgnore
-    @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
     private Set<Term> externalParentTerms;
 
     @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
