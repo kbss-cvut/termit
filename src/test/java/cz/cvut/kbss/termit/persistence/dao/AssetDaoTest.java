@@ -220,7 +220,7 @@ class AssetDaoTest extends BaseDaoTestRunner {
         persistRecord.setAuthor(Generator.generateUserWithId());
         transactional(() -> {
             em.persist(vocabulary);
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setGlossary(vocabulary.getUri());
             em.persist(term);
             em.persist(persistRecord.getAuthor());
             em.persist(persistRecord);

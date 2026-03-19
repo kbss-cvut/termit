@@ -128,7 +128,7 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.getLabel().remove(Constants.DEFAULT_LANGUAGE);
         term.getLabel().set("de", "Apfelbaum, der");
-        vocabulary.getGlossary().addRootTerm(term);
+        vocabulary.addRootTerm(term);
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));

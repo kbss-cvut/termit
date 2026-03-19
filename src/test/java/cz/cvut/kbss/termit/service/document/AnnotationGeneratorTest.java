@@ -125,8 +125,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         document.setUri(Generator.generateUri());
         document.setVocabulary(vocabulary.getUri());
         vocabulary.setDocument(document);
-        vocabulary.getGlossary().addRootTerm(term);
-        vocabulary.getGlossary().addRootTerm(termTwo);
+        vocabulary.addRootTerm(term);
+        vocabulary.addRootTerm(termTwo);
         this.vocabDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         this.file = new File();
         file.setUri(Generator.generateUri());
@@ -255,14 +255,14 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final Term area = new Term();
         area.setLabel(MultilingualString.create("Území", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         area.setUri(URI.create("http://test.org/pojem/uzemi"));
-        vocabulary.getGlossary().addRootTerm(mp);
-        vocabulary.getGlossary().addRootTerm(ma);
-        vocabulary.getGlossary().addRootTerm(area);
+        vocabulary.addRootTerm(mp);
+        vocabulary.addRootTerm(ma);
+        vocabulary.addRootTerm(area);
         transactional(() -> {
             em.persist(mp, descriptorFactory.termDescriptor(vocabulary));
             em.persist(ma, descriptorFactory.termDescriptor(vocabulary));
             em.persist(area, descriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
 
         final InputStream content = loadFile("data/rdfa-large.html");
