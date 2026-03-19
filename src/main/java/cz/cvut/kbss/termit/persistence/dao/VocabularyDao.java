@@ -286,27 +286,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             find(entity.getUri()).ifPresent(em::remove);
             refreshLastModified();
             em.getEntityManagerFactory().getCache().evict(vocabularyContext);
-            em.getEntityManagerFactory().getCache().evict(Glossary.class, entity.getGlossary().getUri(), null);
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    /**
-     * Updates glossary contained in the specified vocabulary.
-     * <p>
-     * The vocabulary is passed for correct context resolution, as glossary existentially depends on its owning
-     * vocabulary.
-     *
-     * @param entity Owner of the updated glossary
-     * @return The updated entity
-     */
-    public Glossary updateGlossary(Vocabulary entity) {
-        Objects.requireNonNull(entity);
-        final Glossary result = em.merge(entity.getGlossary(), descriptorFactory.glossaryDescriptor(entity));
-        refreshLastModified();
-        return result;
     }
 
     /**

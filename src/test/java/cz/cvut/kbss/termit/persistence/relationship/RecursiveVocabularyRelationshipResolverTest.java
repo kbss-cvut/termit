@@ -57,11 +57,11 @@ class RecursiveVocabularyRelationshipResolverTest extends BaseDaoTestRunner {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(intermediateVocabulary, descriptorFactory.vocabularyDescriptor(intermediateVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            source.setGlossary(subjectVocabulary.getGlossary().getUri());
+            source.setGlossary(subjectVocabulary.getUri());
             em.persist(source, descriptorFactory.termDescriptor(subjectVocabulary));
-            intermediate.setGlossary(intermediateVocabulary.getGlossary().getUri());
+            intermediate.setGlossary(intermediateVocabulary.getUri());
             em.persist(intermediate, descriptorFactory.termDescriptor(intermediateVocabulary));
-            target.setGlossary(targetVocabulary.getGlossary().getUri());
+            target.setGlossary(targetVocabulary.getUri());
             em.persist(target, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(source, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(intermediate, intermediateVocabulary.getUri(), em);

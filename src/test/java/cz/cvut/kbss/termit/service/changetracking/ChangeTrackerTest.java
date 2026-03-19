@@ -81,7 +81,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     void onAssetPersistEventStoresCreationChangeRecordInRepository() {
         enableRdfsInference(em);
         final Term newTerm = Generator.generateTermWithId();
-        newTerm.setGlossary(vocabulary.getGlossary().getUri());
+        newTerm.setGlossary(vocabulary.getUri());
         transactional(() -> {
             em.persist(newTerm, descriptorFactory.termDescriptor(vocabulary));
             sut.onAssetPersistEvent(new AssetPersistEvent(this, newTerm));
@@ -122,7 +122,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     void onAssetUpdateEventRecordsSingleChangeToLiteralAttribute() {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(vocabulary.getGlossary().getUri());
+        original.setGlossary(vocabulary.getUri());
         transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
@@ -141,7 +141,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     void onAssetUpdateEventRecordsMultipleChangesToAttributes() {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(vocabulary.getGlossary().getUri());
+        original.setGlossary(vocabulary.getUri());
         transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
