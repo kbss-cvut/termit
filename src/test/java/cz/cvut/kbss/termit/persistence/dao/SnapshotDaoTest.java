@@ -72,10 +72,10 @@ class SnapshotDaoTest extends BaseDaoTestRunner {
         enableRdfsInference(em);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        vocabulary.getGlossary().addRootTerm(term);
+        vocabulary.addRootTerm(term);
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setGlossary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
         });
         final Instant timestamp = Utils.timestamp();

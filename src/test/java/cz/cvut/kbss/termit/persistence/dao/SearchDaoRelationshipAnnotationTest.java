@@ -79,10 +79,10 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             termC.setVocabulary(vocabulary.getUri());
             annotatingTerm.setVocabulary(vocabulary.getUri());
 
-            vocabulary.getGlossary().addRootTerm(termA);
-            vocabulary.getGlossary().addRootTerm(termB);
-            vocabulary.getGlossary().addRootTerm(termC);
-            vocabulary.getGlossary().addRootTerm(annotatingTerm);
+            vocabulary.addRootTerm(termA);
+            vocabulary.addRootTerm(termB);
+            vocabulary.addRootTerm(termC);
+            vocabulary.addRootTerm(annotatingTerm);
 
             customAttribute = new CustomAttribute();
             customAttribute.setUri(URI.create(

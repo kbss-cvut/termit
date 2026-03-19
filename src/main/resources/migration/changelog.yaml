@@ -5,3 +5,84 @@ changeSets:
             iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/model
           - type: deleteClass
             iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-modelu
+    - id: 2
+      changes:
+          - type: sparqlUpdate
+            query: |
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>    
+                DELETE {
+                    ?t skos:inScheme ?glossary .
+                } INSERT {
+                    GRAPH ?g {
+                        ?t skos:inScheme ?vocabulary .
+                    }
+                } WHERE {
+                    GRAPH ?g {
+                        ?t a skos:Concept ;
+                        skos:inScheme ?glossary .
+                        ?vocabulary pdp:má-glosář ?glossary .
+                    }
+                }
+          - type: sparqlUpdate
+            query: |
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                DELETE {
+                    ?glossary skos:hasTopConcept ?t .
+                } INSERT {
+                    GRAPH ?g {
+                        ?vocabulary skos:hasTopConcept ?t .
+                    }
+                } WHERE {
+                    GRAPH ?g {
+                        ?glossary skos:hasTopConcept ?t .
+                    }
+                    ?t pdp:je-pojmem-ze-slovníku ?vocabulary .
+                }
+          - type: sparqlUpdate
+            query: |
+                PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+
+                DELETE {
+                    ?change ?y ?z .
+                } WHERE {
+                    VALUES (?type) {(pdp:glosář) (pdp:model)}
+                    ?change a pdp:úprava-entity ;
+                            ?p ?model ;
+                            ?y ?z .
+                    ?model a ?type .
+                }
+          - type: sparqlUpdate
+            query: |
+                PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                DELETE {
+                    ?og <http://onto.fel.cvut.cz/ontologies/application/ontoGrapher/scheme> ?glossary .
+                } INSERT {
+                    GRAPH ?g {
+                        ?og <http://onto.fel.cvut.cz/ontologies/application/ontoGrapher/scheme> ?vocabulary .
+                    }
+                } WHERE {
+                    GRAPH ?g {
+                      ?og <http://onto.fel.cvut.cz/ontologies/application/ontoGrapher/scheme> ?glossary .
+                    }
+                    ?vocabulary pdp:má-glosář ?glossary .
+                }
+          - type: sparqlUpdate
+            query: |
+                PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                DELETE {
+                    ?vocabulary a pdp:slovník .
+                } INSERT {
+                    GRAPH ?g {
+                        ?vocabulary a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                    }
+                } WHERE {
+                    GRAPH ?g {
+                        ?vocabulary a pdp:slovník .
+                    }
+                }
+          - type: deleteClass
+            iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář
+          - type: deleteClass
+            iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-glosáře

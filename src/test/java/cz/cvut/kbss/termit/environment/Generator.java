@@ -254,7 +254,6 @@ public class Generator {
     public static cz.cvut.kbss.termit.model.Vocabulary generateVocabulary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary =
                 new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setGlossary(new Glossary());
         final String primaryLanguage = Environment.LANGUAGE;
         vocabulary.setPrimaryLanguage(primaryLanguage);
         vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), primaryLanguage));
