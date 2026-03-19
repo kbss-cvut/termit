@@ -174,7 +174,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             vocabulary.addRootTerm(term);
-            em.merge(vocabulary, descriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
         generateSnapshotStub(term, Instant.now());
         return term;
