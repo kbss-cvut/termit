@@ -71,9 +71,8 @@ class ChangeTrackingContextResolverTest {
     @Test
     void resolveChangeTrackingContextReturnsVocabularyIdentifierWithTrackingExtensionForTerm() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.getGlossary().setUri(Generator.generateUri());
         final Term term = Generator.generateTermWithId();
-        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setGlossary(vocabulary.getUri());
         final TypedQuery<URI> q = mock(TypedQuery.class);
         when(q.setParameter(any(String.class), any(Object.class))).thenReturn(q);
         when(q.getSingleResult()).thenReturn(vocabulary.getUri());

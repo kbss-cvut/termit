@@ -125,11 +125,10 @@ class TermTest {
     @Test
     void addParentTermAddsSpecifiedTermToParentsWhenItIsFromSameGlossary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.getGlossary().setUri(Generator.generateUri());
         final Term sut = Generator.generateTermWithId();
-        sut.setGlossary(vocabulary.getGlossary().getUri());
+        sut.setGlossary(vocabulary.getUri());
         final Term parentToAdd = Generator.generateTermWithId();
-        parentToAdd.setGlossary(vocabulary.getGlossary().getUri());
+        parentToAdd.setGlossary(vocabulary.getUri());
 
         sut.addParentTerm(parentToAdd);
         assertThat(sut.getParentTerms(), hasItem(parentToAdd));
@@ -139,9 +138,8 @@ class TermTest {
     @Test
     void addParentTermAddsSpecifiedTermToExternalParentsWhenItIsFromDifferentGlossary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.getGlossary().setUri(Generator.generateUri());
         final Term sut = Generator.generateTermWithId();
-        sut.setGlossary(vocabulary.getGlossary().getUri());
+        sut.setGlossary(vocabulary.getUri());
         final Term parentToAdd = Generator.generateTermWithId();
         parentToAdd.setGlossary(Generator.generateUri());
 
@@ -152,8 +150,6 @@ class TermTest {
 
     @Test
     void consolidateParentsCopiesExternalParentTermsToParentTerms() {
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.getGlossary().setUri(Generator.generateUri());
         final Term sut = Generator.generateTermWithId();
         final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
             final Term t = Generator.generateTermWithId();

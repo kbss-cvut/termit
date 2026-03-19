@@ -91,7 +91,6 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
@@ -213,56 +212,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void updateGlossaryMergesGlossaryIntoPersistenceContext() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
-        transactional(() -> em.persist(vocabulary, descriptor));
-        final Term term = Generator.generateTermWithId();
-        vocabulary.getGlossary().addRootTerm(term);
-        final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
-        transactional(() -> {
-            em.persist(term, termDescriptor);
-            sut.updateGlossary(vocabulary);
-        });
-
-        transactional(() -> {
-            // If we don't run this in transaction, the delegate em is closed right after find and lazy loading of terms
-            // does not work
-            final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri());
-            assertTrue(result.getRootTerms().contains(term.getUri()));
-        });
-    }
-
-    @Test
-    void updateGlossaryMergesGlossaryIntoCorrectRepositoryContext() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
-        transactional(() -> em.persist(vocabulary, descriptor));
-        final Term term = Generator.generateTermWithId();
-        vocabulary.getGlossary().addRootTerm(term);
-        final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
-        transactional(() -> {
-            em.persist(term, termDescriptor);
-            sut.updateGlossary(vocabulary);
-        });
-
-        final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri(),
-                                        descriptorFactory.glossaryDescriptor(vocabulary));
-        assertTrue(result.getRootTerms().contains(term.getUri()));
-    }
-
-    @Test
-    void updateGlossaryReturnsManagedGlossaryInstance() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
-        transactional(() -> em.persist(vocabulary, descriptor));
-        transactional(() -> {
-            final Glossary merged = sut.updateGlossary(vocabulary);
-            assertTrue(em.contains(merged));
-        });
-    }
-
-    @Test
     void hasHierarchyBetweenTermsReturnsFalseForVocabulariesWithoutSKOSRelatedTerms() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
@@ -282,14 +231,14 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Term child = Generator.generateTermWithId();
         final Term parentTerm = Generator.generateTermWithId();
         child.addParentTerm(parentTerm);
-        subjectVocabulary.getGlossary().addRootTerm(child);
-        targetVocabulary.getGlossary().addRootTerm(parentTerm);
+        subjectVocabulary.addRootTerm(child);
+        targetVocabulary.addRootTerm(parentTerm);
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
+            child.setGlossary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
+            parentTerm.setGlossary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
@@ -308,15 +257,15 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Term child = Generator.generateTermWithId();
         final Term parentTerm = Generator.generateTermWithId();
         child.addParentTerm(parentTerm);
-        subjectVocabulary.getGlossary().addRootTerm(child);
-        transitiveVocabulary.getGlossary().addRootTerm(parentTerm);
+        subjectVocabulary.addRootTerm(child);
+        transitiveVocabulary.addRootTerm(parentTerm);
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
+            child.setGlossary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(transitiveVocabulary.getGlossary().getUri());
+            parentTerm.setGlossary(transitiveVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(transitiveVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, transitiveVocabulary.getUri(), em);
@@ -441,11 +390,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final List<AbstractChangeRecord> twoChanges = Generator.generateChangeRecords(termTwo, author);
         twoChanges.forEach(ch -> ch.setTimestamp(Instant.now().minus(Generator.randomInt(1, 10), ChronoUnit.DAYS)));
         transactional(() -> {
-            vocabulary.getGlossary().addRootTerm(termOne);
-            vocabulary.getGlossary().addRootTerm(termTwo);
+            vocabulary.addRootTerm(termOne);
+            vocabulary.addRootTerm(termTwo);
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            termOne.setGlossary(vocabulary.getGlossary().getUri());
-            termTwo.setGlossary(vocabulary.getGlossary().getUri());
+            termOne.setGlossary(vocabulary.getUri());
+            termTwo.setGlossary(vocabulary.getUri());
             em.persist(termOne, descriptorFactory.termDescriptor(vocabulary));
             em.persist(termTwo, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(termOne, vocabulary.getUri(), em);
@@ -550,16 +499,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void removeCascadesOperationToGlossary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
-        transactional(() -> em.persist(vocabulary, descriptor));
-
-        transactional(() -> sut.remove(vocabulary));
-        assertNull(em.find(Glossary.class, vocabulary.getGlossary().getUri()));
-    }
-
-    @Test
     void findSnapshotsRetrievesSnapshotsOfSpecifiedVocabularyOrderedByCreationDateDescending() {
         enableRdfsInference(em);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
@@ -579,9 +518,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final String strTimestamp = timestamp.toString().replace(":", "");
         final Vocabulary stub = new Vocabulary();
         stub.setUri(URI.create(vocabulary.getUri().toString() + "/version/" + strTimestamp));
-        final Glossary glossaryStub = new Glossary();
-        glossaryStub.setUri(URI.create(vocabulary.getGlossary().getUri().toString() + "/version/" + strTimestamp));
-        stub.setGlossary(glossaryStub);
         stub.setLabel(vocabulary.getLabel());
         stub.setDescription(vocabulary.getDescription());
         stub.setPrimaryLanguage(vocabulary.getPrimaryLanguage());

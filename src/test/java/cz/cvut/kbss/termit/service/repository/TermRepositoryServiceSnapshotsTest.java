@@ -67,11 +67,11 @@ public class TermRepositoryServiceSnapshotsTest extends BaseServiceTestRunner {
     private Term generateAndPersistSnapshot() {
         final Term t = Generator.generateTermWithId();
         t.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu);
-        vocabulary.getGlossary().addRootTerm(t);
+        vocabulary.addRootTerm(t);
         t.setVocabulary(vocabulary.getUri());
         transactional(() -> {
             em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
         });
         return t;

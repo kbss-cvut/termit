@@ -230,8 +230,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
 
         try {
-            entity.setGlossary(vocabulary.getGlossary().getUri());
-            entity.setVocabulary(null); // This is inferred
+            entity.setGlossary(vocabulary.getUri());
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
             eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, vocabulary.getUri()));
