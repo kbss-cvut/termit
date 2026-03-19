@@ -513,7 +513,7 @@ public class Configuration {
          * Namespace for custom attribute identifiers.
          */
         @NotNull
-        String customAttribute = Vocabulary.s_c_vlastni_atribut;
+        String customAttribute = Vocabulary.s_c_custom_attribute;
         /**
          * Separator of Term namespace from the parent Vocabulary identifier.
          * <p>

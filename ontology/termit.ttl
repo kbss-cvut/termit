@@ -51,7 +51,7 @@ termit:has-text-quote-prefix
 termit:file-term-occurrence
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class;
         <http://www.w3.org/2004/02/skos/core#broader>
-                termit-pojem:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                termit:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -175,7 +175,7 @@ termit:has-term-definition-source
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
 
 termit:selector
-        a       <http://www.w3.org/2004/02/skos/core#Concept> , https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
                 <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
@@ -194,7 +194,7 @@ termit:has-definition-occurrence-target
                 "Has definition occurrence target"@en , "Má cíl definičního výskytu"@cs ;
         rdfs:domain         termit:definition-term-occurrence ;
         rdfs:range          termit:definition-occurrence-target ;
-        rdfs:subPropertyOf  termit-pojem:has-occurrence-target .
+        rdfs:subPropertyOf  termit:has-occurrence-target .
 
 termit:file-occurrence-target
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
@@ -231,7 +231,7 @@ termit:has-exact-text-quote
 termit:definition-term-occurrence
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                termit-pojem:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                termit:term-occurrence , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -728,7 +728,7 @@ termit:access-level
                 "Access level - Read"@en , "Úroveň přístupových oprávnění - Čtení"@cs .
 
 <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write>
-        a       <http://www.w3.org/2004/02/skos/core#Concept> ; owl:NamedIndividual ;
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  termit:access-level , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
@@ -737,7 +737,7 @@ termit:access-level
                 "Access level - Write"@en , "Úroveň přístupových oprávnění - Zápis"@cs .
 
 <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security>
-        a       <http://www.w3.org/2004/02/skos/core#Concept> ; owl:NamedIndividual ;
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  termit:access-level , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
@@ -756,7 +756,7 @@ termit:initial-term-state
         rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
 
 termit:terminal-term-state
-        a       <http://www.w3.org/2004/02/skos/core#Concept> , https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>

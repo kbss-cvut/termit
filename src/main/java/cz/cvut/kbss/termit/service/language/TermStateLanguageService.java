@@ -101,7 +101,7 @@ public class TermStateLanguageService {
      * @return Optional initial term state
      */
     public Optional<RdfsResource> getInitialState() {
-        return getTermStates().stream().filter(s -> s.getTypes().contains(Vocabulary.s_c_uvodni_stav_pojmu))
+        return getTermStates().stream().filter(s -> s.getTypes().contains(Vocabulary.s_c_initial_term_state))
                               .findFirst();
     }
 }

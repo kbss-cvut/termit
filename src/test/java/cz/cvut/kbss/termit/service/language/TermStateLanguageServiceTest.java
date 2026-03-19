@@ -70,8 +70,8 @@ class TermStateLanguageServiceTest {
         when(statesFile.getInputStream()).thenReturn(url.openStream());
 
         final List<RdfsResource> result = sut.getTermStates();
-        assertTrue(result.stream().anyMatch(r -> r.hasType(Vocabulary.s_c_uvodni_stav_pojmu)));
-        assertTrue(result.stream().anyMatch(r -> r.hasType(Vocabulary.s_c_koncovy_stav_pojmu)));
+        assertTrue(result.stream().anyMatch(r -> r.hasType(Vocabulary.s_c_initial_term_state)));
+        assertTrue(result.stream().anyMatch(r -> r.hasType(Vocabulary.s_c_terminal_term_state)));
     }
 
     @Test
@@ -82,6 +82,6 @@ class TermStateLanguageServiceTest {
         final Optional<RdfsResource> result = sut.getInitialState();
         assertNotNull(result);
         assertTrue(result.isPresent());
-        assertThat(result.get().getTypes(), hasItem(Vocabulary.s_c_uvodni_stav_pojmu));
+        assertThat(result.get().getTypes(), hasItem(Vocabulary.s_c_initial_term_state));
     }
 }

@@ -36,7 +36,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
-@OWLClass(iri = Vocabulary.s_c_cil_vyskytu)
+@OWLClass(iri = Vocabulary.s_c_occurrence_target)
 public abstract class OccurrenceTarget extends AbstractEntity implements Copyable<OccurrenceTarget> {
 
     @NotNull
@@ -46,7 +46,7 @@ public abstract class OccurrenceTarget extends AbstractEntity implements Copyabl
 
     @NotEmpty
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_selektor, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_selector, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Selector> selectors;
 
     public OccurrenceTarget() {

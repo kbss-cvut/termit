@@ -26,7 +26,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
-@OWLClass(iri = Vocabulary.s_c_selektor_xpath)
+@OWLClass(iri = Vocabulary.s_c_selector_xpath)
 public class XPathSelector extends Selector {
 
     @NotBlank

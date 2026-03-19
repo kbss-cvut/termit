@@ -35,7 +35,7 @@ public class StaticContexts {
     /**
      * Repository context for storing {@link cz.cvut.kbss.termit.model.acl.AccessControlList} instances.
      */
-    public static final String ACCESS_CONTROL_LISTS = Vocabulary.s_c_seznam_rizeni_pristupu;
+    public static final String ACCESS_CONTROL_LISTS = Vocabulary.s_c_access_control_list;
 
     private StaticContexts() {
         throw new AssertionError();

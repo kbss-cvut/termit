@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence_;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
@@ -180,7 +181,7 @@ class HtmlTermOccurrenceResolverTest {
         final File file = initFile();
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
         sut.parseContent(is, file);
-        sut.findTermOccurrences(to -> assertThat(to.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+        sut.findTermOccurrences(to -> assertThat(to.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence)));
     }
 
     @Test
@@ -199,7 +200,7 @@ class HtmlTermOccurrenceResolverTest {
         AtomicInteger resultSize = new AtomicInteger(0);
         sut.findTermOccurrences(to -> {
             resultSize.incrementAndGet();
-            assertThat(to.getTypes(), not(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+            assertThat(to.getTypes(), not(hasItem(Vocabulary.s_c_suggested_term_occurrence)));
         });
         assertEquals(1, resultSize.get());
         final Document document = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
@@ -213,7 +214,7 @@ class HtmlTermOccurrenceResolverTest {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
-        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        existing.setUri(URI.create(TermOccurrence_.entityClassIRI + "/r2d2"));
         final Selector quoteSelector = new TextQuoteSelector("Prahy", " hlavního města ", ".");
         final Selector posSelector = new TextPositionSelector(57, 62);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
@@ -242,7 +243,7 @@ class HtmlTermOccurrenceResolverTest {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
-        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        existing.setUri(URI.create(TermOccurrence_.entityClassIRI + "/r2d2"));
         final Selector quoteSelector = new TextQuoteSelector("Prahy", " hlavního města ", ".");
         final Selector posSelector = new TextPositionSelector(57, 62);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
@@ -267,7 +268,7 @@ class HtmlTermOccurrenceResolverTest {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
-        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        existing.setUri(URI.create(TermOccurrence_.entityClassIRI + "/r2d2"));
         final Selector quoteSelector = new TextQuoteSelector("Územní plán", "", " hlavního města Prahy.");
         final Selector posSelector = new TextPositionSelector(29, 40);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
@@ -291,7 +292,7 @@ class HtmlTermOccurrenceResolverTest {
         when(termService.exists(URI.create("http://onto.fel.cvut.cz/ontologies/mpp/domains/plan"))).thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
-        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        existing.setUri(URI.create(TermOccurrence_.entityClassIRI + "/r2d2"));
         final Selector quoteSelector = new TextQuoteSelector("Územní plán", "", " hlavního města Prahy.");
         final Selector posSelector = new TextPositionSelector(29, 40);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
@@ -314,7 +315,7 @@ class HtmlTermOccurrenceResolverTest {
         this.sut = new HtmlTermOccurrenceResolver(termService, selectorGenerators, documentManager, config);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
-        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        existing.setUri(URI.create(TermOccurrence_.entityClassIRI + "/r2d2"));
         final Selector quoteSelector = new TextQuoteSelector("Územní plán", "stovací ", " hlavníh");
         final Selector posSelector = new TextPositionSelector(22, 33);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));

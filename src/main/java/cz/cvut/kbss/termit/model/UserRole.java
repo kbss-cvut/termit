@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.net.URI;
 import java.util.Objects;
 
-@OWLClass(iri = Vocabulary.s_c_uzivatelska_role)
+@OWLClass(iri = Vocabulary.s_c_user_role)
 public class UserRole extends AccessControlAgent implements HasIdentifier {
 
     @OWLAnnotationProperty(iri = Vocabulary.s_p_prefLabel)

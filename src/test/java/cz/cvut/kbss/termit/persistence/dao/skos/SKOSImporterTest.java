@@ -123,12 +123,12 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_uzivatel_termitu), RDF.TYPE, SKOS.CONCEPT,
+                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_user), RDF.TYPE, SKOS.CONCEPT,
                                              false));
                 assertTrue(
-                        conn.hasStatement(vf.createIRI(Vocabulary.s_c_omezeny_uzivatel_termitu), RDF.TYPE, SKOS.CONCEPT,
+                        conn.hasStatement(vf.createIRI(Vocabulary.s_c_reader), RDF.TYPE, SKOS.CONCEPT,
                                           false));
-                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_zablokovany_uzivatel_termitu), RDF.TYPE,
+                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_blocked_user), RDF.TYPE,
                                              SKOS.CONCEPT, false));
             }
         });
@@ -334,7 +334,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
                                               .map(Statement::getObject).collect(Collectors.toList());
                 assertEquals(1, terms.size());
-                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
+                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_user)));
             }
         });
     }
@@ -352,7 +352,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
                                               .map(Statement::getObject).collect(Collectors.toList());
                 assertEquals(1, terms.size());
-                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
+                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_user)));
             }
         });
     }
@@ -427,8 +427,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
                                               .map(Statement::getObject).collect(Collectors.toList());
                 assertEquals(1, terms.size());
-                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
-                assertFalse(conn.hasStatement(vf.createIRI(Vocabulary.s_c_uzivatel_termitu), SKOS.TOP_CONCEPT_OF, null,
+                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_user)));
+                assertFalse(conn.hasStatement(vf.createIRI(Vocabulary.s_c_user), SKOS.TOP_CONCEPT_OF, null,
                                               false));
             }
         });
@@ -510,7 +510,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                final IRI term = conn.getValueFactory().createIRI(Vocabulary.s_c_uzivatel_termitu);
+                final IRI term = conn.getValueFactory().createIRI(Vocabulary.s_c_user);
                 assertTrue(conn.hasStatement(term, RDF.TYPE, SKOS.CONCEPT, false));
                 assertFalse(conn.hasStatement(term, SKOS.RELATED, term, false));
                 assertFalse(conn.hasStatement(term, SKOS.RELATED_MATCH, term, false));

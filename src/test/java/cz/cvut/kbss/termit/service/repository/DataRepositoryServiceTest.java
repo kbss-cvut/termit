@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -95,7 +96,7 @@ class DataRepositoryServiceTest {
 
         sut.persistCustomAttribute(customAttribute);
         assertNotNull(customAttribute.getUri());
-        assertEquals(URI.create(Vocabulary.s_c_vlastni_atribut + "/custom-attribute"), customAttribute.getUri());
+        assertEquals(URI.create(CustomAttribute_.entityClassIRI + "/custom-attribute"), customAttribute.getUri());
     }
 
     @Test
@@ -107,7 +108,7 @@ class DataRepositoryServiceTest {
         sut.persistCustomAttribute(customAttribute);
         assertNotNull(customAttribute.getUri());
         assertThat(customAttribute.getUri().toString(), not(containsString("null")));
-        assertEquals(URI.create(Vocabulary.s_c_vlastni_atribut + "/testovací-atribut"), customAttribute.getUri());
+        assertEquals(URI.create(CustomAttribute_.entityClassIRI + "/testovací-atribut"), customAttribute.getUri());
     }
 
     @Test

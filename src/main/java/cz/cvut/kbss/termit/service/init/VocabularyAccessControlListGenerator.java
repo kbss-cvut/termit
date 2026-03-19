@@ -78,7 +78,7 @@ public class VocabularyAccessControlListGenerator {
         return em.createNativeQuery(
                          "SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }", URI.class)
                  .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
                  .getResultList();
     }
 }

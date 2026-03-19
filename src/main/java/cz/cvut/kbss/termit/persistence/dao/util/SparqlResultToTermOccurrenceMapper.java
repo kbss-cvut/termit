@@ -97,7 +97,7 @@ public class SparqlResultToTermOccurrenceMapper implements SparqlResultMapper<Te
 
     private TermOccurrence createOccurrence(final Object[] row) {
         final TermOccurrence occurrence;
-        if (Vocabulary.s_c_souborovy_vyskyt_termu.equals(row[1].toString())) {
+        if (Vocabulary.s_c_file_term_occurrence.equals(row[1].toString())) {
             occurrence = new TermFileOccurrence((URI) row[2], new FileOccurrenceTarget());
         } else {
             occurrence = new TermDefinitionalOccurrence((URI) row[2], new DefinitionalOccurrenceTarget());
@@ -107,7 +107,7 @@ public class SparqlResultToTermOccurrenceMapper implements SparqlResultMapper<Te
         occurrence.getTarget().setSource(source);
         occurrence.getTarget().setSelectors(new HashSet<>());
         if ((boolean) row[4]) {
-            occurrence.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+            occurrence.addType(Vocabulary.s_c_suggested_term_occurrence);
         }
         visited.put(occurrence.getUri(), occurrence);
         return occurrence;
