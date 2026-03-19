@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.termit.model.Glossary_;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.UserGroup;
@@ -102,7 +101,6 @@ public class DescriptorFactory {
     public Descriptor vocabularyDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(Vocabulary_.glossary, glossaryDescriptor(vocabularyUri));
         descriptor.addAttributeDescriptor(Vocabulary_.document, documentDescriptor(vocabularyUri));
         return descriptor;
     }
@@ -173,35 +171,6 @@ public class DescriptorFactory {
         final Descriptor docDescriptor = assetDescriptor(vocabularyUri);
         docDescriptor.addAttributeDescriptor(Document_.files, assetDescriptor(vocabularyUri));
         descriptor.addAttributeDescriptor(File_.document, docDescriptor);
-        return descriptor;
-    }
-
-    /**
-     * Creates a JOPA descriptor for a {@link cz.cvut.kbss.termit.model.Glossary} related to the specified vocabulary.
-     * <p>
-     * This means that the context of the Glossary (and all its relevant attributes) is given by the specified
-     * vocabulary's IRI.
-     *
-     * @param vocabulary Vocabulary on which the descriptor should be based
-     * @return Glossary descriptor
-     */
-    public Descriptor glossaryDescriptor(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        return glossaryDescriptor(vocabulary.getUri());
-    }
-
-    /**
-     * Creates a JOPA descriptor for a {@link cz.cvut.kbss.termit.model.Glossary} related to a vocabulary with the
-     * specified identifier.
-     * <p>
-     * This means that the context of the Glossary (and all its relevant attributes) is given by the specified IRI.
-     *
-     * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
-     * @return Glossary descriptor
-     */
-    public Descriptor glossaryDescriptor(URI vocabularyUri) {
-        final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(Glossary_.rootTerms, termDescriptor(vocabularyUri));
         return descriptor;
     }
 

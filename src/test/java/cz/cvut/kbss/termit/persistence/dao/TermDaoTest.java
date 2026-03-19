@@ -116,7 +116,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     private void addTermsAndSave(Collection<Term> terms, Vocabulary vocabulary) {
         vocabulary.setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> {
-            em.merge(vocabulary, descriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> {
                 t.setGlossary(vocabulary.getUri());
                 em.persist(t, descriptorFactory.termDescriptor(vocabulary));
@@ -399,7 +399,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
         transactional(() -> {
             vocabulary.setRootTerms(Collections.singleton(root.getUri()));
-            em.merge(vocabulary, descriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
 
             root.setGlossary(vocabulary.getUri());
             em.persist(root, descriptorFactory.termDescriptor(vocabulary));
