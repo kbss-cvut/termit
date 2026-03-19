@@ -20,8 +20,9 @@
         <http://purl.org/vocab/vann/preferredNamespaceUri>
                 "http://onto.fel.cvut.cz/ontologies/application/termit/term/" ;
         owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/glosář> , <https://slovník.gov.cz/datový/pracovní-prostor/glosář> , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/model> , <https://slovník.gov.cz/datový/pracovní-prostor/model> , <http://rdfs.org/sioc/ns#> , <http://www.w3.org/ns/activitystreams#> , <http://purl.org/vocab/vann/> ;
-        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/2.0.0> .
-        # TODO Top concepts
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/2.0.0> ;
+        <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+                termit:has-text-quote-prefix , termit:is-term-definition-selector , termit:user-role , termit:has-user-role , termit:configuration , termit:has-end-position , termit:text-analysis-record , termit:user , termit:has-term-definition-source , termit:selector , termit:has-exact-text-quote , termit:target , termit:is-term-assignment , termit:definition-selector , termit:has-target , termit:has-analysis-vocabulary , termit:has-start-position , termit:term-assignment , termit:has-text-quote-suffix , termit:has-selector , termit:has-analyzed-resource , termit:reaction , termit:has-reaction , termit:is-topic-of , termit:has-my-last-comment , termit:has-maximum-file-size , termit:has-indexed-language , termit:has-version-separator , termit:read-only , termit:external , termit:forbidden , termit:access-control-list , termit:has-access-control-list , termit:access-control-record , termit:has-access-control-record , termit:has-access-level-holder , termit:has-access-level , termit:access-level , termit:initial-term-state , termit:terminal-term-state , termit:password-reset-request , termit:has-modeling-tool-address , termit:custom-attribute , termit:has-last-backup-datetime , termit:personal-access-token , termit:has-expiration-date .
 
 termit:definition-occurrence-target
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
@@ -93,7 +94,7 @@ termit:administrator
 termit:editor
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit:user-role ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -137,7 +138,7 @@ termit:has-end-position
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has end position"@en , "Má koncovou pozici"@cs ;
-        rdfs:domain         termit:selector-text-position ; # TODO
+        rdfs:domain         termit:selector-text-position ;
         rdfs:range          rdfs:Literal ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
 
@@ -186,7 +187,7 @@ termit:selector
 termit:has-definition-occurrence-target
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                termit-pojem:má-cíl-výskytu , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+                termit:has-occurrence-target , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -629,7 +630,7 @@ termit:access-control-record
 termit:user-access-control-record
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-control-record , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -639,7 +640,7 @@ termit:user-access-control-record
 termit:user-group-access-control-record
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-control-record , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -649,7 +650,7 @@ termit:user-group-access-control-record
 termit:user-role-access-control-record
         a       <http://www.w3.org/2004/02/skos/core#Concept> , <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-control-record , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -711,7 +712,7 @@ termit:access-level
 <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none>
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-level , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -720,7 +721,7 @@ termit:access-level
 <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read>
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-level , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -729,7 +730,7 @@ termit:access-level
 <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write>
         a       <http://www.w3.org/2004/02/skos/core#Concept> ; owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-level , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
@@ -738,7 +739,7 @@ termit:access-level
 <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security>
         a       <http://www.w3.org/2004/02/skos/core#Concept> ; owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                 termit:access-level , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
