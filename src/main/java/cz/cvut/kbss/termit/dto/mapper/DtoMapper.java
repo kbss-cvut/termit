@@ -78,7 +78,7 @@ public abstract class DtoMapper {
         final String type = EntityToOwlClassMapper.getOwlClassForEntity(holder.getClass());
         dto.setTypes(new HashSet<>(Set.of(type)));
         switch (type) {
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_user:
                 final User user = (User) holder;
                 Utils.emptyIfNull(user.getTypes()).forEach(dto::addType);
                 dto.setLabel(MultilingualString.create(user.getFullName(),
@@ -88,7 +88,7 @@ public abstract class DtoMapper {
                 dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
                                                        config.getPersistence().getLanguage()));
                 break;
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatelska_role:
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_user_role:
                 dto.setLabel(((UserRole) holder).getLabel());
                 break;
             default:

@@ -37,7 +37,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
+@OWLClass(iri = Vocabulary.s_c_user)
 public class UserAccount implements HasIdentifier, HasTypes, Serializable {
 
     @Id
@@ -144,14 +144,14 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
      */
     @JsonIgnore
     public boolean isLocked() {
-        return types != null && types.contains(Vocabulary.s_c_uzamceny_uzivatel_termitu);
+        return types != null && types.contains(Vocabulary.s_c_locked_user);
     }
 
     /**
      * Locks the account represented by this instance.
      */
     public void lock() {
-        addType(Vocabulary.s_c_uzamceny_uzivatel_termitu);
+        addType(Vocabulary.s_c_locked_user);
     }
 
     /**
@@ -161,7 +161,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
         if (types == null) {
             return;
         }
-        types.remove(Vocabulary.s_c_uzamceny_uzivatel_termitu);
+        types.remove(Vocabulary.s_c_locked_user);
     }
 
     /**
@@ -173,7 +173,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
         if (types == null) {
             return;
         }
-        types.remove(Vocabulary.s_c_zablokovany_uzivatel_termitu);
+        types.remove(Vocabulary.s_c_blocked_user);
     }
 
     /**
@@ -181,7 +181,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
      */
     @JsonIgnore
     public boolean isEnabled() {
-        return types == null || !types.contains(Vocabulary.s_c_zablokovany_uzivatel_termitu);
+        return types == null || !types.contains(Vocabulary.s_c_blocked_user);
     }
 
     /**
@@ -190,7 +190,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
      * Disabled account cannot be logged into and cannot be used to view/modify data.
      */
     public void disable() {
-        addType(Vocabulary.s_c_zablokovany_uzivatel_termitu);
+        addType(Vocabulary.s_c_blocked_user);
     }
 
     /**
@@ -200,7 +200,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
      */
     @JsonIgnore
     public boolean isAdmin() {
-        return hasType(Vocabulary.s_c_administrator_termitu);
+        return hasType(Vocabulary.s_c_administrator);
     }
 
     /**

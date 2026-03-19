@@ -29,7 +29,7 @@ class EntityToOwlClassMapperTest {
     @Test
     void getOwlClassForEntityReturnsClassIriForEntityClass() {
         final String result = EntityToOwlClassMapper.getOwlClassForEntity(User.class);
-        assertEquals(Vocabulary.s_c_uzivatel_termitu, result);
+        assertEquals(Vocabulary.s_c_user, result);
     }
 
     @Test

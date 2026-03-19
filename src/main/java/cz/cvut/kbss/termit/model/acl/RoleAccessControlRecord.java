@@ -25,7 +25,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.util.Objects;
 import java.util.Optional;
 
-@OWLClass(iri = Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatelske_role)
+@OWLClass(iri = Vocabulary.s_c_user_role_access_control_record)
 public class RoleAccessControlRecord extends AccessControlRecord<UserRole> {
 
     public RoleAccessControlRecord() {

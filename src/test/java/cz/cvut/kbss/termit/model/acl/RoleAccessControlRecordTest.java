@@ -36,8 +36,8 @@ class RoleAccessControlRecordTest {
 
     @Test
     void getAccessLevelForReturnsAccessLevelWhenSpecifiedUserAccountHasRoleRepresentedByRecord() {
-        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
-        account.addType(Vocabulary.s_c_plny_uzivatel_termitu);
+        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_editor));
+        account.addType(Vocabulary.s_c_editor);
         final RoleAccessControlRecord sut = new RoleAccessControlRecord(AccessLevel.READ, role);
 
         final Optional<AccessLevel> result = sut.getAccessLevelFor(account);
@@ -47,7 +47,7 @@ class RoleAccessControlRecordTest {
 
     @Test
     void getAccessLevelForReturnsEmptyOptionalWhenSpecifiedUserDoesNotHaveRoleRepresentedByRecord() {
-        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_administrator_termitu));
+        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_administrator));
         final RoleAccessControlRecord sut = new RoleAccessControlRecord(AccessLevel.WRITE, role);
 
         final Optional<AccessLevel> result = sut.getAccessLevelFor(account);

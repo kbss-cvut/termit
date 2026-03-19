@@ -43,7 +43,7 @@ class UserAccountTest {
     @Test
     void toUserReturnsUserWithIdenticalAttributes() {
         final UserAccount ua = Generator.generateUserAccount();
-        ua.setTypes(Collections.singleton(Vocabulary.s_c_administrator_termitu));
+        ua.setTypes(Collections.singleton(Vocabulary.s_c_administrator));
 
         final User result = ua.toUser();
         assertAll(() -> assertEquals(ua.getUri(), result.getUri()),
@@ -67,7 +67,7 @@ class UserAccountTest {
 
     @Test
     void isLockedReturnsTrueForLockedInstance() {
-        sut.addType(Vocabulary.s_c_uzamceny_uzivatel_termitu);
+        sut.addType(Vocabulary.s_c_locked_user);
         assertTrue(sut.isLocked());
     }
 
@@ -95,7 +95,7 @@ class UserAccountTest {
 
     @Test
     void enableRemovesDisabledTypeFromInstance() {
-        sut.addType(Vocabulary.s_c_zablokovany_uzivatel_termitu);
+        sut.addType(Vocabulary.s_c_blocked_user);
         assertFalse(sut.isEnabled());
         sut.enable();
         assertTrue(sut.isEnabled());
@@ -103,13 +103,13 @@ class UserAccountTest {
 
     @Test
     void removeTypeHandlesNullTypesAttribute() {
-        sut.removeType(Vocabulary.s_c_administrator_termitu);
+        sut.removeType(Vocabulary.s_c_administrator);
     }
 
     @Test
     void isAdminReturnsTrueForAdmin() {
         assertFalse(sut.isAdmin());
-        sut.addType(Vocabulary.s_c_administrator_termitu);
+        sut.addType(Vocabulary.s_c_administrator);
         assertTrue(sut.isAdmin());
     }
 

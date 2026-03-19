@@ -33,17 +33,17 @@ import java.util.Objects;
  *
  * @see <a href="https://www.w3.org/TR/annotation-model/#text-position-selector">https://www.w3.org/TR/annotation-model/#text-position-selector</a>
  */
-@OWLClass(iri = Vocabulary.s_c_selektor_pozici_v_textu)
+@OWLClass(iri = Vocabulary.s_c_selector_text_position)
 public class TextPositionSelector extends Selector {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_startovni_pozici)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_start_position)
     private Integer start;
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_koncovou_pozici)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_end_position)
     private Integer end;
 
     public TextPositionSelector() {

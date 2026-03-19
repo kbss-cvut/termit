@@ -1161,7 +1161,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             // Simulates inference
             final ValueFactory vf = connection.getValueFactory();
             connection.add(vf.createIRI(term.getUri().toString()),
-                           vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zdroj_definice_termu),
+                           vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_definition_source),
                            vf.createIRI(source.getUri().toString()));
         }
         return source;

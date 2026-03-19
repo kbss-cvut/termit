@@ -158,7 +158,7 @@ class AdminAccountGeneratorTest {
         sut.initSystemAdmin();
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(userService).persist(captor.capture());
-        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
-        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_reader)));
     }
 }

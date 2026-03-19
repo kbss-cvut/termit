@@ -30,7 +30,7 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_reakce)
+@OWLClass(iri = Vocabulary.s_c_reaction)
 public class CommentReaction extends AbstractEntity implements HasTypes {
 
     @ParticipationConstraints(nonEmpty = true)

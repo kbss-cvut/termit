@@ -92,7 +92,7 @@ class UserAccountDaoTest extends BaseDaoTestRunner {
     @Test
     void doesAdminExistReturnsTrueWhenAdminAccountExists() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        user.addType(Vocabulary.s_c_administrator_termitu);
+        user.addType(Vocabulary.s_c_administrator);
         transactional(() -> em.persist(user));
 
         assertTrue(sut.doesAdminExist());

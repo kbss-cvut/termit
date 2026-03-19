@@ -17,6 +17,28 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.environment.Environment;
+import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserAccount_;
+import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Configuration;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.net.URI;
 import java.util.Optional;
 
@@ -27,32 +49,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import cz.cvut.kbss.termit.environment.Environment;
-import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Vocabulary;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
@@ -90,7 +90,7 @@ class UserRepositoryServiceTest {
         final UserAccount user = Generator.generateUserAccount();
         user.setPassword("12345");
         user.setUri(null);
-        configuration.getNamespace().setUser(Vocabulary.s_c_uzivatel_termitu + "/");
+        configuration.getNamespace().setUser(UserAccount_.entityClassIRI + "/");
         sut.persist(user);
         assertNotNull(user.getUri());
 

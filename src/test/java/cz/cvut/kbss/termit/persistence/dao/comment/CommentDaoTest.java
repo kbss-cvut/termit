@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
+import cz.cvut.kbss.termit.model.comment.Comment_;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -200,7 +201,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(reaction.getObject().toString()),
-                     vf.createIRI(Vocabulary.s_p_ma_reakci),
+                     vf.createIRI(Comment_.reactionsPropertyIRI.toString()),
                      vf.createIRI(reaction.getUri().toString()));
         }
     }

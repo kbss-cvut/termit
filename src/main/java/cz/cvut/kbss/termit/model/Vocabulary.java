@@ -73,7 +73,7 @@ public class Vocabulary extends Asset<MultilingualString>
     private Set<URI> importedVocabularies;
 
     @JsonIgnore
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_seznam_rizeni_pristupu, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_access_control_list, fetch = FetchType.EAGER)
     private URI acl;
 
     /**

@@ -24,10 +24,13 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlList_;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord_;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord_;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.StaticContexts;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
@@ -72,7 +75,7 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = new AccessControlList();
         final RoleAccessControlRecord record = new RoleAccessControlRecord();
-        final UserRole editorRole = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
+        final UserRole editorRole = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_editor));
         record.setHolder(editorRole);
         record.setAccessLevel(AccessLevel.WRITE);
         acl.addRecord(record);
@@ -116,12 +119,9 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
                                                 "?hasRecord ?record ." +
                                                 "?record ?hasLevel ?level . }}", Boolean.class)
                      .setParameter("g", URI.create(StaticContexts.ACCESS_CONTROL_LISTS))
-                     .setParameter("aclType",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_seznam_rizeni_pristupu))
-                     .setParameter("hasRecord",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zaznam_rizeni_pristupu))
-                     .setParameter("hasLevel",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uroven_pristupovych_opravneni))
+                     .setParameter("aclType", AccessControlList_.entityClassIRI.toURI())
+                     .setParameter("hasRecord", AccessControlList_.recordsPropertyIRI.toURI())
+                     .setParameter("hasLevel", AccessControlRecord_.accessLevelPropertyIRI.toURI())
                      .getSingleResult());
     }
 
@@ -171,8 +171,7 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         assertThat(result.getRecords(), anyOf(nullValue(), empty()));
         assertFalse(em.createNativeQuery("ASK WHERE { ?x a ?recordType . }", Boolean.class)
                       .setParameter("x", record.getUri())
-                      .setParameter("recordType", URI.create(
-                              cz.cvut.kbss.termit.util.Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatele))
+                      .setParameter("recordType", UserAccessControlRecord_.entityClassIRI.toURI())
                       .getSingleResult());
     }
 

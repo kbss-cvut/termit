@@ -192,7 +192,7 @@ public class Environment {
             conn.begin();
             conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/popis-dat-model.ttl"), BASE_URI,
                      RDFFormat.TURTLE);
-            conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
+            conn.add(new File("ontology/termit.ttl"), BASE_URI, RDFFormat.TURTLE);
             conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
                      RDFFormat.RDFXML);
             conn.commit();

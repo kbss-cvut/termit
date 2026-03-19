@@ -114,7 +114,7 @@ class CommentChangeNotifierTest {
         final List<UserAccount> users = IntStream.range(0, 10).mapToObj(i -> {
             final UserAccount user = Generator.generateUserAccount();
             if (i % 2 == 0) {
-                user.addType(Vocabulary.s_c_administrator_termitu);
+                user.addType(Vocabulary.s_c_administrator);
             }
             return user;
         }).collect(Collectors.toList());
@@ -131,7 +131,7 @@ class CommentChangeNotifierTest {
         final Term tOne = Generator.generateTermWithId(Generator.generateUri());
         final Term tTwo = Generator.generateTermWithId(Generator.generateUri());
         final UserAccount admin = Generator.generateUserAccount();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         final User author = Generator.generateUserWithId();
         when(userService.findAll()).thenReturn(Collections.singletonList(admin));
         when(changeRecordService.getAuthors(any(Asset.class))).thenReturn(Collections.singleton(author));

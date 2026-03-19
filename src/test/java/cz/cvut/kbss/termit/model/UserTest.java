@@ -26,6 +26,6 @@ class UserTest {
 
     @Test
     void removeTypeHandlesNullTypesAttribute() {
-        sut.removeType(Vocabulary.s_c_administrator_termitu);
+        sut.removeType(Vocabulary.s_c_administrator);
     }
 }

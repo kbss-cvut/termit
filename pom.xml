@@ -391,6 +391,8 @@
                         <configuration>
                             <source-package>cz.cvut.kbss.termit.model</source-package>
                             <additional-sources>${project.basedir}/src/main/generated-sources</additional-sources>
+                            <output-property-iris>true</output-property-iris>
+                            <initialize-iris>true</initialize-iris>
                         </configuration>
                     </execution>
                 </executions>

@@ -627,7 +627,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         final List<RdfsResource> states = languageService.getTermStates();
         final Predicate<URI> isStateTerminal = (URI s) -> states.stream().filter(r -> r.getUri().equals(s)).findFirst()
                                                                 .map(r -> r.hasType(
-                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
+                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state))
                                                                 .orElse(false);
         if (!isStateTerminal.test(state)) {
             return;

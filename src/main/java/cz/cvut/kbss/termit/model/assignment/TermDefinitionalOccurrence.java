@@ -25,7 +25,7 @@ import java.net.URI;
 /**
  * Represents an occurrence of a term in the definition of another term.
  */
-@OWLClass(iri = Vocabulary.s_c_definicni_vyskyt_termu)
+@OWLClass(iri = Vocabulary.s_c_definition_term_occurrence)
 public class TermDefinitionalOccurrence extends TermOccurrence {
 
     public TermDefinitionalOccurrence() {

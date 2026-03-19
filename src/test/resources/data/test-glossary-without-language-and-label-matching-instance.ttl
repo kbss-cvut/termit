@@ -4,7 +4,7 @@
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/term/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 
 <http://onto.fel.cvut.cz/ontologies/application/termit>  a        owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář> , <http://www.w3.org/2004/02/skos/core#ConceptScheme> ;
@@ -24,16 +24,16 @@
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/glosář/verze/1.1.1> .
 
 
-termit-pojem:zablokovaný-uživatel-termitu
+termit:blocked-user
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Blocked TermIt user"@pl .
 
-termit-pojem:uživatel-termitu
+termit:user
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>
                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
@@ -42,10 +42,10 @@ termit-pojem:uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Uživatel TermItu"@cs .
 
-termit-pojem:omezený-uživatel-termitu
+termit:reader
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>

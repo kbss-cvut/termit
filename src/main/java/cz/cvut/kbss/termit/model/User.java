@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
+@OWLClass(iri = Vocabulary.s_c_user)
 public class User extends AccessControlAgent implements HasTypes, Serializable {
 
     @NotBlank

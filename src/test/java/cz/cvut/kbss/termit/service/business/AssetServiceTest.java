@@ -237,7 +237,7 @@ class AssetServiceTest {
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(Constants.DEFAULT_PAGE_SPEC);
         assertEquals(allExpected.size(), result.getSize());
         result.get().filter(ra -> ra.hasType(SKOS.CONCEPT))
-              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_zakazany)));
+              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_forbidden)));
     }
 
     @Test
@@ -274,6 +274,6 @@ class AssetServiceTest {
         final Page<RecentlyCommentedAsset> result = sut.findLastCommented(Constants.DEFAULT_PAGE_SPEC);
         assertEquals(allExpected.size(), result.getSize());
         result.get().filter(ra -> forbiddenVocabulary.equals(ra.getVocabulary()))
-              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_zakazany)));
+              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_forbidden)));
     }
 }
