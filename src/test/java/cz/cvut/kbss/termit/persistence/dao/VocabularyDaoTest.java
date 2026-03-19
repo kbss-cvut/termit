@@ -33,7 +33,6 @@ import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
-import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -464,17 +463,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                                                                                                      ZoneId.systemDefault()),
                                                                                  (k, v) -> v == null ? 1 : 2));
         return updates;
-    }
-
-    @Test
-    void findGlossaryReturnsTheGlossary() {
-        final Glossary glossary = new Glossary();
-        URI uri = URI.create("https://example.org/1");
-        glossary.setUri(uri);
-        transactional(() -> em.persist(glossary));
-        final Optional<Glossary> result = sut.findGlossary(uri);
-        assertTrue(result.isPresent());
-        assertEquals(uri, result.get().getUri());
     }
 
     @Test

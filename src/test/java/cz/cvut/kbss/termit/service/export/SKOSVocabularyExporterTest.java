@@ -218,11 +218,11 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.generateTermWithId();
             terms.add(term);
-            term.setGlossary(target.getGlossary().getUri());
+            term.setGlossary(target.getUri());
         }
-        target.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
+        target.setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> {
-            em.merge(target.getGlossary(), descriptorFactory.glossaryDescriptor(target));
+            em.merge(target, descriptorFactory.vocabularyDescriptor(target));
             terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(target)));
             terms.forEach(t -> Generator.addTermInVocabularyRelationship(t, target.getUri(), em));
         });
