@@ -2,7 +2,7 @@
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/term/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 
@@ -24,7 +24,7 @@
                 "25.04.2019" ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/glosář/verze/1.1.1> .
 
-termit-pojem:uživatel-termitu
+termit:user
         a       skos:Concept ;
         skos:broader
                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
@@ -33,8 +33,8 @@ termit-pojem:uživatel-termitu
         skos:prefLabel
                 "TermIt user"@en , "Uživatel TermItu"@cs ;
         skos:related
-                termit-pojem:uživatel-termitu ;
+                termit:user ;
         skos:relatedMatch
-                termit-pojem:uživatel-termitu ;
+                termit:user ;
         skos:exactMatch
-                termit-pojem:uživatel-termitu .
+                termit:user .

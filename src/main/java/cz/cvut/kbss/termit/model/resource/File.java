@@ -51,7 +51,7 @@ public class File extends Resource implements SupportsStorage {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
     private Instant modified;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_zalohy)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_last_backup_datetime)
     private Instant lastBackup;
 
     @Types

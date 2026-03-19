@@ -26,7 +26,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 public enum CountableAssetType {
     TERM(SKOS.CONCEPT),
     VOCABULARY(SKOS.CONCEPT_SCHEME),
-    USER(Vocabulary.s_c_uzivatel_termitu);
+    USER(Vocabulary.s_c_user);
 
     private final String typeUri;
 

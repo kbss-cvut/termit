@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 
-@OWLClass(iri = Vocabulary.s_c_osobni_pristupovy_token)
+@OWLClass(iri = Vocabulary.s_c_personal_access_token)
 public class PersonalAccessToken implements HasIdentifier, Serializable {
     @Id
     private URI uri;
@@ -34,7 +34,7 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
     private Instant created;
 
     @FutureOrPresent
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_expiration_date)
     private LocalDate expirationDate;
 
     @PastOrPresent

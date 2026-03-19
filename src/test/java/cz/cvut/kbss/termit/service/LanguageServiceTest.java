@@ -66,7 +66,7 @@ class LanguageServiceTest {
 
     @Test
     void getAccessLevelsRetrievesResourcesRepresentingEachOfAccessLevelConstants() {
-        final RdfsResource res = new RdfsResource(URI.create(Vocabulary.s_i_cteni), new LangString("Read",
+        final RdfsResource res = new RdfsResource(URI.create(Vocabulary.s_i_read), new LangString("Read",
                 Environment.LANGUAGE),
                 null, null);
         when(dataService.find(any(URI.class))).thenReturn(Optional.of(res));

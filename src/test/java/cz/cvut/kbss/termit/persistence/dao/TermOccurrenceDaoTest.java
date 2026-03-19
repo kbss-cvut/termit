@@ -157,7 +157,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     private TermOccurrence generateTermOccurrence(boolean suggested, File file, Term term) {
         final TermOccurrence to = new TermFileOccurrence();
         if (suggested) {
-            to.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+            to.addType(Vocabulary.s_c_suggested_term_occurrence);
         }
         final FileOccurrenceTarget target = new FileOccurrenceTarget(file);
         final TextQuoteSelector selector = new TextQuoteSelector("test");
@@ -236,7 +236,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeSuggested(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
-                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
+                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
                       .getSingleResult());
     }
 
@@ -249,7 +249,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final List<TermOccurrence> retained = new ArrayList<>();
         transactional(() -> allOccurrences
                 .forEach((t, list) -> list.stream().filter(to -> Generator.randomBoolean()).forEach(to -> {
-                    to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+                    to.removeType(Vocabulary.s_c_suggested_term_occurrence);
                     retained.add(to);
                     em.merge(to);
                 })));
@@ -266,13 +266,13 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertFalse(sut.findAllTargeting(file).isEmpty());
         transactional(() -> allOccurrences
                 .forEach((t, list) -> list.stream().filter(to -> Generator.randomBoolean()).forEach(to -> {
-                    to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+                    to.removeType(Vocabulary.s_c_suggested_term_occurrence);
                     em.merge(to);
                 })));
         transactional(() -> sut.removeAll(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
-                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
+                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
                       .getSingleResult());
     }
 
@@ -284,13 +284,13 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertFalse(sut.findAllTargeting(file).isEmpty());
         transactional(() -> allOccurrences
                 .forEach((t, list) -> list.forEach(to -> {
-                    to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+                    to.removeType(Vocabulary.s_c_suggested_term_occurrence);
                     em.merge(to);
                 })));
         transactional(() -> sut.removeAll(file));
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class)
-                      .setParameter("target", URI.create(Vocabulary.s_c_cil))
+                      .setParameter("target", URI.create(Vocabulary.s_c_target))
                       .getSingleResult());
     }
 
@@ -354,7 +354,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertThat(sut.findAllTargeting(file), not(emptyCollectionOf(TermOccurrence.class)));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence .} }", Boolean.class)
                      .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_occurrence_target))
                      .getSingleResult());
     }
 
@@ -387,7 +387,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(2, result.size());
         for (TermOccurrences toi : result) {
-            if (toi.hasType(Vocabulary.s_c_navrzeny_vyskyt_termu)) {
+            if (toi.hasType(Vocabulary.s_c_suggested_term_occurrence)) {
                 assertEquals(occurrencesTwo.size(), toi.getCount().intValue());
             } else {
                 assertEquals(occurrencesOne.size(), toi.getCount().intValue());
@@ -505,10 +505,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(2, result.size());
         for (TermOccurrences a : result) {
-            if (a.getTypes().contains(Vocabulary.s_c_souborovy_vyskyt_termu)) {
+            if (a.getTypes().contains(Vocabulary.s_c_file_occurrence_target)) {
                 assertEquals(fileOccurrences.size(), a.getCount().intValue());
             } else {
-                assertThat(a.getTypes(), hasItem(Vocabulary.s_c_definicni_vyskyt_termu));
+                assertThat(a.getTypes(), hasItem(Vocabulary.s_c_definition_term_occurrence));
                 assertEquals(defOccurrences.size(), a.getCount().intValue());
             }
         }
@@ -526,8 +526,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
                      .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
                      .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
-                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
                      .getSingleResult());
         final URI newTermUri = Generator.generateUri();
         occurrence.setTerm(newTermUri);
@@ -535,8 +535,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
                      .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
                      .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
-                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
                      .getSingleResult());
     }
 

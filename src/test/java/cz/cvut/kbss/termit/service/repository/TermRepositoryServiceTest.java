@@ -763,7 +763,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.addRootTerm(referencing);
         final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
-        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {
             em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));

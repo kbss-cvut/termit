@@ -87,7 +87,7 @@ public class AccessControlListDao {
             return Optional.of(
                     em.createNativeQuery("SELECT ?acl WHERE { ?subject ?hasAcl ?acl . }", AccessControlList.class)
                       .setParameter("subject", subject.getUri())
-                      .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                      .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
                       .setDescriptor(descriptor())
                       .getSingleResult());
         } catch (NoResultException e) {
@@ -151,7 +151,7 @@ public class AccessControlListDao {
         Objects.requireNonNull(acl);
         try {
             return Optional.of(em.createNativeQuery("SELECT ?x WHERE { ?x ?hasAcl ?acl . }", URI.class)
-                                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
                                  .setParameter("acl", acl).getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
@@ -181,11 +181,11 @@ public class AccessControlListDao {
                                             "?hasHolder ?agent . " +
                                             "}", cz.cvut.kbss.termit.model.Vocabulary.class)
                  .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
-                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_ma_zaznam_rizeni_pristupu))
-                 .setParameter("hasAccessLevel", URI.create(Vocabulary.s_p_ma_uroven_pristupovych_opravneni))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_has_access_control_record))
+                 .setParameter("hasAccessLevel", URI.create(Vocabulary.s_p_has_access_level))
                  .setParameter("accessLevel", URI.create(AccessLevel.SECURITY.getIri()))
-                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_ma_drzitele_pristupovych_opravneni))
+                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_has_access_level_holder))
                  .setParameter("agent", agent)
                  .getResultList();
     }

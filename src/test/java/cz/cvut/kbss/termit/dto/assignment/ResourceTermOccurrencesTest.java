@@ -39,7 +39,7 @@ class ResourceTermOccurrencesTest {
         final ResourceTermOccurrences result = new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri,
                 count, false);
         assertNotNull(result);
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));
+        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
     }
 
     @Test
@@ -51,7 +51,7 @@ class ResourceTermOccurrencesTest {
         final int count = 117;
         final ResourceTermOccurrences result = new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri,
                 count, true);
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu));
+        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
+        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence));
     }
 }

@@ -20,10 +20,11 @@ package cz.cvut.kbss.termit.rest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.User_;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
@@ -149,20 +150,20 @@ class UserControllerTest extends BaseControllerTestRunner {
 
     @Test
     void changeRoleUsesProvidedNamespaceToResolveUserUri() throws Exception {
-        final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
+        final String namespace = User_.entityClassIRI + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(put(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/role")
                                 .queryParam(Constants.QueryParams.NAMESPACE, namespace)
-                                .content(Vocabulary.s_c_omezeny_uzivatel_termitu).contentType(MediaType.TEXT_PLAIN))
+                                .content(Vocabulary.s_c_reader).contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
-        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel_termitu);
+        verify(userService).changeRole(user, Vocabulary.s_c_reader);
     }
 
     @Test
     void getManagedAssetsRetrievesManagedAssetsForUserWithSpecifiedUri() throws Exception {
-        final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
+        final String namespace = User_.entityClassIRI + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
         when(userService.getReference(user.getUri())).thenReturn(user);
         final List<RdfsResource> resources = Collections.singletonList(

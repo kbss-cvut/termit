@@ -189,7 +189,7 @@ class TermServiceTest {
         final List<TermOccurrences> occurrences = Collections
                 .singletonList(
                         new TermOccurrences(term.getUri(), Generator.generateUri(), "test", BigInteger.valueOf(125L),
-                                            cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
+                                            cz.cvut.kbss.termit.util.Vocabulary.s_c_file_term_occurrence, true));
         when(termOccurrenceRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(occurrences, result);
@@ -518,7 +518,7 @@ class TermServiceTest {
                                                                              cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
-        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
         assertThat(term.getSubTerms().size(), lessThan(Generator.TERM_STATES.length));
         final Iterator<TermInfo> it = term.getSubTerms().iterator();
         int i = 0;
@@ -541,7 +541,7 @@ class TermServiceTest {
                                                                              cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
-        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
         when(languageService.getTermStates()).thenReturn(states);
         assertThrows(InvalidTermStateException.class, () -> sut.setState(term, terminalState.getUri()));
         verify(termRepositoryService, never()).setState(eq(term), any(URI.class));
@@ -644,7 +644,7 @@ class TermServiceTest {
         final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0],
                                                            MultilingualString.create("Initial", Environment.LANGUAGE),
                                                            null,
-                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
+                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_initial_term_state);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(initialState));
 
         sut.persistRoot(toPersist, vocabulary);
@@ -659,7 +659,7 @@ class TermServiceTest {
         final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0],
                                                            MultilingualString.create("Initial", Environment.LANGUAGE),
                                                            null,
-                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
+                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_initial_term_state);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(initialState));
 
         sut.persistChild(toPersist, parent);
@@ -678,7 +678,7 @@ class TermServiceTest {
                                                                              cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
-        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
         assertThat(term.getSubTerms().size(), lessThan(Generator.TERM_STATES.length));
         final Iterator<TermInfo> it = term.getSubTerms().iterator();
         int i = 0;

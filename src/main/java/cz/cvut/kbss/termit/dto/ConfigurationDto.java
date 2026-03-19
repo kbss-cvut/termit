@@ -35,7 +35,7 @@ import java.util.Set;
  * Represents configuration data provided by the server to client.
  */
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_konfigurace)
+@OWLClass(iri = Vocabulary.s_c_configuration)
 public class ConfigurationDto implements Serializable {
 
     @Id
@@ -44,19 +44,19 @@ public class ConfigurationDto implements Serializable {
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE)
     private String language;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_uzivatelskou_roli)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_user_role)
     private Set<UserRole> roles;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_maximalni_velikost_souboru)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_maximum_file_size)
     private String maxFileUploadSize;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_oddelovac_verze)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_version_separator)
     private String versionSeparator;
 
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_adresu_modelovaciho_nastroje)
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_modeling_tool_address)
     private String modelingToolUrl;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_indexovany_jazyk)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_indexed_language)
     private Set<String> indexedLanguages = Set.of();
 
     public String getLanguage() {
