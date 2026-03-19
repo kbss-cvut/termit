@@ -39,7 +39,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
-@OWLClass(iri = Vocabulary.s_c_vyskyt_termu)
+@OWLClass(iri = Vocabulary.s_c_term_occurrence)
 public abstract class TermOccurrence extends AbstractEntity implements Copyable<TermOccurrence>, HasTypes {
 
     /**
@@ -49,12 +49,12 @@ public abstract class TermOccurrence extends AbstractEntity implements Copyable<
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_prirazenim_termu)
+    @OWLObjectProperty(iri = Vocabulary.s_p_is_term_assignment)
     private URI term;
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_cil, cascade = {CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_target, cascade = {CascadeType.MERGE}, fetch = FetchType.EAGER)
     OccurrenceTarget target;
 
     @OWLDataProperty(iri = DC.Terms.DESCRIPTION)
@@ -156,30 +156,30 @@ public abstract class TermOccurrence extends AbstractEntity implements Copyable<
     /**
      * Marks this term occurrence as suggested by automation.
      * <p>
-     * Corresponds to classifying with {@link Vocabulary#s_c_navrzeny_vyskyt_termu}.
+     * Corresponds to classifying with {@link Vocabulary#s_c_suggested_term_occurrence}.
      */
     public void markSuggested() {
-        addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+        addType(Vocabulary.s_c_suggested_term_occurrence);
     }
 
     /**
      * Marks this term occurrence as approved.
      * <p>
-     * Corresponds to removing the {@link Vocabulary#s_c_navrzeny_vyskyt_termu} type.
+     * Corresponds to removing the {@link Vocabulary#s_c_suggested_term_occurrence} type.
      */
     public void markApproved() {
-        removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+        removeType(Vocabulary.s_c_suggested_term_occurrence);
     }
 
     /**
      * Checks whether this term occurrence is marked as suggested by automation.
      * <p>
-     * Suggested in this context means classified with {@link Vocabulary#s_c_navrzeny_vyskyt_termu}.
+     * Suggested in this context means classified with {@link Vocabulary#s_c_suggested_term_occurrence}.
      *
      * @return {@code true} when this instance is marked as suggested by automation
      */
     public boolean isSuggested() {
-        return hasType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+        return hasType(Vocabulary.s_c_suggested_term_occurrence);
     }
 
     @Override

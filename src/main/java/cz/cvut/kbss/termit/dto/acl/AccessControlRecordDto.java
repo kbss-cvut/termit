@@ -29,15 +29,15 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_zaznam_rizeni_pristupu)
+@OWLClass(iri = Vocabulary.s_c_access_control_record)
 @NonEntity
 public class AccessControlRecordDto extends AbstractEntity {
 
     @Enumerated(EnumType.OBJECT_ONE_OF)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_uroven_pristupovych_opravneni)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_access_level)
     private AccessLevel accessLevel;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_drzitele_pristupovych_opravneni)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_access_level_holder)
     private AccessHolderDto holder;
 
     @Types

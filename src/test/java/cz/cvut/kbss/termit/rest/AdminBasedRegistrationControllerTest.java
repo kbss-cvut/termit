@@ -90,7 +90,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
     @Test
     void createUserPersistsUserWhenCalledByAdmin() throws Exception {
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         Environment.setCurrentUser(admin);
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);
@@ -116,7 +116,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
     @Test
     void createUserSendsEmailWhenPasswordIsEmpty() throws Exception {
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         Environment.setCurrentUser(admin);
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);

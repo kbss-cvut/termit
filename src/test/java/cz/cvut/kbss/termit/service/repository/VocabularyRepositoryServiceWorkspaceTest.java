@@ -81,7 +81,7 @@ public class VocabularyRepositoryServiceWorkspaceTest {
 
         final List<VocabularyDto> result = sut.findAll();
         result.stream().filter(dtos::contains)
-              .forEach(v -> assertThat(v.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni)));
+              .forEach(v -> assertThat(v.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_read_only)));
     }
 
     @Test
@@ -97,9 +97,9 @@ public class VocabularyRepositoryServiceWorkspaceTest {
         final Optional<Vocabulary> editableResult = sut.find(editable.getUri());
         assertTrue(editableResult.isPresent());
         assertThat(editableResult.get()
-                                 .getTypes(), not(hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni)));
+                                 .getTypes(), not(hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_read_only)));
         final Optional<Vocabulary> readOnlyResult = sut.find(readOnly.getUri());
         assertTrue(readOnlyResult.isPresent());
-        assertThat(readOnlyResult.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni));
+        assertThat(readOnlyResult.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_read_only));
     }
 }

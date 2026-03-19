@@ -30,7 +30,7 @@ import cz.cvut.kbss.termit.model.acl.AccessLevel;
 @NonEntity
 public class VocabularyDto extends Vocabulary {
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uroven_pristupovych_opravneni)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_access_level)
     private AccessLevel accessLevel;
 
     public VocabularyDto(Vocabulary source) {

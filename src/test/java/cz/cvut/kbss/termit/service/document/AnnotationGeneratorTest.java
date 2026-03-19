@@ -283,7 +283,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         sut.generateAnnotations(content, file);
         final List<TermOccurrence> result = termOccurrenceDao.findAll();
         result.forEach(to -> assertTrue(
-                to.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu)));
+                to.getTypes().contains(Vocabulary.s_c_suggested_term_occurrence)));
         assertEquals(1, findAllOccurrencesOf(term).size());
         assertEquals(1, findAllOccurrencesOf(termTwo).size());
     }
@@ -414,7 +414,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
                                                                "GRAPH ?g { ?x a ?termOccurrence . }" +
                                                                "}", Integer.class)
                                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
-                                    .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
+                                    .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
                                     .getSingleResult();
         assertEquals(occurrencesTwo.size(), instanceCount);
     }
@@ -426,7 +426,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final List<TermOccurrence> occurrencesOne = termOccurrenceDao.findAllTargeting(file);
         final List<TermOccurrence> confirmed = occurrencesOne.stream().filter(to -> Generator.randomBoolean()).toList();
         transactional(() -> confirmed.forEach(to -> {
-            to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+            to.removeType(Vocabulary.s_c_suggested_term_occurrence);
             em.merge(to);
         }));
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), file);
@@ -451,6 +451,6 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final Term source = Generator.generateTermWithId();
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), source);
         final List<TermOccurrence> result = findAllOccurrencesOf(term);
-        result.forEach(occ -> assertThat(occ.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+        result.forEach(occ -> assertThat(occ.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence)));
     }
 }

@@ -69,8 +69,8 @@ class LanguageControllerTest extends BaseControllerTestRunner {
     @Test
     void getTermStatesReturnsLanguageOfTermStates() throws Exception {
         final List<RdfsResource> states = List.of(
-                new RdfsResource(Generator.generateUri(), MultilingualString.create("Initial state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_uvodni_stav_pojmu),
-                new RdfsResource(Generator.generateUri(), MultilingualString.create("Terminal state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_koncovy_stav_pojmu)
+                new RdfsResource(Generator.generateUri(), MultilingualString.create("Initial state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_initial_term_state),
+                new RdfsResource(Generator.generateUri(), MultilingualString.create("Terminal state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_terminal_term_state)
         );
         when(serviceMock.getTermStates()).thenReturn(states);
         final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/states")).andExpect(status().isOk())

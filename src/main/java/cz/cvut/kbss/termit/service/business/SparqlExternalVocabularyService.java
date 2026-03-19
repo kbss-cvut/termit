@@ -167,8 +167,8 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
                         repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
                 // add types
-                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_read_only);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_external);
 
                 final AccessControlList acl = aclService.createFor(vocabulary);
                 vocabulary.setAcl(acl.getUri());
@@ -223,7 +223,7 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         LOG.debug("Reloading externally imported vocabularies.");
         List<String> externalVocabularies = repositoryService.findAll().stream()
                                                              .filter((t) -> t.getTypes().contains(
-                                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
+                                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_external))
                                                              .map((t) -> t.getUri().toString())
                                                              .toList();
 

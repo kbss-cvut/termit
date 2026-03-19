@@ -21,12 +21,12 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserAccount_;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -155,7 +155,7 @@ class SecurityUtilsTest {
 
     @Test
     void getCurrentUserSupportsOidcJwtAuthenticationTokens() {
-        config.getNamespace().setUser(Vocabulary.s_c_uzivatel_termitu);
+        config.getNamespace().setUser(UserAccount_.entityClassIRI.toString());
         final UserAccount user = Generator.generateUserAccount();
         final String subject = UUID.randomUUID().toString();
         user.setUri(idResolver.generateIdentifier(config.getNamespace().getUser(), subject));

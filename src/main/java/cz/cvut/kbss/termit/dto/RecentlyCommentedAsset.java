@@ -60,13 +60,13 @@ public class RecentlyCommentedAsset implements HasTypes, Serializable {
     @Transient
     private URI lastCommentUri;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_tematem)
+    @OWLObjectProperty(iri = Vocabulary.s_p_is_topic_of)
     private Comment lastComment;
 
     @Transient
     private URI myLastCommentUri;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_muj_posledni_komentar)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_my_last_comment)
     private Comment myLastComment;
 
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)

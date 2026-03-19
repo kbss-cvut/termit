@@ -106,7 +106,7 @@ public class VocabularyAnonymousAccessControlListGenerator {
                          }
                          """, URI.class)
                  .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
                  .getResultList();
     }
 
@@ -124,11 +124,11 @@ public class VocabularyAnonymousAccessControlListGenerator {
                          }
                          """, URI.class)
                  .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
-                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_ma_zaznam_rizeni_pristupu))
-                 .setParameter("userRoleRecord", URI.create(Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatelske_role))
-                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_ma_drzitele_pristupovych_opravneni))
-                 .setParameter("anonymousUser", URI.create(Vocabulary.s_c_anonymni_uzivatel_termitu))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_has_access_control_record))
+                 .setParameter("userRoleRecord", URI.create(Vocabulary.s_c_user_role_access_control_record))
+                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_has_access_level_holder))
+                 .setParameter("anonymousUser", URI.create(Vocabulary.s_c_anonymous))
                  .getResultList();
     }
 

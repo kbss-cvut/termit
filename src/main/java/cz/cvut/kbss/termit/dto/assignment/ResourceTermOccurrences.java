@@ -69,9 +69,9 @@ public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
         this.termLabel = termLabel;
         this.vocabulary = vocabulary;
         this.count = count;
-        addType(Vocabulary.s_c_vyskyt_termu);
+        addType(Vocabulary.s_c_term_occurrence);
         if (suggested) {
-            addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+            addType(Vocabulary.s_c_suggested_term_occurrence);
         }
     }
 

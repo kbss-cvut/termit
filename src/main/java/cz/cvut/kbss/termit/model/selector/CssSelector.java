@@ -26,7 +26,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
-@OWLClass(iri = Vocabulary.s_c_selektor_css)
+@OWLClass(iri = Vocabulary.s_c_selector_css)
 public class CssSelector extends Selector {
 
     @NotBlank

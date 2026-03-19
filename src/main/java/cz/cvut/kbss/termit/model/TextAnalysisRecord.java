@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_zaznam_o_textove_analyze)
+@OWLClass(iri = Vocabulary.s_c_text_analysis_record)
 public class TextAnalysisRecord extends AbstractEntity {
 
     @ParticipationConstraints(nonEmpty = true)
@@ -40,11 +40,11 @@ public class TextAnalysisRecord extends AbstractEntity {
     private Instant date;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_analyzovany_zdroj, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_analyzed_resource, fetch = FetchType.EAGER)
     private Resource analyzedResource;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_slovnik_pro_analyzu)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_analysis_vocabulary)
     private Set<URI> vocabularies;
 
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)

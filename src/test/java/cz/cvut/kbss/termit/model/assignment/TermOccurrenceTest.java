@@ -55,16 +55,16 @@ class TermOccurrenceTest {
         final TermOccurrence sut = new TermFileOccurrence();
         sut.markSuggested();
         assertTrue(sut.isSuggested());
-        assertThat(sut.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu));
+        assertThat(sut.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence));
     }
 
     @Test
     void markApprovedRemovesSuggestedTypeFromTypes() {
         final TermOccurrence sut = new TermFileOccurrence();
-        sut.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+        sut.addType(Vocabulary.s_c_suggested_term_occurrence);
         assertTrue(sut.isSuggested());
         sut.markApproved();
         assertFalse(sut.isSuggested());
-        assertThat(sut.getTypes(), not(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+        assertThat(sut.getTypes(), not(hasItem(Vocabulary.s_c_suggested_term_occurrence)));
     }
 }

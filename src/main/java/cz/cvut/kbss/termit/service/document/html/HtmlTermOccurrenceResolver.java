@@ -148,7 +148,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         // Perhaps we should check also for correct property?
         for (String type : types) {
             final String fullType = fullIri(type);
-            if (fullType.equals(cz.cvut.kbss.termit.util.Vocabulary.s_c_vyskyt_termu)) {
+            if (fullType.equals(Vocabulary.s_c_term_occurrence)) {
                 return false;
             }
         }
@@ -377,8 +377,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         annotationNode.text(tqs.getExactMatch());
         annotationNode.attr(Constants.RDFa.ABOUT, to.resolveElementAbout());
         annotationNode.attr(Constants.RDFa.RESOURCE, to.getTerm().toString());
-        annotationNode.attr(Constants.RDFa.TYPE, Vocabulary.s_c_vyskyt_termu);
-        annotationNode.attr(Constants.RDFa.PROPERTY, Vocabulary.s_p_je_prirazenim_termu);
+        annotationNode.attr(Constants.RDFa.TYPE, Vocabulary.s_c_term_occurrence);
+        annotationNode.attr(Constants.RDFa.PROPERTY, Vocabulary.s_p_is_term_assignment);
         return annotationNode;
     }
 

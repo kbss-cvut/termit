@@ -102,7 +102,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                             "?x a ?type ;" +
                                             "?hasTerm ?term . }", TermOccurrence.class)
                  .setParameter("type", typeUri)
-                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
                  .setParameter("term", term.getUri()).getResultList();
     }
 
@@ -131,22 +131,22 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         Objects.requireNonNull(target);
         final Query query = em.createNativeQuery(FIND_ALL_TARGETING_QUERY)
                               .setParameter("g", TermOccurrence.resolveContext(target.getUri()))
-                              .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
-                              .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
-                              .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
-                              .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_cil_vyskytu))
+                              .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
+                              .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
+                              .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                              .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
                               .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
                               .setParameter("source", target.getUri())
-                              .setParameter("hasSelector", URI.create(Vocabulary.s_p_ma_selektor))
-                              .setParameter("selectorType", URI.create(Vocabulary.s_c_selektor))
-                              .setParameter("hasExactMatch", URI.create(Vocabulary.s_p_ma_presny_text_quote))
-                              .setParameter("hasPrefix", URI.create(Vocabulary.s_p_ma_prefix_text_quote))
-                              .setParameter("hasSuffix", URI.create(Vocabulary.s_p_ma_suffix_text_quote))
-                              .setParameter("hasStart", URI.create(Vocabulary.s_p_ma_startovni_pozici))
-                              .setParameter("hasEnd", URI.create(Vocabulary.s_p_ma_koncovou_pozici))
-                              .setParameter("fileOccurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
-                              .setParameter("definitionalOccurrence", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
-                              .setParameter("suggestedType", URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu));
+                              .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector))
+                              .setParameter("selectorType", URI.create(Vocabulary.s_c_selector))
+                              .setParameter("hasExactMatch", URI.create(Vocabulary.s_p_has_exact_text_quote))
+                              .setParameter("hasPrefix", URI.create(Vocabulary.s_p_has_text_quote_prefix))
+                              .setParameter("hasSuffix", URI.create(Vocabulary.s_p_has_text_quote_suffix))
+                              .setParameter("hasStart", URI.create(Vocabulary.s_p_has_start_position))
+                              .setParameter("hasEnd", URI.create(Vocabulary.s_p_has_end_position))
+                              .setParameter("fileOccurrence", URI.create(Vocabulary.s_c_file_occurrence_target))
+                              .setParameter("definitionalOccurrence", URI.create(Vocabulary.s_c_definition_term_occurrence))
+                              .setParameter("suggestedType", URI.create(Vocabulary.s_c_suggested_term_occurrence));
         return new SparqlResultToTermOccurrenceMapper(target.getUri()).map(query.getResultList());
     }
 
@@ -182,19 +182,19 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                             "FILTER langMatches(lang(?label), ?language)" +
                                             "} GROUP BY ?resource ?term ?label ?type ?suggested HAVING (?cnt > 0) ORDER BY ?label",
                                     "TermOccurrences")
-                 .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu))
-                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
-                 .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
+                 .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_suggested_term_occurrence))
+                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                 .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
                  .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
-                 .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
+                 .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
                  .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                  .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("langVal", config.getLanguage())
                  .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                  .setParameter("termType", URI.create(SKOS.CONCEPT))
-                 .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
-                 .setParameter("fileOcc", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                 .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definition_term_occurrence))
+                 .setParameter("fileOcc", URI.create(Vocabulary.s_c_file_term_occurrence))
                  .setParameter("t", term.getUri());
         bindVocabularyRelatedParameters(query);
         return query.getResultList();
@@ -234,7 +234,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      */
     public void removeSuggested(Asset<?> target) {
         Objects.requireNonNull(target);
-        removeAll(target.getUri(), URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu));
+        removeAll(target.getUri(), URI.create(Vocabulary.s_c_suggested_term_occurrence));
     }
 
     private void removeAll(URI assetUri, URI toType) {
@@ -248,11 +248,11 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                      "?target ?tY ?tZ ." +
                                      "?selector ?sY ?sZ . }")
           .setParameter("toType", toType)
-          .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
-          .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_cil_vyskytu))
+          .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
+          .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
           .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
           .setParameter("asset", assetUri)
-          .setParameter("hasSelector", URI.create(Vocabulary.s_p_ma_selektor)).executeUpdate();
+          .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector)).executeUpdate();
     }
 
     /**
@@ -304,13 +304,13 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                      "UNION" +
                                      "{ ?source ?hasTitle ?label . } " +
                                      "}}", URI.class)
-          .setParameter("target", URI.create(Vocabulary.s_c_cil_vyskytu))
+          .setParameter("target", URI.create(Vocabulary.s_c_occurrence_target))
           .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
           .setParameter("hasLabel", URI.create(RDFS.LABEL))
           .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
           .getResultStream().forEach(a -> {
               LOG.trace("Removing orphaned term occurrences targeting <{}>.", a);
-              removeAll(a, URI.create(Vocabulary.s_c_vyskyt_termu));
+              removeAll(a, URI.create(Vocabulary.s_c_term_occurrence));
           });
     }
 }

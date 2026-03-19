@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_osobni_pristupovy_token)
+@OWLClass(iri = Vocabulary.s_c_personal_access_token)
 public class PersonalAccessTokenDto implements HasIdentifier {
     @Id
     private URI uri;
@@ -20,7 +20,7 @@ public class PersonalAccessTokenDto implements HasIdentifier {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
     private Instant created;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_expiration_date)
     private LocalDate expirationDate;
 
     @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)

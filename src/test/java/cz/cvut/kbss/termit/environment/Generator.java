@@ -436,7 +436,7 @@ public class Generator {
             occurrence = new TermDefinitionalOccurrence(term.getUri(), new DefinitionalOccurrenceTarget((Term) target));
         }
         if (suggested) {
-            occurrence.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+            occurrence.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
         }
         // Dummy selector
         occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test text")));

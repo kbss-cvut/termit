@@ -51,7 +51,7 @@ class TermItUserDetailsTest {
     @Test
     void constructorResolvesAuthoritiesFromUserTypes() {
         final UserAccount user = Generator.generateUserAccount();
-        user.addType(Vocabulary.s_c_administrator_termitu);
+        user.addType(Vocabulary.s_c_administrator);
         final TermItUserDetails result = new TermItUserDetails(user);
         assertEquals(4, result.getAuthorities().size());
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
@@ -63,7 +63,7 @@ class TermItUserDetailsTest {
     void authorityBasedConstructorResolvesAuthoritiesFromUserTypes() {
         final Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_MANAGER"));
         final UserAccount user = Generator.generateUserAccount();
-        user.addType(Vocabulary.s_c_administrator_termitu);
+        user.addType(Vocabulary.s_c_administrator);
         final TermItUserDetails result = new TermItUserDetails(user, authorities);
         assertEquals(5, result.getAuthorities().size());
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));

@@ -60,14 +60,14 @@ class DtoMapperTest {
         final UserGroupAccessControlRecord rTwo = new UserGroupAccessControlRecord(AccessLevel.READ,
                                                                                    Generator.generateUserGroup());
         rTwo.setUri(Generator.generateUri());
-        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_reader));
         role.setLabel(MultilingualString.create("Reader", Environment.LANGUAGE));
         final RoleAccessControlRecord rThree = new RoleAccessControlRecord(AccessLevel.WRITE, role);
         rThree.setUri(Generator.generateUri());
         return Stream.of(
-                Arguments.of(rOne, Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatele),
-                Arguments.of(rTwo, Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatelske_skupiny),
-                Arguments.of(rThree, Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatelske_role)
+                Arguments.of(rOne, Vocabulary.s_c_user_access_control_record),
+                Arguments.of(rTwo, Vocabulary.s_c_user_group_access_control_record),
+                Arguments.of(rThree, Vocabulary.s_c_user_role_access_control_record)
         );
     }
 
@@ -87,14 +87,14 @@ class DtoMapperTest {
         final UserGroupAccessControlRecord rTwo = new UserGroupAccessControlRecord(AccessLevel.READ,
                                                                                    Generator.generateUserGroup());
         rTwo.setUri(Generator.generateUri());
-        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_reader));
         role.setLabel(MultilingualString.create("Reader", Environment.LANGUAGE));
         final RoleAccessControlRecord rThree = new RoleAccessControlRecord(AccessLevel.WRITE, role);
         rThree.setUri(Generator.generateUri());
         return Stream.of(
-                Arguments.of(rOne, Vocabulary.s_c_uzivatel_termitu),
+                Arguments.of(rOne, Vocabulary.s_c_user),
                 Arguments.of(rTwo, Vocabulary.s_c_sioc_Usergroup),
-                Arguments.of(rThree, Vocabulary.s_c_uzivatelska_role)
+                Arguments.of(rThree, Vocabulary.s_c_user_role)
         );
     }
 

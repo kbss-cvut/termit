@@ -25,7 +25,7 @@ import java.net.URI;
 /**
  * Represents source of definition of a {@link cz.cvut.kbss.termit.model.Term} discovered in the content of a file.
  */
-@OWLClass(iri = Vocabulary.s_c_zdroj_definice_termu)
+@OWLClass(iri = Vocabulary.s_c_term_definition_source)
 public class TermDefinitionSource extends TermFileOccurrence {
 
     public TermDefinitionSource() {

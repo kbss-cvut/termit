@@ -101,7 +101,7 @@ public class UserAccountDao extends BaseDao<UserAccount> {
     public boolean doesAdminExist() {
         try {
             return em.createNativeQuery("ASK { ?x a ?adminType . }", Boolean.class)
-                     .setParameter("adminType", URI.create(Vocabulary.s_c_administrator_termitu)).getSingleResult();
+                     .setParameter("adminType", URI.create(Vocabulary.s_c_administrator)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

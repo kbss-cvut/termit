@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
@@ -27,6 +26,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
@@ -191,8 +191,8 @@ public class UserService {
         Objects.requireNonNull(account);
         LOG.trace("Persisting user account {}.", account);
         if (!securityUtils.isAuthenticated() || !securityUtils.getCurrentUser().isAdmin()) {
-            account.addType(Vocabulary.s_c_omezeny_uzivatel_termitu);
-            account.removeType(Vocabulary.s_c_administrator_termitu);
+            account.addType(Vocabulary.s_c_reader);
+            account.removeType(Vocabulary.s_c_administrator);
         }
         if (account.getPassword() == null || account.getPassword().trim().isEmpty()) {
             throw new ValidationException("User password must not be empty!");

@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * <p>
  * The {@link #getSource()} value points to the identifier of the file.
  */
-@OWLClass(iri = Vocabulary.s_c_cil_souboroveho_vyskytu)
+@OWLClass(iri = Vocabulary.s_c_file_occurrence_target)
 public class FileOccurrenceTarget extends OccurrenceTarget {
 
     public FileOccurrenceTarget() {
