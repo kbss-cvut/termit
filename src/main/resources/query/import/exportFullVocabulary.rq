@@ -25,7 +25,11 @@ CONSTRUCT {
 } WHERE {
 	VALUES (?vocabulary) {(<%s>)}
 	?vocabulary pdp:má-glosář ?glossary ;
-		  dc:title ?vocabularyLabel .
+	    dc:title ?vocabularyLabel .
+    ?term a skos:Concept ;
+    	skos:inScheme ?glossary ;
+    	?y ?z .
+    FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
     OPTIONAL {
       ?vocabulary dc:language ?vocabularyLanguage .
     }
@@ -59,9 +63,6 @@ CONSTRUCT {
 	BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
 	BIND (COALESCE(?glossaryLanguage, ?vocabularyLanguage) AS ?language)
 
-	?term a skos:Concept ;
-	  	skos:inScheme ?glossary ;
-		?y ?z .
 	OPTIONAL {
 	  ?term skos:broader ?broader .
 	  FILTER NOT EXISTS {
@@ -87,7 +88,6 @@ CONSTRUCT {
 	      ?term skos:relatedMatch ?related .
 	  }
 	}
-
 	OPTIONAL {
 	  ?term a ?type .
 	  FILTER (?type != skos:Concept)
@@ -98,7 +98,6 @@ CONSTRUCT {
 	      FILTER (?type != ?intermediateType)
 	  }
 	}
-	FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
 	OPTIONAL {
 	  ?term skos:relatedMatch ?relatedMatch .
 	}
