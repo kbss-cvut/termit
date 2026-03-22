@@ -121,27 +121,7 @@ public class SearchDao {
         }
 
         String query = adjustQueryForLanguage(ftsQuery, language);
-
-        boolean hasTypeParam = searchParams.stream().anyMatch(p -> p.getProperty().toString().equals(RDF.TYPE));
-        if (hasTypeParam) {
-            // Replace the default type FILTER with one restricting ?type to the searched-for types
-            final String typeValues = searchParams.stream()
-                    .filter(p -> p.getProperty().toString().equals(RDF.TYPE))
-                    .flatMap(p -> p.getValue().stream())
-                    .map(v -> Utils.uriToString(URI.create(v.toString())))
-                    .collect(Collectors.joining(","));
-            query = query.replace("FILTER (?type = ?term || ?type = ?vocabulary)",
-                                  "FILTER (?type IN (" + typeValues + "))")
-                         .replaceAll("\\?term\\b", Utils.uriToString(URI.create(SKOS.CONCEPT)))
-                         .replaceAll("\\?vocabulary\\b", Utils.uriToString(URI.create(Vocabulary.s_c_slovnik)));
-        }
-
-        // Exclude type params from buildSearchParamConditions when hasTypeParam=true since we already
-        // handle them via the ?type FILTER replacement to avoid redundant patterns
-        final Collection<SearchParam> conditionParams = hasTypeParam
-                ? searchParams.stream().filter(p -> !p.getProperty().toString().equals(RDF.TYPE)).toList()
-                : searchParams;
-        final String filters = buildSearchParamConditions(conditionParams);
+        final String filters = buildSearchParamConditions(searchParams);
         final int lastBraceIndex = query.lastIndexOf("}");
         if (lastBraceIndex != -1) {
             query = query.substring(0, lastBraceIndex) + filters + query.substring(lastBraceIndex);
@@ -152,7 +132,7 @@ public class SearchDao {
         final String wildcardString = searchString.isBlank() ? "*" : addWildcard(searchString);
         final String exactMatch = searchString.isBlank() ? "" : splitExactMatch(searchString);
         Query nativeQuery = setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
-                                                 searchString, language, !hasTypeParam)
+                                                 searchString, language)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null);
@@ -176,24 +156,10 @@ public class SearchDao {
     private List<FullTextSearchResult> advancedSearchNoFullText(@Nullable String language,
                                                                 @Nonnull Collection<SearchParam> searchParams,
                                                                 @Nonnull Pageable pageSpec) {
-        final boolean hasTypeParam = searchParams.stream()
-                                                 .anyMatch(p -> p.getProperty().toString().equals(RDF.TYPE));
-
         final StringBuilder queryStr = new StringBuilder();
         queryStr.append("SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score WHERE { \n");
         queryStr.append("  ?entity a ?type . \n");
-        if (!hasTypeParam) {
-            queryStr.append("  FILTER (?type = ?term || ?type = ?vocabulary) \n");
-        } else {
-            // When filtering by type, also restrict the projected ?type variable to the searched-for types
-            // to avoid returning multiple rows per entity (one for each of its types)
-            final String typeValues = searchParams.stream()
-                    .filter(p -> p.getProperty().toString().equals(RDF.TYPE))
-                    .flatMap(p -> p.getValue().stream())
-                    .map(v -> Utils.uriToString(URI.create(v.toString())))
-                    .collect(Collectors.joining(","));
-            queryStr.append("  FILTER (?type IN (").append(typeValues).append(")) \n");
-        }
+        queryStr.append("  FILTER (?type = ?term || ?type = ?vocabulary) \n");
         queryStr.append("  FILTER NOT EXISTS { ?entity a ?snapshot . } \n");
 
         // Retrieve label and description based on asset type (Concept vs Vocabulary)
@@ -217,23 +183,15 @@ public class SearchDao {
             queryStr.append("  FILTER (lang(?label) = ?requestedLanguage || lang(?label) = \"\") \n");
         }
 
-        // Exclude type params from buildSearchParamConditions when hasTypeParam=true since we already
-        // handle them via the ?type FILTER above to avoid redundant patterns causing cross-product duplicates
-        final Collection<SearchParam> conditionParams = hasTypeParam
-                ? searchParams.stream().filter(p -> !p.getProperty().toString().equals(RDF.TYPE)).toList()
-                : searchParams;
-        queryStr.append(buildSearchParamConditions(conditionParams));
+        queryStr.append(buildSearchParamConditions(searchParams));
         queryStr.append("} ORDER BY ?label");
 
         Query nativeQuery = em.createNativeQuery(queryStr.toString(), "FullTextSearchResult")
                               .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+                              .setParameter("term", URI.create(SKOS.CONCEPT))
+                              .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
                               .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                               .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu));
-
-        if (!hasTypeParam) {
-            nativeQuery.setParameter("term", URI.create(SKOS.CONCEPT))
-                       .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik));
-        }
 
         if (language != null) {
             nativeQuery.setParameter("requestedLanguage", language);
@@ -247,17 +205,13 @@ public class SearchDao {
         return nativeQuery.getResultList();
     }
 
-    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage,
-                                         boolean includeTypeParams) {
+    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
         String langSuffix = requestedLanguage == null ? "" : requestedLanguage;
         URI labelIndex = URI.create(Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX + langSuffix);
         URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
         q.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
-
-        if (includeTypeParams) {
-            q.setParameter("term", URI.create(SKOS.CONCEPT))
-             .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik));
-        }
+        q.setParameter("term", URI.create(SKOS.CONCEPT))
+         .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik));
         q.setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
          .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
          .setParameter("searchString", searchString, null);

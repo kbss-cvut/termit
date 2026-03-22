@@ -20,7 +20,10 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.MatchType;
+import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.util.Constants;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,8 +34,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -114,5 +120,24 @@ class SearchDaoTest {
                                                                       Constants.DEFAULT_PAGE_SPEC);
         assertTrue(result.isEmpty());
         verify(emMock, never()).createNativeQuery(any(), anyString());
+    }
+
+    @Test
+    void advancedSearchWithRdfTypeFacetKeepsCanonicalTypeFilterInFtsQuery() {
+        mockSearchQuery();
+        final SearchParam typeParam = new SearchParam(
+                URI.create(RDF.TYPE.stringValue()),
+                Set.of("http://onto.fel.cvut.cz/ontologies/ufo/event"),
+                MatchType.IRI
+        );
+
+        sut.advancedSearch("matching", null, Set.of(typeParam), Constants.DEFAULT_PAGE_SPEC);
+
+        final ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emMock).createNativeQuery(queryCaptor.capture(), anyString());
+        final String query = queryCaptor.getValue();
+        assertTrue(query.contains("FILTER (?type = ?term || ?type = ?vocabulary)"));
+        assertTrue(query.contains("?entity <" + RDF.TYPE.stringValue() + "> ?v0"));
+        assertFalse(query.contains("FILTER (?type IN ("));
     }
 }

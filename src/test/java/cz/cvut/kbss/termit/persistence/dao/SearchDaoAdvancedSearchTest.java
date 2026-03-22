@@ -33,6 +33,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
     private static final String[] TYPES = {"http://onto.fel.cvut.cz/ontologies/ufo/event",
@@ -105,6 +106,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                                                   MatchType.IRI);
         final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
         assertFalse(result.isEmpty());
+        assertTrue(result.stream().allMatch(r -> r.hasType(SKOS.CONCEPT)));
         final List<Term> expectedTerms = terms.stream()
                                               .filter(t -> t.hasType(TYPES[0]) || t.hasType(TYPES[1]))
                                               .toList();

@@ -71,7 +71,7 @@ public class SearchController extends BaseController {
                                                      @Parameter(description = "Search language. " +
                                                              "Searches in all languages if the field is omitted.")
                                                      @RequestParam(name = "language", required = false) String language) {
-        return searchService.advancedSearch(searchString, language, Collections.emptyList(), RestUtils.createPageRequest(null, null));
+        return searchService.advancedSearch(searchString, language, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Operation(description = "Runs full-text search over terms, matching their labels, definitions and scope notes.")
