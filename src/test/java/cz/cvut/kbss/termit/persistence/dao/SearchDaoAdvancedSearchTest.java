@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
@@ -13,7 +14,6 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +24,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -92,7 +94,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                     Constants.LETTERS.charAt(Generator.randomInt(0, Constants.LETTERS.length())))));
             term.setExamples(Set.of(MultilingualString.create(randomBool ? "Matching" : "Unknown" + " example " + i,
                                                               Environment.LANGUAGE)));
-            term.setProperties(Map.of(INTEGER_PROPERTY, Set.of(i)));
+            term.setProperties(new HashMap<>(Map.of(INTEGER_PROPERTY, Set.of(i))));
             newTerms.add(term);
         }
         newTerms.sort(Comparator.comparing(Environment::getPrimaryLabel));
@@ -102,9 +104,10 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
 
     @Test
     void advancedSearchReturnsTermsMatchingIriSearchParamWithSpecifiedTypes() {
-        final SearchParam param = new SearchParam(URI.create(RDF.TYPE.stringValue()), Set.of(TYPES[0], TYPES[1]),
+        final SearchParam param = new SearchParam(URI.create(RDF.TYPE), Set.of(TYPES[0], TYPES[1]),
                                                   MatchType.IRI);
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param),
+                                                                     Constants.DEFAULT_PAGE_SPEC);
         assertFalse(result.isEmpty());
         assertTrue(result.stream().allMatch(r -> r.hasType(SKOS.CONCEPT)));
         final List<Term> expectedTerms = terms.stream()
@@ -121,7 +124,8 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         final List<Term> matchingTerms = terms.stream()
                                               .filter(t -> !Collections.disjoint(t.getNotations(), param.getValue()))
                                               .toList();
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param),
+                                                                     Constants.DEFAULT_PAGE_SPEC);
         assertFalse(result.isEmpty());
         assertThat(result, containsSameEntities(matchingTerms));
     }
@@ -135,23 +139,25 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                                                   MatchType.SUBSTRING);
         final List<Term> matchingTerms = terms.stream()
                                               .filter(t -> t.getExamples().iterator().next().get()
-                                              .startsWith(sampleValue))
+                                                            .startsWith(sampleValue))
                                               .toList();
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param),
+                                                                     Constants.DEFAULT_PAGE_SPEC);
         assertFalse(result.isEmpty());
         assertThat(result, containsSameEntities(matchingTerms));
     }
 
     @Test
     void advancedSearchReturnsResultsMatchingMultipleSearchParameters() {
-        final SearchParam typeParam = new SearchParam(URI.create(RDF.TYPE.stringValue()), Set.of(TYPES[0], TYPES[1]),
+        final SearchParam typeParam = new SearchParam(URI.create(RDF.TYPE), Set.of(TYPES[0], TYPES[1]),
                                                       MatchType.IRI);
         final SearchParam substringParam = new SearchParam(URI.create(SKOS.EXAMPLE),
                                                            Set.of("matching"),
                                                            MatchType.SUBSTRING);
         final List<Term> matchingTerms = terms.stream()
                                               .filter(t -> t.getExamples().iterator().next().get()
-                                              .startsWith("Matching") && (t.hasType(TYPES[0]) || t.hasType(TYPES[1])))
+                                                            .startsWith("Matching") && (t.hasType(
+                                                      TYPES[0]) || t.hasType(TYPES[1])))
                                               .toList();
         final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(typeParam, substringParam),
                                                                      Constants.DEFAULT_PAGE_SPEC);
@@ -192,5 +198,46 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
     void advancedSearchReturnsEmptyListWhenSearchStringIsBlankAndNoSearchParams() {
         final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(), Constants.DEFAULT_PAGE_SPEC);
         assertEquals(Collections.emptyList(), result);
+    }
+
+    @Test
+    void advancedSearchHandlesRdfNilAsExplicitEmptyValueCondition() {
+        final List<Term> withValue = terms.subList(0, terms.size() / 2);
+        final List<Term> withoutValue = terms.subList(terms.size() / 2, terms.size());
+        final String property = URI.create(
+                                           cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT + "/custom-attribute/booleanProperty")
+                                   .toString();
+        transactional(() -> withValue.forEach(t -> {
+            t.getProperties().put(property, Set.of(Generator.randomBoolean()));
+            em.merge(t, descriptorFactory.termDescriptor(t));
+        }));
+        final List<FullTextSearchResult> result = sut.advancedSearch("", null,
+                                                                     Set.of(new SearchParam(URI.create(property),
+                                                                                            Set.of(RDF.NIL),
+                                                                                            MatchType.IRI),
+                                                                            new SearchParam(URI.create(RDF.TYPE),
+                                                                                            Set.of(SKOS.CONCEPT),
+                                                                                            MatchType.IRI)),
+                                                                     Constants.DEFAULT_PAGE_SPEC);
+        assertThat(result, containsSameEntities(withoutValue));
+    }
+
+    @Test
+    void advancedSearchHandlesRdfNilForAssetType() {
+        final List<Term> withoutType = terms.subList(0, terms.size() / 2);
+        transactional(() -> withoutType.forEach(t -> {
+            t.setTypes(Set.of());
+            em.merge(t, descriptorFactory.termDescriptor(t));
+        }));
+
+        final List<FullTextSearchResult> result = sut.advancedSearch("", null,
+                                                                     Set.of(new SearchParam(URI.create(RDF.TYPE),
+                                                                                            Set.of(RDF.NIL),
+                                                                                            MatchType.IRI),
+                                                                            new SearchParam(URI.create(RDF.TYPE),
+                                                                                            Set.of(SKOS.CONCEPT),
+                                                                                            MatchType.IRI)),
+                                                                     Constants.DEFAULT_PAGE_SPEC);
+        assertThat(result, containsSameEntities(withoutType));
     }
 }

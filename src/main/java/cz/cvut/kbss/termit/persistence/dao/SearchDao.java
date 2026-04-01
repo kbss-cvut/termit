@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
@@ -148,16 +149,17 @@ public class SearchDao {
     /**
      * Finds assets that satisfy the provided faceted search parameters, without applying full-text search.
      *
-     * @param language The language to filter by for label and definition, or null to include all languages
+     * @param language     The language to filter by for label and definition, or null to include all languages
      * @param searchParams Search parameters (facets) to filter the results by
-     * @param pageSpec Specification of the page of results to return
+     * @param pageSpec     Specification of the page of results to return
      * @return List of matching results
      */
     private List<FullTextSearchResult> advancedSearchNoFullText(@Nullable String language,
                                                                 @Nonnull Collection<SearchParam> searchParams,
                                                                 @Nonnull Pageable pageSpec) {
         final StringBuilder queryStr = new StringBuilder();
-        queryStr.append("SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score WHERE { \n");
+        queryStr.append(
+                "SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score WHERE { \n");
         queryStr.append("  ?entity a ?type . \n");
         queryStr.append("  FILTER (?type = ?term || ?type = ?vocabulary) \n");
         queryStr.append("  FILTER NOT EXISTS { ?entity a ?snapshot . } \n");
@@ -241,7 +243,12 @@ public class SearchDao {
 
         for (SearchParam p : regularParams) {
             final String variable = "?v" + i++;
-            queryStr.append("?entity").append(" ").append(Utils.uriToString(p.getProperty())).append(" ").append(variable)
+            if (isExplicitNull(p)) {
+                queryStr.append(buildNullFilter(p, variable)).append('\n');
+                continue;
+            }
+            queryStr.append("?entity").append(" ").append(Utils.uriToString(p.getProperty())).append(" ")
+                    .append(variable)
                     .append(" . ");
             switch (p.getMatchType()) {
                 case IRI:
@@ -262,6 +269,18 @@ public class SearchDao {
             }
         }
         return queryStr.toString();
+    }
+
+    private static boolean isExplicitNull(SearchParam p) {
+        return (p.getMatchType() == MatchType.IRI || p.getMatchType() == MatchType.EXACT_MATCH) && p.getValue()
+                                                                                                    .contains(RDF.NIL);
+    }
+
+    private static String buildNullFilter(SearchParam p, String variable) {
+        if (URI.create(RDF.TYPE).equals(p.getProperty())) {
+            return "FILTER NOT EXISTS { ?entity a " + variable + " . FILTER (" + variable + " NOT IN (?term, ?vocabulary, <" + RDFS.RESOURCE + ">))}";
+        }
+        return "FILTER NOT EXISTS { ?entity " + Utils.uriToString(p.getProperty()) + " [] }";
     }
 
     /**
@@ -295,10 +314,12 @@ public class SearchDao {
                                                                       .collect(Collectors.joining(","));
 
         sb.append("{\n");
-        sb.append("  { << ").append("?entity").append(" ").append(predicateVar).append(" ").append(objectVar).append(" >> ")
+        sb.append("  { << ").append("?entity").append(" ").append(predicateVar).append(" ").append(objectVar)
+          .append(" >> ")
           .append(annotationPropVar).append(" ").append(valueVar).append(" . }\n");
         sb.append("  UNION\n");
-        sb.append("  { << ").append(subjectVar).append(" ").append(predicateVar).append(" ").append("?entity").append(" >> ")
+        sb.append("  { << ").append(subjectVar).append(" ").append(predicateVar).append(" ").append("?entity")
+          .append(" >> ")
           .append(annotationPropVar).append(" ").append(valueVar).append(" .\n");
         sb.append("    FILTER NOT EXISTS { ").append(subjectVar).append(" a ?snapshot . }\n");
         sb.append("  }\n");
