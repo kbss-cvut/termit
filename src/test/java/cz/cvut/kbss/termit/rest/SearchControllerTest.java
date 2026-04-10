@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.rest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -70,10 +70,10 @@ class SearchControllerTest extends BaseControllerTestRunner {
 
     @Test
     void fullTextSearchExecutesSearchOnService() throws Exception {
-        final List<FullTextSearchResult> expected = Collections
+        final List<SearchResult> expected = Collections
                 .singletonList(
-                        new FullTextSearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
-                                                 "test", "test", 1.0));
+                        new SearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
+                                         "test", "test", 1.0));
         final String searchLanguage = "pl";
         when(searchServiceMock.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(expected);
         final String searchString = "test";
@@ -82,7 +82,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
                                                    .param("searchString", searchString)
                                                    .param("language", searchLanguage))
                                            .andExpect(status().isOk()).andReturn();
-        final List<FullTextSearchResult> result = readValue(mvcResult, new TypeReference<>() {
+        final List<SearchResult> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(expected.size(), result.size());
         assertEquals(expected.get(0).getUri(), result.get(0).getUri());
@@ -103,9 +103,9 @@ class SearchControllerTest extends BaseControllerTestRunner {
     @Test
     void fullTextSearchOfTermsWithoutVocabularySpecificationExecutesSearchOnService() throws Exception {
         final URI vocabularyIri = URI.create("https://test.org/vocabulary");
-        final List<FullTextSearchResult> expected = Collections
-                .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", "Term definition", vocabularyIri, null,
-                                                        SKOS.CONCEPT, "test", "test", 1.0));
+        final List<SearchResult> expected = Collections
+                .singletonList(new SearchResult(Generator.generateUri(), "test", "Term definition", vocabularyIri, null,
+                                                SKOS.CONCEPT, "test", "test", 1.0));
         when(searchServiceMock.fullTextSearchOfTerms(any(), any(), any())).thenReturn(expected);
         final String searchString = "test";
 
@@ -137,7 +137,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
 
     @Test
     void advancedSearchPassesSearchParametersToSearchService() throws Exception {
-        final FullTextSearchResult term = new FullTextSearchResult(
+        final SearchResult term = new SearchResult(
                 Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
                 SKOS.CONCEPT, "test", "test", 1.0);
         when(searchServiceMock.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
@@ -148,7 +148,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc.perform(
                 post(PATH + "/advanced").param("searchString", "test").content(toJson(searchParams)).contentType(
                         MediaType.APPLICATION_JSON)).andReturn();
-        final List<FullTextSearchResult> result = readValue(mvcResult, new TypeReference<>() {
+        final List<SearchResult> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getUri());
@@ -157,7 +157,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
 
     @Test
     void advancedSearchPassesSpecifiedPageSpecificationToService() throws Exception {
-        final FullTextSearchResult term = new FullTextSearchResult(
+        final SearchResult term = new SearchResult(
                 Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
                 SKOS.CONCEPT, "test", "test", 1.0);
         when(searchServiceMock.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(term));

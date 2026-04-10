@@ -23,7 +23,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -110,15 +110,15 @@ public class SearchDao {
      * @param pageSpec     Specification of the page of results to return
      * @return List of matching results
      */
-    public List<FullTextSearchResult> advancedSearch(@Nonnull String searchString, @Nullable String language,
-                                                     @Nonnull Collection<SearchParam> searchParams, Pageable pageSpec) {
+    public List<SearchResult> advancedSearch(@Nonnull String searchString, @Nullable String language,
+                                             @Nonnull Collection<SearchParam> searchParams, Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
         if (searchString.isBlank() && searchParams.isEmpty()) {
             return Collections.emptyList();
         }
 
         if (searchString.isBlank()) {
-            return advancedSearchNoFullText(language, searchParams, pageSpec);
+            return advancedSearchNoFullText(searchParams, pageSpec);
         }
 
         String query = adjustQueryForLanguage(ftsQuery, language);
@@ -149,55 +149,40 @@ public class SearchDao {
     /**
      * Finds assets that satisfy the provided faceted search parameters, without applying full-text search.
      *
-     * @param language     The language to filter by for label and definition, or null to include all languages
      * @param searchParams Search parameters (facets) to filter the results by
      * @param pageSpec     Specification of the page of results to return
      * @return List of matching results
      */
-    private List<FullTextSearchResult> advancedSearchNoFullText(@Nullable String language,
-                                                                @Nonnull Collection<SearchParam> searchParams,
-                                                                @Nonnull Pageable pageSpec) {
-        final StringBuilder queryStr = new StringBuilder();
-        queryStr.append(
-                "SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score WHERE { \n");
-        queryStr.append("  ?entity a ?type . \n");
-        queryStr.append("  FILTER (?type = ?term || ?type = ?vocabulary) \n");
-        queryStr.append("  FILTER NOT EXISTS { ?entity a ?snapshot . } \n");
+    private List<SearchResult> advancedSearchNoFullText(@Nonnull Collection<SearchParam> searchParams,
+                                                        @Nonnull Pageable pageSpec) {
 
-        // Retrieve label and description based on asset type (Concept vs Vocabulary)
-        queryStr.append("  { \n");
-        queryStr.append("    ?entity <").append(SKOS.PREF_LABEL).append("> ?label . \n");
-        queryStr.append("    OPTIONAL { ?entity <").append(SKOS.DEFINITION).append("> ?description . } \n");
-        queryStr.append("    BIND(<").append(SKOS.PREF_LABEL).append("> AS ?snippetField) \n");
-        queryStr.append("    BIND(?label AS ?snippetText) \n");
-        queryStr.append("  } UNION { \n");
-        queryStr.append("    ?entity <").append(DC.Terms.TITLE).append("> ?label . \n");
-        queryStr.append("    OPTIONAL { ?entity <").append(DC.Terms.DESCRIPTION).append("> ?description . } \n");
-        queryStr.append("    BIND(<").append(DC.Terms.TITLE).append("> AS ?snippetField) \n");
-        queryStr.append("    BIND(?label AS ?snippetText) \n");
-        queryStr.append("  } \n");
+        String queryStr = "SELECT DISTINCT ?entity" +
+                " (GROUP_CONCAT(DISTINCT CONCAT(?label, \"@\", lang(?label)); SEPARATOR=\"" + Constants.GROUP_CONCAT_SEPARATOR + "\") AS ?label)" +
+                " (GROUP_CONCAT(DISTINCT CONCAT(?description, \"@\", lang(?description)); SEPARATOR=\"" + Constants.GROUP_CONCAT_SEPARATOR + "\") AS ?description)" +
+                " ?vocabularyUri ?state ?type WHERE { \n" +
+                "  ?entity a ?type . \n" +
+                "  FILTER (?type = ?term || ?type = ?vocabulary) \n" +
+                "  FILTER NOT EXISTS { ?entity a ?snapshot . } \n" +
 
-        queryStr.append("  OPTIONAL { ?entity ?inVocabulary ?vocabularyUri . } \n");
-        queryStr.append("  OPTIONAL { ?entity ?hasState ?state . } \n");
-        queryStr.append("  BIND(0.0 AS ?score) \n");
+                // Retrieve label and description based on asset type (Concept vs Vocabulary)
+                "  { \n" +
+                "    ?entity <" + SKOS.PREF_LABEL + "> ?label . \n" +
+                "    OPTIONAL { ?entity <" + SKOS.DEFINITION + "> ?description . } \n" +
+                "  } UNION { \n" +
+                "    ?entity <" + DC.Terms.TITLE + "> ?label . \n" +
+                "    OPTIONAL { ?entity <" + DC.Terms.DESCRIPTION + "> ?description . } \n" +
+                "  } \n" +
+                "  OPTIONAL { ?entity ?inVocabulary ?vocabularyUri . } \n" +
+                "  OPTIONAL { ?entity ?hasState ?state . } \n" +
+                buildSearchParamConditions(searchParams) +
+                "} GROUP BY ?entity ?vocabularyUri ?state ?type ORDER BY ?entity";
 
-        if (language != null) {
-            queryStr.append("  FILTER (lang(?label) = ?requestedLanguage || lang(?label) = \"\") \n");
-        }
-
-        queryStr.append(buildSearchParamConditions(searchParams));
-        queryStr.append("} ORDER BY ?label");
-
-        Query nativeQuery = em.createNativeQuery(queryStr.toString(), "FullTextSearchResult")
+        Query nativeQuery = em.createNativeQuery(queryStr, "FacetedSearchResult")
                               .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                               .setParameter("term", URI.create(SKOS.CONCEPT))
                               .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
                               .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                               .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu));
-
-        if (language != null) {
-            nativeQuery.setParameter("requestedLanguage", language);
-        }
 
         if (pageSpec.isPaged()) {
             nativeQuery.setFirstResult((int) pageSpec.getOffset());

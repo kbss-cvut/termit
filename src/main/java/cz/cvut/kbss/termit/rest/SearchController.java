@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
@@ -66,9 +66,9 @@ public class SearchController extends BaseController {
     @ApiResponse(responseCode = "200", description = "Search results.")
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/fts", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<FullTextSearchResult> fullTextSearch(@Parameter(description = "Search string.")
+    public List<SearchResult> fullTextSearch(@Parameter(description = "Search string.")
                                                      @RequestParam(name = "searchString") String searchString,
-                                                     @Parameter(description = "Search language. " +
+                                             @Parameter(description = "Search language. " +
                                                              "Searches in all languages if the field is omitted.")
                                                      @RequestParam(name = "language", required = false) String language) {
         return searchService.advancedSearch(searchString, language, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
@@ -78,7 +78,7 @@ public class SearchController extends BaseController {
     @ApiResponse(responseCode = "200", description = "Search results.")
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/fts/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<FullTextSearchResult> fullTextSearchTerms(
+    public List<SearchResult> fullTextSearchTerms(
             @Parameter(description = "Search string.")
             @RequestParam(name = "searchString") String searchString,
             @Parameter(description = "Identifiers of vocabularies in which to search.")
@@ -104,7 +104,7 @@ public class SearchController extends BaseController {
     @PreAuthorize("permitAll()")
     @PostMapping(value = "/advanced", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
             consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public List<FullTextSearchResult> advancedSearch(
+    public List<SearchResult> advancedSearch(
             @Parameter(description = "Search string.")
             @RequestParam(name = "searchString", required = false, defaultValue = "") String searchString,
             @Parameter(description = "Search language.")
@@ -132,13 +132,13 @@ public class SearchController extends BaseController {
     @PreAuthorize("permitAll()")
     @PostMapping(value = "/faceted/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
                  consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public List<FullTextSearchResult> facetedTermSearch(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+    public List<SearchResult> facetedTermSearch(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
                                                        @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
                                                                      required = false) Integer pageSize,
-                                                       @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                                                @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
                                                        @RequestParam(name = Constants.QueryParams.PAGE,
                                                                      required = false) Integer pageNo,
-                                                       @Parameter(description = "Search parameters.")
+                                                @Parameter(description = "Search parameters.")
                                                        @RequestBody Collection<SearchParam> searchParams) {
         return searchService.advancedSearch("", null, searchParams, RestUtils.createPageRequest(pageSize, pageNo));
     }

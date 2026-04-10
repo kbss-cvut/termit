@@ -135,7 +135,8 @@ public class Constants {
      * Relations between vocabularies that do not prevent vocabulary to be removed
      */
     public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
-            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku, Vocabulary.s_p_importuje_slovnik
+            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku,
+            Vocabulary.s_p_importuje_slovnik
     ).map(URI::create).collect(Collectors.toSet());
 
     /**
@@ -174,6 +175,14 @@ public class Constants {
      * Blank node prefix.
      */
     public static final String BNODE_PREFIX = "_:";
+
+    /**
+     * Separator used for SPARQL {@literal GROUP_CONCAT} aggregation.
+     * <p>
+     * Note that the same separator is used in the {@code fulltextsearchquery.rq}, so any changes here should be
+     * reflected in that file as well.
+     */
+    public static final String GROUP_CONCAT_SEPARATOR = ";;;";
 
     /**
      * Lucene index URI namespace
@@ -245,8 +254,8 @@ public class Constants {
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";
         /**
-         * JWT for access token.
-         * The JWT standard suggests to omit the {@code application/} prefix.
+         * JWT for access token. The JWT standard suggests to omit the {@code application/} prefix.
+         *
          * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC9068</a>
          */
         public static final String JWT_ACCESS_TOKEN = "AT+JWT";

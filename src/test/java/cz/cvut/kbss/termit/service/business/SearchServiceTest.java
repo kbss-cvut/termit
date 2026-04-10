@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -72,13 +72,13 @@ class SearchServiceTest {
     @Test
     void advancedSearchExecutesSearchOnDaoAndReturnsResults() {
         final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
-        final FullTextSearchResult item = new FullTextSearchResult(
+        final SearchResult item = new SearchResult(
                 Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
                 SKOS.CONCEPT, "test", "test", 1.0);
         when(searchDao.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
         final Pageable pageSpec = PageRequest.of(2, 100);
 
-        final List<FullTextSearchResult> result = sut.advancedSearch("test", null, Set.of(spOne), pageSpec);
+        final List<SearchResult> result = sut.advancedSearch("test", null, Set.of(spOne), pageSpec);
         assertEquals(List.of(item), result);
         verify(searchDao).advancedSearch("test", null, Set.of(spOne), pageSpec);
     }
@@ -87,7 +87,7 @@ class SearchServiceTest {
     void fullTextSearchOfTermsAddsConceptAndVocabularyFilters() {
         final String searchString = "test";
         final URI vocabulary = Generator.generateUri();
-        final FullTextSearchResult item = new FullTextSearchResult(
+        final SearchResult item = new SearchResult(
                 Generator.generateUri(),
                 "test",
                 "Term definition",
@@ -99,7 +99,7 @@ class SearchServiceTest {
                 1.0);
         when(searchDao.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
 
-        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Set.of(vocabulary), null);
+        final List<SearchResult> result = sut.fullTextSearchOfTerms(searchString, Set.of(vocabulary), null);
 
         assertEquals(List.of(item), result);
         verify(searchDao).advancedSearch(eq(searchString), eq(null), argThat(params ->
@@ -116,7 +116,7 @@ class SearchServiceTest {
     @Test
     void fullTextSearchOfTermsAddsOnlyConceptFilterWhenVocabularyNotSpecified() {
         final String searchString = "test";
-        final FullTextSearchResult item = new FullTextSearchResult(
+        final SearchResult item = new SearchResult(
                 Generator.generateUri(),
                 "test",
                 "Term definition",
@@ -128,7 +128,7 @@ class SearchServiceTest {
                 1.0);
         when(searchDao.advancedSearch(any(), any(), anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
 
-        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.emptySet(), null);
+        final List<SearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.emptySet(), null);
 
         assertEquals(List.of(item), result);
         verify(searchDao).advancedSearch(eq(searchString), eq(null), argThat(params ->

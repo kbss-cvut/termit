@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.dto.search;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
@@ -24,12 +25,14 @@ import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
+import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMappings;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
@@ -37,33 +40,47 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Set;
 
-@SparqlResultSetMapping(name = "FullTextSearchResult",
-                        classes = {@ConstructorResult(targetClass = FullTextSearchResult.class,
-                                                      variables = {
-                                                              @VariableResult(name = "entity", type = URI.class),
-                                                              @VariableResult(name = "label", type = String.class),
-                                                              @VariableResult(name = "description", type = String.class),
-                                                              @VariableResult(name = "vocabularyUri", type = URI.class),
-                                                              @VariableResult(name = "state", type = URI.class),
-                                                              @VariableResult(name = "type", type = String.class),
-                                                              @VariableResult(name = "snippetField",
-                                                                              type = String.class),
-                                                              @VariableResult(name = "snippetText",
-                                                                              type = String.class),
-                                                              @VariableResult(name = "score", type = Double.class)
-                                                      })})
-public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializable {
+@SparqlResultSetMappings({
+        @SparqlResultSetMapping(name = "FullTextSearchResult",
+                                classes = {
+                                        @ConstructorResult(
+                                                targetClass = SearchResult.class,
+                                                variables = {
+                                                        @VariableResult(name = "entity", type = URI.class),
+                                                        @VariableResult(name = "label", type = String.class),
+                                                        @VariableResult(name = "description", type = String.class),
+                                                        @VariableResult(name = "vocabularyUri", type = URI.class),
+                                                        @VariableResult(name = "state", type = URI.class),
+                                                        @VariableResult(name = "type", type = String.class),
+                                                        @VariableResult(name = "snippetField", type = String.class),
+                                                        @VariableResult(name = "snippetText", type = String.class),
+                                                        @VariableResult(name = "score", type = Double.class)
+                                                })}),
+        @SparqlResultSetMapping(name = "FacetedSearchResult",
+                                classes = {
+                                        @ConstructorResult(
+                                                targetClass = SearchResult.class,
+                                                variables = {
+                                                        @VariableResult(name = "entity", type = URI.class),
+                                                        @VariableResult(name = "label", type = String.class),
+                                                        @VariableResult(name = "description", type = String.class),
+                                                        @VariableResult(name = "vocabularyUri", type = URI.class),
+                                                        @VariableResult(name = "state", type = URI.class),
+                                                        @VariableResult(name = "type", type = String.class)
+                                                })})
+})
+public class SearchResult implements HasIdentifier, HasTypes, Serializable {
 
     @Id
     private URI uri;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = RDFS.LABEL)
-    private String label;
+    private MultilingualString label;
 
     // This could be term definition, scope note or vocabulary description
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
-    private String description;
+    private MultilingualString description;
 
     @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/snippet-text")
     private String snippetText;
@@ -83,20 +100,38 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     @Types
     private Set<String> types;
 
-    public FullTextSearchResult() {
+    public SearchResult() {
     }
 
-    public FullTextSearchResult(URI uri, String label, String description, URI vocabulary, URI state, String type,
-                                String snippetField, String snippetText, Double score) {
+    public SearchResult(URI uri, String label, String description, URI vocabulary, URI state, String type) {
+        this(uri, label, description, vocabulary, state, type, null, null, null);
+    }
+
+    public SearchResult(URI uri, String label, String description, URI vocabulary, URI state, String type,
+                        String snippetField, String snippetText, Double score) {
         this.uri = uri;
-        this.label = label;
-        this.description = description;
+        this.label = separateGroupConcatenatedMultilingualStrings(label);
+        this.description = separateGroupConcatenatedMultilingualStrings(description);
         this.vocabulary = vocabulary;
         this.state = state;
         this.types = Collections.singleton(type);
         this.snippetField = snippetField;
         this.snippetText = snippetText;
         this.score = score;
+    }
+
+    private static MultilingualString separateGroupConcatenatedMultilingualStrings(String input) {
+        if (input == null) {
+            return new MultilingualString();
+        }
+        final String[] translations = input.split(Constants.GROUP_CONCAT_SEPARATOR);
+        final MultilingualString mls = new MultilingualString();
+        for (String translation : translations) {
+            final String[] parts = translation.split("@");
+            final String lang = parts.length < 2 ? Constants.DEFAULT_LANGUAGE : parts[1];
+            mls.set(lang, parts[0]);
+        }
+        return mls;
     }
 
     @Override
@@ -109,19 +144,19 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
         this.uri = uri;
     }
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 
-    public String getDescription() {
+    public MultilingualString getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(MultilingualString description) {
         this.description = description;
     }
 
