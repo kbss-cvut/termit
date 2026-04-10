@@ -5,7 +5,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -144,11 +144,11 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             MatchType.IRI
         );
 
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
 
         assertFalse(result.isEmpty());
         // Both termA (subject) and termB (object) should be in the results
-        final Set<URI> resultUris = result.stream().map(FullTextSearchResult::getUri).collect(Collectors.toSet());
+        final Set<URI> resultUris = result.stream().map(SearchResult::getUri).collect(Collectors.toSet());
         assertThat(resultUris, hasItem(termA.getUri()));
         assertThat(resultUris, hasItem(termB.getUri()));
     }
@@ -161,9 +161,9 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             MatchType.IRI
         );
 
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
 
-        final Set<URI> resultUris = result.stream().map(FullTextSearchResult::getUri).collect(Collectors.toSet());
+        final Set<URI> resultUris = result.stream().map(SearchResult::getUri).collect(Collectors.toSet());
         assertThat(resultUris, org.hamcrest.Matchers.not(hasItem(termC.getUri())));
     }
 
@@ -181,7 +181,7 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             MatchType.IRI
         );
 
-        final List<FullTextSearchResult> result = sut.advancedSearch(
+        final List<SearchResult> result = sut.advancedSearch(
             "", null,
             Set.of(relationshipParam, vocabularyParam),
             Constants.DEFAULT_PAGE_SPEC
@@ -204,7 +204,7 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             MatchType.IRI
         );
 
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(param), Constants.DEFAULT_PAGE_SPEC);
 
         assertEquals(0, result.size());
     }

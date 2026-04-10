@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Service;
@@ -46,7 +46,7 @@ public class SearchAuthorizationService {
      * @param instance Search result to authorize access to
      * @return {@code true} if the current user can read the specified instance, {@code false} otherwise
      */
-    public boolean canRead(@Nonnull FullTextSearchResult instance) {
+    public boolean canRead(@Nonnull SearchResult instance) {
         Objects.requireNonNull(instance);
         if (instance.getVocabulary() != null) {
             assert instance.hasType(SKOS.CONCEPT);

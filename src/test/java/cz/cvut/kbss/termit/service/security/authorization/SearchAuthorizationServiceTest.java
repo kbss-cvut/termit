@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.junit.jupiter.api.Test;
@@ -45,11 +45,11 @@ class SearchAuthorizationServiceTest {
 
     @Test
     void canReadChecksIfVocabularyIsReadableForTermResult() {
-        final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "Term label",
-                                                                  "Term definition",
-                                                                  Generator.generateUri(), Generator.generateUri(),
-                                                                  SKOS.CONCEPT, "label", "test",
-                                                                  (double) Generator.randomInt());
+        final SearchResult res = new SearchResult(Generator.generateUri(), "Term label",
+                                                  "Term definition",
+                                                  Generator.generateUri(), Generator.generateUri(),
+                                                  SKOS.CONCEPT, "label", "test",
+                                                  (double) Generator.randomInt());
         when(vocabularyAuthorizationService.canRead(any(Vocabulary.class))).thenReturn(true);
         assertTrue(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getVocabulary()));
@@ -57,12 +57,12 @@ class SearchAuthorizationServiceTest {
 
     @Test
     void canReadChecksIfVocabularyIsReadableForVocabularyResult() {
-        final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "Vocabulary title",
-                                                                  "Vocabulary description",
-                                                                  null, null,
-                                                                  cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik,
-                                                                  "label", "test",
-                                                                  (double) Generator.randomInt());
+        final SearchResult res = new SearchResult(Generator.generateUri(), "Vocabulary title",
+                                                  "Vocabulary description",
+                                                  null, null,
+                                                  cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik,
+                                                  "label", "test",
+                                                  (double) Generator.randomInt());
         assertFalse(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getUri()));
     }

@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
@@ -59,7 +59,7 @@ public class SearchService {
      * @return Matching terms
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies, String language) {
+    public List<SearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies, String language) {
         Objects.requireNonNull(vocabularies);
 
         Collection<SearchParam> searchParams = new ArrayList<>();
@@ -90,9 +90,9 @@ public class SearchService {
      * @return Matching results
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FullTextSearchResult> advancedSearch(String searchString, String language,
-                                                     Collection<SearchParam> searchParams,
-                                                     Pageable pageSpec) {
+    public List<SearchResult> advancedSearch(String searchString, String language,
+                                             Collection<SearchParam> searchParams,
+                                             Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
         searchParams.forEach(SearchParam::validate);
         return searchDao.advancedSearch(searchString, language, searchParams, pageSpec);

@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.util.Constants;
@@ -116,8 +116,8 @@ class SearchDaoTest {
 
     @Test
     void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
-        final List<FullTextSearchResult> result = sut.advancedSearch("", null, Collections.emptyList(),
-                                                                      Constants.DEFAULT_PAGE_SPEC);
+        final List<SearchResult> result = sut.advancedSearch("", null, Collections.emptyList(),
+                                                             Constants.DEFAULT_PAGE_SPEC);
         assertTrue(result.isEmpty());
         verify(emMock, never()).createNativeQuery(any(), anyString());
     }
