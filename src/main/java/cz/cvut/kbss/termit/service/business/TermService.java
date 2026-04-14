@@ -148,7 +148,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Retrieves full versions of all terms from the vocabulary.
+     * Retrieves full versions of all terms from the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
      * @param pageSpec   Page specification
@@ -156,9 +156,20 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @see #findAll(Vocabulary, Pageable)
      */
     public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
-        Objects.requireNonNull(vocabulary);
-        Objects.requireNonNull(pageSpec);
         return repositoryService.findAllFull(vocabulary, pageSpec);
+    }
+
+    /**
+     * Retrieves full versions of all terms from the specified vocabulary that match the specified search string.
+     *
+     * @param searchString Search string for label matching
+     * @param vocabulary   Vocabulary whose terms will be returned
+     * @param pageSpec     Page specification
+     * @return Matching terms
+     * @see #findAll(String, Vocabulary, Pageable)
+     */
+    public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return repositoryService.findAllFull(searchString, vocabulary, pageSpec);
     }
 
     /**

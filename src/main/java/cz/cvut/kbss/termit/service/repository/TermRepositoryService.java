@@ -349,6 +349,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Finds terms from the specified vocabulary whose label matches the specified search string.
+     *
+     * @param searchString Search string to filter terms by
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
+     * @return List of full terms ordered by label
+     */
+    public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllFull(searchString, vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
+    }
+
+    /**
      * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
      * term hierarchy.
      * <p>

@@ -442,11 +442,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Gets all terms on the specified vocabulary.
+     * Gets terms from the specified vocabulary.
      * <p>
      * No differences are made between root terms and terms with parents.
      *
      * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specification
      * @return Matching terms, ordered by label
      */
     public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
@@ -463,15 +464,57 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                     "?hasLabel ?label ;" +
                                                                     "}" +
                                                                     "?term ?inVocabulary ?vocabulary ." +
-                                                                    "?vocabulary ?hasLanguage ?labelLang ." +
-                                                                    "FILTER (lang(?label) = ?labelLang) ." +
                                                                     " } ORDER BY " + orderSentence("?label"), URI.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("context", context(vocabulary))
                                          .setParameter("vocabulary", vocabulary.getUri())
                                          .setParameter("hasLabel", LABEL_PROP)
                                          .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                         .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                         .setMaxResults(pageSpec.getPageSize())
+                                         .setFirstResult((int) pageSpec.getOffset())
+                                         .getResultList();
+            return termIris.stream().map(ti -> {
+                final Term t = find(ti).get();
+                em.clear();
+                return t;
+            }).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Gets all terms matching the specified search string from the specified vocabulary.
+     * <p>
+     * No differences are made between root terms and terms with parents.
+     *
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param searchString Search string
+     * @param pageSpec     Page specification
+     * @return Matching terms, ordered by label
+     */
+    public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        try {
+            // Load terms one by one. This works around the issue of terms being loaded in the persistence context
+            // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
+            // The workaround relies on clearing the EntityManager after loading each term
+            // The price for this solution is that this method performs very poorly for larger vocabularies (hundreds of terms)
+            final List<URI> termIris = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                                    "GRAPH ?context { " +
+                                                                    "?term a ?type ;" +
+                                                                    "?hasLabel ?label ;" +
+                                                                    "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                                                    "}" +
+                                                                    "?term ?inVocabulary ?vocabulary ." +
+                                                                    " } ORDER BY " + orderSentence("?label"), URI.class)
+                                         .setParameter("type", typeUri)
+                                         .setParameter("context", context(vocabulary))
+                                         .setParameter("vocabulary", vocabulary.getUri())
+                                         .setParameter("hasLabel", LABEL_PROP)
+                                         .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                         .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
                                          .setMaxResults(pageSpec.getPageSize())
                                          .setFirstResult((int) pageSpec.getOffset())
                                          .getResultList();

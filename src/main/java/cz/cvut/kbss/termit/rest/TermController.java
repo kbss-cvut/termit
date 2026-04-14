@@ -161,6 +161,10 @@ public class TermController extends BaseController {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
+            if (full) {
+                return ResponseEntity.ok(
+                        termService.findAllFull(searchString, vocabulary, createPageRequest(pageSize, pageNo)));
+            }
             if (flat) {
                 return ResponseEntity.ok(includeImported ?
                                          termService.findAllFlatIncludingImported(searchString, vocabulary,
