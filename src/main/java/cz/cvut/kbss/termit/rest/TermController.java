@@ -152,6 +152,8 @@ public class TermController extends BaseController {
                            defaultValue = MediaType.ALL_VALUE) String acceptType,
             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+            @Parameter(description = "Boolean flag to determine whether to return full versions of the terms.")
+            @RequestParam(name = "full", required = false, defaultValue = "false") boolean full,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
@@ -176,6 +178,9 @@ public class TermController extends BaseController {
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
+            if (full) {
+                return ResponseEntity.ok(termService.findAllFull(vocabulary, createPageRequest(pageSize, pageNo)));
+            }
             if (flat) {
                 return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary,
                                                                                                     createPageRequest(

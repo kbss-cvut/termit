@@ -40,6 +40,7 @@ import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
@@ -319,7 +320,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all terms from vocabulary, regardless of their position in the term hierarchy.
+     * Gets all terms from the specified vocabulary, regardless of their position in the term hierarchy.
      * <p>
      * This returns the full versions of all terms (complete metadata) contained in vocabulary's glossary, and thus its
      * performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
@@ -329,7 +330,22 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @see #findAll(Vocabulary, Pageable)
      */
     public List<Term> findAllFull(Vocabulary vocabulary) {
-        return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
+        return findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+    }
+
+    /**
+     * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
+     * <p>
+     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, and thus its
+     * performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specifying result number and position
+     * @return List of full terms ordered by label
+     * @see #findAll(Vocabulary, Pageable)
+     */
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllFull(vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
     }
 
     /**

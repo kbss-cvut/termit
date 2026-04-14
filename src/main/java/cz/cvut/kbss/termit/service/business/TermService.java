@@ -148,6 +148,20 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Retrieves full versions of all terms from the vocabulary.
+     *
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
+     * @param pageSpec   Page specification
+     * @return Matching terms
+     * @see #findAll(Vocabulary, Pageable)
+     */
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllFull(vocabulary, pageSpec);
+    }
+
+    /**
      * Retrieves all terms from the specified vocabulary in a flat structure.
      *
      * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient

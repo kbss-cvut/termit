@@ -449,8 +449,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @param vocabulary Vocabulary whose terms should be returned
      * @return Matching terms, ordered by label
      */
-    public List<Term> findAllFull(Vocabulary vocabulary) {
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
         try {
             // Load terms one by one. This works around the issue of terms being loaded in the persistence context
             // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
@@ -471,6 +472,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                          .setParameter("hasLabel", LABEL_PROP)
                                          .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                          .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                         .setMaxResults(pageSpec.getPageSize())
+                                         .setFirstResult((int) pageSpec.getOffset())
                                          .getResultList();
             return termIris.stream().map(ti -> {
                 final Term t = find(ti).get();
@@ -808,7 +811,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                 .setParameter("hasLabel", LABEL_PROP)
                                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                                 .setParameter("vocabulary", vocabulary.getUri())
-                                                .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
+                                                .setParameter("searchString", searchString,
+                                                              vocabulary.getPrimaryLanguage())
                                                 .setMaxResults(pageSpec.getPageSize())
                                                 .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -959,7 +963,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                               URI.create(
                                                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                                 .setParameter("targetVocabulary", vocabulary.getUri())
-                                                .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
+                                                .setParameter("searchString", searchString,
+                                                              vocabulary.getPrimaryLanguage())
                                                 .setMaxResults(pageSpec.getPageSize())
                                                 .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -1018,7 +1023,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                      .setParameter("vocabulary", vocabulary.getUri())
                      .setParameter("searchString", label,
-                                   languageTag != null ? languageTag : vocabulary.getPrimaryLanguage()).getSingleResult();
+                                   languageTag != null ? languageTag : vocabulary.getPrimaryLanguage())
+                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
