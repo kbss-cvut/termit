@@ -37,13 +37,14 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
-import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -100,6 +101,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -112,7 +114,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-class TermControllerTest extends BaseControllerTestRunner {
+public class TermControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/vocabularies/";
     private static final String VOCABULARY_NAME = "metropolitan-plan";
@@ -284,7 +286,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAll(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termServiceMock).findAll(eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(
                                                    get(PATH + VOCABULARY_NAME + "/terms")
@@ -293,8 +295,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAll(eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(vocabulary), eq(new TermSelectionParams(DEFAULT_PAGE_SPEC)));
     }
 
     @Test
@@ -303,7 +304,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllIncludingImported(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termServiceMock).findAll(eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(
                                                    get(PATH + VOCABULARY_NAME + "/terms")
@@ -313,8 +314,11 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllIncludingImported(eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(vocabulary), eq(termSelectionParamsBuilder().includeImported().build()));
+    }
+
+    public static TermSelectionParamsBuilder termSelectionParamsBuilder() {
+        return new TermSelectionParamsBuilder();
     }
 
     @Test
@@ -323,8 +327,8 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
-        when(termServiceMock.findAllFlat(anyString(), any(), any(Pageable.class))).thenReturn(terms);
         final String searchString = "test";
+        doReturn(terms).when(termServiceMock).findAll(eq(searchString), eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
                                                             .param(QueryParams.NAMESPACE, Environment.BASE_URI)
@@ -334,8 +338,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllFlat(eq(searchString), eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(searchString), eq(vocabulary),
+                                        eq(termSelectionParamsBuilder().flat().build()));
     }
 
     @Test
@@ -344,7 +348,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllFlat(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termServiceMock).findAll(eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
                                                             .param(QueryParams.NAMESPACE, Environment.BASE_URI)
@@ -353,8 +357,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllFlat(eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(vocabulary), eq(termSelectionParamsBuilder().flat().build()));
     }
 
     @Test
@@ -363,7 +366,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllFlatIncludingImported(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termServiceMock).findAll(eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
                                                             .param(QueryParams.NAMESPACE, Environment.BASE_URI)
@@ -373,8 +376,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllFlatIncludingImported(eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(vocabulary),
+                                        eq(termSelectionParamsBuilder().flat().includeImported().build()));
     }
 
     @Test
@@ -384,9 +387,8 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<FlatTermDto> terms = termsToFlatDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllFlatIncludingImported(anyString(), eq(vocabulary), any(Pageable.class))).thenReturn(
-                terms);
         final String searchString = "test";
+        doReturn(terms).when(termServiceMock).findAll(eq(searchString), eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
                                                             .param(QueryParams.NAMESPACE, Environment.BASE_URI)
@@ -397,8 +399,9 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<FlatTermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllFlatIncludingImported(eq(searchString), eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(searchString), eq(vocabulary),
+                                        eq(termSelectionParamsBuilder().includeImported().flat()
+                                                                       .build()));
     }
 
     @Test
@@ -407,8 +410,8 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
-        when(termServiceMock.findAll(anyString(), any(), any(Pageable.class))).thenReturn(terms);
         final String searchString = "test";
+        doReturn(terms).when(termServiceMock).findAll(eq(searchString), eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
                                                             .param(QueryParams.NAMESPACE, Environment.BASE_URI)
@@ -417,8 +420,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAll(eq(searchString), eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(searchString), eq(vocabulary), eq(termSelectionParamsBuilder().build()));
     }
 
     @Test
@@ -781,8 +783,8 @@ class TermControllerTest extends BaseControllerTestRunner {
                                .param("includeImported", Boolean.TRUE.toString())
                                .param("searchString", searchString))
                .andExpect(status().isOk());
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllIncludingImported(eq(searchString), eq(vocabulary), captor.capture());
+        verify(termServiceMock).findAll(eq(searchString), eq(vocabulary),
+                                        eq(termSelectionParamsBuilder().includeImported().build()));
     }
 
     @Test
@@ -1290,5 +1292,24 @@ class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock).findAllFlat(eq(searchString), captor.capture());
         assertEquals(PageRequest.of(2, 50), captor.getValue());
         verify(termServiceMock, never()).findAll(anyString(), eq(PageRequest.of(2, 50)));
+    }
+
+    public static class TermSelectionParamsBuilder {
+        private boolean flat = false;
+        private boolean includeImported = false;
+
+        public TermSelectionParamsBuilder flat() {
+            this.flat = true;
+            return this;
+        }
+
+        public TermSelectionParamsBuilder includeImported() {
+            this.includeImported = true;
+            return this;
+        }
+
+        public TermSelectionParams build() {
+            return new TermSelectionParams(flat, false, includeImported, DEFAULT_PAGE_SPEC);
+        }
     }
 }

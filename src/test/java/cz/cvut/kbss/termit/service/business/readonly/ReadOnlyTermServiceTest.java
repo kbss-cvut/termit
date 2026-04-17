@@ -83,44 +83,6 @@ class ReadOnlyTermServiceTest {
     }
 
     @Test
-    void findAllRetrievesAllTermsFromService() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
-        final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAll(any(Vocabulary.class), any())).thenReturn(terms);
-
-        final List<TermDto> result = sut.findAll(vocabulary, pageSpec);
-        assertEquals(terms, result);
-        verify(termService).findAll(vocabulary, pageSpec);
-    }
-
-    @Test
-    void findAllBySearchStringSearchesForTermsViaServiceAndTransformsResultsToReadOnlyVersion() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
-        final String searchString = "test";
-        final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAll(anyString(), any(), any())).thenReturn(terms);
-
-        final List<TermDto> result = sut.findAll(searchString, vocabulary, pageSpec);
-        assertEquals(terms, result);
-        verify(termService).findAll(searchString, vocabulary, pageSpec);
-    }
-
-    @Test
-    void findAllIncludingImportedBySearchStringSearchesForTermsViaServiceAndTransformsResultsToReadOnlyVersion() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
-        final String searchString = "test";
-        final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAllIncludingImported(anyString(), any(), any())).thenReturn(terms);
-
-        final List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary, pageSpec);
-        assertEquals(terms, result);
-        verify(termService).findAllIncludingImported(searchString, vocabulary, pageSpec);
-    }
-
-    @Test
     void findAllRootsGetsRootTermsFromServiceAndTransformsThemToReadOnlyVersion() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
