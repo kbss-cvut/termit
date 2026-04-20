@@ -70,7 +70,6 @@ public class Vocabulary extends Asset<MultilingualString>
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
 
-    @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar,
                        cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
                        fetch = FetchType.EAGER)
