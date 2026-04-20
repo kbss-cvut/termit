@@ -37,7 +37,6 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -290,17 +289,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    /**
-     * Finds a glossary given its URI.
-     *
-     * @param uri glossary URI to find
-     * @return Glossary, if found
-     */
-    public Optional<Glossary> findGlossary(URI uri) {
-        Objects.requireNonNull(uri);
-        return Optional.ofNullable(em.find(Glossary.class, uri));
     }
 
     /**

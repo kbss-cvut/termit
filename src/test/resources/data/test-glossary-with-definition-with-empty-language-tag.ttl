@@ -5,13 +5,18 @@
 @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 
-termit:glosář  a        owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář> , <http://www.w3.org/2004/02/skos/core#ConceptScheme> ;
+<http://onto.fel.cvut.cz/ontologies/application/termit>  a        owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář> , <http://www.w3.org/2004/02/skos/core#ConceptScheme> ;
         <http://purl.org/dc/terms/creator>
                 " Martin Ledvinka" , "Michal Med" ;
         <http://purl.org/dc/terms/language>
                 "cs";
         <http://purl.org/dc/terms/title>
                 "Vocabulary of system TermIt - glossary"@en , "Slovník systému TermIt - glosář"@cs ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+                "termit-pojem" ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri>
+                "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/" ;
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/slovník/verze/1.1.1> ;
         <http://purl.org/dc/terms/created>
                 "25.04.2019" ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/glosář/verze/1.1.1> .
@@ -21,7 +26,7 @@ termit-pojem:zablokovaný-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#broader>
                 termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
-                termit:glosář ;
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#definition>
                 "Definition without a language tag" ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
