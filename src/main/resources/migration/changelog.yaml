@@ -91,226 +91,226 @@ changeSets:
         changes:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cíl-výskytu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/definition-occurrence-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/definition-occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-prefix-text-quote
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-text-quote-prefix
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-text-quote-prefix
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/souborový-výskyt-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/file-term-occurrence
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/file-term-occurrence
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-selektorem-definice-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/is-term-definition-selector
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/is-term-definition-selector
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zablokovaný-uživatel-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/blocked-user
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/administrátor-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/administrator
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/administrator
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/plný-uživatel-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/editor
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/editor
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/uživatelská-role
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/user-role
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/user-role
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-uživatelskou-roli
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-user-role
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-user-role
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/konfigurace
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/configuration
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/configuration
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-koncovou-pozici
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-end-position
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-end-position
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-o-textové-analýze
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/text-analysis-record
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/text-analysis-record
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/uživatel-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/user
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/user
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-zdroj-definice-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-term-definition-source
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-term-definition-source
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/selector
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/selector
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-cíl-definičního-výskytu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-definition-occurrence-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-definition-occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cíl-souborového-výskytu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/file-occurrence-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/file-occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-xpath
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/selector-xpath
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/selector-xpath
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-přesný-text-quote
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-exact-text-quote
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-exact-text-quote
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/definiční-výskyt-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/definition-term-occurrence
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/definition-term-occurrence
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navržené-přiřazení-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/suggested-term-assignment
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/suggested-term-assignment
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cíl-výskytu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/occurrence-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cíl
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-přiřazením-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/is-term-assignment
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/is-term-assignment
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-definice
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/definition-selector
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/definition-selector
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-cíl-souborového-výskytu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-file-occurrence-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-file-occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navržený-výskyt-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/suggested-term-occurrence
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/suggested-term-occurrence
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-pozici-v-textu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/selector-text-position
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/selector-text-position
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zdroj-definice-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/term-definition-source
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term-definition-source
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/uzamčený-uživatel-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/locked-user
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/locked-user
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-cíl
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-slovník-pro-analýzu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-analysis-vocabulary
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-analysis-vocabulary
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-fragmentem
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/selector-fragment
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/selector-fragment
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-startovní-pozici
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-start-position
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-start-position
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-cíl-výskytu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-occurrence-target
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-css
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/selector-css
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/selector-css
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/přiřazení-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/term-assignment
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term-assignment
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-text-quote
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/selector-text-quote
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/selector-text-quote
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/omezený-uživatel-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/reader
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/reader
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/anonymní-uživatel-termitu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/anonymous
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/anonymous
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-suffix-text-quote
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-text-quote-suffix
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-text-quote-suffix
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-selektor
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-selector
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-selector
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-analyzovaný-zdroj
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-analyzed-resource
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-analyzed-resource
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/výskyt-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/term-occurrence
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term-occurrence
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/reakce
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/reaction
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/reaction
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-reakci
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-reaction
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-reaction
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-tématem
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/is-topic-of
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/is-topic-of
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-můj-poslední-komentář
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-my-last-comment
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-my-last-comment
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-maximální-velikost-souboru
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-maximum-file-size
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-maximum-file-size
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-indexovaný-jazyk
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-indexed-language
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-indexed-language
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-oddělovač-verze
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-version-separator
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-version-separator
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/pouze-pro-čtení
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/read-only
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/read-only
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/externí
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/external
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/external
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zakázaný
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/forbidden
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/forbidden
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/seznam-řízení-přístupu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-control-list
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-control-list
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-seznam-řízení-přístupu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-access-control-list
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-access-control-list
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-řízení-přístupu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-control-record
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-control-record
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-řízení-přístupu-uživatele
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/user-access-control-record
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/user-access-control-record
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-řízení-přístupu-uživatelské-skupiny
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/user-group-access-control-record
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/user-group-access-control-record
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-řízení-přístupu-uživatelské-role
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/user-role-access-control-record
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/user-role-access-control-record
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-záznam-řízení-přístupu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-access-control-record
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-access-control-record
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-držitele-přístupových-oprávnění
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-access-level-holder
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-access-level-holder
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-úroveň-přístupových-oprávnění
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-access-level
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-access-level
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-level
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/žádná
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-level/none
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/čtení
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-level/read
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/zápis
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-level/write
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/access-level/security
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úvodní-stav-pojmu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/initial-term-state
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/initial-term-state
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/koncový-stav-pojmu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/terminal-term-state
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/terminal-term-state
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/požadavek-na-změnu-hesla
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/password-reset-request
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/password-reset-request
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/custom-attribute
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-datum-a-čas-poslední-zálohy
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-last-backup-datetime
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-last-backup-datetime
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/osobní-přístupový-token
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/personal-access-token
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/personal-access-token
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-datum-expirace
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/term/has-expiration-date
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-expiration-date
