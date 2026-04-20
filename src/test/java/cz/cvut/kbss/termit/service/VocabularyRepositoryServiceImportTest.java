@@ -56,7 +56,7 @@ class VocabularyRepositoryServiceImportTest {
     void passesInputStreamFromProvidedInputFileToImporter() throws IOException {
         final MultipartFile input = new MockMultipartFile("vocabulary.ttl", "vocabulary.ttl",
                                                           Constants.MediaType.TURTLE,
-                                                          Environment.loadFile("data/test-vocabulary.ttl"));
+                                                          Environment.loadFile("data/test-glossary.ttl"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         when(importer.importVocabulary(any(VocabularyImporter.ImportConfiguration.class),
                                        any(VocabularyImporter.ImportInput.class))).thenReturn(vocabulary);
