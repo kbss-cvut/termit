@@ -55,7 +55,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
     private MultilingualString label;
 
     @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)

@@ -40,10 +40,8 @@ public class TermSnapshotLoader extends AssetSnapshotLoader<Term> {
                      .setParameter("snapshotType", snapshotType)
                      .setParameter("hasCreated",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("hasAuthor",
-                                   URI.create(DC.Terms.CREATOR))
-                     .setParameter("inVocabulary",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("hasAuthor", URI.create(DC.Terms.CREATOR))
+                     .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                      .setParameter("firstName",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
                      .setParameter("lastName",

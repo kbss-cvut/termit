@@ -111,7 +111,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         clone.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         clone.setDescription(original.getDescription());
         clone.setVocabulary(original.getVocabulary());
-        clone.setGlossary(original.getGlossary());
         return clone;
     }
 
@@ -132,9 +131,9 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesDiscoversChangesInSingularIdentifierBasedReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(Generator.generateUri());
+        original.setVocabulary(Generator.generateUri());
         final Term changed = cloneOf(original);
-        changed.setGlossary(Generator.generateUri());
+        changed.setVocabulary(Generator.generateUri());
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
@@ -326,15 +325,15 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularIdentifierBasedReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(Generator.generateUri());
+        original.setVocabulary(Generator.generateUri());
         final Term changed = cloneOf(original);
-        changed.setGlossary(Generator.generateUri());
+        changed.setVocabulary(Generator.generateUri());
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(Collections.singleton(original.getGlossary()), record.getOriginalValue());
-        assertEquals(Collections.singleton(changed.getGlossary()), record.getNewValue());
+        assertEquals(Collections.singleton(original.getVocabulary()), record.getOriginalValue());
+        assertEquals(Collections.singleton(changed.getVocabulary()), record.getNewValue());
     }
 
     @Test

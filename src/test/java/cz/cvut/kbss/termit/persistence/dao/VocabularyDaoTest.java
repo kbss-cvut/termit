@@ -235,9 +235,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getUri());
+            child.setVocabulary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getUri());
+            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
@@ -262,9 +262,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
-            child.setGlossary(subjectVocabulary.getUri());
+            child.setVocabulary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(transitiveVocabulary.getUri());
+            parentTerm.setVocabulary(transitiveVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(transitiveVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, transitiveVocabulary.getUri(), em);
@@ -392,8 +392,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             vocabulary.addRootTerm(termOne);
             vocabulary.addRootTerm(termTwo);
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            termOne.setGlossary(vocabulary.getUri());
-            termTwo.setGlossary(vocabulary.getUri());
+            termOne.setVocabulary(vocabulary.getUri());
+            termTwo.setVocabulary(vocabulary.getUri());
             em.persist(termOne, descriptorFactory.termDescriptor(vocabulary));
             em.persist(termTwo, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(termOne, vocabulary.getUri(), em);
@@ -622,7 +622,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void removeVocabularyRemovesVocabularyGlossaryModelAndAllTermsWithoutDocument() {
+    void removeVocabularyRemovesVocabularyAndAllTermsWithoutDocument() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
                                           .toList();
@@ -631,10 +631,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(vocabulary, descriptorFor(vocabulary));
             em.persist(doc, descriptorFactory.documentDescriptor(vocabulary));
-            terms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
         });
 
         transactional(() -> sut.removeVocabularyKeepDocument(vocabulary));
@@ -642,10 +639,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         // vocabulary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
-                      .getSingleResult());
-        // glossary removed
-        assertFalse(em.createNativeQuery(query, Boolean.class)
-                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_glosar))
                       .getSingleResult());
 
         // all terms removed

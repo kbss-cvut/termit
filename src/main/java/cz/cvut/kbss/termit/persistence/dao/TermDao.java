@@ -74,8 +74,7 @@ import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.orderSente
 public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
-    private static final URI TERM_FROM_VOCABULARY = URI.create(
-            cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
+    private static final URI TERM_FROM_VOCABULARY = URI.create(SKOS.IN_SCHEME);
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
@@ -230,7 +229,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
 
         try {
-            entity.setGlossary(vocabulary.getUri());
+            entity.setVocabulary(vocabulary.getUri());
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
             eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, vocabulary.getUri()));
@@ -353,9 +352,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                             "GRAPH ?context { " +
                                             "?term a ?type ;" +
                                             "?hasLabel ?label ;" +
-                                            "}" +
-                                            "?term ?inVocabulary ?vocabulary ." +
+                                            "?inVocabulary ?vocabulary ." +
                                             "?vocabulary ?hasLanguage ?labelLang ." +
+                                            "}" +
                                             "FILTER (lang(?label) = ?labelLang) ." +
                                             " } ORDER BY " + orderSentence("?label"),
                                     FlatTermDto.class)
@@ -418,12 +417,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                 "GRAPH ?context { " +
-                                                "?term a ?type ;" +
-                                                "?hasLabel ?label ;" +
-                                                "?hasDefinition ?definition ;" +
-                                                "}" +
-                                                "?term ?inVocabulary ?vocabulary ." +
+                                                "?term a ?type ; " +
+                                                "?hasLabel ?label ; " +
+                                                "?hasDefinition ?definition ; " +
+                                                "?inVocabulary ?vocabulary ." +
                                                 "?vocabulary ?hasLanguage ?labelLang ." +
+                                                "}" +
                                                 "FILTER (lang(?label) = ?labelLang) ." +
                                                 "FILTER (lang(?definition) = ?labelLang) ." +
                                                 " } ORDER BY " + orderSentence("?label"),
@@ -729,7 +728,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "GRAPH ?context { " +
                                                                  "?term a ?type ;" +
                                                                  "?hasLabel ?label ." +
-                                                                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
+                                                                 "?vocabulary ?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
                                                                  "}} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
@@ -767,7 +766,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "?term a ?type ; " +
                                                                  "?hasLabel ?label . " +
-                                                                 "?vocabulary ?hasGlossary/?hasTerm ?term . " +
+                                                                 "?vocabulary ?hasTerm ?term . " +
                                                                  "?vocabulary ?hasLanguage ?primaryLanguage ." +
                                                                  "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included)) . " +
@@ -793,8 +792,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private <T> TypedQuery<T> setCommonFindAllRootsQueryParams(TypedQuery<T> query, boolean includeImports) {
         final TypedQuery<T> tq = query.setParameter("type", typeUri)
                                       .setParameter("hasLabel", LABEL_PROP)
-                                      .setParameter("hasGlossary",
-                                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
                                       .setParameter("hasTerm", URI.create(SKOS.HAS_TOP_CONCEPT));
         if (includeImports) {
             tq.setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik));
@@ -855,7 +852,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?term a ?type ;" +
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?imports* ?parent ." +
-                                                                 "?parent ?hasGlossary/?hasTerm ?term ." +
+                                                                 "?parent ?hasTerm ?term ." +
                                                                  "?vocabulary ?hasLanguage ?primaryLanguage ." +
                                                                  "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
@@ -894,10 +891,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                                        "GRAPH ?context { " +
                                                                        "?term a ?type ; " +
-                                                                       "      ?hasLabel ?label ; " +
+                                                                       "?hasLabel ?label ; " +
+                                                                       "?inVocabulary ?vocabulary ." +
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                                                                        "}" +
-                                                                       "?term ?inVocabulary ?vocabulary ." +
                                                                        "} ORDER BY " + orderSentence("?label"),
                                                                TermDto.class)
                                             .setParameter("type", typeUri)
@@ -935,10 +932,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         final TypedQuery<FlatTermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                                            "GRAPH ?context { " +
                                                                            "?term a ?type ; " +
-                                                                           "      ?hasLabel ?label ; " +
+                                                                           "?hasLabel ?label ; " +
+                                                                           "?inVocabulary ?vocabulary ." +
                                                                            "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                                                                            "}" +
-                                                                           "?term ?inVocabulary ?vocabulary ." +
                                                                            "} ORDER BY " + orderSentence("?label"),
                                                                    FlatTermDto.class)
                                                 .setParameter("type", typeUri)

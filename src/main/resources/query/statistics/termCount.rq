@@ -3,10 +3,10 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 SELECT (COUNT(DISTINCT ?asset) AS ?count) {
     GRAPH ?v {
-        ?asset a skos:Concept .
+        ?asset a skos:Concept ;
+               skos:inScheme ?v .
         FILTER NOT EXISTS {
             ?asset a pdp:verze-pojmu .
         }
     }
-    ?asset pdp:je-pojmem-ze-slovníku ?slovnik .
 }

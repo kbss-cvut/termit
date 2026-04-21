@@ -52,7 +52,6 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(v, descriptorFactory.vocabularyDescriptor(v));
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, v.getUri(), em);
         });
 
         final List<DistributionDto> result = sut.getTermDistribution();

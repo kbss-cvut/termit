@@ -51,9 +51,9 @@ class TermTest {
     void hasParentInSameVocabularyReturnsTrueWhenTermHasParentWithSameVocabulary() {
         final Term sut = Generator.generateTermWithId();
         final URI vocabularyUri = Generator.generateUri();
-        sut.setGlossary(vocabularyUri);
+        sut.setVocabulary(vocabularyUri);
         final Term parent = Generator.generateTermWithId();
-        parent.setGlossary(vocabularyUri);
+        parent.setVocabulary(vocabularyUri);
         sut.addParentTerm(parent);
 
         assertTrue(sut.hasParentInSameVocabulary());
@@ -62,9 +62,9 @@ class TermTest {
     @Test
     void hasParentInSameVocabularyReturnsFalseWhenTermHasParentWithDifferentVocabulary() {
         final Term sut = Generator.generateTermWithId();
-        sut.setGlossary(Generator.generateUri());
+        sut.setVocabulary(Generator.generateUri());
         final Term parent = Generator.generateTermWithId();
-        parent.setGlossary(Generator.generateUri());
+        parent.setVocabulary(Generator.generateUri());
         sut.addParentTerm(parent);
 
         assertFalse(sut.hasParentInSameVocabulary());
@@ -126,9 +126,9 @@ class TermTest {
     void addParentTermAddsSpecifiedTermToParentsWhenItIsFromSameGlossary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term sut = Generator.generateTermWithId();
-        sut.setGlossary(vocabulary.getUri());
+        sut.setVocabulary(vocabulary.getUri());
         final Term parentToAdd = Generator.generateTermWithId();
-        parentToAdd.setGlossary(vocabulary.getUri());
+        parentToAdd.setVocabulary(vocabulary.getUri());
 
         sut.addParentTerm(parentToAdd);
         assertThat(sut.getParentTerms(), hasItem(parentToAdd));
@@ -139,9 +139,9 @@ class TermTest {
     void addParentTermAddsSpecifiedTermToExternalParentsWhenItIsFromDifferentGlossary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term sut = Generator.generateTermWithId();
-        sut.setGlossary(vocabulary.getUri());
+        sut.setVocabulary(vocabulary.getUri());
         final Term parentToAdd = Generator.generateTermWithId();
-        parentToAdd.setGlossary(Generator.generateUri());
+        parentToAdd.setVocabulary(Generator.generateUri());
 
         sut.addParentTerm(parentToAdd);
         assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
@@ -153,7 +153,7 @@ class TermTest {
         final Term sut = Generator.generateTermWithId();
         final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
             final Term t = Generator.generateTermWithId();
-            t.setGlossary(Generator.generateUri());
+            t.setVocabulary(Generator.generateUri());
             return t;
         }).collect(Collectors.toSet());
         sut.setExternalParentTerms(externalParents);
@@ -174,15 +174,15 @@ class TermTest {
     void splitExternalAndInternalParentsMovesParentsWithDifferentGlossaryFromParentTermsToExternalParentTerms() {
         final URI glossaryUri = Generator.generateUri();
         final Term sut = Generator.generateTermWithId();
-        sut.setGlossary(glossaryUri);
+        sut.setVocabulary(glossaryUri);
         final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
             final Term t = Generator.generateTermWithId();
-            t.setGlossary(Generator.generateUri());
+            t.setVocabulary(Generator.generateUri());
             return t;
         }).collect(Collectors.toSet());
         final Set<Term> internalParents = IntStream.range(0, 5).mapToObj(i -> {
             final Term t = Generator.generateTermWithId();
-            t.setGlossary(glossaryUri);
+            t.setVocabulary(glossaryUri);
             return t;
         }).collect(Collectors.toSet());
         final Set<Term> allParents = new HashSet<>(externalParents);

@@ -261,9 +261,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getUri());
+            child.setVocabulary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getUri());
+            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
@@ -287,9 +287,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getUri());
+            child.setVocabulary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getUri());
+            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);

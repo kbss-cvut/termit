@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.persistence.relationship;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -72,7 +71,7 @@ class OntoGrapherVocabularyRelationshipResolver implements VocabularyRelationshi
                                                                     FILTER (?linkVocabulary = ?vocabulary || ?sourceVocabulary = ?vocabulary || ?targetVocabulary = ?vocabulary)
                                                                  }
                                                                  """).setParameter("vocabulary", vocabulary)
-                                      .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                      .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                                       .setParameter("term", URI.create(SKOS.CONCEPT))
                                       .getResultList();
         final Set<URI> result = new HashSet<>(vocabularyList.size());

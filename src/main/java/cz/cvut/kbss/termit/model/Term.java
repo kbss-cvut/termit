@@ -84,7 +84,7 @@ public class Term extends AbstractFullTerm implements SupportsSnapshots {
      */
     public void addParentTerm(Term term) {
         Objects.requireNonNull(term);
-        if (!Objects.equals(getGlossary(), term.getGlossary())) {
+        if (!Objects.equals(getVocabulary(), term.getVocabulary())) {
             if (externalParentTerms == null) {
                 setExternalParentTerms(new HashSet<>());
             }
@@ -104,7 +104,7 @@ public class Term extends AbstractFullTerm implements SupportsSnapshots {
      * term at all.
      */
     public boolean hasParentInSameVocabulary() {
-        return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getGlossary().equals(getGlossary()));
+        return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
     }
 
     /**
@@ -142,7 +142,7 @@ public class Term extends AbstractFullTerm implements SupportsSnapshots {
         final Set<Term> parents = new LinkedHashSet<>();
         final Set<Term> externalParents = new LinkedHashSet<>();
         for (Term p : parentTerms) {
-            if (Objects.equals(getGlossary(), p.getGlossary())) {
+            if (Objects.equals(getVocabulary(), p.getVocabulary())) {
                 parents.add(p);
             } else {
                 externalParents.add(p);
