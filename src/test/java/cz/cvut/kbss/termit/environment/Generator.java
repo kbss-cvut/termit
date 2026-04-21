@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.environment;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
@@ -397,24 +396,6 @@ public class Generator {
             result.forEach(r -> r.setAuthor(user));
         }
         return result;
-    }
-
-    /**
-     * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
-     *
-     * @param term          Term in vocabulary
-     * @param vocabularyIri Vocabulary identifier
-     * @param em            Transactional entity manager to unwrap repository connection from
-     */
-    public static void addTermInVocabularyRelationship(Term term, URI vocabularyIri,
-                                                       EntityManager em) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(term.getUri().toString()),
-                     vf.createIRI(SKOS.IN_SCHEME),
-                     vf.createIRI(vocabularyIri.toString()));
-        }
     }
 
     /**

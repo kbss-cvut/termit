@@ -221,7 +221,6 @@ class AssetDaoTest extends BaseDaoTestRunner {
             em.persist(term);
             em.persist(persistRecord.getAuthor());
             em.persist(persistRecord);
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(PageRequest.of(0, 1));

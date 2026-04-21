@@ -58,8 +58,6 @@ class SkosVocabularyRelationshipResolverTest extends BaseDaoTestRunner {
             em.persist(source, descriptorFactory.termDescriptor(subjectVocabulary));
             target.setVocabulary(targetVocabulary.getUri());
             em.persist(target, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(source, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(target, targetVocabulary.getUri(), em);
         });
         source.setRelatedMatch(Set.of(new TermInfo(target)));
         transactional(() -> em.merge(source, descriptorFactory.termDescriptor(subjectVocabulary)));
