@@ -7,7 +7,7 @@ PREFIX dc: <http://purl.org/dc/terms/>
 
 CONSTRUCT {
     ?term a skos:Concept ;
-        skos:inScheme ?glossary ;
+        skos:inScheme ?vocabulary ;
         skos:prefLabel ?prefLabel ;
         ?skosProperty ?skosPropertyValue ;
         skos:exactMatch ?exactMatch ;
@@ -23,9 +23,8 @@ CONSTRUCT {
 } WHERE {
     GRAPH ?g {
         ?term a skos:Concept ;
-            skos:inScheme ?glossary ;
+            skos:inScheme ??vocabulary ;
             skos:prefLabel ?prefLabel .
-        ?vocabulary pdp:má-glosář ?glossary .
         OPTIONAL {
             ?term ?skosProperty ?skosPropertyValue .
             FILTER( ?skosProperty in ( dc:source, dc:references, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example, pdp:má-stav-pojmu ) )
@@ -57,7 +56,7 @@ CONSTRUCT {
         }
         OPTIONAL {
         # This ensures only parent-less terms become top concepts of their glossaries
-            BIND(IF(EXISTS {?glossary skos:hasTopConcept ?term}, ?glossary, BNODE()) as ?topOf)
+            BIND(IF(EXISTS {?vocabulary skos:hasTopConcept ?term}, ?vocabulary, BNODE()) as ?topOf)
             FILTER (!ISBLANK(?topOf))
         }
     }

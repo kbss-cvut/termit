@@ -34,7 +34,7 @@ public interface VocabularyExporter {
      * @return IO resource representing the exported glossary
      * @throws UnsupportedOperationException If the specified export type is not supported by the exporter
      */
-    TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config);
+    TypeAwareResource exportVocabulary(Vocabulary vocabulary, ExportConfig config);
 
     /**
      * Checks whether this exporter supports the specified media type.
