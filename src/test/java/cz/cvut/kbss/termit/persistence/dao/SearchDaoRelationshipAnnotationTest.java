@@ -180,9 +180,9 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         );
 
         final SearchParam vocabularyParam = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                Set.of(vocabulary.getUri().toString()),
-                MatchType.IRI
+            URI.create(SKOS.IN_SCHEME),
+            Set.of(vocabulary.getUri().toString()),
+            MatchType.IRI
         );
 
         final Page<SearchResult> result = sut.advancedSearch(

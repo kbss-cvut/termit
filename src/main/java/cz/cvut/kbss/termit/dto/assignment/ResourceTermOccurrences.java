@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
@@ -53,7 +54,7 @@ public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String termLabel;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
     @OWLDataProperty(iri = COUNT_PROPERTY)
@@ -103,13 +104,12 @@ public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ResourceTermOccurrences)) {
+        if (!(o instanceof ResourceTermOccurrences that)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        ResourceTermOccurrences that = (ResourceTermOccurrences) o;
         return Objects.equals(termLabel, that.termLabel) && Objects.equals(vocabulary, that.vocabulary) && Objects.equals(count, that.count);
     }
 

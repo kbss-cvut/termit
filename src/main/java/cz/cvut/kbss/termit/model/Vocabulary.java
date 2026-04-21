@@ -204,10 +204,11 @@ public class Vocabulary extends Asset<MultilingualString>
      */
     public void addRootTerm(Term rootTerm) {
         Objects.requireNonNull(rootTerm);
-        if (rootTerms == null) {
+        // Call getter/setter to force lazy loading
+        if (getRootTerms() == null) {
             setRootTerms(new HashSet<>());
         }
-        rootTerms.add(rootTerm.getUri());
+        getRootTerms().add(rootTerm.getUri());
     }
 
     /**
@@ -217,8 +218,9 @@ public class Vocabulary extends Asset<MultilingualString>
      */
     public void removeRootTerm(Term toRemove) {
         Objects.requireNonNull(toRemove);
-        if (rootTerms != null) {
-            rootTerms.remove(toRemove.getUri());
+        // Call getter to force lazy loading
+        if (getRootTerms() != null) {
+            getRootTerms().remove(toRemove.getUri());
         }
     }
 
@@ -295,7 +297,6 @@ public class Vocabulary extends Asset<MultilingualString>
                 getLabel() + " "
                 + Utils.uriToString(getUri());
         try {
-            result += ", glossary=" + glossary;
             if (importedVocabularies != null) {
                 result += ", importedVocabularies = [" +
                         importedVocabularies.stream().map(Utils::uriToString)

@@ -27,6 +27,7 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -68,7 +69,7 @@ public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializa
     private User editor;
 
     // In case the modified asset is a term, we want its vocabulary as well
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
     @Types
@@ -161,10 +162,9 @@ public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializa
         if (this == o) {
             return true;
         }
-        if (!(o instanceof RecentlyModifiedAsset)) {
+        if (!(o instanceof RecentlyModifiedAsset that)) {
             return false;
         }
-        RecentlyModifiedAsset that = (RecentlyModifiedAsset) o;
         return Objects.equals(uri, that.uri) &&
                 Objects.equals(label, that.label) &&
                 Objects.equals(modified, that.modified) &&

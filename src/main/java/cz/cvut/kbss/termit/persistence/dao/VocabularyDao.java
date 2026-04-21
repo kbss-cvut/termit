@@ -310,8 +310,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                             "        SELECT ?import WHERE {" +
                                             "           ?targetVocabulary ?importsVocabulary* ?import . " +
                                             "} } }", Boolean.class)
-                 .setParameter("isTermFromVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("isTermFromVocabulary", URI.create(SKOS.IN_SCHEME))
                  .setParameter("subjectVocabulary", subjectVocabulary)
                  .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
                  .setParameter("targetVocabulary", targetVocabulary)
@@ -380,8 +379,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
                  .setParameter("hasTimestamp", URI.create(
                          cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("inVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                  .setParameter("vocabulary", vocabulary);
     }
 
@@ -412,8 +410,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                  " }", Boolean.class)
                       .setParameter("type", URI.create(SKOS.CONCEPT))
                       .setParameter("vocabulary", vocabulary.getUri())
-                      .setParameter("inVocabulary",
-                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                      .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                       .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -502,7 +499,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     public List<RdfStatement> getIncomingTermRelations(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final URI termType = URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class));
-        final URI inVocabulary = URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
+        final URI inVocabulary = URI.create(SKOS.IN_SCHEME);
 
         try {
             return em.createNativeQuery("""
@@ -550,8 +547,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                 }
                                                 """, String.class)
                      .setParameter("type", URI.create(SKOS.CONCEPT))
-                     .setParameter("inVocabulary",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("labelProp", URI.create(SKOS.PREF_LABEL))
                      .getResultList();

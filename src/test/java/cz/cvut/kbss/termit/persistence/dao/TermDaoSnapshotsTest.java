@@ -99,7 +99,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
                 vocabularySnapshot.setUri(vocSnapshotUri);
                 vocabularySnapshot.addRootTerm(stub);
                 em.persist(vocabularySnapshot, descriptorFactory.vocabularyDescriptor(vocSnapshotUri));
-                stub.setGlossary(vocabularySnapshot.getUri());
+                stub.setVocabulary(vocabularySnapshot.getUri());
             });
         }
         transactional(() -> {
