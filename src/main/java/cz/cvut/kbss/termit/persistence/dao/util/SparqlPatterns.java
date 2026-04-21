@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.util;
 
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
@@ -42,7 +43,7 @@ public class SparqlPatterns {
      */
     public static void bindVocabularyRelatedParameters(Query query) {
         query
-                .setParameter("isFromVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME))
                 .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_ma_dokumentovy_slovnik))
                 .setParameter("inDocument", URI.create(Vocabulary.s_p_je_casti_dokumentu))
                 .setParameter("vocabularyType", URI.create(Vocabulary.s_c_slovnik));

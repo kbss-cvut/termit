@@ -235,7 +235,7 @@ public class SearchDao {
         q.setParameter("term", URI.create(SKOS.CONCEPT))
          .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
          .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-         .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+         .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
          .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
          .setParameter("allowedVocabularies", allowedVocabularies);
         return q;

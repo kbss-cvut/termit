@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -113,7 +114,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                     .setParameter("hasLabel", labelProperty())
-                    .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                    .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                     .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))

@@ -60,11 +60,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
                                                  Generator.generateTermWithId(vocabulary.getUri()));
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            related.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            related.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             generateRelatedRelationships(term, related, SKOS.RELATED);
         });
 
@@ -89,11 +85,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         inverseRelated.addAll(related);
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            inverseRelated.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            inverseRelated.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             generateRelatedRelationships(term, inverseRelated, SKOS.RELATED);
         });
         term.setRelated(related.stream().map(TermInfo::new).collect(Collectors.toSet()));
@@ -112,11 +104,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
                                                       Generator.generateTermWithId(generateAndPersistVocabulary().getUri()));
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            relatedMatch.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
-                Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
-            });
+            relatedMatch.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
             generateRelatedRelationships(term, relatedMatch, SKOS.RELATED_MATCH);
         });
 
@@ -136,11 +124,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         inverseRelatedMatch.addAll(relatedMatch);
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            inverseRelatedMatch.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
-                Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
-            });
+            inverseRelatedMatch.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary())));
             generateRelatedRelationships(term, inverseRelatedMatch, SKOS.RELATED_MATCH);
         });
         term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
@@ -171,16 +155,9 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         final Collection<Term> allRelatedMatch = Utils.joinCollections(relatedMatch, inverseRelatedMatch);
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            allRelated.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            allRelated.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             generateRelatedRelationships(term, allRelated, SKOS.RELATED);
-            allRelatedMatch.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
-                Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
-            });
+            allRelatedMatch.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary())));
             generateRelatedRelationships(term, allRelatedMatch, SKOS.RELATED_MATCH);
         });
         term.setRelated(related.stream().map(TermInfo::new).collect(Collectors.toSet()));

@@ -56,11 +56,7 @@ public class TermDaoExactMatchTermsTest extends BaseTermDaoTestRunner {
                 Generator.generateTermWithId(generateAndPersistVocabulary().getUri()));
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            exactMatchTerms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
-                Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
-            });
+            exactMatchTerms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
             generateExactMatchRelationships(term, exactMatchTerms);
         });
 
@@ -93,11 +89,7 @@ public class TermDaoExactMatchTermsTest extends BaseTermDaoTestRunner {
         inverseExactMatchTerms.addAll(exactMatchTerms);
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            inverseExactMatchTerms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
-                Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
-            });
+            inverseExactMatchTerms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary())));
             generateExactMatchRelationships(term, inverseExactMatchTerms);
         });
         term.setExactMatchTerms(exactMatchTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
