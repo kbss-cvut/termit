@@ -72,7 +72,6 @@ public class TermRepositoryServiceSnapshotsTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(t, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
         });
         return t;
     }
