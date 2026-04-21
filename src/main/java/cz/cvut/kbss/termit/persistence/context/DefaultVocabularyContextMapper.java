@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.Objects;
@@ -61,7 +62,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
                              "GRAPH ?g { ?vocabulary a ?type . " +
                              "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
                              "}}", URI.class)
-                     .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                     .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
                      .getSingleResult();
@@ -81,7 +82,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         try {
             return Optional.of(em.createNativeQuery("SELECT ?v WHERE { GRAPH ?g { ?v a ?type . } }", URI.class)
                                  .setParameter("g", contextUri)
-                                 .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                                 .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
                                  .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();

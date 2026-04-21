@@ -375,7 +375,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     void findAllCustomAttributesByDomainReturnsCustomAttributesWithSpecifiedDomain() {
         final CustomAttribute pOne = new CustomAttribute(Generator.generateUri(),
                                                          MultilingualString.create("Attribute one", "en"), null);
-        pOne.setDomain(URI.create(Vocabulary.s_c_slovnik));
+        pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT_SCHEME));
         pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         final CustomAttribute pTwo = new CustomAttribute(Generator.generateUri(),
                                                          MultilingualString.create("Attribute two", "en"), null);

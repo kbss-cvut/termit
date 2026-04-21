@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -38,7 +39,7 @@ import java.util.Set;
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_slovnik)
+@OWLClass(iri = SKOS.CONCEPT_SCHEME)
 public class ReadOnlyVocabulary extends Asset<MultilingualString> implements HasIdentifier, Serializable {
 
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)

@@ -113,7 +113,7 @@ class AssetServiceTest {
                     rma = new RecentlyModifiedAsset(vocabulary.getUri(),
                                                     vocabulary.getLabel().get(Environment.LANGUAGE), Utils.timestamp(),
                                                     author.getUri(), null,
-                                                    Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
+                                                    SKOS.CONCEPT_SCHEME, Vocabulary.s_c_vytvoreni_entity);
                 }
             }
             rma.setModified(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
