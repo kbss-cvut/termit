@@ -46,7 +46,7 @@ public class VocabularyExporters {
      * @return Exported data wrapped in an {@code Optional}
      */
     public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, ExportConfig config) {
-        return resolveExporter(config.getMediaType()).map(e -> e.exportGlossary(vocabulary, config));
+        return resolveExporter(config.getMediaType()).map(e -> e.exportVocabulary(vocabulary, config));
     }
 
     private Optional<VocabularyExporter> resolveExporter(String mediaType) {

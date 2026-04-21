@@ -96,7 +96,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     @Override
-    public TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config) {
+    public TypeAwareResource exportVocabulary(Vocabulary vocabulary, ExportConfig config) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(config);
         if (ExportType.SKOS == config.getType()) {

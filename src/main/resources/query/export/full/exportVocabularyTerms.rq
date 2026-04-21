@@ -13,10 +13,9 @@ CONSTRUCT {
     	skos:topConceptOf ?topOf .
 } WHERE {
     GRAPH ?g {
-        ?vocabulary pdp:má-glosář ?glossary .
-    	?term skos:inScheme ?glossary ;
-    	      a skos:Concept ;
-    		  ?y ?z .
+    	?term a skos:Concept ;
+        	skos:inScheme ?vocabulary ;
+    		?y ?z .
         FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch, rdf:type, rdfs:subClassOf))
 
         OPTIONAL {
@@ -41,6 +40,11 @@ CONSTRUCT {
             FILTER NOT EXISTS {
                 ?term skos:relatedMatch ?related .
             }
+        }
+        OPTIONAL {
+        # This ensures only parent-less terms become top concepts of their glossaries
+            BIND(IF(EXISTS {?vocabulary skos:hasTopConcept ?term}, ?vocabulary, BNODE()) as ?topOf)
+            FILTER (!ISBLANK(?topOf))
         }
         OPTIONAL {
             ?term a ?type .
