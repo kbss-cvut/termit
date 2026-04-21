@@ -75,7 +75,7 @@ class SnapshotDaoTest extends BaseDaoTestRunner {
         vocabulary.addRootTerm(term);
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getUri());
+            term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
         });
         final Instant timestamp = Utils.timestamp();

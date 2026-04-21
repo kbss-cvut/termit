@@ -833,7 +833,6 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final Vocabulary result = sut.importVocabulary(
@@ -855,7 +854,6 @@ class ExcelImporterTest {
         final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final ReferencedTermInUnrelatedVocabularyException ex = assertThrows(
@@ -874,7 +872,6 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
         referencedParent.setLabel(MultilingualString.create("Building", "en"));
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
@@ -926,7 +923,6 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         sut.importVocabulary(

@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -36,7 +35,6 @@ import java.net.URI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -57,7 +55,7 @@ class ChangeTrackingContextResolverTest {
     @BeforeEach
     void setUp() {
         when(config.getChangetracking().getContext().getExtension()).thenReturn(CHANGE_CONTEXT_EXTENSION);
-        this.sut = new ChangeTrackingContextResolver(em, config);
+        this.sut = new ChangeTrackingContextResolver(config);
     }
 
     @Test
@@ -72,11 +70,7 @@ class ChangeTrackingContextResolverTest {
     void resolveChangeTrackingContextReturnsVocabularyIdentifierWithTrackingExtensionForTerm() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId();
-        term.setGlossary(vocabulary.getUri());
-        final TypedQuery<URI> q = mock(TypedQuery.class);
-        when(q.setParameter(any(String.class), any(Object.class))).thenReturn(q);
-        when(q.getSingleResult()).thenReturn(vocabulary.getUri());
-        when(em.createNativeQuery(anyString(), eq(URI.class))).thenReturn(q);
+        term.setVocabulary(vocabulary.getUri());
         final URI result = sut.resolveChangeTrackingContext(term);
         assertNotNull(result);
         assertEquals(vocabulary.getUri().toString().concat(CHANGE_CONTEXT_EXTENSION), result.toString());

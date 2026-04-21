@@ -41,7 +41,7 @@ class ReadOnlyTermTest {
     @Test
     void constructorCopiesAllMappedAttributesFromSpecifiedTerm() {
         final Term term = Generator.generateTermWithId();
-        term.setGlossary(Generator.generateUri());
+        term.setVocabulary(Generator.generateUri());
         term.addType(Generator.generateUri().toString());
         term.setSources(Collections.singleton(Generator.generateUri().toString()));
         final Term child = Generator.generateTermWithId();
@@ -60,7 +60,6 @@ class ReadOnlyTermTest {
         assertEquals(term.getVocabulary(), result.getVocabulary());
         assertEquals(term.getTypes(), result.getTypes());
         assertEquals(term.getSubTerms(), result.getSubTerms());
-        assertEquals(term.getGlossary(), result.getGlossary());
         assertEquals(term.getExactMatchTerms(), result.getExactMatchTerms());
         assertEquals(term.getRelated(), result.getRelated());
         assertEquals(term.getRelatedMatch(), result.getRelatedMatch());

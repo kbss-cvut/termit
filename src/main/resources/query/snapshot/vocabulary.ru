@@ -5,35 +5,27 @@ PREFIX dc: <http://purl.org/dc/terms/>
 
 INSERT {
     GRAPH ?vocabularySnapshot {
-    ?vocabularySnapshot a pdp:verze-slovníku ;
+    ?vocabularySnapshot a pdp:verze-slovníku, skos:ConceptScheme ;
               pdp:je-verzí-slovníku ?vocabulary ;
               pdp:má-datum-a-čas-vytvoření-verze ?created ;
               dc:creator ?author ;
-              pdp:má-glosář ?glossarySnapshot ;
               pdp:importuje-slovník ?importedSnapshot ;
-              ?y ?z .
-    ?glossarySnapshot a pdp:glosář ;
-                      a pdp:verze-glosáře ;
-                      a skos:ConceptScheme ;
               skos:hasTopConcept ?topConceptSnapshot ;
-              pdp:je-verzí-glosáře ?glossary ;
-              pdp:má-datum-a-čas-vytvoření-verze ?created .
+              ?y ?z .
     }
 } WHERE {
     GRAPH ?context {
-    ?vocabulary a pdp:slovník ;
-                pdp:má-glosář ?glossary ;
-                ?y ?z .
+        ?vocabulary a skos:ConceptScheme ;
+            ?y ?z .
         OPTIONAL {
-            ?glossary skos:hasTopConcept ?topConcept .
+            ?vocabulary skos:hasTopConcept ?topConcept .
         }
         OPTIONAL {
             ?vocabulary pdp:importuje-slovník ?imported .
         }
     }
     BIND (IRI(CONCAT(str(?vocabulary), ?suffix)) as ?vocabularySnapshot)
-    BIND (IRI(CONCAT(str(?glossary), ?suffix)) as ?glossarySnapshot)
     BIND (IRI(CONCAT(str(?topConcept), ?suffix)) as ?topConceptSnapshot)
     BIND (IRI(CONCAT(str(?imported), ?suffix)) as ?importedSnapshot)
-    FILTER (?y NOT IN (pdp:má-glosář, pdp:popisuje-dokument, pdp:importuje-slovník, owl:imports))
+    FILTER (?y NOT IN (skos:hasTopConcept, pdp:popisuje-dokument, pdp:importuje-slovník, owl:imports))
 }

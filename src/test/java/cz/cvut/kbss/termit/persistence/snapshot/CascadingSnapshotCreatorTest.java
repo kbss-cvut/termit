@@ -95,9 +95,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
                 vocabulary.addRootTerm(term);
             }
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         vocabularyTerms.put(vocabulary, term);
         return vocabulary;
@@ -154,7 +152,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         assertEquals(term.getLabel(), result.getLabel());
         assertEquals(term.getDefinition(), result.getDefinition());
         assertEquals(term.getDescription(), result.getDescription());
-        assertEquals(vocabularyResult.getUri(), result.getGlossary());
+        assertEquals(vocabularyResult.getUri(), result.getVocabulary());
         assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu));
     }
 

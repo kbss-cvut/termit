@@ -135,7 +135,7 @@ public class AssetDao {
     private void setVocabularyRelatedParameter(AssetWithType elem, Query query) {
         switch (elem.type.toString()) {
             case SKOS.CONCEPT:
-                query.setParameter("isFromVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku));
+                query.setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME));
                 break;
             case Vocabulary.s_c_dokument:
                 query.setParameter("hasVocabulary", URI.create(Vocabulary.s_p_ma_dokumentovy_slovnik));

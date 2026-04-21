@@ -30,6 +30,7 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Constants;
@@ -91,7 +92,7 @@ public class SearchResult implements HasIdentifier, HasTypes, Serializable {
     @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/score")
     private Double score;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)

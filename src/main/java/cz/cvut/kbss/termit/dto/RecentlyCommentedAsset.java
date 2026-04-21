@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Utils;
@@ -68,7 +69,7 @@ public class RecentlyCommentedAsset implements HasTypes, Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_muj_posledni_komentar)
     private Comment myLastComment;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
     @Types
@@ -169,10 +170,9 @@ public class RecentlyCommentedAsset implements HasTypes, Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof RecentlyCommentedAsset)) {
+        if (!(o instanceof RecentlyCommentedAsset that)) {
             return false;
         }
-        RecentlyCommentedAsset that = (RecentlyCommentedAsset) o;
         return Objects.equals(uri, that.uri) &&
             Objects.equals(lastComment, that.lastComment) &&
             Objects.equals(myLastComment, that.myLastComment) &&

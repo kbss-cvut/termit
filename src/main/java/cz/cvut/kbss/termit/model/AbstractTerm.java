@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
@@ -74,10 +73,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     private Set<TermInfo> subTerms;
 
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)
-    private URI glossary;
-
-    @Inferred
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
@@ -100,7 +95,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         }
         this.primaryLanguage = other.primaryLanguage;
         this.state = other.state;
-        this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
         if (other.getSubTerms() != null) {
             this.subTerms = other.getSubTerms().stream().map(TermInfo::new)
@@ -147,8 +141,8 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     }
 
     /**
-     * Setting the value has no persistent effect, the attribute is resolved
-     * from the vocabulary language when the entity is loaded.
+     * Setting the value has no persistent effect, the attribute is resolved from the vocabulary language when the
+     * entity is loaded.
      */
     public void setPrimaryLanguage(String primaryLanguage) {
         this.primaryLanguage = primaryLanguage;
@@ -168,14 +162,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
 
     public void setSubTerms(Set<TermInfo> subTerms) {
         this.subTerms = subTerms;
-    }
-
-    public URI getGlossary() {
-        return glossary;
-    }
-
-    public void setGlossary(URI glossary) {
-        this.glossary = glossary;
     }
 
     public URI getVocabulary() {
