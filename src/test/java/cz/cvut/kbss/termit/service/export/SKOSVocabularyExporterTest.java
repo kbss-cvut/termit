@@ -390,7 +390,6 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         transactional(() -> {
             insertPropertyAssertion(rdfsSubclass, RDFS.SUBCLASSOF.stringValue(), supertype);
             // Simulate inference
-            Generator.addTermInVocabularyRelationship(rdfsSubclass, vocabulary.getUri(), em);
         });
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
@@ -418,7 +417,6 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
             insertPropertyAssertion(hasPart, cz.cvut.kbss.termit.util.Vocabulary.s_p_has_part,
                                     partOf.getUri().toString());
             // Simulate inference
-            Generator.addTermInVocabularyRelationship(hasPart, vocabulary.getUri(), em);
         });
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
@@ -437,7 +435,6 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
             insertPropertyAssertion(parent, cz.cvut.kbss.termit.util.Vocabulary.s_p_has_participant,
                                     participant.getUri().toString());
             // Simulate inference
-            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
         });
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
@@ -470,7 +467,6 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         transactional(() -> {
             insertPropertyAssertion(withOwl, RDFS.SUBCLASSOF.stringValue(), OWL.OBJECTPROPERTY.stringValue());
             // Simulate inference
-            Generator.addTermInVocabularyRelationship(withOwl, vocabulary.getUri(), em);
         });
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());

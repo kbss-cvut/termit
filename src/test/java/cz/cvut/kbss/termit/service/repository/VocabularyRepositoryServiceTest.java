@@ -265,8 +265,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
             parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
@@ -291,8 +289,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
             parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
@@ -387,7 +383,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         assertEquals(1, sut.getTermCount(vocabulary));
     }
