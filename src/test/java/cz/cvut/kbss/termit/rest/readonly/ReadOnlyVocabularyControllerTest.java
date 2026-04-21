@@ -35,6 +35,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MvcResult;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -87,7 +88,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void getByIdRetrievesVocabularyFromServiceAndReturnsIt() throws Exception {
         final String fragment = "test-vocabulary";
-        final String namespace = Vocabulary.s_c_slovnik + "/";
+        final String namespace = SKOS.CONCEPT_SCHEME + "/";
         final URI uri = URI.create(namespace + fragment);
         final ReadOnlyVocabulary vocabulary = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
         vocabulary.setUri(uri);
@@ -115,7 +116,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void getTransitiveImportsRetrievesImportsFromService() throws Exception {
         final String fragment = "test-vocabulary";
-        final String namespace = Vocabulary.s_c_slovnik + "/";
+        final String namespace = SKOS.CONCEPT_SCHEME + "/";
         final URI uri = URI.create(namespace + fragment);
         final ReadOnlyVocabulary vocabulary = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
         vocabulary.setUri(uri);

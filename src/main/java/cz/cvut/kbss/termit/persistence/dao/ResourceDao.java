@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Repository;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -152,7 +153,7 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", labelProperty())
                      .setParameter("hasFile", URI.create(Vocabulary.s_p_ma_soubor))
-                     .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                     .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

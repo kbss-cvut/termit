@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.Objects;
 public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
 
     public VocabularySnapshotLoader(EntityManager em) {
-        super(em, URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik), URI.create(
+        super(em, URI.create(SKOS.CONCEPT_SCHEME), URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku));
     }
 

@@ -86,7 +86,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         return IntStream.range(0, 5).mapToObj(i -> new RecentlyModifiedAsset(Generator.generateUri(), "Test " + i,
                                                                              Utils.timestamp(), user.getUri(), null,
                                                                              Generator.randomBoolean() ?
-                                                                             Vocabulary.s_c_slovnik :
+                                                                             SKOS.CONCEPT_SCHEME :
                                                                              SKOS.CONCEPT,
                                                                              Vocabulary.s_c_vytvoreni_entity))
                         .collect(Collectors.toList());

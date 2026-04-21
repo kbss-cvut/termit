@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 
@@ -48,7 +49,7 @@ public class VocabularyPrimaryLanguageGenerator {
                         }
                     }
                     """)
-          .setParameter("vocabularyType", URI.create(Vocabulary.s_c_slovnik))
+          .setParameter("vocabularyType", URI.create(SKOS.CONCEPT_SCHEME))
           .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
           .setParameter("language", config.getLanguage(), null)
           .executeUpdate();

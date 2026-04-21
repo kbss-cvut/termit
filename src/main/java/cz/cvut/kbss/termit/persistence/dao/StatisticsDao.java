@@ -80,7 +80,7 @@ public class StatisticsDao {
                                                                            return new DistributionDto(
                                                                                    new RdfsResource(vocabulary, label,
                                                                                                     null,
-                                                                                                    Vocabulary.s_c_slovnik),
+                                                                                                    SKOS.CONCEPT_SCHEME),
                                                                                    count.intValue());
                                                                        }).collect(Collectors.toList());
         consolidateTranslations(result);
@@ -151,7 +151,7 @@ public class StatisticsDao {
                     final TermTypeDistributionDto res = new TermTypeDistributionDto();
                     res.setVocabulary(new RdfsResource(vocabulary, label,
                                                        null,
-                                                       Vocabulary.s_c_slovnik));
+                                                       SKOS.CONCEPT_SCHEME));
                     res.getTypeDistribution().add(new DistributionDto(
                             typeMap.get(type), count.intValue()));
                     return res;
