@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
 /**
- * Exports vocabulary glossary in a SKOS-compatible format.
+ * Exports vocabulary in a SKOS-compatible format.
  */
 public abstract class SKOSVocabularyExporter implements VocabularyExporter {
 
@@ -51,23 +51,23 @@ public abstract class SKOSVocabularyExporter implements VocabularyExporter {
 
     @Override
     @Transactional(readOnly = true)
-    public TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config) {
+    public TypeAwareResource exportVocabulary(Vocabulary vocabulary, ExportConfig config) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(config);
-        LOG.debug("Exporting glossary of vocabulary {} as {}.", vocabulary, config.getType());
+        LOG.debug("Exporting vocabulary {} as {}.", vocabulary, config.getType());
         final SKOSExporter skosExporter = getSKOSExporter();
         switch (config.getType()) {
             case SKOS:
-                skosExporter.exportGlossary(vocabulary);
+                skosExporter.exportVocabulary(vocabulary);
                 break;
             case SKOS_FULL:
-                skosExporter.exportFullGlossary(vocabulary);
+                skosExporter.exportFullVocabulary(vocabulary);
                 break;
             case SKOS_WITH_REFERENCES:
-                skosExporter.exportGlossaryWithReferences(vocabulary, config.getReferenceProperties());
+                skosExporter.exportVocabularyWithReferences(vocabulary, config.getReferenceProperties());
                 break;
             case SKOS_FULL_WITH_REFERENCES:
-                skosExporter.exportFullGlossaryWithReferences(vocabulary, config.getReferenceProperties());
+                skosExporter.exportFullVocabularyWithReferences(vocabulary, config.getReferenceProperties());
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported export type " + config.getType());
