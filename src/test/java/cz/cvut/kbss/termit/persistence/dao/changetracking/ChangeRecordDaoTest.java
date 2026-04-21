@@ -195,7 +195,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsEmptyListForUnknownAsset() {
         enableRdfsInference(em);
-        final List<AbstractChangeRecord> result = sut.findAll(Generator.generateTermWithId());
+        final List<AbstractChangeRecord> result = sut.findAll(Generator.generateTermWithId(Generator.generateUri()));
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }

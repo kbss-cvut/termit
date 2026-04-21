@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 
@@ -32,7 +33,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @NonEntity
-@OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
+@OWLClass(iri = SKOS.CONCEPT_SCHEME)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class VocabularyDto extends AbstractEntity {
 
