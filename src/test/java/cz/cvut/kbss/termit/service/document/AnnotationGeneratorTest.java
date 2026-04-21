@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.web.WebAppConfiguration;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -187,7 +188,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final Document doc = Jsoup.parse(content, StandardCharsets.UTF_8.name(), "");
         final Elements element = doc.getElementsByAttribute(Constants.RDFa.ABOUT);
         assert element.size() == 1;
-        element.attr(Constants.RDFa.TYPE, cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik);
+        element.attr(Constants.RDFa.TYPE, SKOS.CONCEPT_SCHEME);
 
         return new ByteArrayInputStream(doc.toString().getBytes(StandardCharsets.UTF_8));
     }

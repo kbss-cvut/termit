@@ -46,7 +46,7 @@ public class SparqlPatterns {
                 .setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME))
                 .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_ma_dokumentovy_slovnik))
                 .setParameter("inDocument", URI.create(Vocabulary.s_p_je_casti_dokumentu))
-                .setParameter("vocabularyType", URI.create(Vocabulary.s_c_slovnik));
+                .setParameter("vocabularyType", URI.create(SKOS.CONCEPT_SCHEME));
     }
 
     /**

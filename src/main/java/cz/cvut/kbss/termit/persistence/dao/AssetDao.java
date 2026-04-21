@@ -168,7 +168,7 @@ public class AssetDao {
                                             URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                               .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
                               .setParameter("assetTypes",
-                                            Arrays.asList(URI.create(SKOS.CONCEPT), URI.create(Vocabulary.s_c_slovnik),
+                                            Arrays.asList(URI.create(SKOS.CONCEPT), URI.create(SKOS.CONCEPT_SCHEME),
                                                           URI.create(Vocabulary.s_c_dokument),
                                                           URI.create(Vocabulary.s_c_soubor)))
                               .setFirstResult(offset)

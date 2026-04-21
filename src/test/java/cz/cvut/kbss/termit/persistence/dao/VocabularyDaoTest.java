@@ -608,7 +608,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.setProperties(new HashMap<>());
         final String prefix = "vocab";
-        final String namespace = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik + "/";
+        final String namespace = SKOS.CONCEPT_SCHEME + "/";
         vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix,
                                        Collections.singleton(prefix));
         vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
@@ -638,7 +638,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final String query = "ASK { ?x a ?type }";
         // vocabulary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
-                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
+                      .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
                       .getSingleResult());
 
         // all terms removed

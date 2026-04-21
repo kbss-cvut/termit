@@ -66,7 +66,7 @@ class DataRepositoryServiceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({SKOS.CONCEPT, Vocabulary.s_c_slovnik})
+    @CsvSource({SKOS.CONCEPT, SKOS.CONCEPT_SCHEME})
     void persistCustomAttributeSupportsSelectedDomains(String domain) {
         final CustomAttribute customAttribute = new CustomAttribute();
         customAttribute.setLabel(MultilingualString.create("Custom attribute", "en"));
