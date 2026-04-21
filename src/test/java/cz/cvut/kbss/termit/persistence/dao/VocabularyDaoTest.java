@@ -239,8 +239,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
             parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
         assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
@@ -266,8 +264,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
             parentTerm.setVocabulary(transitiveVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(transitiveVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, transitiveVocabulary.getUri(), em);
         });
 
         assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
@@ -396,8 +392,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             termTwo.setVocabulary(vocabulary.getUri());
             em.persist(termOne, descriptorFactory.termDescriptor(vocabulary));
             em.persist(termTwo, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(termOne, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(termTwo, vocabulary.getUri(), em);
             oneChanges.forEach(ch -> em.persist(ch));
             twoChanges.forEach(ch -> em.persist(ch));
         });
@@ -472,10 +466,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                                           .toList();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            terms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
         });
 
         assertEquals(terms.size(), sut.getTermCount(vocabulary));
@@ -595,10 +586,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = Collections.singletonList(Generator.generateTermWithId(vocabulary.getUri()));
         transactional(() -> {
             em.persist(vocabulary, descriptorFor(vocabulary));
-            terms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
         });
         assertFalse(sut.isEmpty(vocabulary));
     }
@@ -666,10 +654,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(vocabulary, descriptorFor(vocabulary));
             em.persist(doc, descriptorFactory.documentDescriptor(vocabulary));
-            terms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
-                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
-            });
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
         });
 
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
@@ -758,10 +743,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             sut.persist(secondVocabulary);
 
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
 
             em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
-            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
 
             Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
         });
@@ -801,8 +784,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(vocabulary, descriptorFor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(term));
             em.persist(term2, descriptorFactory.termDescriptor(term2));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(term2, vocabulary.getUri(), em);
         });
 
         final List<String> languages = sut.getLanguages(vocabulary.getUri());

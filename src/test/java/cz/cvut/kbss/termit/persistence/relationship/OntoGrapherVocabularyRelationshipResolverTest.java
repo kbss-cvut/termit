@@ -64,8 +64,6 @@ class OntoGrapherVocabularyRelationshipResolverTest extends BaseDaoTestRunner {
             em.persist(source, descriptorFactory.termDescriptor(subjectVocabulary));
             target.setVocabulary(targetVocabulary.getUri());
             em.persist(target, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(source, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(target, targetVocabulary.getUri(), em);
             addOntoGrapherLink(source, target);
         });
 

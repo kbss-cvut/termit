@@ -157,7 +157,6 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.setDefinition(MultilingualString.create("Updated term definition.", Environment.LANGUAGE));
         // This is normally inferred
@@ -182,8 +181,6 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             parent.setVocabulary(vocabulary.getUri());
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.addParentTerm(parent);
         // This is normally inferred
@@ -206,7 +203,6 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         final MultilingualString newDefinition = MultilingualString
                 .create("Updated term definition.", Environment.LANGUAGE);
@@ -233,8 +229,6 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             term.setVocabulary(vocabulary.getUri());
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.addParentTerm(parent);
         // This is normally inferred
@@ -265,7 +259,6 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         termService.setState(term, Generator.randomItem(Generator.TERM_STATES));
@@ -284,7 +277,6 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         termService.remove(term);
