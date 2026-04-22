@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.exception.LazyLoadingException;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.CascadeType;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
@@ -69,11 +68,6 @@ public class Vocabulary extends Asset<MultilingualString>
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
-
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar,
-                       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-                       fetch = FetchType.EAGER)
-    private Glossary glossary;
 
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
@@ -152,14 +146,6 @@ public class Vocabulary extends Asset<MultilingualString>
     @Override
     public String getPrimaryLabel() {
         return getLabel(getPrimaryLanguage());
-    }
-
-    public Glossary getGlossary() {
-        return glossary;
-    }
-
-    public void setGlossary(Glossary glossary) {
-        this.glossary = glossary;
     }
 
     public Set<URI> getImportedVocabularies() {

@@ -38,8 +38,6 @@ public class SnapshotDao {
      */
     private static final List<URI> SNAPSHOT_TYPES = List.of(
             URI.create(Vocabulary.s_c_verze_slovniku),
-            URI.create(Vocabulary.s_c_verze_glosare),
-            URI.create(Vocabulary.s_c_verze_modelu),
             URI.create(Vocabulary.s_c_verze_pojmu)
     );
 
