@@ -4,9 +4,10 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -17,6 +18,7 @@ import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -56,13 +58,10 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
-    private DataDao dataDao;
-
     private SearchDao sut;
 
     @BeforeEach
     void setUp() {
-        sut = new SearchDao(em, dataDao);
 
         if (!initialized) {
             user = Generator.generateUserWithId();
@@ -107,14 +106,14 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
     void advancedSearchReturnsTermsMatchingIriSearchParamWithSpecifiedTypes() {
         final SearchParam param = new SearchParam(URI.create(RDF.TYPE), Set.of(TYPES[0], TYPES[1]),
                                                   MatchType.IRI);
-        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(param),
-                                                             Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
         assertFalse(result.isEmpty());
         assertTrue(result.stream().allMatch(r -> r.hasType(SKOS.CONCEPT)));
         final List<Term> expectedTerms = terms.stream()
                                               .filter(t -> t.hasType(TYPES[0]) || t.hasType(TYPES[1]))
                                               .toList();
-        assertThat(result, containsSameEntities(expectedTerms));
+        assertThat(result.getContent(), containsSameEntities(expectedTerms));
     }
 
     @Test
@@ -125,10 +124,10 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         final List<Term> matchingTerms = terms.stream()
                                               .filter(t -> !Collections.disjoint(t.getNotations(), param.getValue()))
                                               .toList();
-        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(param),
-                                                             Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
         assertFalse(result.isEmpty());
-        assertThat(result, containsSameEntities(matchingTerms));
+        assertThat(result.getContent(), containsSameEntities(matchingTerms));
     }
 
     @Test
@@ -142,10 +141,10 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                                               .filter(t -> t.getExamples().iterator().next().get()
                                                             .startsWith(sampleValue))
                                               .toList();
-        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(param),
-                                                             Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
         assertFalse(result.isEmpty());
-        assertThat(result, containsSameEntities(matchingTerms));
+        assertThat(result.getContent(), containsSameEntities(matchingTerms));
     }
 
     @Test
@@ -160,9 +159,10 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                                                             .startsWith("Matching") && (t.hasType(
                                                       TYPES[0]) || t.hasType(TYPES[1])))
                                               .toList();
-        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(typeParam, substringParam),
-                                                             Constants.DEFAULT_PAGE_SPEC);
-        assertThat(result, containsSameEntities(matchingTerms));
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null),
+                                                             Set.of(typeParam, substringParam),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertThat(result.getContent(), containsSameEntities(matchingTerms));
     }
 
     @Test
@@ -173,11 +173,13 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
                 Set.of(vocabulary.getUri().toString()), MatchType.IRI);
 
-        final List<SearchResult> resultOne = sut.advancedSearch("", null, Set.of(searchParam), pageOne);
-        assertEquals(terms.size() / 2, resultOne.size());
-        final List<SearchResult> resultTwo = sut.advancedSearch("", null, Set.of(searchParam), pageTwo);
-        assertEquals(terms.size() / 2, resultTwo.size());
-        assertThat(resultOne, not(containsSameEntities(resultTwo)));
+        final Page<SearchResult> resultOne = sut.advancedSearch(new SearchString("", null), Set.of(searchParam),
+                                                                pageOne, Set.of(vocabulary.getUri()));
+        assertEquals(terms.size() / 2, resultOne.getNumberOfElements());
+        final Page<SearchResult> resultTwo = sut.advancedSearch(new SearchString("", null), Set.of(searchParam),
+                                                                pageTwo, Set.of(vocabulary.getUri()));
+        assertEquals(terms.size() / 2, resultTwo.getNumberOfElements());
+        assertThat(resultOne.getContent(), not(containsSameEntities(resultTwo.getContent())));
     }
 
     @Test
@@ -189,16 +191,17 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                 URI.create(INTEGER_PROPERTY), Set.of(paramValue), MatchType.EXACT_MATCH
         );
 
-        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(searchParam),
-                                                             Constants.DEFAULT_PAGE_SPEC);
-        assertEquals(1, result.size());
-        assertEquals(expected.getUri(), result.get(0).getUri());
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(searchParam),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertEquals(1, result.getNumberOfElements());
+        assertEquals(expected.getUri(), result.getContent().get(0).getUri());
     }
 
     @Test
     void advancedSearchReturnsEmptyListWhenSearchStringIsBlankAndNoSearchParams() {
-        final List<SearchResult> result = sut.advancedSearch("", null, Set.of(), Constants.DEFAULT_PAGE_SPEC);
-        assertEquals(Collections.emptyList(), result);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -212,15 +215,15 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
             t.getProperties().put(property, Set.of(Generator.randomBoolean()));
             em.merge(t, descriptorFactory.termDescriptor(t));
         }));
-        final List<SearchResult> result = sut.advancedSearch("", null,
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null),
                                                              Set.of(new SearchParam(URI.create(property),
-                                                                                            Set.of(RDF.NIL),
-                                                                                            MatchType.IRI),
-                                                                            new SearchParam(URI.create(RDF.TYPE),
-                                                                                            Set.of(SKOS.CONCEPT),
-                                                                                            MatchType.IRI)),
-                                                             Constants.DEFAULT_PAGE_SPEC);
-        assertThat(result, containsSameEntities(withoutValue));
+                                                                                    Set.of(RDF.NIL),
+                                                                                    MatchType.IRI),
+                                                                    new SearchParam(URI.create(RDF.TYPE),
+                                                                                    Set.of(SKOS.CONCEPT),
+                                                                                    MatchType.IRI)),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertThat(result.getContent(), containsSameEntities(withoutValue));
     }
 
     @Test
@@ -231,15 +234,15 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
             em.merge(t, descriptorFactory.termDescriptor(t));
         }));
 
-        final List<SearchResult> result = sut.advancedSearch("", null,
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null),
                                                              Set.of(new SearchParam(URI.create(RDF.TYPE),
-                                                                                            Set.of(RDF.NIL),
-                                                                                            MatchType.IRI),
-                                                                            new SearchParam(URI.create(RDF.TYPE),
-                                                                                            Set.of(SKOS.CONCEPT),
-                                                                                            MatchType.IRI)),
-                                                             Constants.DEFAULT_PAGE_SPEC);
-        assertThat(result, containsSameEntities(withoutType));
+                                                                                    Set.of(RDF.NIL),
+                                                                                    MatchType.IRI),
+                                                                    new SearchParam(URI.create(RDF.TYPE),
+                                                                                    Set.of(SKOS.CONCEPT),
+                                                                                    MatchType.IRI)),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertThat(result.getContent(), containsSameEntities(withoutType));
     }
 
     @Test
@@ -253,8 +256,9 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
 
         try {
             final SearchParam p = new SearchParam(URI.create(RDF.TYPE), Set.of(TYPES[0]), MatchType.IRI);
-            final List<SearchResult> result = sut.advancedSearch("", null, Set.of(p),
-                                                                 Constants.DEFAULT_PAGE_SPEC);
+            final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(p),
+                                                                 Constants.DEFAULT_PAGE_SPEC,
+                                                                 Set.of(vocabulary.getUri()));
             final Optional<SearchResult> matching = result.stream()
                                                           .filter(t -> t.getUri().equals(multilingual.getUri()))
                                                           .findFirst();
@@ -263,5 +267,18 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         } finally {
             transactional(() -> em.remove(em.getReference(Term.class, multilingual.getUri())));
         }
+    }
+
+    @Test
+    void advancedSearchWithoutSearchStringResolvesTotalNumberOfResults() {
+        final Pageable pageSpec = PageRequest.of(0, terms.size() / 2);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null),
+                                                             Set.of(new SearchParam(URI.create(RDF.TYPE),
+                                                                                    Set.of(SKOS.CONCEPT),
+                                                                                    MatchType.IRI)),
+                                                             pageSpec,
+                                                             Set.of(vocabulary.getUri()));
+        assertEquals(pageSpec.getPageSize(), result.getNumberOfElements());
+        assertEquals(terms.size(), result.getTotalElements());
     }
 }

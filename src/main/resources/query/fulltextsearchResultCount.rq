@@ -9,10 +9,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-SELECT DISTINCT ?entity
-                (GROUP_CONCAT(DISTINCT CONCAT(?label, "@", lang(?label)); SEPARATOR=";;;") AS ?label)
-                (GROUP_CONCAT(DISTINCT CONCAT(?description, "@", lang(?description)); SEPARATOR=";;;") AS ?description)
-                ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score {
+SELECT (COUNT(DISTINCT ?entity) as ?cnt) {
     {
         ?search a ?label_index .
     }
@@ -37,13 +34,8 @@ SELECT DISTINCT ?entity
         BIND(?entity AS ?authorized)
     }
     ?search :query ?wildCardSearchString ;
-        :snippetSize 250 ;
         :entities ?entity .
-    ?entity a ?type ;
-        :score ?initScore ;
-        :snippets _:s .
-    _:s :snippetText ?snippetText ;
-        :snippetField ?snippetField .
+    ?entity a ?type .
     OPTIONAL {
         ?entity ?inVocabulary ?vocabularyUri .
     }
@@ -57,8 +49,4 @@ SELECT DISTINCT ?entity
     FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)
     BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
     FILTER (!BOUND(?description) || STRLEN(?description) = 0 || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
-    BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "prefLabel", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
-    BIND(IF(?snippetField = "prefLabel", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
 }
-GROUP BY ?entity ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score
-ORDER BY desc(?score)

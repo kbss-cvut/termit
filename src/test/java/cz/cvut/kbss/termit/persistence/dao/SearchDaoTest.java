@@ -19,9 +19,11 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
-import cz.cvut.kbss.termit.dto.search.SearchResult;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,16 +32,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -54,7 +58,10 @@ class SearchDaoTest {
     private EntityManager emMock;
 
     @Mock
-    private Query queryMock;
+    private Query ftsQueryMock;
+
+    @Mock
+    private TypedQuery<Long> ftsResultCountQueryMock;
 
     @Mock
     private DataDao dataDaoMock;
@@ -68,19 +75,23 @@ class SearchDaoTest {
     }
 
     private void mockSearchQuery() {
-        when(emMock.createNativeQuery(any(), anyString())).thenReturn(queryMock);
-        when(queryMock.setParameter(anyString(), any())).thenReturn(queryMock);
-        when(queryMock.setParameter(anyString(), any(), any())).thenReturn(queryMock);
-        when(queryMock.getResultList()).thenReturn(Collections.emptyList());
+        when(emMock.createNativeQuery(anyString(), anyString())).thenReturn(ftsQueryMock);
+        when(emMock.createNativeQuery(anyString(), eq(Long.class))).thenReturn(ftsResultCountQueryMock);
+        when(ftsQueryMock.setParameter(anyString(), any())).thenReturn(ftsQueryMock);
+        when(ftsQueryMock.setParameter(anyString(), any(), any())).thenReturn(ftsQueryMock);
+        when(ftsQueryMock.getResultList()).thenReturn(Collections.emptyList());
+        when(ftsResultCountQueryMock.setParameter(anyString(), any())).thenReturn(ftsResultCountQueryMock);
+        when(ftsResultCountQueryMock.setParameter(anyString(), any(), any())).thenReturn(ftsResultCountQueryMock);
+        when(ftsResultCountQueryMock.getSingleResult()).thenReturn(13L);
     }
 
     @Test
     void fullTextSearchUsesOneTokenSearchStringAsWildcardMatch() {
         mockSearchQuery();
         final String searchString = "test";
-        sut.advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
+        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
+        verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
                                                 .filter(s -> s.equals(searchString + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
@@ -92,9 +103,9 @@ class SearchDaoTest {
         mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
-        sut.advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
+        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
+        verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
                                                 .filter(s -> s.equals("termOne termTwo " + lastToken + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
@@ -105,9 +116,9 @@ class SearchDaoTest {
     void fullTextSearchDoesNotAddWildcardIfLastTokenAlreadyEndsWithWildcard() {
         mockSearchQuery();
         final String searchString = "test token*";
-        sut.advancedSearch(searchString, null, Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
+        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
+        verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream().filter(s -> s.startsWith(searchString))
                                                 .findAny();
         assertTrue(argument.isPresent());
@@ -116,8 +127,8 @@ class SearchDaoTest {
 
     @Test
     void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
-        final List<SearchResult> result = sut.advancedSearch("", null, Collections.emptyList(),
-                                                             Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Collections.emptyList(),
+                                                             Constants.DEFAULT_PAGE_SPEC, List.of());
         assertTrue(result.isEmpty());
         verify(emMock, never()).createNativeQuery(any(), anyString());
     }
@@ -131,7 +142,7 @@ class SearchDaoTest {
                 MatchType.IRI
         );
 
-        sut.advancedSearch("matching", null, Set.of(typeParam), Constants.DEFAULT_PAGE_SPEC);
+        sut.advancedSearch(new SearchString("matching", null), Set.of(typeParam), Constants.DEFAULT_PAGE_SPEC, List.of());
 
         final ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
         verify(emMock).createNativeQuery(queryCaptor.capture(), anyString());
@@ -139,5 +150,13 @@ class SearchDaoTest {
         assertTrue(query.contains("FILTER (?type = ?term || ?type = ?vocabulary)"));
         assertTrue(query.contains("?entity <" + RDF.TYPE.stringValue() + "> ?v0"));
         assertFalse(query.contains("FILTER (?type IN ("));
+    }
+
+    @Test
+    void advancedSearchWithFullTextResolvesTotalNumberOfResults() {
+        mockSearchQuery();
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("matching", null), Collections.emptyList(),
+                                                             Constants.DEFAULT_PAGE_SPEC, List.of());
+        assertEquals(13, result.getTotalElements());
     }
 }

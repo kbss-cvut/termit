@@ -19,14 +19,17 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchString;
+import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -42,9 +45,12 @@ public class SearchService {
 
     private final SearchDao searchDao;
 
+    private final VocabularyAuthorizationService authService;
+
     @Autowired
-    public SearchService(SearchDao searchDao) {
+    public SearchService(SearchDao searchDao, VocabularyAuthorizationService authService) {
         this.searchDao = searchDao;
+        this.authService = authService;
     }
 
 
@@ -53,48 +59,47 @@ public class SearchService {
      * <p>
      * This method now uses the advanced search internally with type and vocabulary filters.
      *
-     * @param searchString String to search by
+     * @param searchString String to search by (including optional language)
      * @param vocabularies URIs of vocabularies to search in, or empty set to search all vocabularies
-     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return Matching terms
      */
-    @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<SearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies, String language) {
+    public List<SearchResult> fullTextSearchOfTerms(SearchString searchString, Set<URI> vocabularies) {
         Objects.requireNonNull(vocabularies);
 
         Collection<SearchParam> searchParams = new ArrayList<>();
         searchParams.add(new SearchParam(
-            URI.create(RDF.TYPE),
-            Set.of(SKOS.CONCEPT),
-            MatchType.IRI
+                URI.create(RDF.TYPE),
+                Set.of(SKOS.CONCEPT),
+                MatchType.IRI
         ));
         if (!vocabularies.isEmpty()) {
             searchParams.add(new SearchParam(
-                URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku),
-                vocabularies.stream().map(URI::toString).collect(Collectors.toSet()),
-                MatchType.IRI
+                    URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku),
+                    vocabularies.stream().map(URI::toString).collect(Collectors.toSet()),
+                    MatchType.IRI
             ));
         }
 
         // advancedSearch with unpaged results to maintain backwards compatibility
-        return advancedSearch(searchString, language, searchParams, Pageable.unpaged());
+        return advancedSearch(searchString, searchParams, Pageable.unpaged()).getContent();
     }
 
     /**
      * Executes advanced search combining full text search with faceted filtering.
      *
-     * @param searchString String to search by for full text search
-     * @param language     The language of the {@code searchString}, {@code null} to match all languages
+     * @param searchString String to search by for full text search (including optional language)
      * @param searchParams Search parameters for filtering by facets.
      * @param pageSpec     Specification of the page of results to return
      * @return Matching results
      */
-    @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<SearchResult> advancedSearch(String searchString, String language,
+    public Page<SearchResult> advancedSearch(SearchString searchString,
                                              Collection<SearchParam> searchParams,
                                              Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
         searchParams.forEach(SearchParam::validate);
-        return searchDao.advancedSearch(searchString, language, searchParams, pageSpec);
+        return searchDao.advancedSearch(searchString, searchParams, pageSpec,
+                                        authService.getReadableVocabularies().stream()
+                                                   .map(AbstractEntity::getUri)
+                                                   .toList());
     }
 }

@@ -19,31 +19,34 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -55,7 +58,6 @@ import java.util.stream.Collectors;
  */
 @Repository
 public class SearchDao {
-    private static final String FTS_QUERY_FILE = "fulltextsearch.rq";
 
     private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
@@ -63,7 +65,8 @@ public class SearchDao {
 
     private final EntityManager em;
     private final DataDao dataDao;
-    protected String ftsQuery;
+    private String ftsQuery;
+    private String ftsResultCountQuery;
 
     public SearchDao(EntityManager em, DataDao dataDao) {
         this.em = em;
@@ -72,7 +75,8 @@ public class SearchDao {
 
     @PostConstruct
     void loadQueries() {
-        this.ftsQuery = Utils.loadQuery(FTS_QUERY_FILE);
+        this.ftsQuery = Utils.loadQuery("fulltextsearch.rq");
+        this.ftsResultCountQuery = Utils.loadQuery("fulltextsearchResultCount.rq");
     }
 
     private static String adjustQueryForLanguage(String query, String language) {
@@ -104,108 +108,159 @@ public class SearchDao {
      * <p>
      * This combines full-text search with faceted filtering.
      *
-     * @param searchString The string to search by for full-text search.
-     * @param language     The language of the {@code searchString}, {@code null} to match all languages
-     * @param searchParams Search parameters (facets) to filter the results by
-     * @param pageSpec     Specification of the page of results to return
-     * @return List of matching results
+     * @param searchString        The string to search by for full-text search (with optional language)
+     * @param searchParams        Search parameters (facets) to filter the results by
+     * @param pageSpec            Specification of the page of results to return
+     * @param allowedVocabularies Vocabularies that are accessible to the current user for reading
+     * @return Page of matching results
      */
-    public List<SearchResult> advancedSearch(@Nonnull String searchString, @Nullable String language,
-                                             @Nonnull Collection<SearchParam> searchParams, Pageable pageSpec) {
+    public Page<SearchResult> advancedSearch(@Nonnull SearchString searchString,
+                                             @Nonnull Collection<SearchParam> searchParams, Pageable pageSpec,
+                                             Collection<URI> allowedVocabularies) {
         Objects.requireNonNull(searchParams);
-        if (searchString.isBlank() && searchParams.isEmpty()) {
-            return Collections.emptyList();
+        final boolean searchStringBlank = searchString.searchString().isBlank();
+        if (searchStringBlank && searchParams.isEmpty()) {
+            return Page.empty(pageSpec);
         }
 
-        if (searchString.isBlank()) {
-            return advancedSearchNoFullText(searchParams, pageSpec);
+        final long start = System.currentTimeMillis();
+        final Page<SearchResult> result;
+        if (searchStringBlank) {
+            result = advancedSearchNoFullText(searchParams, pageSpec, allowedVocabularies);
+        } else {
+            result = advancedSearchWithFullText(searchString, searchParams, pageSpec, allowedVocabularies);
         }
+        final long end = System.currentTimeMillis();
+        LOG.debug("Advanced search took {} ms", end - start);
+        return result;
+    }
 
-        String query = adjustQueryForLanguage(ftsQuery, language);
+    private Page<SearchResult> advancedSearchWithFullText(SearchString searchString,
+                                                          Collection<SearchParam> searchParams,
+                                                          Pageable pageSpec, Collection<URI> allowedVocabularies) {
+        final Query query = initFullTextSearchQuery(ftsQuery, searchString, searchParams, allowedVocabularies,
+                                                    queryString -> em.createNativeQuery(queryString,
+                                                                                        "FullTextSearchResult"));
+        final String exactMatch = splitExactMatch(searchString.searchString());
+        query.setParameter("splitExactMatch", exactMatch, null);
+        query.setParameter("searchString", searchString.searchString(), null);
+
+        if (pageSpec.isPaged()) {
+            query.setFirstResult((int) pageSpec.getOffset());
+            query.setMaxResults(pageSpec.getPageSize());
+        }
+        return new PageImpl<>(query.getResultList(), pageSpec,
+                              getTotalFulltextResultCount(searchString, searchParams, allowedVocabularies));
+    }
+
+    private <T extends Query> T initFullTextSearchQuery(String baseQueryStr, SearchString searchString,
+                                                        Collection<SearchParam> searchParams,
+                                                        Collection<URI> allowedVocabularies,
+                                                        Function<String, T> queryCreator) {
+        String queryStr = adjustQueryForLanguage(baseQueryStr, searchString.language());
         final String filters = buildSearchParamConditions(searchParams);
-        final int lastBraceIndex = query.lastIndexOf("}");
+        final int lastBraceIndex = queryStr.lastIndexOf("}");
         if (lastBraceIndex != -1) {
-            query = query.substring(0, lastBraceIndex) + filters + query.substring(lastBraceIndex);
+            queryStr = queryStr.substring(0, lastBraceIndex) + filters + queryStr.substring(lastBraceIndex);
         } else {
             LOG.warn("Unable to inject facet parameters into FTS query, '}' not found.");
         }
 
-        final String wildcardString = searchString.isBlank() ? "*" : addWildcard(searchString);
-        final String exactMatch = searchString.isBlank() ? "" : splitExactMatch(searchString);
-        Query nativeQuery = setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
-                                                 searchString, language)
-                .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
-                .setParameter("wildCardSearchString", wildcardString, null)
-                .setParameter("splitExactMatch", exactMatch, null);
+        final String wildcardString = addWildcard(searchString.searchString());
 
-        if (pageSpec.isPaged()) {
-            nativeQuery.setFirstResult((int) pageSpec.getOffset());
-            nativeQuery.setMaxResults(pageSpec.getPageSize());
+        T query = (T) setCommonQueryParams(queryCreator.apply(queryStr), allowedVocabularies)
+                .setParameter("wildCardSearchString", wildcardString, null);
+        String langSuffix = searchString.language() == null ? "" : searchString.language();
+        URI labelIndex = URI.create(Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX + langSuffix);
+        URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
+        query.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
+        if (searchString.language() != null) {
+            query.setParameter("requestedLanguageVal", searchString.language());
         }
+        return query;
+    }
 
-        return nativeQuery.getResultList();
+    private Long getTotalFulltextResultCount(SearchString searchString,
+                                             Collection<SearchParam> searchParams,
+                                             Collection<URI> allowedVocabularies) {
+        final long start = System.currentTimeMillis();
+        final Query query = initFullTextSearchQuery(ftsResultCountQuery, searchString, searchParams,
+                                                    allowedVocabularies,
+                                                    queryStr -> em.createNativeQuery(queryStr, Long.class));
+        final Long result = (Long) query.getSingleResult();
+        final long end = System.currentTimeMillis();
+        LOG.debug("Full-text search result count took {} ms", end - start);
+        return result;
     }
 
     /**
      * Finds assets that satisfy the provided faceted search parameters, without applying full-text search.
      *
-     * @param searchParams Search parameters (facets) to filter the results by
-     * @param pageSpec     Specification of the page of results to return
+     * @param searchParams        Search parameters (facets) to filter the results by
+     * @param pageSpec            Specification of the page of results to return
+     * @param allowedVocabularies Vocabularies accessible for the search
      * @return List of matching results
      */
-    private List<SearchResult> advancedSearchNoFullText(@Nonnull Collection<SearchParam> searchParams,
-                                                        @Nonnull Pageable pageSpec) {
+    private Page<SearchResult> advancedSearchNoFullText(Collection<SearchParam> searchParams,
+                                                        Pageable pageSpec, Collection<URI> allowedVocabularies) {
 
         String queryStr = "SELECT DISTINCT ?entity" +
                 " (GROUP_CONCAT(DISTINCT CONCAT(?label, \"@\", lang(?label)); SEPARATOR=\"" + Constants.GROUP_CONCAT_SEPARATOR + "\") AS ?label)" +
                 " (GROUP_CONCAT(DISTINCT CONCAT(?description, \"@\", lang(?description)); SEPARATOR=\"" + Constants.GROUP_CONCAT_SEPARATOR + "\") AS ?description)" +
                 " ?vocabularyUri ?state ?type WHERE { \n" +
-                "  ?entity a ?type . \n" +
-                "  FILTER (?type = ?term || ?type = ?vocabulary) \n" +
-                "  FILTER NOT EXISTS { ?entity a ?snapshot . } \n" +
-
-                // Retrieve label and description based on asset type (Concept vs Vocabulary)
-                "  { \n" +
-                "    ?entity <" + SKOS.PREF_LABEL + "> ?label . \n" +
-                "    OPTIONAL { ?entity <" + SKOS.DEFINITION + "> ?description . } \n" +
-                "  } UNION { \n" +
-                "    ?entity <" + DC.Terms.TITLE + "> ?label . \n" +
-                "    OPTIONAL { ?entity <" + DC.Terms.DESCRIPTION + "> ?description . } \n" +
-                "  } \n" +
-                "  OPTIONAL { ?entity ?inVocabulary ?vocabularyUri . } \n" +
-                "  OPTIONAL { ?entity ?hasState ?state . } \n" +
-                buildSearchParamConditions(searchParams) +
+                buildWhereCondition(searchParams) +
                 "} GROUP BY ?entity ?vocabularyUri ?state ?type ORDER BY ?entity";
 
-        Query nativeQuery = em.createNativeQuery(queryStr, "FacetedSearchResult")
-                              .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
-                              .setParameter("term", URI.create(SKOS.CONCEPT))
-                              .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                              .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                              .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu));
+        Query nativeQuery = em.createNativeQuery(queryStr, "FacetedSearchResult");
+        setCommonQueryParams(nativeQuery, allowedVocabularies);
 
         if (pageSpec.isPaged()) {
             nativeQuery.setFirstResult((int) pageSpec.getOffset());
             nativeQuery.setMaxResults(pageSpec.getPageSize());
         }
 
-        return nativeQuery.getResultList();
+        return new PageImpl<>(nativeQuery.getResultList(), pageSpec,
+                              getTotalResultCount(searchParams, allowedVocabularies));
     }
 
-    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
-        String langSuffix = requestedLanguage == null ? "" : requestedLanguage;
-        URI labelIndex = URI.create(Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX + langSuffix);
-        URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
-        q.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
+    private String buildWhereCondition(Collection<SearchParam> searchParams) {
+        return "  ?entity a ?type . \n" +
+                "  FILTER (?type = ?term || ?type = ?vocabulary) \n" +
+                "  FILTER NOT EXISTS { ?entity a ?snapshot . } \n" +
+
+                // Retrieve label and description based on asset type (Concept vs Vocabulary)
+                "  { \n" +
+                "    ?entity <" + SKOS.PREF_LABEL + "> ?label ; \n" +
+                "            ?inVocabulary ?entityVocabulary . \n" +
+                "    OPTIONAL { ?entity <" + SKOS.DEFINITION + "> ?description . } \n" +
+                "    FILTER (?entityVocabulary IN (?allowedVocabularies))\n" +
+                "  } UNION { \n" +
+                "    ?entity <" + DC.Terms.TITLE + "> ?label . \n" +
+                "    OPTIONAL { ?entity <" + DC.Terms.DESCRIPTION + "> ?description . } \n" +
+                "    FILTER (?entity IN (?allowedVocabularies))\n" +
+                "  } \n" +
+                "  OPTIONAL { ?entity ?inVocabulary ?vocabularyUri . } \n" +
+                "  OPTIONAL { ?entity ?hasState ?state . } \n" +
+                buildSearchParamConditions(searchParams);
+    }
+
+    private static <T extends Query> T setCommonQueryParams(T q, Collection<URI> allowedVocabularies) {
         q.setParameter("term", URI.create(SKOS.CONCEPT))
-         .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik));
-        q.setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+         .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+         .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+         .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
          .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
-         .setParameter("searchString", searchString, null);
-        if (requestedLanguage != null) {
-            q.setParameter("requestedLanguageVal", requestedLanguage);
-        }
+         .setParameter("allowedVocabularies", allowedVocabularies);
         return q;
+    }
+
+    private long getTotalResultCount(Collection<SearchParam> searchParams, Collection<URI> allowedVocabularies) {
+        String queryStr = "SELECT (COUNT(DISTINCT ?entity) AS ?cnt) WHERE { \n" +
+                buildWhereCondition(searchParams) +
+                "}";
+        TypedQuery<Long> nativeQuery = em.createNativeQuery(queryStr, Long.class);
+        setCommonQueryParams(nativeQuery, allowedVocabularies);
+        return nativeQuery.getSingleResult();
     }
 
     private String buildSearchParamConditions(Collection<SearchParam> searchParams) {
