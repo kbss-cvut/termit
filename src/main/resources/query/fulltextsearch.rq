@@ -59,6 +59,7 @@ SELECT DISTINCT ?entity
     FILTER (!BOUND(?description) || STRLEN(?description) = 0 || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
     BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "prefLabel", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
     BIND(IF(?snippetField = "prefLabel", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
+    #FACETED_SEARCH_FILTERS#
 }
 GROUP BY ?entity ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score
 ORDER BY desc(?score)

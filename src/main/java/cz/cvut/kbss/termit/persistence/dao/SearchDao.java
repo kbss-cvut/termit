@@ -123,15 +123,12 @@ public class SearchDao {
             return Page.empty(pageSpec);
         }
 
-        final long start = System.currentTimeMillis();
         final Page<SearchResult> result;
         if (searchStringBlank) {
             result = advancedSearchNoFullText(searchParams, pageSpec, allowedVocabularies);
         } else {
             result = advancedSearchWithFullText(searchString, searchParams, pageSpec, allowedVocabularies);
         }
-        final long end = System.currentTimeMillis();
-        LOG.debug("Advanced search took {} ms", end - start);
         return result;
     }
 
@@ -159,13 +156,7 @@ public class SearchDao {
                                                         Function<String, T> queryCreator) {
         String queryStr = adjustQueryForLanguage(baseQueryStr, searchString.language());
         final String filters = buildSearchParamConditions(searchParams);
-        final int lastBraceIndex = queryStr.lastIndexOf("}");
-        if (lastBraceIndex != -1) {
-            queryStr = queryStr.substring(0, lastBraceIndex) + filters + queryStr.substring(lastBraceIndex);
-        } else {
-            LOG.warn("Unable to inject facet parameters into FTS query, '}' not found.");
-        }
-
+        queryStr = queryStr.replace("#FACETED_SEARCH_FILTERS#", filters);
         final String wildcardString = addWildcard(searchString.searchString());
 
         T query = (T) setCommonQueryParams(queryCreator.apply(queryStr), allowedVocabularies)
@@ -183,14 +174,10 @@ public class SearchDao {
     private Long getTotalFulltextResultCount(SearchString searchString,
                                              Collection<SearchParam> searchParams,
                                              Collection<URI> allowedVocabularies) {
-        final long start = System.currentTimeMillis();
-        final Query query = initFullTextSearchQuery(ftsResultCountQuery, searchString, searchParams,
+        final TypedQuery<Long> query = initFullTextSearchQuery(ftsResultCountQuery, searchString, searchParams,
                                                     allowedVocabularies,
                                                     queryStr -> em.createNativeQuery(queryStr, Long.class));
-        final Long result = (Long) query.getSingleResult();
-        final long end = System.currentTimeMillis();
-        LOG.debug("Full-text search result count took {} ms", end - start);
-        return result;
+        return query.getSingleResult();
     }
 
     /**
