@@ -6,7 +6,7 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 
 <http://onto.fel.cvut.cz/ontologies/application/termit>
-        a               skos:ConceptScheme , owl:Ontology ;
+        a       skos:ConceptScheme , owl:Ontology ;
         <http://purl.org/dc/terms/created>
                 "2020-05-26" ;
         <http://purl.org/dc/terms/creator>
