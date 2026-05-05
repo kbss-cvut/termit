@@ -5,9 +5,10 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.dto.search.SearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -23,10 +24,11 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -83,7 +85,8 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             vocabulary.getGlossary().addRootTerm(annotatingTerm);
 
             customAttribute = new CustomAttribute();
-            customAttribute.setUri(URI.create(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT + "/custom-attribute/annotatedBy"));
+            customAttribute.setUri(URI.create(
+                    cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT + "/custom-attribute/annotatedBy"));
             customAttribute.setLabel(MultilingualString.create("Annotated By", Environment.LANGUAGE));
             customAttribute.setDomain(URI.create(RDF.STATEMENT));
             customAttribute.setRange(URI.create(SKOS.CONCEPT));
@@ -121,13 +124,13 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             conn.begin();
 
             Statement stmt = vf.createStatement(
-                vf.createTriple(
-                    vf.createIRI(subject.toString()),
-                    vf.createIRI(predicate.toString()),
-                    vf.createIRI(object.toString())
-                ),
-                vf.createIRI(annotationProperty.toString()),
-                vf.createIRI(annotationValue.toString())
+                    vf.createTriple(
+                            vf.createIRI(subject.toString()),
+                            vf.createIRI(predicate.toString()),
+                            vf.createIRI(object.toString())
+                    ),
+                    vf.createIRI(annotationProperty.toString()),
+                    vf.createIRI(annotationValue.toString())
             );
 
             conn.add(stmt, vf.createIRI(context.toString()));
@@ -136,53 +139,56 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void facetedTermSearchFindsTermsWhoseRelationshipsAreAnnotatedBySpecifiedTerm() {
+    void advancedSearchFindsTermsWhoseRelationshipsAreAnnotatedBySpecifiedTerm() {
         final SearchParam param = new SearchParam(
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
-            Set.of(annotatingTerm.getUri().toString()),
-            MatchType.IRI
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                Set.of(annotatingTerm.getUri().toString()),
+                MatchType.IRI
         );
 
-        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
 
         assertFalse(result.isEmpty());
         // Both termA (subject) and termB (object) should be in the results
-        final Set<URI> resultUris = result.stream().map(FacetedSearchResult::getUri).collect(java.util.stream.Collectors.toSet());
+        final Set<URI> resultUris = result.stream().map(SearchResult::getUri).collect(Collectors.toSet());
         assertThat(resultUris, hasItem(termA.getUri()));
         assertThat(resultUris, hasItem(termB.getUri()));
     }
 
     @Test
-    void facetedTermSearchDoesNotFindTermsWhoseRelationshipsAreNotAnnotated() {
+    void advancedSearchDoesNotFindTermsWhoseRelationshipsAreNotAnnotated() {
         final SearchParam param = new SearchParam(
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
-            Set.of(annotatingTerm.getUri().toString()),
-            MatchType.IRI
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                Set.of(annotatingTerm.getUri().toString()),
+                MatchType.IRI
         );
 
-        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
 
-        final Set<URI> resultUris = result.stream().map(FacetedSearchResult::getUri).collect(java.util.stream.Collectors.toSet());
+        final Set<URI> resultUris = result.stream().map(SearchResult::getUri).collect(Collectors.toSet());
         assertThat(resultUris, org.hamcrest.Matchers.not(hasItem(termC.getUri())));
     }
 
     @Test
-    void facetedTermSearchCombinesRelationshipAnnotationWithOtherSearchParameters() {
+    void advancedSearchCombinesRelationshipAnnotationWithOtherSearchParameters() {
         final SearchParam relationshipParam = new SearchParam(
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
-            Set.of(annotatingTerm.getUri().toString()),
-            MatchType.IRI
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                Set.of(annotatingTerm.getUri().toString()),
+                MatchType.IRI
         );
 
         final SearchParam vocabularyParam = new SearchParam(
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-            Set.of(vocabulary.getUri().toString()),
-            MatchType.IRI
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                Set.of(vocabulary.getUri().toString()),
+                MatchType.IRI
         );
 
-        final List<FacetedSearchResult> result = sut.facetedTermSearch(
-            Set.of(relationshipParam, vocabularyParam),
-            Constants.DEFAULT_PAGE_SPEC
+        final Page<SearchResult> result = sut.advancedSearch(
+                new SearchString("", null),
+                Set.of(relationshipParam, vocabularyParam),
+                Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri())
         );
 
         assertFalse(result.isEmpty());
@@ -190,21 +196,22 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void facetedTermSearchReturnsEmptyResultWhenNoRelationshipsAnnotatedBySpecifiedTerm() {
+    void advancedSearchReturnsEmptyResultWhenNoRelationshipsAnnotatedBySpecifiedTerm() {
         final Term otherTerm = Generator.generateTermWithId();
         setPrimaryLabel(otherTerm, "Other Term");
         otherTerm.setVocabulary(vocabulary.getUri());
         transactional(() -> em.persist(otherTerm, descriptorFactory.termDescriptor(otherTerm)));
 
         final SearchParam param = new SearchParam(
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
-            Set.of(otherTerm.getUri().toString()),
-            MatchType.IRI
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                Set.of(otherTerm.getUri().toString()),
+                MatchType.IRI
         );
 
-        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param), Constants.DEFAULT_PAGE_SPEC);
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
 
-        assertEquals(0, result.size());
+        assertEquals(0, result.getNumberOfElements());
     }
 }
 

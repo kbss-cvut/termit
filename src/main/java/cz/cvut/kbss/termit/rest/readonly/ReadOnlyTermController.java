@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -100,18 +101,13 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         if (searchString != null) {
-            if (flat) {
-                return includeImported ? termService.findAllFlatIncludingImported(searchString, vocabulary,
-                                                                                  createPageRequest(pageSize, pageNo)) :
-                       termService.findAllFlat(searchString, vocabulary,
-                                               createPageRequest(pageSize, pageNo));
-            }
-            return includeImported ?
-                   termService.findAllIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
-                   termService.findAll(searchString, vocabulary, createPageRequest(pageSize, pageNo));
+            return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported,
+                                                                                         createPageRequest(pageSize,
+                                                                                                           pageNo)));
+        } else {
+            return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported,
+                                                                           createPageRequest(pageSize, pageNo)));
         }
-        return flat ? termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)) :
-               termService.findAll(vocabulary, createPageRequest(pageSize, pageNo));
     }
 
     private Vocabulary getVocabulary(String fragment, Optional<String> namespace) {

@@ -308,7 +308,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
-        final List<Term> result = sut.findAllFull(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms.size(), result.size());
         assertThat(result, hasItems(terms.toArray(new Term[]{})));
     }
@@ -318,7 +318,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
-        final List<Term> result = sut.findAllFull(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         terms.sort(Comparator.comparing(Environment::getPrimaryLabel));
         assertEquals(terms, result);
     }
@@ -647,7 +647,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         addTermsAndSave(allTerms, vocabulary);
         transactional(() -> insertForeignLabel(foreignLabelTerm));
 
-        final List<Term> result = sut.findAllFull(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
     }
 
@@ -864,7 +864,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     void findAllLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
 
-        final List<Term> result = sut.findAllFull(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(2, result.size());
         final Optional<Term> parentResult = result.stream().filter(t -> t.equals(parent)).findFirst();
         assertTrue(parentResult.isPresent());

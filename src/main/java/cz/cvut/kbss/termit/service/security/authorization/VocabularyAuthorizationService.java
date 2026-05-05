@@ -27,8 +27,10 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -199,5 +201,15 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         final UserAccount user = securityUtils.getCurrentUser();
         return editableVocabularies.isEditable(asset) ? aclAuthorizationService.getAccessLevel(user, asset) :
                AccessLevel.NONE;
+    }
+
+    /**
+     * Gets a list of vocabularies that are readable by the current user.
+     * @return List of readable vocabularies
+     */
+    @Transactional(readOnly = true)
+    public List<VocabularyDto> getReadableVocabularies() {
+        return vocabularyRepositoryService.findAll().stream()
+                .filter(this::canRead).toList();
     }
 }

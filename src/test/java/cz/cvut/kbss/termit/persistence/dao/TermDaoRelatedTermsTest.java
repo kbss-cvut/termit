@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -186,7 +187,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
         transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
 
-        final List<Term> result = sut.findAllFull(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         final Optional<Term> singleResult = result.stream().filter(t -> t.equals(term)).findFirst();
         assertTrue(singleResult.isPresent());
         inverseRelated.forEach(ir -> assertThat(singleResult.get().getInverseRelated(), hasItem(new TermInfo(ir))));

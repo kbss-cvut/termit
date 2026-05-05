@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -34,7 +35,9 @@ import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.model.AbstractFullTerm;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.FlatTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -125,7 +128,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    private void postLoad(Term r) {
+    private void postLoad(AbstractFullTerm r) {
         r.setSubTerms(getSubTerms(r));
         r.setInverseRelated(loadInverseRelatedTerms(r));
         r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
@@ -137,7 +140,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param term Term to load related terms for
      */
-    private Set<TermInfo> loadInverseRelatedTerms(Term term) {
+    private Set<TermInfo> loadInverseRelatedTerms(AbstractFullTerm term) {
         return loadInverseTermInfo(term, SKOS.RELATED,
                                    Utils.joinCollections(term.getRelated(), term.getRelatedMatch()));
     }
@@ -179,7 +182,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param term Term to load related terms for
      */
-    private Set<TermInfo> loadInverseRelatedMatchTerms(Term term) {
+    private Set<TermInfo> loadInverseRelatedMatchTerms(AbstractFullTerm term) {
         return loadInverseTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term
                 .getRelatedMatch() : Collections.emptySet());
     }
@@ -189,7 +192,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param term Term to load related terms for
      */
-    private Set<TermInfo> loadInverseExactMatchTerms(Term term) {
+    private Set<TermInfo> loadInverseExactMatchTerms(AbstractFullTerm term) {
         return loadInverseTermInfo(term, SKOS.EXACT_MATCH, term.getExactMatchTerms() != null ? term
                 .getExactMatchTerms() : Collections.emptySet());
     }
@@ -267,6 +270,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      */
     private void evictPossiblyCachedReferences(Term term) {
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
+        em.getEntityManagerFactory().getCache().evict(FlatTerm.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(FlatTermDto.class, term.getUri(), null);
@@ -288,6 +292,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
           .setParameter("hasChild", URI.create(SKOS.NARROWER))
           .setParameter("t", term).getResultStream().forEach(st -> {
               em.getEntityManagerFactory().getCache().evict(Term.class, st, null);
+              em.getEntityManagerFactory().getCache().evict(FlatTerm.class, st, null);
               em.getEntityManagerFactory().getCache().evict(TermDto.class, st, null);
           });
     }
@@ -442,39 +447,173 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Gets all terms on the specified vocabulary.
+     * Gets terms from the specified vocabulary.
      * <p>
-     * No differences are made between root terms and terms with parents.
+     * No differences are made between root terms and terms with parents. Note that this method returns terms with all
+     * their ancestors eagerly loaded. If only direct parent terms are necessary, prefer
+     * {@link #findAllFlat(Vocabulary, Pageable)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specification
      * @return Matching terms, ordered by label
+     * @see #findAllFlat(Vocabulary, Pageable)
      */
-    public List<Term> findAllFull(Vocabulary vocabulary) {
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
         try {
             // Load terms one by one. This works around the issue of terms being loaded in the persistence context
             // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
             // The workaround relies on clearing the EntityManager after loading each term
-            // The price for this solution is that this method performs very poorly for larger vocabularies (hundreds of terms)
-            final List<URI> termIris = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                    "GRAPH ?context { " +
-                                                                    "?term a ?type ;" +
-                                                                    "?hasLabel ?label ;" +
-                                                                    "}" +
-                                                                    "?term ?inVocabulary ?vocabulary ." +
-                                                                    "?vocabulary ?hasLanguage ?labelLang ." +
-                                                                    "FILTER (lang(?label) = ?labelLang) ." +
-                                                                    " } ORDER BY " + orderSentence("?label"), URI.class)
-                                         .setParameter("type", typeUri)
-                                         .setParameter("context", context(vocabulary))
-                                         .setParameter("vocabulary", vocabulary.getUri())
-                                         .setParameter("hasLabel", LABEL_PROP)
-                                         .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                         .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
-                                         .getResultList();
+            // The price for this solution is that this method performs poorly for larger vocabularies (hundreds of terms)
+            final List<URI> termIris = findAllTermIris(vocabulary, pageSpec);
+            final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
             return termIris.stream().map(ti -> {
-                final Term t = find(ti).get();
-                em.clear();
+                final Term t = em.find(Term.class, ti, termDescriptor);
+                if (t != null) {
+                    postLoad(t);
+                    em.clear();
+                }
+                return t;
+            }).filter(Objects::nonNull).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec) {
+        return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                            "GRAPH ?context { " +
+                                            "?term a ?type ;" +
+                                            "?hasLabel ?label ;" +
+                                            "}" +
+                                            "?term ?inVocabulary ?vocabulary ." +
+                                            " } ORDER BY " + orderSentence("?label"), URI.class)
+                 .setParameter("type", typeUri)
+                 .setParameter("context", context(vocabulary))
+                 .setParameter("vocabulary", vocabulary.getUri())
+                 .setParameter("hasLabel", LABEL_PROP)
+                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                 .setMaxResults(pageSpec.getPageSize())
+                 .setFirstResult((int) pageSpec.getOffset())
+                 .getResultList();
+    }
+
+    /**
+     * Gets all terms from the specified vocabulary, regardless of their position in the term hierarchy.
+     * <p>
+     * Returns terms as a list of {@link FlatTerm} entities, i.e. only referencing direct parent terms.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specification
+     * @return Flat list of vocabulary terms
+     * @see #findAllFull(Vocabulary, Pageable)
+     */
+    public List<FlatTerm> findAllFullAndFlat(Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        try {
+            // Load terms one by one. This works around the issue of terms being loaded in the persistence context
+            // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
+            // The workaround relies on clearing the EntityManager after loading each term
+            // The price for this solution is that this method performs poorly for larger vocabularies (hundreds of terms)
+            final List<URI> termIris = findAllTermIris(vocabulary, pageSpec);
+            final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
+            return termIris.stream().map(ti -> {
+                final FlatTerm t = em.find(FlatTerm.class, ti, termDescriptor);
+                if (t != null) {
+                    postLoad(t);
+                    em.clear();
+                }
+                return t;
+            }).filter(Objects::nonNull).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Gets all terms matching the specified search string from the specified vocabulary.
+     * <p>
+     * No differences are made between root terms and terms with parents. Note that this method returns terms with all
+     * their ancestors eagerly loaded. If only direct parent terms are necessary, prefer
+     * {@link #findAllFlat(String, Vocabulary, Pageable)}.
+     *
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param searchString Search string
+     * @param pageSpec     Page specification
+     * @return Matching terms, ordered by label
+     */
+    public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        try {
+            // Load terms one by one. This works around the issue of terms being loaded in the persistence context
+            // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
+            // The workaround relies on clearing the EntityManager after loading each term
+            // The price for this solution is that this method performs poorly for larger vocabularies (hundreds of terms)
+            final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
+            final List<URI> termIris = findAllTermIris(searchString, vocabulary, pageSpec);
+            return termIris.stream().map(ti -> {
+                final Term t = em.find(Term.class, ti, termDescriptor);
+                if (t != null) {
+                    postLoad(t);
+                    em.clear();
+                }
+                return t;
+            }).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    private List<URI> findAllTermIris(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                            "GRAPH ?context { " +
+                                            "?term a ?type ;" +
+                                            "?hasLabel ?label ;" +
+                                            "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                            "}" +
+                                            "?term ?inVocabulary ?vocabulary ." +
+                                            " } ORDER BY " + orderSentence("?label"), URI.class)
+                 .setParameter("type", typeUri)
+                 .setParameter("context", context(vocabulary))
+                 .setParameter("vocabulary", vocabulary.getUri())
+                 .setParameter("hasLabel", LABEL_PROP)
+                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                 .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
+                 .setMaxResults(pageSpec.getPageSize())
+                 .setFirstResult((int) pageSpec.getOffset())
+                 .getResultList();
+    }
+
+    /**
+     * Gets all terms matching the specified search string from the specified vocabulary.
+     * <p>
+     * Returns terms as a list of {@link FlatTerm} entities, i.e. only referencing direct parent terms.
+     *
+     * @param searchString Search string to match term labels
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return Flat list of vocabulary terms matching the search string
+     * @see #findAllFullAndFlat(Vocabulary, Pageable)
+     */
+    public List<FlatTerm> findAllFullAndFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        try {
+            // Load terms one by one. This works around the issue of terms being loaded in the persistence context
+            // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
+            // The workaround relies on clearing the EntityManager after loading each term
+            // The price for this solution is that this method performs poorly for larger vocabularies (hundreds of terms)
+            final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
+            final List<URI> termIris = findAllTermIris(searchString, vocabulary, pageSpec);
+            return termIris.stream().map(ti -> {
+                final FlatTerm t = em.find(FlatTerm.class, ti, termDescriptor);
+                if (t != null) {
+                    postLoad(t);
+                    em.clear();
+                }
                 return t;
             }).collect(Collectors.toList());
         } catch (RuntimeException e) {
@@ -808,7 +947,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                 .setParameter("hasLabel", LABEL_PROP)
                                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                                 .setParameter("vocabulary", vocabulary.getUri())
-                                                .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
+                                                .setParameter("searchString", searchString,
+                                                              vocabulary.getPrimaryLanguage())
                                                 .setMaxResults(pageSpec.getPageSize())
                                                 .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -959,7 +1099,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                               URI.create(
                                                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                                 .setParameter("targetVocabulary", vocabulary.getUri())
-                                                .setParameter("searchString", searchString, vocabulary.getPrimaryLanguage())
+                                                .setParameter("searchString", searchString,
+                                                              vocabulary.getPrimaryLanguage())
                                                 .setMaxResults(pageSpec.getPageSize())
                                                 .setFirstResult((int) pageSpec.getOffset());
         try {
@@ -1018,7 +1159,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                      .setParameter("vocabulary", vocabulary.getUri())
                      .setParameter("searchString", label,
-                                   languageTag != null ? languageTag : vocabulary.getPrimaryLanguage()).getSingleResult();
+                                   languageTag != null ? languageTag : vocabulary.getPrimaryLanguage())
+                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

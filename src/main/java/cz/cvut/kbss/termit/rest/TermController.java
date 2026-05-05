@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -152,6 +153,8 @@ public class TermController extends BaseController {
                            defaultValue = MediaType.ALL_VALUE) String acceptType,
             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+            @Parameter(description = "Boolean flag to determine whether to return full versions of the terms.")
+            @RequestParam(name = "full", required = false, defaultValue = "false") boolean full,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
@@ -159,35 +162,16 @@ public class TermController extends BaseController {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
-            if (flat) {
-                return ResponseEntity.ok(includeImported ?
-                                         termService.findAllFlatIncludingImported(searchString, vocabulary,
-                                                                                  createPageRequest(pageSize, pageNo)) :
-                                         termService.findAllFlat(searchString, vocabulary,
-                                                                 createPageRequest(pageSize, pageNo)));
-            }
-
-            return ResponseEntity.ok(includeImported ?
-                                     termService.findAllIncludingImported(searchString, vocabulary,
-                                                                          createPageRequest(pageSize, pageNo)) :
-                                     termService.findAll(searchString, vocabulary,
-                                                         createPageRequest(pageSize, pageNo)));
+            return ResponseEntity.ok(termService.findAll(searchString, vocabulary,
+                                                         new TermSelectionParams(flat, full, includeImported,
+                                                                                 createPageRequest(pageSize, pageNo))));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
-            if (flat) {
-                return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary,
-                                                                                                    createPageRequest(
-                                                                                                            pageSize,
-                                                                                                            pageNo)) :
-                                         termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)));
-            }
-
-            return ResponseEntity
-                    .ok(includeImported ?
-                        termService.findAllIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
-                        termService.findAll(vocabulary, createPageRequest(pageSize, pageNo)));
+            return ResponseEntity.ok(termService.findAll(vocabulary,
+                                                         new TermSelectionParams(flat, full, includeImported,
+                                                                                 createPageRequest(pageSize, pageNo))));
         });
     }
 

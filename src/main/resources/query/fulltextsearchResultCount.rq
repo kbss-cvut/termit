@@ -1,0 +1,58 @@
+##
+# Full text search query for GraphDB with a Lucene connector - count results.
+##
+
+PREFIX : <http://www.ontotext.com/connectors/lucene#>
+PREFIX inst: <http://www.ontotext.com/connectors/lucene/instance#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT (COUNT(*) as ?cnt) {
+    SELECT DISTINCT ?entity ?snippetText ?snippetField {
+        {
+            ?search a ?label_index .
+        }
+        UNION
+        {
+            ?search a ?defcom_index .
+        }
+        {
+            ?entity skos:prefLabel ?label ;
+                    ?inVocabulary ?authorized .
+            OPTIONAL {
+                ?entity skos:definition ?definition .
+            }
+            OPTIONAL {
+                ?entity skos:scopeNote ?scopeNote .
+            }
+        } UNION {
+            ?entity dc:title ?label .
+            OPTIONAL {
+                ?entity dc:description ?dcDescription .
+            }
+            BIND(?entity AS ?authorized)
+        }
+        ?search :query ?wildCardSearchString ;
+            :entities ?entity .
+        ?entity a ?type ;
+                :snippets _:s .
+            _:s :snippetText ?snippetText ;
+                :snippetField ?snippetField .
+        OPTIONAL {
+            ?entity ?inVocabulary ?vocabularyUri .
+        }
+        OPTIONAL {
+            ?entity ?hasState ?state .
+        }
+        FILTER (?type = ?term || ?type = ?vocabulary)
+        FILTER NOT EXISTS { ?entity a ?snapshot . }
+        FILTER (?authorized IN (?allowedVocabularies))
+        BIND (?requestedLanguageVal AS ?requestedLanguage)
+        FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)
+        BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
+        FILTER (!BOUND(?description) || STRLEN(?description) = 0 || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
+        #FACETED_SEARCH_FILTERS#
+    }
+}
