@@ -57,48 +57,34 @@ Rules
     -------------------------------
     this <pdp:má-dokumentový-slovník> vocabulary
 
-  Id: pdp_term_4
-
-    this <rdf:type> <pdp:dokumentový-slovník>
-    -------------------------------
-    this <rdf:type> <pdp:slovník>
-
-  Id: pdp_term_5
+  Id: pdp_dokument_2
 
     doc <pdp:má-soubor> this
     -------------------------------
     this <pdp:je-částí-dokumentu> doc
 
-  Id: pdp_term_6
+  Id: pdp_term_1
 
     this <rdf:type> <skos:Concept>
     this <skos:broader> parent
     -------------------------------
     parent <skos:narrower> this
 
-  Id: pdp_term_7
-
-    this <rdf:type> <skos:Concept>
-    this <skos:inScheme> glossary
-    vocabulary <pdp:má-glosář> glossary
-    -------------------------------
-    this <pdp:je-pojmem-ze-slovníku> vocabulary
-
-  Id: pdp_term_8
+  Id: pdp_term_2
 
     source <rdf:type> <termit:zdroj-definice-termu>
     source <termit:je-přiřazením-termu> this
     -------------------------------
     this <termit:má-zdroj-definice-termu> source
 
-  Id: pdp_term_9
+  Id: pdp_term_3
 
     this <rdf:type> <skos:Concept>
     this <skos:related> related
     -------------------------------
     related <skos:related> this
 
-  Id: pdp_term_10
+  Id: pdp_term_4
 
     this <rdf:type> <skos:Concept>
     this <skos:relatedMatch> related
