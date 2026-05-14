@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
@@ -100,20 +99,17 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         newTerms.sort(Comparator.comparing(Environment::getPrimaryLabel));
         return newTerms;
     }
-    
+
     @Test
     void advancedSearchReturnsTermsMatchingIriSearchParamWithSpecifiedTypes() {
-        final Set<String> types = Generator.randomElement(terms).getTypes();
-        final SearchParam param = new SearchParam(URI.create(RDF.TYPE), types.stream().map(Object.class::cast).collect(
-                Collectors.toSet()), MatchType.IRI);
-        final List<Term> expectedTerms = terms.stream()
-                                              .filter(t -> t.getTypes().stream().anyMatch(types::contains))
-                                              .toList();
-        assertFalse(expectedTerms.isEmpty());
+        final SearchParam param = new SearchParam(URI.create(RDF.TYPE), Set.of(TYPES[0], TYPES[1]),
+                                                  MatchType.IRI);
         final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
                                                              Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
-        assertFalse(result.isEmpty());
         assertTrue(result.stream().allMatch(r -> r.hasType(SKOS.CONCEPT)));
+        final List<Term> expectedTerms = terms.stream()
+                                              .filter(t -> t.hasType(TYPES[0]) || t.hasType(TYPES[1]))
+                                              .toList();
         assertThat(result.getContent(), containsSameEntities(expectedTerms));
     }
 
