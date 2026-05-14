@@ -41,6 +41,13 @@ public class Pair<T, V> {
         return second;
     }
 
+    @Override
+    public String toString() {
+        return "Pair{" +
+                first +
+                " - " + second +
+                '}';
+    }
 
     /**
      * First compares the first value, if they are equal, compares the second value.

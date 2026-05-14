@@ -21,6 +21,8 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,16 +185,22 @@ public class TermRelationshipAnnotationDao {
      * @param annotationProperty Annotation property
      */
     private void removeExistingValues(Pair<RdfStatement, URI> annotatedStatement, URI annotationProperty) {
-        em.createNativeQuery("DELETE WHERE {" +
-                                     "GRAPH ?g {" +
-                                     "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
-                                     "} }")
-          .setParameter("g", annotatedStatement.getSecond())
-          .setParameter("subject", annotatedStatement.getFirst().getSubject())
-          .setParameter("predicate", annotatedStatement.getFirst().getRelation())
-          .setParameter("object", annotatedStatement.getFirst().getObject())
-          .setParameter("annotationProperty", annotationProperty)
-          .executeUpdate();
+        LOG.trace("Remove existing values of annotation {} - {}", annotatedStatement, annotationProperty);
+        final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            conn.begin();
+            final Update u = conn.prepareUpdate("DELETE WHERE {" +
+                                                        "GRAPH ?g {" +
+                                                        "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
+                                                        "} }");
+            u.setBinding("g", Values.iri(annotatedStatement.getSecond().toString()));
+            u.setBinding("subject", Values.iri(annotatedStatement.getFirst().getSubject().toString()));
+            u.setBinding("predicate", Values.iri(annotatedStatement.getFirst().getRelation().toString()));
+            u.setBinding("object", Values.iri(annotatedStatement.getFirst().getObject().toString()));
+            u.setBinding("annotationProperty", Values.iri(annotationProperty.toString()));
+            u.execute();
+            conn.commit();
+        }
     }
 
     /**
