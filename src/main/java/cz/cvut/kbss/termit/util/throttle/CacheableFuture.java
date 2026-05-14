@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.TooLargeToValidateException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import jakarta.annotation.Nullable;
 
@@ -54,7 +55,7 @@ public interface CacheableFuture<T> extends Future<T> {
                 return Optional.of(get());
             }
         } catch (ExecutionException e) {
-            if (e.getCause() instanceof UnsupportedOperationException) {
+            if (e.getCause() instanceof UnsupportedOperationException || e.getCause() instanceof TooLargeToValidateException) {
                 return Optional.empty();
             }
             throw new TermItException(e);
