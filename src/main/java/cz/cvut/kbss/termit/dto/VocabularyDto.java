@@ -43,6 +43,7 @@ public class VocabularyDto extends Vocabulary {
         setProperties(source.getProperties());
         setTypes(source.getTypes());
         setAcl(source.getAcl());
+        // Do not include root terms in the DTO
     }
 
     public AccessLevel getAccessLevel() {

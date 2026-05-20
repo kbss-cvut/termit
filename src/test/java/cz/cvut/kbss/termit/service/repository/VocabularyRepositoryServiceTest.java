@@ -195,6 +195,25 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void updateRestoresRootTermsFromExistingInstance() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setRootTerms(Set.of(Generator.generateUri(), Generator.generateUri()));
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final Vocabulary update = new Vocabulary(vocabulary.getUri());
+        update.setRootTerms(Set.of());
+        update.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
+        update.setLabel(vocabulary.getLabel());
+        update.setDescription(vocabulary.getDescription());
+        update.getDescription().set(Environment.LANGUAGE, "Updated description.");
+        sut.update(update);
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertNotNull(result);
+        assertEquals(vocabulary.getRootTerms(), result.getRootTerms());
+        assertEquals("Updated description.", result.getDescription().get(Environment.LANGUAGE));
+    }
+
+    @Test
     void removeRemovesEmptyVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));

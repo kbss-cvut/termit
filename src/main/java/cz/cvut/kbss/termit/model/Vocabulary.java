@@ -80,6 +80,7 @@ public class Vocabulary extends Asset<MultilingualString>
      * This attribute should contain only root terms. The term hierarchy is modeled by terms having sub-terms, so all
      * terms should be reachable.
      */
+    @JsonIgnore
     @OWLObjectProperty(iri = SKOS.HAS_TOP_CONCEPT)
     private Set<URI> rootTerms;
 
