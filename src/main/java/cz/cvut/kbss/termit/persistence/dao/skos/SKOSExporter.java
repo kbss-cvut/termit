@@ -39,8 +39,6 @@ import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.WriterConfig;
-import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriterFactory;
 import org.slf4j.Logger;
@@ -69,6 +67,8 @@ public class SKOSExporter {
     private static final String TERMS_EXPORT_QUERY = "export/skos/exportVocabularyTerms.rq";
     private static final String TERMS_FULL_EXPORT_QUERY = "export/full/exportVocabularyTerms.rq";
     private static final String TERMS_HIERARCHY_EXPORT_QUERY = "export/full/exportHierarchy.rq";
+
+    private final VocabularyContextMapper vocabularyContextMapper;
 
     private final org.eclipse.rdf4j.repository.Repository repository;
     private final ValueFactory vf;
@@ -169,6 +169,7 @@ public class SKOSExporter {
      * @param vocabulary Vocabulary to export
      */
     private void exportVocabularyTermsWithQuery(Vocabulary vocabulary, String queryFile) {
+        final long startTime = System.currentTimeMillis();
         LOG.trace("Exporting terms from {}.", vocabulary);
         final IRI graphIri = vf.createIRI(vocabularyContextMapper.getVocabularyContext(vocabulary).toString());
         final IRI vocabularyIri = vf.createIRI(vocabulary.getUri().toString());
@@ -258,20 +259,22 @@ public class SKOSExporter {
      */
     private void exportReferencedVocabularies() {
         final Set<IRI> vocabulariesToExport = model.stream().filter(s -> s.getPredicate().equals(SKOS.IN_SCHEME))
-                                                 .map(s -> {
-                                                     assert s.getObject().isIRI();
-                                                     return (IRI) s.getObject();
-                                                 }).filter(gIri -> !model.contains(gIri, RDF.TYPE, SKOS.CONCEPT_SCHEME))
-                                                 .collect(Collectors.toSet());
+                                                   .map(s -> {
+                                                       assert s.getObject().isIRI();
+                                                       return (IRI) s.getObject();
+                                                   })
+                                                   .filter(vocIri -> !model.contains(vocIri, RDF.TYPE, SKOS.CONCEPT_SCHEME))
+                                                   .collect(Collectors.toSet());
         LOG.trace("Exporting metadata of vocabularies of referenced terms: {}.", vocabulariesToExport);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final String queryString = Utils.loadQuery(VOCABULARY_EXPORT_QUERY);
-            vocabulariesToExport.forEach(s -> {
-                final GraphQuery gq = conn.prepareGraphQuery(queryString);
-                gq.setBinding("vocabulary", s);
-                evaluateAndAddToModel(gq);
-                resolvePrefixes(s, conn);
-            });
+            vocabulariesToExport.forEach(
+                    vocIri -> {
+                        final GraphQuery gq = conn.prepareGraphQuery(queryString);
+                        gq.setBinding("vocabulary", vocIri);
+                        evaluateAndAddToModel(gq);
+                        resolvePrefixes(vocIri, conn);
+                    });
         }
     }
 
@@ -287,9 +290,6 @@ public class SKOSExporter {
             case RDF_XML -> new RDFXMLPrettyWriterFactory().getWriter(bos);
             default -> throw new IllegalArgumentException("Unsupported SKOS export format " + format);
         };
-        final WriterConfig writerConfig = new WriterConfig();
-        writerConfig.set(BasicWriterSettings.PRETTY_PRINT, true);
-        writer.setWriterConfig(writerConfig);
         Rio.write(model, writer);
         return bos.toByteArray();
     }
