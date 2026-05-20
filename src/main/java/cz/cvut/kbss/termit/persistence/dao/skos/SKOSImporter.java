@@ -72,7 +72,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
@@ -215,7 +214,8 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void validateVocabularyIriCompatibility(URI providedVocabularyUri) {
-        if (providedVocabularyUri != null && !Objects.equals(vocabularyIri.stringValue(), providedVocabularyUri.toString())) {
+        if (providedVocabularyUri != null && !Objects.equals(vocabularyIri.stringValue(),
+                                                             providedVocabularyUri.toString())) {
             throw new IllegalArgumentException(
                     "Cannot import a vocabulary into an existing one with different identifier.");
         }
@@ -386,7 +386,7 @@ public class SKOSImporter implements VocabularyImporter {
         boolean languageSet = handleVocabularyLiteralStringProperty(vocabulary::setPrimaryLanguage);
         if (!languageSet) {
             AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
-            handleStringStringProperty(glossaryIri, DCTERMS.TITLE, labelRef::set, config.getPersistence()
+            handleStringStringProperty(vocabularyIri, DCTERMS.TITLE, labelRef::set, config.getPersistence()
                                                                                         .getLanguage());
             MultilingualString label = labelRef.get();
             if (label == null || label.isEmpty() || label.contains(config.getPersistence().getLanguage())) {
@@ -397,10 +397,33 @@ public class SKOSImporter implements VocabularyImporter {
         }
     }
 
+    /**
+     * Looks up the language property in the vocabulary and/or glossary and sets it as the primary language.
+     * Looks up {@literal dcterms:language} in the glossary, loads the first value as string and passes it to the
+     * provided consumer.
+     *
+     * @param consumer Consumer to accept the literal string value if found
+     * @return true if the property was found and the consumer was called, false otherwise
+     */
+
+    private boolean handleVocabularyLiteralStringProperty(Consumer<String> consumer) {
+        final Set<Statement> values = model.filter(vocabularyIri, DCTERMS.LANGUAGE, null);
+        return values.stream()
+                     .filter(s -> s.getObject().isLiteral()).findFirst()
+                     .map(s -> (Literal) s.getObject())
+                     .map(Literal::getLabel)
+                     .map(value -> {
+                         consumer.accept(value);
+                         return true;
+                     })
+                     .orElse(false);
+    }
+
     private String getFreshVocabularyIri(boolean rename, String newVocabularyIriBase) {
         String newVocabularyIri = stripTrailingSeparator(newVocabularyIriBase);
         if (rename) {
-            newVocabularyIri = stripTrailingSeparator(getUniqueIriFromBase(newVocabularyIriBase, r -> vocabularyDao.find(URI.create(r))));
+            newVocabularyIri = stripTrailingSeparator(
+                    getUniqueIriFromBase(newVocabularyIriBase, r -> vocabularyDao.find(URI.create(r))));
             if (!newVocabularyIri.equals(newVocabularyIriBase)) {
                 Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri, model);
             }
@@ -409,7 +432,7 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyLabel(final Vocabulary vocabulary) {
-        handleVocabularyStringProperty(DCTERMS.TITLE, vocabulary::setLabel, vocabulary.getPrimaryLanguage());
+        handleStringStringProperty(vocabularyIri, DCTERMS.TITLE, vocabulary::setLabel, vocabulary.getPrimaryLanguage());
     }
 
     /**
@@ -438,7 +461,7 @@ public class SKOSImporter implements VocabularyImporter {
                                                                                 .toString()), DCTERMS.DESCRIPTION,
                                                          vocabulary::setDescription, vocabulary.getPrimaryLanguage());
         if (!found) {
-            handleStringStringProperty(glossaryIri, DCTERMS.DESCRIPTION, vocabulary::setDescription,
+            handleStringStringProperty(vocabularyIri, DCTERMS.DESCRIPTION, vocabulary::setDescription,
                                        vocabulary.getPrimaryLanguage());
         }
     }
