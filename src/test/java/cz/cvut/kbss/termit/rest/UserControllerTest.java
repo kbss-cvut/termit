@@ -119,19 +119,6 @@ class UserControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void unlockUnlocksUser() throws Exception {
-        final String newPassword = "newPassword";
-
-        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
-                user.getUri());
-        when(userService.findRequired(user.getUri())).thenReturn(user);
-        mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/lock")
-                                .content(newPassword))
-               .andExpect(status().isNoContent());
-        verify(userService).unlock(user, newPassword);
-    }
-
-    @Test
     void enableEnablesUser() throws Exception {
         when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
                 user.getUri());

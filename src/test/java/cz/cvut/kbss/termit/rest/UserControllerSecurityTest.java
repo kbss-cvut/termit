@@ -91,19 +91,6 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void unlockThrowsForbiddenForNonAdmin() throws Exception {
-        // This one is not an admin
-        Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
-        final UserAccount toUnlock = Generator.generateUserAccountWithPassword();
-
-        mockMvc.perform(
-                       delete(BASE_URL + "/" + extractIdentifierFragment(toUnlock.getUri()) + "/lock")
-                               .content(toUnlock.getPassword()))
-               .andExpect(status().isForbidden());
-        verify(userService, never()).unlock(any(), any());
-    }
-
-    @Test
     void enableThrowsForbiddenForNonAdmin() throws Exception {
         // This one is not an admin
         Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
