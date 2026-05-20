@@ -83,7 +83,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
             final Term term = new Term();
             term.setUri(Generator.generateUri());
             setPrimaryLabel(term, randomBool ? "Matching label " + i : "Unknown label " + i);
-            vocabulary.getGlossary().addRootTerm(term);
+            vocabulary.addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
             if (randomBool) {
                 term.setState(Generator.generateUri());
@@ -167,7 +167,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         final Pageable pageOne = PageRequest.of(0, terms.size() / 2);
         final Pageable pageTwo = PageRequest.of(1, terms.size() / 2);
         final SearchParam searchParam = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                URI.create(SKOS.IN_SCHEME),
                 Set.of(vocabulary.getUri().toString()), MatchType.IRI);
 
         final Page<SearchResult> resultOne = sut.advancedSearch(new SearchString("", null), Set.of(searchParam),
