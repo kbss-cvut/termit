@@ -71,7 +71,7 @@ public abstract class AbstractFullTerm extends AbstractTerm implements HasTypes 
     private Set<TermInfo> inverseRelatedMatch;
 
     @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj_definice_termu, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_term_definition_source, fetch = FetchType.EAGER)
     private TermDefinitionSource definitionSource;
 
     @Properties(fetchType = FetchType.EAGER)

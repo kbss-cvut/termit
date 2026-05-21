@@ -85,6 +85,7 @@ import java.util.stream.IntStream;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -570,7 +571,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         generateSnapshotStub(vocabulary, Instant.now().truncatedTo(ChronoUnit.SECONDS));
 
         final List<Vocabulary> result = sut.findAll();
-        assertEquals(Collections.singletonList(vocabulary), result);
+        assertThat(result, hasItem(vocabulary));
+        assertTrue(result.stream().noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)));
     }
 
     @Test

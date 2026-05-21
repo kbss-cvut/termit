@@ -103,7 +103,7 @@ public class CommentDao {
                                                                            "FILTER (?mod >= ?from && ?mod < ?to) " +
                                                                            "} } ORDER BY ?mod", Comment.class)
                                                 .setParameter("type", URI.create(Vocabulary.s_c_Comment))
-                                                .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
+                                                .setParameter("hasTopic", URI.create(Vocabulary.s_p_sioc_topic))
                                                 .setParameter("hasCreated",
                                                               URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                                                 .setParameter("hasModified", URI.create(
@@ -201,7 +201,7 @@ public class CommentDao {
                  .setParameter("hasCreationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                  .setParameter("hasEditor", URI.create(Vocabulary.s_p_sioc_has_creator))
                  .setParameter("author", author.getUri())
-                 .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
+                 .setParameter("hasAsset", URI.create(Vocabulary.s_p_sioc_topic))
                  .setMaxResults(limit)
                  .getResultList();
     }
