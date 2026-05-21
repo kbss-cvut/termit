@@ -27,17 +27,16 @@ import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
-import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.MessageFormatter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporters;
-import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -142,19 +141,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
-        initGlossary(instance);
         initDocument(instance);
         namespaceResolver.setVocabularyPreferredNamespace(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
-        }
-    }
-
-    private void initGlossary(Vocabulary vocabulary) {
-        final String iriBase = vocabulary.getUri().toString();
-        if (vocabulary.getGlossary() == null) {
-            vocabulary.setGlossary(new Glossary());
-            vocabulary.getGlossary().setUri(idResolver.generateIdentifier(iriBase, config.getGlossary().getFragment()));
         }
     }
 
@@ -178,6 +168,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyVocabularyImports(instance, original);
         // ACL reference does not change, but it can be missing in case the instance arrived from client
         instance.setAcl(original.getAcl());
+        // Client does not get root terms, restore them from the original instance
+        instance.setRootTerms(original.getRootTerms());
         SnapshotProvider.verifySnapshotNotModified(original);
     }
 

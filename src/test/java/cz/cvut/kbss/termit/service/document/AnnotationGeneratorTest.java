@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.web.WebAppConfiguration;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -125,8 +126,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         document.setUri(Generator.generateUri());
         document.setVocabulary(vocabulary.getUri());
         vocabulary.setDocument(document);
-        vocabulary.getGlossary().addRootTerm(term);
-        vocabulary.getGlossary().addRootTerm(termTwo);
+        vocabulary.addRootTerm(term);
+        vocabulary.addRootTerm(termTwo);
         this.vocabDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         this.file = new File();
         file.setUri(Generator.generateUri());
@@ -187,7 +188,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final Document doc = Jsoup.parse(content, StandardCharsets.UTF_8.name(), "");
         final Elements element = doc.getElementsByAttribute(Constants.RDFa.ABOUT);
         assert element.size() == 1;
-        element.attr(Constants.RDFa.TYPE, cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik);
+        element.attr(Constants.RDFa.TYPE, SKOS.CONCEPT_SCHEME);
 
         return new ByteArrayInputStream(doc.toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -255,14 +256,14 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final Term area = new Term();
         area.setLabel(MultilingualString.create("Území", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         area.setUri(URI.create("http://test.org/pojem/uzemi"));
-        vocabulary.getGlossary().addRootTerm(mp);
-        vocabulary.getGlossary().addRootTerm(ma);
-        vocabulary.getGlossary().addRootTerm(area);
+        vocabulary.addRootTerm(mp);
+        vocabulary.addRootTerm(ma);
+        vocabulary.addRootTerm(area);
         transactional(() -> {
             em.persist(mp, descriptorFactory.termDescriptor(vocabulary));
             em.persist(ma, descriptorFactory.termDescriptor(vocabulary));
             em.persist(area, descriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
 
         final InputStream content = loadFile("data/rdfa-large.html");

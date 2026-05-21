@@ -10,8 +10,7 @@ CONSTRUCT {
           skos:broader ?parentEvent .
 } WHERE {
     GRAPH ?g {
-        ?vocabulary pdp:má-glosář ?glossary .
-        ?term skos:inScheme ?glossary .
+        ?term skos:inScheme ?vocabulary .
         ?term a ?type .
         OPTIONAL {
             ?term rdfs:subClassOf ?superClass .

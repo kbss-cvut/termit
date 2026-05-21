@@ -97,9 +97,9 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
             transactional(() -> {
                 final Vocabulary vocabularySnapshot = Generator.generateVocabulary();
                 vocabularySnapshot.setUri(vocSnapshotUri);
-                vocabularySnapshot.getGlossary().addRootTerm(stub);
+                vocabularySnapshot.addRootTerm(stub);
                 em.persist(vocabularySnapshot, descriptorFactory.vocabularyDescriptor(vocSnapshotUri));
-                stub.setGlossary(vocabularySnapshot.getGlossary().getUri());
+                stub.setVocabulary(vocabularySnapshot.getUri());
             });
         }
         transactional(() -> {
@@ -173,8 +173,8 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            vocabulary.getGlossary().addRootTerm(term);
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            vocabulary.addRootTerm(term);
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
         generateSnapshotStub(term, Instant.now());
         return term;

@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao.acl;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
@@ -179,7 +180,7 @@ public class AccessControlListDao {
                                             "?record ?hasAccessLevel ?accessLevel ; " +
                                             "?hasHolder ?agent . " +
                                             "}", cz.cvut.kbss.termit.model.Vocabulary.class)
-                 .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                 .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
                  .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
                  .setParameter("hasRecord", URI.create(Vocabulary.s_p_ma_zaznam_rizeni_pristupu))
                  .setParameter("hasAccessLevel", URI.create(Vocabulary.s_p_ma_uroven_pristupovych_opravneni))

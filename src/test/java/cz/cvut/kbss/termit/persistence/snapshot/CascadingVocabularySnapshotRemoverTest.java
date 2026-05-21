@@ -94,12 +94,10 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(snapshotOne, descriptorFactory.vocabularyDescriptor(snapshotOne));
             em.persist(snapshotTwo, descriptorFactory.vocabularyDescriptor(snapshotTwo));
-            tSnapshotOne.setGlossary(snapshotOne.getGlossary().getUri());
-            tSnapshotTwo.setGlossary(snapshotTwo.getGlossary().getUri());
+            tSnapshotOne.setVocabulary(snapshotOne.getUri());
+            tSnapshotTwo.setVocabulary(snapshotTwo.getUri());
             em.persist(tSnapshotOne, descriptorFactory.termDescriptor(snapshotOne));
             em.persist(tSnapshotTwo, descriptorFactory.termDescriptor(snapshotTwo));
-            Generator.addTermInVocabularyRelationship(tSnapshotOne, snapshotOne.getUri(), em);
-            Generator.addTermInVocabularyRelationship(tSnapshotTwo, snapshotTwo.getUri(), em);
         });
         // Separate transaction to prevent IndividualAlreadyManagedException for tSnapshotTwo as Term and TermInfo in persistence context
 

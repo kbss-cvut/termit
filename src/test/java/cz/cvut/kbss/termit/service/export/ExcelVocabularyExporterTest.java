@@ -76,12 +76,12 @@ class ExcelVocabularyExporterTest {
     }
 
     @Test
-    void exportGlossaryOutputsGlossaryTermsIntoSheet() throws Exception {
+    void exportGlossaryOutputsVocabularyTermsIntoSheet() throws Exception {
         when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
+        final Resource result = sut.exportVocabulary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(LanguageCode.getByCodeIgnoreCase(Constants.DEFAULT_LANGUAGE).getName());
         assertNotNull(sheet);
@@ -105,7 +105,7 @@ class ExcelVocabularyExporterTest {
     }
 
     @Test
-    void exportGlossaryUsesVocabularyServiceToRetrievePrefixes() {
+    void exportVocabularyUsesVocabularyServiceToRetrievePrefixes() {
         final URI vocabularyUri = Generator.generateUri();
         final URI exactMatchVocabularyUri = Generator.generateUri();
         final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId(vocabularyUri))
@@ -115,13 +115,13 @@ class ExcelVocabularyExporterTest {
         when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
 
-        sut.exportGlossary(vocabulary, exportConfig());
+        sut.exportVocabulary(vocabulary, exportConfig());
         verify(vocabularyService).resolvePrefix(vocabularyUri);
         verify(vocabularyService).resolvePrefix(exactMatchVocabularyUri);
     }
 
     @Test
-    void exportGlossaryGeneratesExtraSheetWithPrefixMapping() throws Exception {
+    void exportVocabularyGeneratesExtraSheetWithPrefixMapping() throws Exception {
         final URI vocabularyUri = vocabulary.getUri();
         final String vocabularyPrefix = "pOne";
         when(vocabularyService.resolvePrefix(vocabularyUri)).thenReturn(new PrefixDeclaration(vocabularyPrefix,
@@ -137,7 +137,7 @@ class ExcelVocabularyExporterTest {
         terms.get(0).setExactMatchTerms(
                 Collections.singleton(new TermInfo(Generator.generateTermWithId(exactMatchVocabularyUri))));
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
+        final Resource result = sut.exportVocabulary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheetAt(wb.getNumberOfSheets() - 1);
         assertNotNull(sheet);
@@ -157,13 +157,13 @@ class ExcelVocabularyExporterTest {
     }
 
     @Test
-    void exportGlossaryOutputsLocalizedVersionsOfTermsIntoSeparateSheets() throws Exception {
+    void exportVocabularyOutputsLocalizedVersionsOfTermsIntoSeparateSheets() throws Exception {
         when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final String[] languages = {"en", "cs"};
         final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),
                                          Generator.generateMultiLingualTerm(languages));
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
+        final Resource result = sut.exportVocabulary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         for (String langCode : languages) {
             final XSSFSheet sheet = wb.getSheet(LanguageCode.getByCodeIgnoreCase(langCode).getName());
@@ -179,21 +179,21 @@ class ExcelVocabularyExporterTest {
     }
 
     @Test
-    void exportGlossarySkipsNullLanguages() throws Exception {
+    void exportVocabularySkipsNullLanguages() throws Exception {
         when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final String[] languages = {"en", "cs"};
         final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),
                                          Generator.generateMultiLingualTerm(languages));
         terms.get(0).getLabel().set("Language-less");
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
+        final Resource result = sut.exportVocabulary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         // Glossary sheets + prefix sheet
         assertEquals(languages.length + 1, wb.getNumberOfSheets());
     }
 
     @Test
-    void exportGlossaryHandlesTermsWithoutDescriptionAndDefinition() {
+    void exportVocabularyHandlesTermsWithoutDescriptionAndDefinition() {
         when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final String[] languages = {"en", "cs"};
         final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),
@@ -201,6 +201,6 @@ class ExcelVocabularyExporterTest {
         terms.get(0).setDescription(null);
         terms.get(1).setDefinition(null);
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        assertDoesNotThrow(() -> sut.exportGlossary(vocabulary, exportConfig()));
+        assertDoesNotThrow(() -> sut.exportVocabulary(vocabulary, exportConfig()));
     }
 }

@@ -187,11 +187,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     @Override
     protected void postUpdate(@Nonnull Term instance) {
-        final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
+        final Vocabulary vocabulary = vocabularyService.findRequired(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
-            vocabulary.getGlossary().removeRootTerm(instance);
+            vocabulary.removeRootTerm(instance);
         } else {
-            vocabulary.getGlossary().addRootTerm(instance);
+            vocabulary.addRootTerm(instance);
         }
     }
 
@@ -206,11 +206,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional
     public void addRootTermToVocabulary(Term instance, Vocabulary vocabulary) {
         prepareTermForPersist(instance, vocabulary);
-        instance.setGlossary(vocabulary.getGlossary().getUri());
+        instance.setVocabulary(vocabulary.getUri());
         instance.splitExternalAndInternalParents();
 
         assert !instance.hasParentInSameVocabulary();
-        addTermAsRootToGlossary(instance, vocabulary.getUri());
+        addTermAsRootToVocabulary(instance, vocabulary.getUri());
         termDao.persist(instance, vocabulary);
     }
 
@@ -231,11 +231,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                                              termLabel.get(vocabulary.getPrimaryLanguage()));
     }
 
-    private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
-        // Load vocabulary so that it is managed and changes to it (resp. the glossary) are persisted on commit
-        final Vocabulary toUpdate = vocabularyService.getReference(vocabularyIri);
-        instance.setGlossary(toUpdate.getGlossary().getUri());
-        toUpdate.getGlossary().addRootTerm(instance);
+    private void addTermAsRootToVocabulary(Term instance, URI vocabularyIri) {
+        // Load vocabulary so that it is managed and changes to it are persisted on commit
+        final Vocabulary toUpdate = vocabularyService.findRequired(vocabularyIri);
+        instance.setVocabulary(toUpdate.getUri());
+        toUpdate.addRootTerm(instance);
     }
 
     @Transactional
@@ -247,14 +247,14 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
 
-        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
+        final Vocabulary vocabulary = vocabularyService.findRequired(vocabularyIri);
         prepareTermForPersist(instance, vocabulary);
 
-        instance.setGlossary(vocabulary.getGlossary().getUri());
+        instance.setVocabulary(vocabulary.getUri());
         instance.addParentTerm(parentTerm);
         instance.splitExternalAndInternalParents();
         if (!instance.hasParentInSameVocabulary()) {
-            addTermAsRootToGlossary(instance, vocabularyIri);
+            addTermAsRootToVocabulary(instance, vocabularyIri);
         }
 
         termDao.persist(instance, vocabulary);
@@ -681,7 +681,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         super.postRemove(instance);
         if (!instance.hasParentInSameVocabulary()) {
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
-            v.getGlossary().removeRootTerm(instance);
+            v.removeRootTerm(instance);
         }
         termOccurrenceService.removeAllOf(instance);
     }

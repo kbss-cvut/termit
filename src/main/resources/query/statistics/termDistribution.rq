@@ -7,11 +7,11 @@ PREFIX dc: <http://purl.org/dc/terms/>
 SELECT ?vocabulary ?label ( COUNT(DISTINCT ?term) AS ?count ) ?language {
     GRAPH ?g {
         ?term a skos:Concept ;
+            skos:inScheme ?vocabulary .
+        ?vocabulary dc:title ?label ;
+            dc:language ?language .
     }
-    ?term pdp:je-pojmem-ze-slovníku ?vocabulary .
     FILTER NOT EXISTS {
         ?vocabulary a pdp:verze-slovníku .
     }
-    ?vocabulary dc:title ?label .
-    ?vocabulary dc:language ?language .
 } GROUP BY ?vocabulary ?label ?language

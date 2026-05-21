@@ -37,7 +37,6 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -286,38 +285,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             find(entity.getUri()).ifPresent(em::remove);
             refreshLastModified();
             em.getEntityManagerFactory().getCache().evict(vocabularyContext);
-            em.getEntityManagerFactory().getCache().evict(Glossary.class, entity.getGlossary().getUri(), null);
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    /**
-     * Updates glossary contained in the specified vocabulary.
-     * <p>
-     * The vocabulary is passed for correct context resolution, as glossary existentially depends on its owning
-     * vocabulary.
-     *
-     * @param entity Owner of the updated glossary
-     * @return The updated entity
-     */
-    public Glossary updateGlossary(Vocabulary entity) {
-        Objects.requireNonNull(entity);
-        final Glossary result = em.merge(entity.getGlossary(), descriptorFactory.glossaryDescriptor(entity));
-        refreshLastModified();
-        return result;
-    }
-
-    /**
-     * Finds a glossary given its URI.
-     *
-     * @param uri glossary URI to find
-     * @return Glossary, if found
-     */
-    public Optional<Glossary> findGlossary(URI uri) {
-        Objects.requireNonNull(uri);
-        return Optional.ofNullable(em.find(Glossary.class, uri));
     }
 
     /**
@@ -339,8 +310,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                             "        SELECT ?import WHERE {" +
                                             "           ?targetVocabulary ?importsVocabulary* ?import . " +
                                             "} } }", Boolean.class)
-                 .setParameter("isTermFromVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("isTermFromVocabulary", URI.create(SKOS.IN_SCHEME))
                  .setParameter("subjectVocabulary", subjectVocabulary)
                  .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
                  .setParameter("targetVocabulary", targetVocabulary)
@@ -409,8 +379,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
                  .setParameter("hasTimestamp", URI.create(
                          cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("inVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                  .setParameter("vocabulary", vocabulary);
     }
 
@@ -441,8 +410,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                  " }", Boolean.class)
                       .setParameter("type", URI.create(SKOS.CONCEPT))
                       .setParameter("vocabulary", vocabulary.getUri())
-                      .setParameter("inVocabulary",
-                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                      .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                       .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -531,7 +499,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     public List<RdfStatement> getIncomingTermRelations(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final URI termType = URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class));
-        final URI inVocabulary = URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
+        final URI inVocabulary = URI.create(SKOS.IN_SCHEME);
 
         try {
             return em.createNativeQuery("""
@@ -579,8 +547,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                 }
                                                 """, String.class)
                      .setParameter("type", URI.create(SKOS.CONCEPT))
-                     .setParameter("inVocabulary",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("labelProp", URI.create(SKOS.PREF_LABEL))
                      .getResultList();

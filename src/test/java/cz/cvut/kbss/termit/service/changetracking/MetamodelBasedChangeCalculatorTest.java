@@ -23,7 +23,6 @@ import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
@@ -55,7 +54,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesDiscoversChangeInSingularLiteralAttribute() {
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
         changed.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
 
@@ -70,7 +68,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Vocabulary clone = new Vocabulary();
         clone.setUri(original.getUri());
         clone.setDescription(original.getDescription());
-        clone.setGlossary(original.getGlossary());
         clone.setLabel(original.getLabel());
         clone.setPrimaryLanguage(original.getPrimaryLanguage());
         return clone;
@@ -80,16 +77,15 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesDiscoversInSingularReferenceAttribute() {
         // Note: This does not normally happen, it simulates possible changes in model when assets would have singular references to other objects
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getGlossary().setUri(Generator.generateUri());
+        original.setDocument(Generator.generateDocumentWithId());
         final Vocabulary changed = cloneOf(original);
-        changed.setGlossary(new Glossary());
-        changed.getGlossary().setUri(Generator.generateUri());
+        changed.setDocument(Generator.generateDocumentWithId());
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getUri(), record.getChangedEntity());
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), record.getChangedAttribute());
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument), record.getChangedAttribute());
     }
 
     @Test
@@ -115,7 +111,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         clone.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         clone.setDescription(original.getDescription());
         clone.setVocabulary(original.getVocabulary());
-        clone.setGlossary(original.getGlossary());
         return clone;
     }
 
@@ -136,9 +131,9 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesDiscoversChangesInSingularIdentifierBasedReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(Generator.generateUri());
+        original.setVocabulary(Generator.generateUri());
         final Term changed = cloneOf(original);
-        changed.setGlossary(Generator.generateUri());
+        changed.setVocabulary(Generator.generateUri());
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
@@ -272,7 +267,6 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularLiteralAttribute() {
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
         changed.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
 
@@ -287,16 +281,15 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularReferenceAttribute() {
         // Note: This does not normally happen, it simulates possible changes in model when assets would have singular references to other objects
         final Vocabulary original = Generator.generateVocabularyWithId();
-        original.getGlossary().setUri(Generator.generateUri());
+        original.setDocument(Generator.generateDocumentWithId());
         final Vocabulary changed = cloneOf(original);
-        changed.setGlossary(new Glossary());
-        changed.getGlossary().setUri(Generator.generateUri());
+        changed.setDocument(Generator.generateDocumentWithId());
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(Collections.singleton(original.getGlossary().getUri()), record.getOriginalValue());
-        assertEquals(Collections.singleton(changed.getGlossary().getUri()), record.getNewValue());
+        assertEquals(Collections.singleton(original.getDocument().getUri()), record.getOriginalValue());
+        assertEquals(Collections.singleton(changed.getDocument().getUri()), record.getNewValue());
     }
 
     @Test
@@ -332,15 +325,15 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularIdentifierBasedReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(Generator.generateUri());
+        original.setVocabulary(Generator.generateUri());
         final Term changed = cloneOf(original);
-        changed.setGlossary(Generator.generateUri());
+        changed.setVocabulary(Generator.generateUri());
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(Collections.singleton(original.getGlossary()), record.getOriginalValue());
-        assertEquals(Collections.singleton(changed.getGlossary()), record.getNewValue());
+        assertEquals(Collections.singleton(original.getVocabulary()), record.getOriginalValue());
+        assertEquals(Collections.singleton(changed.getVocabulary()), record.getNewValue());
     }
 
     @Test

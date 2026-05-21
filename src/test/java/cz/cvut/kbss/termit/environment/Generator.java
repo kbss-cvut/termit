@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -254,7 +253,6 @@ public class Generator {
     public static cz.cvut.kbss.termit.model.Vocabulary generateVocabulary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary =
                 new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setGlossary(new Glossary());
         final String primaryLanguage = Environment.LANGUAGE;
         vocabulary.setPrimaryLanguage(primaryLanguage);
         vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), primaryLanguage));
@@ -398,24 +396,6 @@ public class Generator {
             result.forEach(r -> r.setAuthor(user));
         }
         return result;
-    }
-
-    /**
-     * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
-     *
-     * @param term          Term in vocabulary
-     * @param vocabularyIri Vocabulary identifier
-     * @param em            Transactional entity manager to unwrap repository connection from
-     */
-    public static void addTermInVocabularyRelationship(Term term, URI vocabularyIri,
-                                                       EntityManager em) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(term.getUri().toString()),
-                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                     vf.createIRI(vocabularyIri.toString()));
-        }
     }
 
     /**

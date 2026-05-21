@@ -155,9 +155,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.setDefinition(MultilingualString.create("Updated term definition.", Environment.LANGUAGE));
         // This is normally inferred
@@ -178,12 +177,10 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
-            parent.setGlossary(vocabulary.getGlossary().getUri());
+            term.setVocabulary(vocabulary.getUri());
+            parent.setVocabulary(vocabulary.getUri());
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.addParentTerm(parent);
         // This is normally inferred
@@ -204,9 +201,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final MultilingualString originalDefinition = term.getDefinition();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         final MultilingualString newDefinition = MultilingualString
                 .create("Updated term definition.", Environment.LANGUAGE);
@@ -229,12 +225,10 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            parent.setGlossary(vocabulary.getGlossary().getUri());
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            parent.setVocabulary(vocabulary.getUri());
+            term.setVocabulary(vocabulary.getUri());
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.addParentTerm(parent);
         // This is normally inferred
@@ -263,9 +257,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         termService.setState(term, Generator.randomItem(Generator.TERM_STATES));
@@ -282,9 +275,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(()-> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         termService.remove(term);

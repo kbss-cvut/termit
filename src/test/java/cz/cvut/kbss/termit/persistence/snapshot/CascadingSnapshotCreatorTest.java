@@ -92,12 +92,10 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             if (rootTerm) {
-                vocabulary.getGlossary().addRootTerm(term);
+                vocabulary.addRootTerm(term);
             }
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         vocabularyTerms.put(vocabulary, term);
         return vocabulary;
@@ -132,7 +130,6 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         final Vocabulary result = findRequiredSnapshot(vocabulary, Vocabulary.class);
         assertEquals(vocabulary.getLabel(), result.getLabel());
         assertEquals(vocabulary.getDescription(), result.getDescription());
-        assertNotNull(result.getGlossary());
     }
 
     @Test
@@ -141,7 +138,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.createSnapshot(vocabulary));
         final Vocabulary result = findRequiredSnapshot(vocabulary, Vocabulary.class);
-        assertEquals(1, result.getGlossary().getRootTerms().size());
+        assertEquals(1, result.getRootTerms().size());
     }
 
     @Test
@@ -155,7 +152,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         assertEquals(term.getLabel(), result.getLabel());
         assertEquals(term.getDefinition(), result.getDefinition());
         assertEquals(term.getDescription(), result.getDescription());
-        assertEquals(vocabularyResult.getGlossary().getUri(), result.getGlossary());
+        assertEquals(vocabularyResult.getUri(), result.getVocabulary());
         assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu));
     }
 
@@ -178,9 +175,6 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         final String queryString = "ASK { ?s ?isSnapshotOf ?a }";
         assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
                              cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_slovniku)).setParameter("a", vocabulary)
-                     .getSingleResult());
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                             cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_glosare)).setParameter("a", vocabulary.getGlossary())
                      .getSingleResult());
         assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_pojmu)).setParameter("a", term).getSingleResult());

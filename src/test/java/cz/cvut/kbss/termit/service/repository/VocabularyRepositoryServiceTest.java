@@ -145,16 +145,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void persistCreatesGlossary() {
-        final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        setPrimaryLabel(vocabulary, "TestVocabulary");
-        sut.persist(vocabulary);
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
-        assertNotNull(result.getGlossary());
-    }
-
-    @Test
     void persistThrowsResourceExistsExceptionWhenAnotherVocabularyWithIdenticalIdentifierAlreadyIriExists() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary));
@@ -202,6 +192,25 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
         assertEquals(newName, result.getLabel().get(Environment.LANGUAGE));
+    }
+
+    @Test
+    void updateRestoresRootTermsFromExistingInstance() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setRootTerms(Set.of(Generator.generateUri(), Generator.generateUri()));
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final Vocabulary update = new Vocabulary(vocabulary.getUri());
+        update.setRootTerms(Set.of());
+        update.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
+        update.setLabel(vocabulary.getLabel());
+        update.setDescription(vocabulary.getDescription());
+        update.getDescription().set(Environment.LANGUAGE, "Updated description.");
+        sut.update(update);
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertNotNull(result);
+        assertEquals(vocabulary.getRootTerms(), result.getRootTerms());
+        assertEquals("Updated description.", result.getDescription().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -266,17 +275,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Term child = Generator.generateTermWithId();
         final Term parentTerm = Generator.generateTermWithId();
         child.addParentTerm(parentTerm);
-        subjectVocabulary.getGlossary().addRootTerm(child);
-        targetVocabulary.getGlossary().addRootTerm(parentTerm);
+        subjectVocabulary.addRootTerm(child);
+        targetVocabulary.addRootTerm(parentTerm);
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
+            child.setVocabulary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
+            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
@@ -290,19 +297,17 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
         final Term child = Generator.generateTermWithId();
         final Term parentTerm = Generator.generateTermWithId();
-        subjectVocabulary.getGlossary().addRootTerm(child);
+        subjectVocabulary.addRootTerm(child);
         child.setVocabulary(subjectVocabulary.getUri());
-        targetVocabulary.getGlossary().addRootTerm(parentTerm);
+        targetVocabulary.addRootTerm(parentTerm);
         parentTerm.setVocabulary(targetVocabulary.getUri());
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
+            child.setVocabulary(subjectVocabulary.getUri());
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
+            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
@@ -397,23 +402,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         assertEquals(1, sut.getTermCount(vocabulary));
-    }
-
-    @Test
-    void persistGeneratesGlossaryIriBasedOnVocabularyIriAndConfiguredFragment() {
-        final String label = "Test vocabulary " + System.currentTimeMillis();
-        final Vocabulary vocabulary = new Vocabulary();
-        setPrimaryLabel(vocabulary, label);
-        sut.persist(vocabulary);
-        assertNotNull(vocabulary.getUri());
-        assertNotNull(vocabulary.getGlossary());
-
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
-        assertEquals(vocabulary.getUri() + "/" + config.getGlossary().getFragment(),
-                     result.getGlossary().getUri().toString());
     }
 
     @Test
@@ -442,7 +432,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
         final Vocabulary update = new Vocabulary(vocabulary.getUri());
-        update.setGlossary(vocabulary.getGlossary());
         setPrimaryLabel(update, "Updated label");
         // Intentionally leave ACL null; this is how it would arrive from the client
 
