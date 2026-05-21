@@ -49,7 +49,7 @@ public abstract class TermOccurrence extends AbstractEntity implements Copyable<
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_is_term_assignment)
+    @OWLObjectProperty(iri = Vocabulary.s_p_is_assignment_of_term)
     private URI term;
 
     @NotNull

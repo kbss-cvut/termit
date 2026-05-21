@@ -28,7 +28,7 @@ import java.util.Set;
 
 abstract class AbstractAssignmentsInfo implements HasTypes {
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_is_term_assignment)
+    @OWLObjectProperty(iri = Vocabulary.s_p_is_assignment_of_term)
     private URI term;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj)
