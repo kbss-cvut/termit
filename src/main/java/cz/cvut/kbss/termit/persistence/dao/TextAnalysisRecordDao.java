@@ -63,10 +63,8 @@ public class TextAnalysisRecordDao {
                     "?hasDateCreated ?dateCreated ." +
                     "} ORDER BY DESC(?dateCreated)", TextAnalysisRecord.class)
                                        .setMaxResults(1)
-                                 .setParameter("type", URI.create(
-                                         "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/záznam-o-textové-analýze"))
-                                 .setParameter("hasResource", URI.create(
-                                         "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-analyzovaný-zdroj"))
+                                 .setParameter("type", URI.create(Vocabulary.s_c_text_analysis_record))
+                                 .setParameter("hasResource", URI.create(Vocabulary.s_p_has_analyzed_resource))
                                  .setParameter("hasDateCreated", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                                  .setParameter("resource", resource.getUri()).getSingleResult());
         } catch (NoResultException e) {

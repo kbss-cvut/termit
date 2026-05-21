@@ -129,6 +129,6 @@ public class TermOccurrenceController extends BaseController {
         private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the term occurrence identifier.";
         private static final String ID_LOCAL_NAME_EXAMPLE = "instance-12345";
         private static final String ID_NAMESPACE_DESCRIPTION = "Term occurrence identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/výskyt-termu/";
+        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/application/termit/term-occurrence/";
     }
 }

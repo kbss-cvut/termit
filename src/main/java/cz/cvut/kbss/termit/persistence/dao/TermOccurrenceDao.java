@@ -144,7 +144,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                               .setParameter("hasSuffix", URI.create(Vocabulary.s_p_has_text_quote_suffix))
                               .setParameter("hasStart", URI.create(Vocabulary.s_p_has_start_position))
                               .setParameter("hasEnd", URI.create(Vocabulary.s_p_has_end_position))
-                              .setParameter("fileOccurrence", URI.create(Vocabulary.s_c_file_occurrence_target))
+                              .setParameter("fileOccurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
                               .setParameter("definitionalOccurrence", URI.create(Vocabulary.s_c_definition_term_occurrence))
                               .setParameter("suggestedType", URI.create(Vocabulary.s_c_suggested_term_occurrence));
         return new SparqlResultToTermOccurrenceMapper(target.getUri()).map(query.getResultList());

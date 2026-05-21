@@ -55,7 +55,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#broader> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/approved> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
@@ -93,7 +93,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#related> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/approved> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
@@ -121,7 +121,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                     <http://www.w3.org/2004/02/skos/core#prefLabel> "Object"@en .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
@@ -161,7 +161,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#related> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/approved> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
@@ -206,7 +206,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 << <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://www.w3.org/2004/02/skos/core#related> <http://onto.fel.cvut.cz/ontologies/application/termit/subject> >> <http://onto.fel.cvut.cz/ontologies/application/termit/approved> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
@@ -251,7 +251,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#broader> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/annotated-by> <http://onto.fel.cvut.cz/ontologies/application/termit/annotating-term> .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/annotated-by> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/annotated-by> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Annotated by"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
@@ -285,7 +285,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#related> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://www.w3.org/2000/01/rdf-schema#comment> "Comment" .
                 }
                 <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
-                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/vlastní-atribut> ;
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }

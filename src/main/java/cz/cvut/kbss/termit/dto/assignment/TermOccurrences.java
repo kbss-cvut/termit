@@ -48,7 +48,7 @@ import java.util.Objects;
 ))
 public class TermOccurrences extends AbstractAssignmentsInfo {
 
-    public static final String COUNT_PROPERTY = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/počet";
+    public static final String COUNT_PROPERTY = Vocabulary.ONTOLOGY_IRI_TERMIT + "/count";
 
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String resourceLabel;

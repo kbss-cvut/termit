@@ -249,13 +249,13 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
                 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
                 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-                @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
-                @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .termit-pojem:zablokovaný-uživatel-termitu
+                @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+                termit:blocked-user
                         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
                         <http://www.w3.org/2004/02/skos/core#broader>
-                                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
                         <http://www.w3.org/2004/02/skos/core#inScheme>
-                                termit:glosář ;
+                                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
                         <http://www.w3.org/2004/02/skos/core#prefLabel>
                                 "Blocked TermIt user"@en , "Zablokovaný uživatel TermItu"@cs .""";
         transactional(() -> {
@@ -368,7 +368,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                     "data/test-glossary.ttl"),
                                                                Environment.loadFile(
                                                                        "data/test-glossary-with-definition-with-empty-language-tag.ttl"))));
-            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zablokovaný-uživatel-termitu",
+            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user",
                          ex.getParameters().get("term"));
             assertEquals("http://www.w3.org/2004/02/skos/core#definition",
                          ex.getParameters().get("property"));
@@ -532,7 +532,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         assertNotNull(result);
         assertThat(result.getProperties().keySet(),
                    hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
-        assertEquals(Set.of("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/"),
+        assertEquals(Set.of("http://onto.fel.cvut.cz/ontologies/application/termit/"),
                      result.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
     }
 
@@ -598,7 +598,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                             new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
                                     "data/test-glossary-term-without-label.ttl"))));
             assertEquals("error.vocabulary.import.skos.missingLabel", ex.getMessageId());
-            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zablokovaný-uživatel-termitu",
+            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user",
                          ex.getParameters().get("term"));
         });
     }
