@@ -72,9 +72,9 @@ import java.util.stream.IntStream;
 public class Generator {
 
     public static URI[] TERM_STATES = new URI[]{
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/new-term"),
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/published-term"),
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cancelled-term")
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/new-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/published-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/cancelled-term")
     };
 
     private static final Random random = new Random();

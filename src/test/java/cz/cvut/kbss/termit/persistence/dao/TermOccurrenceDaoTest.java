@@ -354,7 +354,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertThat(sut.findAllTargeting(file), not(emptyCollectionOf(TermOccurrence.class)));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence .} }", Boolean.class)
                      .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_occurrence_target))
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
                      .getSingleResult());
     }
 
@@ -505,7 +505,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(2, result.size());
         for (TermOccurrences a : result) {
-            if (a.getTypes().contains(Vocabulary.s_c_file_occurrence_target)) {
+            if (a.getTypes().contains(Vocabulary.s_c_file_term_occurrence)) {
                 assertEquals(fileOccurrences.size(), a.getCount().intValue());
             } else {
                 assertThat(a.getTypes(), hasItem(Vocabulary.s_c_definition_term_occurrence));
