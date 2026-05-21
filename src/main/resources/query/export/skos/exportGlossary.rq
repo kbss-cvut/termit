@@ -14,6 +14,7 @@ CONSTRUCT {
               dc:description ?description ;
               dc:creator ?fullName ;
               dc:created ?created ;
+              dc:modified ?latestMod ;
               dc:rights ?rights ;
               owl:imports ?imported ;
               owl:versionIRI ?versionIri ;
@@ -73,6 +74,22 @@ CONSTRUCT {
         }
         FILTER(?createdDateMax = ?created)
     }
+    OPTIONAL {
+        SELECT (MAX(?contentMod) as ?contentLatestMod) WHERE {
+            ?changeRecord a pdp:změna ;
+            pdp:má-změněnou-entitu ?t ;
+            pdp:má-datum-a-čas-modifikace ?contentMod .
+            ?t pdp:je-pojmem-ze-slovníku ?vocabulary .
+        }
+    }
+    OPTIONAL {
+        SELECT (MAX(?modified) as ?metadataLatestMod) WHERE {
+            ?changeRecord a pdp:změna ;
+            pdp:má-změněnou-entitu ?vocabulary ;
+            pdp:má-datum-a-čas-modifikace ?modified .
+        }
+    }
+    BIND (IF(?contentLatestMod > ?metadataLatestMod, ?contentLatestMod, ?metadataLatestMod) AS ?latestMod)
     BIND (CONCAT(?firstName, " ", ?lastName) AS ?fullName)
     BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
 }
