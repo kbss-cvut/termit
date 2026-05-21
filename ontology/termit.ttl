@@ -25,7 +25,7 @@
         owl:versionInfo "2.0.0-SNAPSHOT" ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/2.0.0-SNAPSHOT> ;
         <http://www.w3.org/2004/02/skos/core#hasTopConcept>
-                termit:has-text-quote-prefix , termit:is-term-definition-selector , termit:user-role , termit:has-user-role , termit:configuration , termit:has-end-position , termit:text-analysis-record , termit:user , termit:has-term-definition-source , termit:selector , termit:has-exact-text-quote , termit:target , termit:is-term-assignment , termit:definition-selector , termit:has-target , termit:has-analysis-vocabulary , termit:has-start-position , termit:term-assignment , termit:has-text-quote-suffix , termit:has-selector , termit:has-analyzed-resource , termit:reaction , termit:has-reaction , termit:is-topic-of , termit:has-my-last-comment , termit:has-maximum-file-size , termit:has-indexed-language , termit:has-version-separator , termit:read-only , termit:external , termit:forbidden , termit:access-control-list , termit:has-access-control-list , termit:access-control-record , termit:has-access-control-record , termit:has-access-level-holder , termit:has-access-level , termit:access-level , termit:initial-term-state , termit:terminal-term-state , termit:password-reset-request , termit:has-modeling-tool-address , termit:custom-attribute , termit:has-last-backup-datetime , termit:personal-access-token , termit:has-expiration-date .
+                termit:has-text-quote-prefix , termit:is-term-definition-selector , termit:user-role , termit:has-user-role , termit:configuration , termit:has-end-position , termit:text-analysis-record , termit:user , termit:has-term-definition-source , termit:selector , termit:has-exact-text-quote , termit:target , termit:is-assignment-of-term , termit:definition-selector , termit:has-target , termit:has-analysis-vocabulary , termit:has-start-position , termit:term-assignment , termit:has-text-quote-suffix , termit:has-selector , termit:has-analyzed-resource , termit:reaction , termit:has-reaction , termit:is-topic-of , termit:has-my-last-comment , termit:has-maximum-file-size , termit:has-indexed-language , termit:has-version-separator , termit:read-only , termit:external , termit:forbidden , termit:access-control-list , termit:has-access-control-list , termit:access-control-record , termit:has-access-control-record , termit:has-access-level-holder , termit:has-access-level , termit:access-level , termit:initial-term-state , termit:terminal-term-state , termit:password-reset-request , termit:has-modeling-tool-address , termit:custom-attribute , termit:has-last-backup-datetime , termit:personal-access-token , termit:has-expiration-date .
 
 termit:definition-occurrence-target
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
@@ -243,7 +243,7 @@ termit:target
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Target"@en , "Cíl"@cs .
 
-termit:is-term-assignment
+termit:is-assignment-of-term
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
@@ -607,14 +607,14 @@ termit:access-level
                 "Access level"@en , "Úroveň přístupových oprávnění"@cs ;
         owl:equivalentClass [
                             a          owl:Class ;
-                            owl:oneOf ( <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security>
-                                        <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write>
-                                        <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read>
-                                        <http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none>
+                            owl:oneOf ( <http://onto.fel.cvut.cz/ontologies/application/termit/access-level/security>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/access-level/write>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/access-level/read>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/access-level/none>
                                       )
                             ] .
 
-<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/none>
+<http://onto.fel.cvut.cz/ontologies/application/termit/access-level/none>
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  termit:access-level ;
@@ -623,7 +623,7 @@ termit:access-level
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Access level - None"@en , "Úroveň přístupových oprávnění - Žádná"@cs .
 
-<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/read>
+<http://onto.fel.cvut.cz/ontologies/application/termit/access-level/read>
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  termit:access-level ;
@@ -632,7 +632,7 @@ termit:access-level
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Access level - Read"@en , "Úroveň přístupových oprávnění - Čtení"@cs .
 
-<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/write>
+<http://onto.fel.cvut.cz/ontologies/application/termit/access-level/write>
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  termit:access-level ;
@@ -641,7 +641,7 @@ termit:access-level
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Access level - Write"@en , "Úroveň přístupových oprávnění - Zápis"@cs .
 
-<http://onto.fel.cvut.cz/ontologies/application/termit/term/access-level/security>
+<http://onto.fel.cvut.cz/ontologies/application/termit/access-level/security>
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:NamedIndividual ;
         <http://www.w3.org/2004/02/skos/core#broader>
                  termit:access-level ;

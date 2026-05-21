@@ -160,7 +160,7 @@ changeSets:
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-přiřazením-termu
-                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/is-term-assignment
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/is-assignment-of-term
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/selektor-definice
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/definition-selector

@@ -102,7 +102,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                             "?x a ?type ;" +
                                             "?hasTerm ?term . }", TermOccurrence.class)
                  .setParameter("type", typeUri)
-                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                  .setParameter("term", term.getUri()).getResultList();
     }
 
@@ -133,7 +133,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                               .setParameter("g", TermOccurrence.resolveContext(target.getUri()))
                               .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
                               .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
-                              .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                              .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                               .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
                               .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
                               .setParameter("source", target.getUri())
@@ -183,7 +183,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                             "} GROUP BY ?resource ?term ?label ?type ?suggested HAVING (?cnt > 0) ORDER BY ?label",
                                     "TermOccurrences")
                  .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_suggested_term_occurrence))
-                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                  .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
                  .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
                  .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
