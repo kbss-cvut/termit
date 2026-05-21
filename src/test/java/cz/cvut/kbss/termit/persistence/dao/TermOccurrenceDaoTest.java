@@ -527,7 +527,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                      .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
                      .setParameter("x", occurrence.getUri())
                      .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
-                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                      .getSingleResult());
         final URI newTermUri = Generator.generateUri();
         occurrence.setTerm(newTermUri);
@@ -536,7 +536,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                      .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
                      .setParameter("x", occurrence.getUri())
                      .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
-                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_term_assignment))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                      .getSingleResult());
     }
 
