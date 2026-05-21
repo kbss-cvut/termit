@@ -195,7 +195,8 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         final Term term = generateTermWithSnapshot();
 
         final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptySet());
-        assertEquals(Collections.singletonList(new TermDto(term)), result);
+        assertThat(result, hasItem(new TermDto(term)));
+        assertTrue(result.stream().noneMatch(dto -> dto.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu)));
     }
 
     @Test

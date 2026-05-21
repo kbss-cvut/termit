@@ -1,7 +1,6 @@
 PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 PREFIX dc: <http://purl.org/dc/terms/>
 
 SELECT ?vocabulary ?label ( COUNT(DISTINCT ?term) AS ?count ) ?language {

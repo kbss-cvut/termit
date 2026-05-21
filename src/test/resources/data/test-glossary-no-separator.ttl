@@ -16,7 +16,7 @@
                 "This is a test version of the vocabulary of TermIt"@en , "Toto je testovací verze slovníku systému TermIt"@cs ;
         <http://purl.org/dc/terms/created>
                 "25.04.2019" ;
-        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/glosář/verze/1.1.1> .
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/1.1.1> .
 
 termit:blocked-user
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
