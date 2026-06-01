@@ -90,7 +90,7 @@ changeSets:
     -   id: 3
         changes:
             -   type: renameResource
-                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cíl-výskytu
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cíl-definičního-výskytu
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/definition-occurrence-target
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-prefix-text-quote
@@ -314,3 +314,22 @@ changeSets:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-datum-expirace
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-expiration-date
+    -   id: 4
+        changes:
+            -   type: sparqlUpdate
+                query: |
+                    PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                    DELETE {
+                        ?x ?y pdp:slovník .
+                    } INSERT {
+                        GRAPH <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
+                            ?x ?y <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    } WHERE {
+                        GRAPH <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
+                            ?x ?y pdp:slovník .
+                        }
+                    }
+            -   type: sparqlUpdate
+                query: |
+                    MOVE <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/seznam-řízení-přístupu> to <http://onto.fel.cvut.cz/ontologies/application/termit/access-control-list>

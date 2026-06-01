@@ -136,7 +136,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     private static Map<String, String> defaultPrefixes() {
-        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/pojem/");
+        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/");
     }
 
     private boolean isNotTermOccurrence(Node rdfaElem) {

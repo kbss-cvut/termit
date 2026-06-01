@@ -53,6 +53,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import jakarta.annotation.Nonnull;
@@ -553,12 +554,14 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public AccessControlListDto getAccessControlList(Vocabulary vocabulary) {
         return aclService.findForAsDto(vocabulary).orElseThrow(
-                () -> new NotFoundException("Access control list for vocabulary " + vocabulary + " not found."));
+                () -> new NotFoundException("Access control list for vocabulary " + Utils.uriToString(
+                        vocabulary.getUri()) + " not found."));
     }
 
     private AccessControlList findRequiredAclForVocabulary(Vocabulary vocabulary) {
         return aclService.findFor(vocabulary).orElseThrow(
-                () -> new NotFoundException("Access control list for vocabulary " + vocabulary + " not found."));
+                () -> new NotFoundException("Access control list for vocabulary " + Utils.uriToString(
+                        vocabulary.getUri()) + " not found."));
     }
 
     /**
