@@ -314,6 +314,16 @@ changeSets:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-datum-expirace
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-expiration-date
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/proposed-term
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/publikovaný-pojem
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/published-term
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zrušený-pojem
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/cancelled-term
+
     -   id: 4
         changes:
             -   type: sparqlUpdate
