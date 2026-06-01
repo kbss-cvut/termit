@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
 import cz.cvut.kbss.termit.exception.SuppressibleLogging;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.TooLargeToValidateException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
@@ -70,8 +71,8 @@ import java.util.Optional;
 import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
- * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}.<br>
- * In order for the delegation to work, the method signature of MessageExceptionHandler methods must be {@code (Message<?>, Exception)}
+ * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}.<br> In order for the
+ * delegation to work, the method signature of MessageExceptionHandler methods must be {@code (Message<?>, Exception)}
  */
 @SendToUser
 @ControllerAdvice
@@ -120,12 +121,11 @@ public class WebSocketExceptionHandler {
     }
 
     /**
-     * Searches available methods annotated with {@link MessageExceptionHandler} in this class
-     * when the method signature matches {@code (Message<?>, Exception)}
-     * and the exception parameter is assignable from the supplied throwable
-     * the method is called.
+     * Searches available methods annotated with {@link MessageExceptionHandler} in this class when the method signature
+     * matches {@code (Message<?>, Exception)} and the exception parameter is assignable from the supplied throwable the
+     * method is called.
      *
-     * @param message the associated message
+     * @param message   the associated message
      * @param throwable the exception to handle
      * @return true when a method was found and called, false otherwise
      */
@@ -142,16 +142,15 @@ public class WebSocketExceptionHandler {
     }
 
     /**
-     * Searches available methods annotated with {@link MessageExceptionHandler} in this class
-     * when the method signature matches {@code (Message<?>, Exception)}
-     * and the exception parameter is assignable from the supplied throwable
-     * the method is called.
+     * Searches available methods annotated with {@link MessageExceptionHandler} in this class when the method signature
+     * matches {@code (Message<?>, Exception)} and the exception parameter is assignable from the supplied throwable the
+     * method is called.
      *
-     * @param message the associated message
+     * @param message   the associated message
      * @param throwable the exception to handle
      * @return true when a method was found and called, false otherwise
-     * @throws IllegalArgumentException never
-     * @throws IllegalAccessException never
+     * @throws IllegalArgumentException  never
+     * @throws IllegalAccessException    never
      * @throws InvocationTargetException when the exception handler method throws an exception
      */
     private boolean delegateInternal(Message<?> message, Throwable throwable)
@@ -172,14 +171,18 @@ public class WebSocketExceptionHandler {
                     continue;
                 }
                 // check if the MessageExceptionHandler annotation has value with allowed exceptions
-                Class<? extends Throwable>[] allowedExceptions = Optional.ofNullable(method.getAnnotation(MessageExceptionHandler.class))
-                                                                         .map(MessageExceptionHandler::value).orElseGet(() -> new Class[0]);
+                Class<? extends Throwable>[] allowedExceptions = Optional.ofNullable(
+                                                                                 method.getAnnotation(MessageExceptionHandler.class))
+                                                                         .map(MessageExceptionHandler::value)
+                                                                         .orElseGet(() -> new Class[0]);
                 // if the exception is not allowed by the annotation, skip the method
-                if (allowedExceptions.length > 0 && Arrays.stream(allowedExceptions).noneMatch(e -> e.isAssignableFrom(exception.getClass()))) {
+                if (allowedExceptions.length > 0 && Arrays.stream(allowedExceptions)
+                                                          .noneMatch(e -> e.isAssignableFrom(exception.getClass()))) {
                     continue;
                 }
                 // validate the method signature
-                if (params[0].isAssignableFrom(message.getClass()) && params[1].isAssignableFrom(exception.getClass())) {
+                if (params[0].isAssignableFrom(message.getClass()) && params[1].isAssignableFrom(
+                        exception.getClass())) {
                     // call the method with message, exception parameters
                     method.invoke(this, message, exception);
                     return true; // exception was handled
@@ -251,7 +254,9 @@ public class WebSocketExceptionHandler {
         LOG.atWarn().setMessage("Authentication failure during message processing: {}\nMessage: {}")
            .addArgument(e.getMessage()).addArgument(message::toString).log();
 
-        if (ExceptionUtils.findCause(e, JwtException.class).isPresent() || ExceptionUtils.findCause(e, InvalidBearerTokenException.class).isPresent()) {
+        if (ExceptionUtils.findCause(e, JwtException.class).isPresent() || ExceptionUtils.findCause(e,
+                                                                                                    InvalidBearerTokenException.class)
+                                                                                         .isPresent()) {
             return errorInfo(message, e);
         }
 
@@ -386,6 +391,12 @@ public class WebSocketExceptionHandler {
     public ErrorInfo unsupportedTextAnalysisLanguageException(Message<?> message,
                                                               UnsupportedTextAnalysisLanguageException e) {
         logException(e, message);
+        return errorInfo(message, e);
+    }
+
+    @MessageExceptionHandler
+    public ErrorInfo tooLargeToValidateException(Message<?> message, TooLargeToValidateException e) {
+        // Do not log the exception
         return errorInfo(message, e);
     }
 }
