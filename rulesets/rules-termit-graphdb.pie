@@ -7,7 +7,7 @@ Prefices
     skos :  http://www.w3.org/2004/02/skos/core#
     pdp  :  http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/
     psys :  http://proton.semanticweb.org/protonsys#
-    termit : http://onto.fel.cvut.cz/ontologies/application/termit/pojem/
+    termit : http://onto.fel.cvut.cz/ontologies/application/termit/
     activity: https://www.w3.org/ns/activitystreams#
 }
 
@@ -72,10 +72,10 @@ Rules
 
   Id: pdp_term_2
 
-    source <rdf:type> <termit:zdroj-definice-termu>
-    source <termit:je-přiřazením-termu> this
+    source <rdf:type> <termit:term-definition-source>
+    source <termit:is-assignment-of-term> this
     -------------------------------
-    this <termit:má-zdroj-definice-termu> source
+    this <termit:has-term-definition-source> source
 
   Id: pdp_term_3
 
@@ -93,10 +93,10 @@ Rules
 
   Id: sioc_comment_1
 
-    source <rdf:type> <termit:reakce>
+    source <rdf:type> <termit:reaction>
     source <activity:object> this
     -------------------------------
-    this <termit:má-reakci> source
+    this <termit:has-reaction> source
 
   Id: skos_exact_match_symmetry
 
