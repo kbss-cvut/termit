@@ -11,6 +11,8 @@ changeSets:
                 query: |
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                     PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                    
+                    # Link top concepts to vocabulary instead of glossary
                     DELETE {
                         ?glossary skos:hasTopConcept ?t .
                     } INSERT {
@@ -19,32 +21,35 @@ changeSets:
                         }
                     } WHERE {
                         GRAPH ?g {
+                            ?vocabulary pdp:má-glosář ?glossary .
                             ?glossary skos:hasTopConcept ?t .
                         }
-                        ?t pdp:je-pojmem-ze-slovníku ?vocabulary .
                     }
 
             -   type: sparqlUpdate
                 query: |
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                                    PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>    
-                                    DELETE {
-                                        ?t skos:inScheme ?glossary .
-                                    } INSERT {
-                                        GRAPH ?g {
-                                            ?t skos:inScheme ?vocabulary .
-                                        }
-                                    } WHERE {
-                                        GRAPH ?g {
-                                            ?t a skos:Concept ;
-                                            skos:inScheme ?glossary .
-                                            ?vocabulary pdp:má-glosář ?glossary .
-                                        }
-                                    }
+                    PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                    
+                    # Link concepts to vocabulary instead of glossary
+                    DELETE {
+                        ?t skos:inScheme ?glossary .
+                    } INSERT {
+                        GRAPH ?g {
+                            ?t skos:inScheme ?vocabulary .
+                        }
+                    } WHERE {
+                        GRAPH ?g {
+                            ?t a skos:Concept ;
+                            skos:inScheme ?glossary .
+                            ?vocabulary pdp:má-glosář ?glossary .
+                        }
+                    }
             -   type: sparqlUpdate
                 query: |
                     PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
                     
+                    # Remove change records mentioning model and glossary
                     DELETE {
                         ?change ?y ?z .
                     } WHERE {
@@ -57,6 +62,8 @@ changeSets:
             -   type: sparqlUpdate
                 query: |
                     PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                    
+                    # Link ontoGrapher scheme to vocabulary instead of glossary
                     DELETE {
                         ?og <http://onto.fel.cvut.cz/ontologies/application/ontoGrapher/scheme> ?glossary .
                     } INSERT {
@@ -72,6 +79,8 @@ changeSets:
             -   type: sparqlUpdate
                 query: |
                     PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                    
+                    # Change vocabulary class to ConceptScheme
                     DELETE {
                         ?vocabulary a pdp:slovník .
                     } INSERT {
@@ -323,12 +332,18 @@ changeSets:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/zrušený-pojem
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/cancelled-term
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-adresu-modelovacího-nástroje
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-modeling-tool-address
+
 
     -   id: 4
         changes:
             -   type: sparqlUpdate
                 query: |
                     PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                    
+                    # Migrate custom attribute references of pdp:slovník to skos:ConceptScheme
                     DELETE {
                         ?x ?y pdp:slovník .
                     } INSERT {
