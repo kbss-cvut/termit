@@ -358,3 +358,12 @@ changeSets:
             -   type: sparqlUpdate
                 query: |
                     MOVE <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/seznam-řízení-přístupu> to <http://onto.fel.cvut.cz/ontologies/application/termit/access-control-list>
+
+    -   id: 5
+        changes:
+            -   type: importFromUrl
+                sourceUrl: https://onto.fel.cvut.cz/ontologies/application/termit.ttl
+                graph: http://onto.fel.cvut.cz/ontologies/application/termit
+                replace: true
+            -   type: sparqlUpdate
+                query: DROP GRAPH <http://onto.fel.cvut.cz/ontologies/termit>
