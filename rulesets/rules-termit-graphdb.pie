@@ -78,11 +78,11 @@ Rules
 
   Id: pdp_term_7
 
-      this <rdf:type> <skos:Concept>
-      this <skos:inScheme> glossary
-      vocabulary <pdp:má-glosář> glossary
-      -------------------------------
-      this <pdp:je-pojmem-ze-slovníku> vocabulary
+    this <rdf:type> <skos:Concept>
+    this <skos:inScheme> glossary
+    vocabulary <pdp:má-glosář> glossary
+    -------------------------------
+    this <pdp:je-pojmem-ze-slovníku> vocabulary
 
   Id: pdp_term_8
 
@@ -93,37 +93,37 @@ Rules
 
   Id: pdp_term_9
 
-      this <rdf:type> <skos:Concept>
-      this <skos:related> related
-      -------------------------------
-      related <skos:related> this
+    this <rdf:type> <skos:Concept>
+    this <skos:related> related
+    -------------------------------
+    related <skos:related> this
 
   Id: pdp_term_10
 
-        this <rdf:type> <skos:Concept>
-        this <skos:relatedMatch> related
-        -------------------------------
-        related <skos:relatedMatch> this
+    this <rdf:type> <skos:Concept>
+    this <skos:relatedMatch> related
+    -------------------------------
+    related <skos:relatedMatch> this
 
   Id: sioc_comment_1
 
-      source <rdf:type> <termit:reakce>
-      source <activity:object> this
-      -------------------------------
-      this <termit:má-reakci> source
+    source <rdf:type> <termit:reakce>
+    source <activity:object> this
+    -------------------------------
+    this <termit:má-reakci> source
 
   Id: skos_exact_match_symmetry
 
-      source <skos:exactMatch> this
-      -------------------------------
-      this <skos:exactMatch> source
+    source <skos:exactMatch> this
+    -------------------------------
+    this <skos:exactMatch> source
 
   Id: skos_exact_match_transitivity
 
-      x <skos:exactMatch>    y           [Constraint x != y, x != z, y != z]
-      y <skos:exactMatch>    z
-      -------------------------------
-      x <skos:exactMatch>    z
+    x <skos:exactMatch>    y           [Constraint x != y, x != z, y != z]
+    y <skos:exactMatch>    z
+    -------------------------------
+    x <skos:exactMatch>    z
 
   Id: skos_broad_match_inverse
 

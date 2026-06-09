@@ -62,7 +62,6 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
 
     @BeforeEach
     void setUp() {
-
         if (!initialized) {
             user = Generator.generateUserWithId();
             vocabulary = Generator.generateVocabularyWithId();
@@ -101,14 +100,12 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         return newTerms;
     }
 
-
     @Test
     void advancedSearchReturnsTermsMatchingIriSearchParamWithSpecifiedTypes() {
         final SearchParam param = new SearchParam(URI.create(RDF.TYPE), Set.of(TYPES[0], TYPES[1]),
                                                   MatchType.IRI);
         final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
                                                              Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
-        assertFalse(result.isEmpty());
         assertTrue(result.stream().allMatch(r -> r.hasType(SKOS.CONCEPT)));
         final List<Term> expectedTerms = terms.stream()
                                               .filter(t -> t.hasType(TYPES[0]) || t.hasType(TYPES[1]))

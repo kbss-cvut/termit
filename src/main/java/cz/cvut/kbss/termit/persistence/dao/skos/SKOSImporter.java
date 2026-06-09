@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.dao.util.DuplicateSymmetricRelationshipPruner;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
@@ -172,6 +173,7 @@ public class SKOSImporter implements VocabularyImporter {
         vocabularyDao.persist(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         notifyReferencingTerms();
+        pruneDuplicateSymmetricRelationships();
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
     }
@@ -368,7 +370,6 @@ public class SKOSImporter implements VocabularyImporter {
         INFERABLE_MAPPING_PROPERTIES.stream()
                                     .flatMap(prop -> model.filter(null, prop, null).stream())
                                     .forEach(mappingStatements::add);
-        model.removeAll(mappingStatements);
     }
 
     private void addDataIntoRepository(URI vocabularyIri) {
@@ -378,19 +379,7 @@ public class SKOSImporter implements VocabularyImporter {
             final IRI targetContext = repository.getValueFactory().createIRI(vocabularyIri.toString());
             LOG.debug("Importing vocabulary into context <{}>.", targetContext);
             conn.add(model, targetContext);
-            addAssertedSkosMappingStatements(conn, targetContext);
             conn.commit();
-        }
-    }
-
-    /**
-     * Adds only those SKOS mapping property statements that cannot be inferred from existing data to the repository.
-     */
-    private void addAssertedSkosMappingStatements(RepositoryConnection conn, IRI targetContext) {
-        for (Statement s : mappingStatements) {
-            if (!conn.hasStatement(s, true)) {
-                conn.add(s, targetContext);
-            }
         }
     }
 
@@ -547,6 +536,13 @@ public class SKOSImporter implements VocabularyImporter {
             final URI termUri = URI.create(s.getObject().stringValue());
             eventPublisher.publishEvent(new TermReferencesUpdatedEvent(this, termUri, SKOS.NARROWER.stringValue()));
         });
+    }
+
+    private void pruneDuplicateSymmetricRelationships() {
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection con = repo.getConnection()) {
+            new DuplicateSymmetricRelationshipPruner(con).prune();
+        }
     }
 
     @Override

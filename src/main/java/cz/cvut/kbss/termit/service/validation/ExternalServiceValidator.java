@@ -1,19 +1,24 @@
 package cz.cvut.kbss.termit.service.validation;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
+import cz.cvut.kbss.termit.exception.TooLargeToValidateException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Validates repository contexts by calling an external validation service.
@@ -42,6 +49,8 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
 
     private final String validationServiceUrl;
 
+    private final Set<List<URI>> tooLargeVocabularies = ConcurrentHashMap.newKeySet();
+
     public ExternalServiceValidator(RestTemplate restClient, String validationServiceUrl) {
         this.restClient = restClient;
         this.validationServiceUrl = validationServiceUrl;
@@ -53,8 +62,12 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         Objects.requireNonNull(contexts);
         Objects.requireNonNull(language);
         assert validationServiceUrl != null && !validationServiceUrl.isBlank();
-        LOG.debug("Invoking validation service for contexts {} and language '{}'.", contexts, language);
+        if (tooLargeVocabularies.contains(contexts)) {
+            LOG.trace("Contexts too large to validate.");
+            throw new TooLargeToValidateException("Contexts " + contexts + " contain too much data for validation.");
+        }
 
+        LOG.debug("Invoking validation service for contexts {} and language '{}'.", contexts, language);
         final long start = System.currentTimeMillis();
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.addAll("vocabularyContextIri", contexts.stream().map(URI::toString).toList());
@@ -79,6 +92,13 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
                     .setSeverity(r.severity())
                     .setMessage(new MultilingualString(r.message()))
                     .setIssueCauseUri(r.sourceShape())).toList();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.PAYLOAD_TOO_LARGE) {
+                LOG.warn("Validation failed for {} with message: {}", contexts, e.getResponseBodyAsString());
+                tooLargeVocabularies.add(contexts);
+                throw new TooLargeToValidateException(e.getResponseBodyAsString());
+            }
+            throw new WebServiceIntegrationException("Unable to invoke validation service.", e);
         } catch (RestClientException e) {
             throw new WebServiceIntegrationException("Unable to invoke validation service.", e);
         }
@@ -120,5 +140,10 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
             return ownSeverity.map(value -> otherSeverity.map(value::compareTo).orElse(-1))
                               .orElseGet(() -> otherSeverity.isPresent() ? 1 : 0);
         }
+    }
+
+    @EventListener(EvictCacheEvent.class)
+    public void handleEvictCacheEvent(EvictCacheEvent event) {
+        tooLargeVocabularies.clear();
     }
 }

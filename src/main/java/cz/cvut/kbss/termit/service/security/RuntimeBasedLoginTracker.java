@@ -22,10 +22,12 @@ import cz.cvut.kbss.termit.event.LoginFailureEvent;
 import cz.cvut.kbss.termit.event.LoginSuccessEvent;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Map;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * When a threshold ({@link SecurityConstants#MAX_LOGIN_ATTEMPTS}) is reached, an event is published for the
  * application. A successful login resets the counter of unsuccessful attempts for the user.
  */
+@Component
 public class RuntimeBasedLoginTracker implements LoginTracker, ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(RuntimeBasedLoginTracker.class);
@@ -82,7 +85,7 @@ public class RuntimeBasedLoginTracker implements LoginTracker, ApplicationEventP
     }
 
     @Override
-    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }
