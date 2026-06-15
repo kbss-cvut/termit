@@ -141,7 +141,7 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
     @Test
     void advancedSearchFindsTermsWhoseRelationshipsAreAnnotatedBySpecifiedTerm() {
         final SearchParam param = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(annotatingTerm.getUri().toString()),
                 MatchType.IRI
         );
@@ -159,7 +159,7 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
     @Test
     void advancedSearchDoesNotFindTermsWhoseRelationshipsAreNotAnnotated() {
         final SearchParam param = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(annotatingTerm.getUri().toString()),
                 MatchType.IRI
         );
@@ -174,7 +174,7 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
     @Test
     void advancedSearchCombinesRelationshipAnnotationWithOtherSearchParameters() {
         final SearchParam relationshipParam = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(annotatingTerm.getUri().toString()),
                 MatchType.IRI
         );
@@ -203,7 +203,7 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(otherTerm, descriptorFactory.termDescriptor(otherTerm)));
 
         final SearchParam param = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_as_relationship),
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(otherTerm.getUri().toString()),
                 MatchType.IRI
         );

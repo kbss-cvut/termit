@@ -25,7 +25,7 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_owner, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_owner, fetch = FetchType.EAGER)
     private UserAccount owner;
 
     @NotNull
@@ -38,7 +38,7 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
     private LocalDate expirationDate;
 
     @PastOrPresent
-    @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
+    @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)
     private Instant lastUsed;
 
     @Override

@@ -161,11 +161,11 @@ public class RestAuthenticationStackTest {
      */
     private String generateExpiredJwt() {
         final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
-        final String token = Jwts.builder().setSubject(staticUser.getUsername())
-                                 .setIssuedAt(Date.from(issued))
-                                 .setExpiration(Date.from(issued.plus(1, ChronoUnit.DAYS)))
+        final String token = Jwts.builder().subject(staticUser.getUsername())
+                                 .issuedAt(Date.from(issued))
+                                 .expiration(Date.from(issued.plus(1, ChronoUnit.DAYS)))
                                  .signWith(getValidSecretKey(), SIGNATURE_ALGORITHM)
-                                 .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                                 .json(new JacksonSerializer<>(objectMapper))
                                  .compact();
         return SecurityConstants.JWT_TOKEN_PREFIX + token;
     }
@@ -178,13 +178,13 @@ public class RestAuthenticationStackTest {
         final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
         final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
         final Date expiration = Date.from(issued.plus(1, ChronoUnit.DAYS));
-        return Jwts.builder().setSubject(patToken.getUri().toString())
-                   .setIssuedAt(Date.from(issued))
-                   .setExpiration(expiration)
-                   .setHeaderParam(JoseHeaderNames.TYP,  type)
+        return Jwts.builder().subject(patToken.getUri().toString())
+                   .issuedAt(Date.from(issued))
+                   .expiration(expiration)
+                   .header().add(JoseHeaderNames.TYP,  type).and()
                    .claim(JoseHeaderNames.TYP, type)
                    .signWith(getValidSecretKey(), SIGNATURE_ALGORITHM)
-                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                   .json(new JacksonSerializer<>(objectMapper))
                    .compact();
     }
 

@@ -23,7 +23,7 @@ public class CustomAttribute extends RdfsResource {
     @OWLAnnotationProperty(iri = RDFS.RANGE)
     private URI range;
 
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_as_relationship)
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_relationship)
     private Set<URI> annotatedRelationships;
 
     public CustomAttribute() {

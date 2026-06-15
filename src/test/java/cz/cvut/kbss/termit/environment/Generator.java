@@ -498,7 +498,7 @@ public class Generator {
     public static UserGroup generateUserGroup() {
         final UserGroup group = new UserGroup();
         group.setUri(
-                IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_sioc_Usergroup));
+                IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
     }

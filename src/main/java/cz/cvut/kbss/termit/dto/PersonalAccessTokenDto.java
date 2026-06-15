@@ -23,7 +23,7 @@ public class PersonalAccessTokenDto implements HasIdentifier {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
     private LocalDate expirationDate;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
+    @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)
     private Instant lastUsed;
 
     @Override

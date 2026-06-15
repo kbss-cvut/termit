@@ -54,7 +54,7 @@ public class Comment extends AbstractEntity {
     private String content;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_creator, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_creator, fetch = FetchType.EAGER)
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)

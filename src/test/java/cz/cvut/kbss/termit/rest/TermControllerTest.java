@@ -267,7 +267,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
     void getTermReturnsTermWithUnmappedProperties() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
-        final String customProperty = Vocabulary.s_p_ddo_has_dataset;
+        final String customProperty = Vocabulary.s_p_has_dataset;
         final String value = "Test";
         term.setProperties(Collections.singletonMap(customProperty, Collections.singleton(value)));
         term.setUri(termUri);

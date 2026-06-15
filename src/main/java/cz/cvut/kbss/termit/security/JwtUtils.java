@@ -34,11 +34,11 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.MacAlgorithm;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,8 +66,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    static final SignatureAlgorithm SIGNATURE_ALGORITHM =
-            SignatureAlgorithm.forName(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM);
+    static final MacAlgorithm SIGNATURE_ALGORITHM = Jwts.SIG.HS256;
 
     private final ObjectMapper objectMapper;
 
@@ -78,11 +77,11 @@ public class JwtUtils {
     @Autowired
     public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
         this.objectMapper = objectMapper;
-        this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? Keys.secretKeyFor(SIGNATURE_ALGORITHM) :
+        this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? SIGNATURE_ALGORITHM.key().build() :
                          Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
 
-        this.jwtParser = Jwts.parserBuilder().setSigningKey(key)
-                             .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
+        this.jwtParser = Jwts.parser().verifyWith(key)
+                             .json(new JacksonDeserializer<>(objectMapper))
                              .build();
     }
 
@@ -122,7 +121,7 @@ public class JwtUtils {
     public TermItUserDetails extractUserInfo(String token) {
         Objects.requireNonNull(token);
         try {
-            final Claims claims = getClaimsFromToken(token).getBody();
+            final Claims claims = getClaimsFromToken(token).getPayload();
             return extractUserInfo(claims);
         } catch (IllegalArgumentException e) {
             throw new JwtException("Unable to parse user identifier from the specified JWT.", e);
@@ -156,7 +155,7 @@ public class JwtUtils {
     }
 
     private Jws<Claims> parseClaims(String token) {
-        return jwtParser.parseClaimsJws(token);
+        return jwtParser.parseSignedClaims(token);
     }
 
     private static void verifyAttributePresence(Claims claims) {
@@ -191,13 +190,13 @@ public class JwtUtils {
      */
     public String refreshToken(String token) {
         Objects.requireNonNull(token);
-        final Claims claims = getClaimsFromToken(token).getBody();
+        final Claims claims = getClaimsFromToken(token).getPayload();
         final Instant issued = issueTimestamp();
-        claims.setIssuedAt(Date.from(issued));
-        claims.setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)));
-        return Jwts.builder().setClaims(claims)
+        return Jwts.builder().claims(claims)
+                .issuedAt(Date.from(issued))
+                .expiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
                    .signWith(key, SIGNATURE_ALGORITHM)
-                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                   .json(new JacksonSerializer<>(objectMapper))
                    .compact();
     }
 
@@ -213,13 +212,13 @@ public class JwtUtils {
         if (expiration == null) {
             expiration = Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT));
         }
-        return Jwts.builder().setSubject(subject)
-                   .setIssuedAt(Date.from(issued))
-                   .setExpiration(expiration)
+        return Jwts.builder().subject(subject)
+                   .issuedAt(Date.from(issued))
+                   .expiration(expiration)
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
                    .claim(JwtClaimNames.JTI, userId.toString())
                    .signWith(key, SIGNATURE_ALGORITHM)
-                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper));
+                   .json(new JacksonSerializer<>(objectMapper));
     }
 
     /**
@@ -234,7 +233,7 @@ public class JwtUtils {
             expiration = Date.from(newToken.getExpirationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
         }
         return prebuildJwt(newToken.getUri().toString(), newToken.getOwner().getUri(), List.of(), expiration)
-                .setHeaderParam(JoseHeaderNames.TYP,  type)
+                .header().add(JoseHeaderNames.TYP,  type).and()
                 .compact();
     }
 }
