@@ -210,7 +210,7 @@ class JwtAuthorizationFilterTest {
         when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION));
+        assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION), () -> mockResponse.getHeaderNames().toString());
         assertNotEquals(mockRequest.getHeader(HttpHeaders.AUTHORIZATION),
                         mockResponse.getHeader(HttpHeaders.AUTHORIZATION));
         verify(jwtUtilsSpy).refreshToken(any());
