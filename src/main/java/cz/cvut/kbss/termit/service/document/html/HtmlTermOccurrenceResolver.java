@@ -136,7 +136,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     private static Map<String, String> defaultPrefixes() {
-        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/");
+        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/",
+                      "termit-old", Legacy.NAMESPACE);
     }
 
     private boolean isNotTermOccurrence(Node rdfaElem) {
@@ -148,7 +149,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         // Perhaps we should check also for correct property?
         for (String type : types) {
             final String fullType = fullIri(type);
-            if (fullType.equals(Vocabulary.s_c_term_occurrence)) {
+            if (fullType.equals(Vocabulary.s_c_term_occurrence) || fullType.equals(Legacy.TERM_OCCURRENCE)) {
                 return false;
             }
         }
@@ -449,5 +450,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return probedContentType.isPresent() && (probedContentType.get()
                                                                   .equals(MediaType.TEXT_HTML_VALUE) || probedContentType.get()
                                                                                                                          .equals(MediaType.APPLICATION_XHTML_XML_VALUE));
+    }
+
+    private static class Legacy {
+        private static final String NAMESPACE = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/";
+        private static final String TERM_OCCURRENCE = NAMESPACE + "výskyt-termu";
     }
 }
