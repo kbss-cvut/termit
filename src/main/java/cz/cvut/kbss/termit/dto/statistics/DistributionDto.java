@@ -35,7 +35,7 @@ public class DistributionDto {
     @OWLObjectProperty(iri = DC.Terms.SUBJECT)
     private RdfsResource resource;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_as_totalItems)
+    @OWLDataProperty(iri = Vocabulary.s_p_totalItems)
     private Integer count;
 
     public DistributionDto() {

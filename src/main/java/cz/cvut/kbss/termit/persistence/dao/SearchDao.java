@@ -253,11 +253,11 @@ public class SearchDao {
     private String buildSearchParamConditions(Collection<SearchParam> searchParams) {
         final List<SearchParam> relationshipAnnotationParams = searchParams.stream()
                                                                            .filter(p -> p.getProperty().toString()
-                                                                                         .equals(Vocabulary.s_p_as_relationship))
+                                                                                         .equals(Vocabulary.s_p_relationship))
                                                                            .toList();
         final List<SearchParam> regularParams = searchParams.stream()
                                                             .filter(p -> !p.getProperty().toString()
-                                                                           .equals(Vocabulary.s_p_as_relationship))
+                                                                           .equals(Vocabulary.s_p_relationship))
                                                             .toList();
 
         final StringBuilder queryStr = new StringBuilder();

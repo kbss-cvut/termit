@@ -89,11 +89,10 @@ class JwtAuthenticationFilterTest {
         assertNotNull(value);
         assertTrue(value.startsWith(SecurityConstants.JWT_TOKEN_PREFIX));
         final String jwtToken = value.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
-        final Jws<Claims> jwt = Jwts.parserBuilder()
-                                    .setSigningKey(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
+        final Jws<Claims> jwt = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
                                                                             .getBytes(StandardCharsets.UTF_8)))
                                     .build()
-                                    .parseClaimsJws(jwtToken);
-        assertFalse(jwt.getBody().isEmpty());
+                                    .parseSignedClaims(jwtToken);
+        assertFalse(jwt.getPayload().isEmpty());
     }
 }

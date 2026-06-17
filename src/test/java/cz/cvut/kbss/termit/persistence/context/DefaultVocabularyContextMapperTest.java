@@ -93,7 +93,7 @@ class DefaultVocabularyContextMapperTest extends BaseDaoTestRunner {
         try (final RepositoryConnection con = repo.getConnection()) {
             final ValueFactory vf = con.getValueFactory();
             con.add(vf.createIRI(context.toString()),
-                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_d_sgov_pracovni_prostor_pojem_vychazi_z_verze),
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze),
                     vf.createIRI(canonical.toString()), vf.createIRI(context.toString()));
         }
     }
