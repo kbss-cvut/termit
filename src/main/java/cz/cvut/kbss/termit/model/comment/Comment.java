@@ -46,7 +46,7 @@ public class Comment extends AbstractEntity {
      * The asset to which this comment has been made.
      */
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_topic)
+    @OWLObjectProperty(iri = Vocabulary.s_p_topic)
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
