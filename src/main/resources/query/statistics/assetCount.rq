@@ -1,8 +1,8 @@
-PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
 
 SELECT (COUNT(DISTINCT ?asset) AS ?count) {
     ?asset a ?assetType .
     FILTER NOT EXISTS {
-        ?asset a pdp:verze-objektu .
+        ?asset a dd:object-version .
     }
 }

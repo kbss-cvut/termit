@@ -1,6 +1,6 @@
-PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
 PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/>
 
 SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) ?language WHERE {
@@ -11,7 +11,7 @@ SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) ?language WHERE {
             dc:language ?language .
     }
     FILTER NOT EXISTS {
-        ?vocabulary a pdp:verze-objektu .
+        ?vocabulary a dd:object-version .
     }
     OPTIONAL {
         ?term a ?t .

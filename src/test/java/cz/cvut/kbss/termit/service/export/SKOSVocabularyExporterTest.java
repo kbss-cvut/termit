@@ -414,7 +414,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final Term partOf = terms.get(0);
         final Term hasPart = terms.get(1);
         transactional(() -> {
-            insertPropertyAssertion(hasPart, cz.cvut.kbss.termit.util.Vocabulary.s_p_has_part,
+            insertPropertyAssertion(hasPart, "http://onto.fel.cvut.cz/ontologies/ufo/has-part",
                                     partOf.getUri().toString());
             // Simulate inference
         });
