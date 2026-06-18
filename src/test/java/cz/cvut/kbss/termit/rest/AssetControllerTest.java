@@ -88,7 +88,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
                                                                              Generator.randomBoolean() ?
                                                                              SKOS.CONCEPT_SCHEME :
                                                                              SKOS.CONCEPT,
-                                                                             Vocabulary.s_c_vytvoreni_entity))
+                                                                             Vocabulary.s_c_creation_of_entity))
                         .collect(Collectors.toList());
     }
 

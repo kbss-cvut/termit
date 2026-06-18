@@ -33,7 +33,7 @@ import java.net.URI;
  * Extends {@link VocabularyDto} with information about the snapshot author.
  */
 @NonEntity
-@OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)
+@OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version)
 @JsonLdAttributeOrder({"uri", "label", "description", "author"})
 public class VocabularySnapshotDto extends VocabularyDto {
 

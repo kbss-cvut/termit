@@ -67,10 +67,10 @@ class DataControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getPropertiesLoadsPropertiesFromDao() throws Exception {
-        final RdfsResource property = create(Vocabulary.s_p_ma_krestni_jmeno, "Name", null);
+        final RdfsResource property = create(Vocabulary.s_p_has_name, "Name", null);
         when(dataServiceMock.findAllProperties()).thenReturn(Collections.singletonList(property));
         final MvcResult mvcResult = mockMvc.perform(get("/data/properties")).andExpect(status().isOk()).andReturn();
-        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
+        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(Collections.singletonList(property), result);
     }
@@ -82,7 +82,7 @@ class DataControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getByIdReturnsResourceWithSpecifiedIdentifier() throws Exception {
-        final RdfsResource property = create(Vocabulary.s_p_ma_krestni_jmeno, "Name", null);
+        final RdfsResource property = create(Vocabulary.s_p_has_name, "Name", null);
         when(dataServiceMock.find(any())).thenReturn(Optional.of(property));
         final MvcResult mvcResult = mockMvc.perform(get("/data/resource").param("iri", property.getUri().toString()))
                                            .andExpect(status().isOk()).andReturn();

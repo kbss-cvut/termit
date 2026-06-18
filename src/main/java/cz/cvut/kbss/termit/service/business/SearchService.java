@@ -26,7 +26,6 @@ import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -73,8 +72,7 @@ public class SearchService {
                 MatchType.IRI
         ));
         if (!vocabularies.isEmpty()) {
-            searchParams.add(new SearchParam(
-                    URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku),
+            searchParams.add(new SearchParam(URI.create(SKOS.IN_SCHEME),
                     vocabularies.stream().map(URI::toString).collect(Collectors.toSet()),
                     MatchType.IRI
             ));

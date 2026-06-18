@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao.comment;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -290,7 +291,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
                 em.createNativeQuery("INSERT DATA { GRAPH ?g { ?c ?modified ?timestamp } }")
                   .setParameter("g", descriptor.getSingleContext().get())
                   .setParameter("c", c)
-                  .setParameter("modified", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                  .setParameter("modified", URI.create(DC.Terms.MODIFIED))
                   .setParameter("timestamp", Utils.timestamp().minus(i, ChronoUnit.DAYS))
                   .executeUpdate();
             }

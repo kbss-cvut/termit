@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.TransactionalTestRunner;
 import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -96,8 +96,8 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
     @Test
     void initializeCreatesConnectorsForAllLanguages() {
         final List<String> languages = List.of("cs", "en", "pl", "as", "aa");
-        final List<URI> predicates = Stream.of(Vocabulary.s_p_prefLabel,
-                Vocabulary.s_p_altLabel, DC.Terms.TITLE, DC.Terms.DESCRIPTION, Vocabulary.s_p_definition)
+        final List<URI> predicates = Stream.of(SKOS.PREF_LABEL,
+                                               SKOS.ALT_LABEL, DC.Terms.TITLE, DC.Terms.DESCRIPTION, SKOS.DEFINITION)
                 .map(URI::create).toList();
         assertEquals(languages.size(), predicates.size());
         transactional(() -> {
@@ -115,7 +115,7 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
 
     private Query bindUriPredAndValue(Query q, URI uri, String language) {
         return q.setParameter("uri", uri)
-                .setParameter("pred", URI.create(Vocabulary.s_p_altLabel))
+                .setParameter("pred", URI.create(SKOS.ALT_LABEL))
                 .setParameter("value", "stringValue", language);
     }
     private Query bindUriPredAndValue(Query q, URI uri) {

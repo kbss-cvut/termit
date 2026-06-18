@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.Resource;
@@ -65,7 +66,7 @@ public class TextAnalysisRecordDao {
                                        .setMaxResults(1)
                                  .setParameter("type", URI.create(Vocabulary.s_c_text_analysis_record))
                                  .setParameter("hasResource", URI.create(Vocabulary.s_p_has_analyzed_resource))
-                                 .setParameter("hasDateCreated", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                                 .setParameter("hasDateCreated", URI.create(DC.Terms.CREATED))
                                  .setParameter("resource", resource.getUri()).getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();

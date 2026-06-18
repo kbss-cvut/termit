@@ -128,8 +128,7 @@ public class Constants {
      * Relations between vocabularies that do not prevent vocabulary to be removed
      */
     public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
-            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku,
-            Vocabulary.s_p_importuje_slovnik
+            Vocabulary.s_p_is_version_of, Vocabulary.s_p_is_version_of_vocabulary, Vocabulary.s_p_imports_vocabulary
     ).map(URI::create).collect(Collectors.toSet());
 
     /**

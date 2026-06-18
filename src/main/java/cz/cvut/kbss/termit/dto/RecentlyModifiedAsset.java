@@ -65,7 +65,7 @@ public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializa
     @JsonIgnore
     private transient URI modifiedBy;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_editora)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_editor)
     private User editor;
 
     // In case the modified asset is a term, we want its vocabulary as well

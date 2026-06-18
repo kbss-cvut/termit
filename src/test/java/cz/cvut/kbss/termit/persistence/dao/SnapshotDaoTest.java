@@ -64,7 +64,7 @@ class SnapshotDaoTest extends BaseDaoTestRunner {
         final Optional<Snapshot> result = sut.find(URI.create(vocabulary.getUri().toString() + suffix));
         assertTrue(result.isPresent());
         assertEquals(vocabulary.getUri(), result.get().getVersionOf());
-        assertThat(result.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku));
+        assertThat(result.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version));
     }
 
     @Test
@@ -89,7 +89,7 @@ class SnapshotDaoTest extends BaseDaoTestRunner {
         final Optional<Snapshot> result = sut.find(URI.create(term.getUri().toString() + suffix));
         assertTrue(result.isPresent());
         assertEquals(term.getUri(), result.get().getVersionOf());
-        assertThat(result.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu));
+        assertThat(result.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version));
     }
 
     @Test

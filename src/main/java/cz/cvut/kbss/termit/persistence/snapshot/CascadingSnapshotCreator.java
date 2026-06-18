@@ -82,7 +82,7 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
             snapshotTerms(v);
         });
         final Snapshot snapshot = new Snapshot(snapshotUri(vocabulary.getUri()), timestamp, vocabulary.getUri(),
-                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version);
         snapshot.setAuthor(currentUser);
         LOG.debug("Snapshot created: {}", snapshot);
         return snapshot;

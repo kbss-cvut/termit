@@ -400,12 +400,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Map<LocalDate, Integer> updates = resolveExpectedUpdates(oneChanges, twoChanges);
 
         final List<AggregatedChangeInfo> result = sut.getChangesOfContent(vocabulary);
-        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity))
+        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity))
               .forEach(r -> {
                   assertTrue(persists.containsKey(r.getDate()));
                   assertEquals(persists.get(r.getDate()), r.getCount());
               });
-        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity))
+        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_update_of_entity))
               .forEach(r -> {
                   assertTrue(updates.containsKey(r.getDate()));
                   assertEquals(updates.get(r.getDate()), r.getCount());
@@ -509,12 +509,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 final ValueFactory vf = connection.getValueFactory();
                 final IRI stubIri = vf.createIRI(stub.getUri().toString());
                 connection.begin();
-                connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_slovniku),
+                connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
                                vf.createIRI(vocabulary.getUri().toString()), stubIri);
                 connection.add(stubIri,
-                               vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze),
+                               vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version),
                                vf.createLiteral(Date.from(timestamp)), stubIri);
-                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku),
+                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version),
                                stubIri);
                 connection.commit();
             }
@@ -572,7 +572,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         final List<Vocabulary> result = sut.findAll();
         assertThat(result, hasItem(vocabulary));
-        assertTrue(result.stream().noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)));
+        assertTrue(result.stream().noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version)));
     }
 
     @Test
@@ -637,7 +637,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         // document not removed
         assertTrue(em.createNativeQuery(query, Boolean.class)
-                     .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument))
+                     .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_document))
                      .getSingleResult());
 
         // vocabulary removed from cache

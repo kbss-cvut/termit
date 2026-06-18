@@ -15,7 +15,7 @@ public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
 
     public VocabularySnapshotLoader(EntityManager em) {
         super(em, URI.create(SKOS.CONCEPT_SCHEME), URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku));
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version));
     }
 
     @Override
@@ -40,16 +40,16 @@ public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
                                         "Snapshot")
                      .setParameter("snapshotType", snapshotType)
                      .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version))
                      .setParameter("hasAuthor",
                                    URI.create(DC.Terms.CREATOR))
                      .setParameter("firstName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_name))
                      .setParameter("lastName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni))
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_surname))
                      .setParameter("accountName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uzivatelske_jmeno))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_username))
+                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of))
                      .setParameter("source", asset).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

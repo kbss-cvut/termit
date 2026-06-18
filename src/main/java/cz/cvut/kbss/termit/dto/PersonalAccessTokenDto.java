@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -17,7 +18,7 @@ public class PersonalAccessTokenDto implements HasIdentifier {
     @Id
     private URI uri;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    @OWLDataProperty(iri = DC.Terms.CREATED)
     private Instant created;
 
     @OWLDataProperty(iri = Vocabulary.s_p_has_expiration_date)

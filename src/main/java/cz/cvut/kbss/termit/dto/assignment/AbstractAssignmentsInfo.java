@@ -31,7 +31,7 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
     @OWLObjectProperty(iri = Vocabulary.s_p_is_assignment_of_term)
     private URI term;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_resource)
     private URI resource;
 
     @Types
