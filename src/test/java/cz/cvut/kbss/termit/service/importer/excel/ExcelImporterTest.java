@@ -527,9 +527,9 @@ class ExcelImporterTest {
         type.getLabel().set("cs", "Typ objektu");
         when(languageService.getTermTypes()).thenReturn(List.of(type));
         final RdfsResource state = new RdfsResource(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/proposed-term"),
                 MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
-                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state);
         when(languageService.getTermStates()).thenReturn(List.of(state));
 
 
@@ -549,9 +549,9 @@ class ExcelImporterTest {
     void importSetsConfiguredInitialTermStateWhenSheetDoesNotSpecifyIt() {
         initVocabularyResolution();
         final RdfsResource state = new RdfsResource(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/proposed-term"),
                 MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
-                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(state));
 
         final Vocabulary result = sut.importVocabulary(
@@ -641,9 +641,9 @@ class ExcelImporterTest {
         type.getLabel().set("cs", "Typ objektu");
         when(languageService.getTermTypes()).thenReturn(List.of(type));
         final RdfsResource state = new RdfsResource(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/publikovaný-pojem"),
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/published-term"),
                 MultilingualString.create("Published term", Constants.DEFAULT_LANGUAGE), null,
-                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state);
         state.getLabel().set("cs", "Publikovaný pojem");
         when(languageService.getTermStates()).thenReturn(List.of(state));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();

@@ -52,6 +52,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -190,8 +193,11 @@ public class Environment {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
-            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/popis-dat-model.ttl"), BASE_URI,
-                     RDFFormat.TURTLE);
+            try (final DirectoryStream<Path> files = Files.newDirectoryStream(OntologyDownloader.getDirectory())) {
+                for (Path f : files) {
+                    conn.add(f.toFile(), BASE_URI, RDFFormat.TURTLE);
+                }
+            }
             conn.add(new File("ontology/termit.ttl"), BASE_URI, RDFFormat.TURTLE);
             conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
                      RDFFormat.RDFXML);
