@@ -29,17 +29,17 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_uprava_entity)
+@OWLClass(iri = Vocabulary.s_c_update_of_entity)
 public class UpdateChangeRecord extends AbstractChangeRecord {
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_zmeneny_atribut)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_changed_attribute)
     private URI changedAttribute;
 
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_puvodni_hodnotu)
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_original_value)
     private Set<Object> originalValue;
 
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_novou_hodnotu)
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_new_value)
     private Set<Object> newValue;
 
     public UpdateChangeRecord() {

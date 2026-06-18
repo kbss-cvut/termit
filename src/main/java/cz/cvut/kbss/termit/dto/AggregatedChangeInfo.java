@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -41,7 +42,7 @@ import java.util.Set;
                                                       })})
 public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChangeInfo> {
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_modifikace)
+    @OWLDataProperty(iri = DC.Terms.MODIFIED)
     private LocalDate date;
 
     /**
@@ -117,6 +118,6 @@ public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChan
         assert other.date != null;
 
         final int dateRes = date.compareTo(other.date);
-        return dateRes != 0 ? dateRes : hasType(Vocabulary.s_c_vytvoreni_entity) ? -1 : 1;
+        return dateRes != 0 ? dateRes : hasType(Vocabulary.s_c_creation_of_entity) ? -1 : 1;
     }
 }

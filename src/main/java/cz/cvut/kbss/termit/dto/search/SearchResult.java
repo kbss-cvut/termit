@@ -95,7 +95,7 @@ public class SearchResult implements HasIdentifier, HasTypes, Serializable {
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_term_state)
     private URI state;
 
     @Types

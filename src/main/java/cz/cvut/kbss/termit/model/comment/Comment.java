@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.PrePersist;
 import cz.cvut.kbss.jopa.model.annotations.PreUpdate;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.util.Utils;
@@ -58,10 +59,10 @@ public class Comment extends AbstractEntity {
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    @OWLDataProperty(iri = DC.Terms.CREATED)
     private Instant created;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
+    @OWLDataProperty(iri = DC.Terms.MODIFIED)
     private Instant modified;
 
     @Inferred

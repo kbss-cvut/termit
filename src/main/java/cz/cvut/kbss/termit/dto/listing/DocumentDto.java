@@ -30,7 +30,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.net.URI;
 
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_dokument)
+@OWLClass(iri = Vocabulary.s_c_document)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class DocumentDto {
 

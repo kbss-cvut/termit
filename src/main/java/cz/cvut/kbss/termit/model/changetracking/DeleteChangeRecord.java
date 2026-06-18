@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Represents a record of asset deletion.
  */
-@OWLClass(iri = Vocabulary.s_c_smazani_entity)
+@OWLClass(iri = Vocabulary.s_c_deletion_of_entity)
 public class DeleteChangeRecord extends AbstractChangeRecord {
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = RDFS.LABEL)

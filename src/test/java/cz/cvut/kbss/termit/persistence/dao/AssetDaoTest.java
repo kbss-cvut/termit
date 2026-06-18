@@ -134,7 +134,7 @@ class AssetDaoTest extends BaseDaoTestRunner {
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
         assertFalse(result.isEmpty());
         result.forEach(
-                rma -> assertThat(rma.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity)));
+                rma -> assertThat(rma.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity)));
     }
 
     @Test
@@ -151,7 +151,7 @@ class AssetDaoTest extends BaseDaoTestRunner {
             try (RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
                 conn.add(vf.createIRI(document.getUri().toString()),
-                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_dokumentovy_slovnik),
+                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_document_vocabulary),
                          vf.createIRI(vocabulary.getUri().toString()));
             }
         });

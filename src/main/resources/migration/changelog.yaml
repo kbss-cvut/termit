@@ -367,3 +367,95 @@ changeSets:
                 replace: true
             -   type: sparqlUpdate
                 query: DROP GRAPH <http://onto.fel.cvut.cz/ontologies/termit>
+    -   id: 6
+        changes:
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/dokument
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/document
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-soubor
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-file
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-dokumentový-slovník
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-document-vocabulary
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/popisuje-dokument
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/describes-document
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/importuje-slovník
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/imports-vocabulary
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/soubor
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/file
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-částí-dokumentu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-part-of-document
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-poslední-modifikace
+                newIri: http://purl.org/dc/terms/modified
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-zdroj
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-resource
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-stav-pojmu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-term-state
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-pojmu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/term-version
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/změna
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/change
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/vytvoření-entity
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/creation-of-entity
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/smazání-entity
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/deletion-of-entity
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/úprava-entity
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/update-of-entity
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-objektu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/object-version
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-version-of
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-změněnou-entitu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-changed-entity
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-změněný-atribut
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-changed-attribute
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-novou-hodnotu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-new-value
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-původní-hodnotu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-original-value
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-editora
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-editor
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-heslo
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-password
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-uživatelské-jméno
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-username
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-křestní-jméno
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-name
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-příjmení
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-surname
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-vytvoření-verze
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-date-and-time-of-creation-of-version
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-vytvoření
+                newIri: http://purl.org/dc/terms/created
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace
+                newIri: http://purl.org/dc/terms/modified
+
+
+

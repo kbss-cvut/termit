@@ -449,11 +449,11 @@ public class Generator {
                 asset.getUri().toString() + "/version/" + timestamp.toString().replace(":", "").replace(" ", ""));
         final String type;
         if (asset instanceof Vocabulary) {
-            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku;
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version;
         } else if (asset instanceof AbstractTerm) {
-            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu;
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version;
         } else {
-            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_objektu;
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_object_version;
         }
         return new Snapshot(uri, timestamp, asset.getUri(), type);
     }

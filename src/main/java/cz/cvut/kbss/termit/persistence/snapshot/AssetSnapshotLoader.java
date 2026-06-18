@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 import java.time.Instant;
@@ -66,10 +67,8 @@ public abstract class AssetSnapshotLoader<T extends Asset<?>> {
                                  .setParameter("type", assetType)
                                  .setParameter("snapshotType", snapshotType)
                                  .setParameter("hasCreated",
-                                               URI.create(
-                                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                                 .setParameter("versionOf", URI.create(
-                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
+                                               URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
+                                 .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
                                  .setParameter("at", at)
                                  .setParameter("asset", asset).getSingleResult());
         } catch (NoResultException e) {

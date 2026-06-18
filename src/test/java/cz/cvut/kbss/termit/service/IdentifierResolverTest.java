@@ -306,7 +306,7 @@ class IdentifierResolverTest {
 
     @Test
     void generateSyntheticIdentifierGeneratesIdentifierForBaseNotContainingHash() {
-        final String base = Vocabulary.s_c_person;
+        final String base = Vocabulary.s_c_foaf_Person;
         assertThat(base, not(containsString("#")));
         final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
         assertThat(result.toString(), containsString(base));
@@ -315,14 +315,14 @@ class IdentifierResolverTest {
 
     @Test
     void generateIdentifierHandlesStringsWithReservedUriCharacters() {
-        final String namespace = Vocabulary.s_c_person;
+        final String namespace = Vocabulary.s_c_foaf_Person;
         final String invalidString = "Bug #$# test";
         assertDoesNotThrow(() -> sut.generateIdentifier(namespace, invalidString));
     }
 
     @Test
     void generateIdentifierRemovesSectionSign() {
-        final String namespace = Vocabulary.s_c_person;
+        final String namespace = Vocabulary.s_c_foaf_Person;
         final String label = "je povinným subjektem podle §2 zákona 106/1999 Sb.";
         final URI result = sut.generateIdentifier(namespace, label);
         assertEquals(URI.create(namespace + "/je-povinným-subjektem-podle-2-zákona-106-1999-sb."), result);
@@ -330,7 +330,7 @@ class IdentifierResolverTest {
 
     @Test
     void generateIdentifierRemovesSquareBrackets() {
-        final String namespace = Vocabulary.s_c_person;
+        final String namespace = Vocabulary.s_c_foaf_Person;
         final String label = "Délka dostřiku [m]";
         final URI result = sut.generateIdentifier(namespace, label);
         assertEquals(URI.create(namespace + "/délka-dostřiku-m"), result);
@@ -338,7 +338,7 @@ class IdentifierResolverTest {
 
     @Test
     void generateIdentifierThrowsInvalidIdentifierExceptionWhenComponentsContainsUnforeseenInvalidCharacters() {
-        final String namespace = Vocabulary.s_c_person;
+        final String namespace = Vocabulary.s_c_foaf_Person;
         final String label = "label with double quotes \"";
         assertThrows(InvalidIdentifierException.class, () -> sut.generateIdentifier(namespace, label));
     }
@@ -362,7 +362,7 @@ class IdentifierResolverTest {
 
     private static Stream<Arguments> validAbsoluteUris() {
         return Stream.of(
-                Arguments.of(Vocabulary.s_c_person),
+                Arguments.of(Vocabulary.s_c_foaf_Person),
                 Arguments.of("file:///test")
         );
     }

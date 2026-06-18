@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -188,20 +189,20 @@ public class ChangeRecordDao {
                          """, AbstractChangeRecord.class)
                                                    .setParameter("changeContext", changeContext)
                                                    .setParameter("subClassOf", URI.create(RDFS.SUB_CLASS_OF))
-                                                   .setParameter("changeType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
-                                                   .setParameter("hasChangedEntity", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
-                                                   .setParameter("hasTime", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                                                   .setParameter("hasAuthor", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_editora)) // record has author
-                                                   .setParameter("hasFirstName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
-                                                   .setParameter("hasLastName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni))
+                                                   .setParameter("changeType", URI.create(Vocabulary.s_c_change))
+                                                   .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
+                                                   .setParameter("hasTime", URI.create(DC.Terms.MODIFIED))
+                                                   .setParameter("hasAuthor", URI.create(
+                                                           Vocabulary.s_p_has_editor)) // record has author
+                                                   .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_name))
+                                                   .setParameter("hasLastName", URI.create(Vocabulary.s_p_has_surname))
                                                    // Optional - update change record
-                                                   .setParameter("hasChangedAttribute", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmeneny_atribut))
+                                                   .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_has_changed_attribute))
                                                    .setParameter("hasRdfsLabel", URI.create(RDFS.LABEL))
                                                    // Optional -
                                                    .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
-
                                                    // Optional asset label
-                                                   .setParameter("deleteRecordType", URI.create(Vocabulary.s_c_smazani_entity));
+                                                   .setParameter("deleteRecordType", URI.create(Vocabulary.s_c_deletion_of_entity));
 
         if(asset.isPresent() && asset.get().getUri() != null) {
             query = query.setParameter("asset", asset.get().getUri());
@@ -247,10 +248,10 @@ public class ChangeRecordDao {
                                            "?x a ?persistRecord ;" +
                                            "?hasChangedEntity ?asset ;" +
                                            "?hasAuthor ?author . }", User.class)
-                                   .setParameter("persistRecord", URI.create(Vocabulary.s_c_vytvoreni_entity))
-                                   .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                                   .setParameter("persistRecord", URI.create(Vocabulary.s_c_creation_of_entity))
+                                   .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
                                    .setParameter("asset", asset.getUri())
-                                   .setParameter("hasAuthor", URI.create(Vocabulary.s_p_ma_editora))
+                                   .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_editor))
                                    .getResultList());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

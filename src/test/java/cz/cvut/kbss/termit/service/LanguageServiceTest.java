@@ -52,7 +52,7 @@ import static org.mockito.Mockito.when;
 class LanguageServiceTest {
 
     private static final List<RdfsResource> TERM_STATE_RESOURCES = Stream.of(Generator.TERM_STATES)
-                                                                         .map(u -> new RdfsResource(u, MultilingualString.create("Label", Environment.LANGUAGE), null, Vocabulary.s_c_stav_pojmu))
+                                                                         .map(u -> new RdfsResource(u, MultilingualString.create("Label", Environment.LANGUAGE), null, Vocabulary.s_c_term_state))
                                                                          .collect(Collectors.toList());
 
     @Mock

@@ -114,7 +114,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                 "}} ORDER BY ?title", type)
                      .setParameter("type", typeUri)
                      .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
-                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -153,7 +153,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
                                                 "?x ?imports+ ?imported ." +
                                                 "}", URI.class)
-                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary))
                      .setParameter("x", vocabularyIri).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -172,7 +172,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
                                                 "?importing ?imports ?imported ." +
                                                 "}", Vocabulary.class)
-                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary))
                      .setParameter("imported", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -315,7 +315,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                  .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
                  .setParameter("targetVocabulary", targetVocabulary)
                  .setParameter("importsVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary))
                  .getSingleResult();
     }
 
@@ -344,16 +344,16 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         Objects.requireNonNull(vocabulary);
         final List<AggregatedChangeInfo> persists = createContentChangesQuery(vocabulary)
                 .setParameter("type", URI.create(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity)).getResultList();
-        persists.forEach(p -> p.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity));
+                        cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity)).getResultList();
+        persists.forEach(p -> p.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity));
         final List<AggregatedChangeInfo> updates = createContentChangesQuery(vocabulary)
                 .setParameter("type", URI.create(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity)).getResultList();
-        updates.forEach(u -> u.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity));
+                        cz.cvut.kbss.termit.util.Vocabulary.s_c_update_of_entity)).getResultList();
+        updates.forEach(u -> u.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_update_of_entity));
         final List<AggregatedChangeInfo> deletitions = createContentChangesQuery(vocabulary)
-                .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity))
+                .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_deletion_of_entity))
                 .getResultList();
-        deletitions.forEach(d -> d.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity));
+        deletitions.forEach(d -> d.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_deletion_of_entity));
         return Stream.of(persists, updates, deletitions)
                      .flatMap(List::stream)
                      .sorted()
@@ -376,9 +376,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     private Query createContentChangesQuery(Vocabulary vocabulary) {
         return em.createNativeQuery(CONTENT_CHANGES_QUERY, "AggregatedChangeInfo")
                  .setParameter("hasEntity",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
-                 .setParameter("hasTimestamp", URI.create(
-                         cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_changed_entity))
+                 .setParameter("hasTimestamp", URI.create(DC.Terms.MODIFIED))
                  .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                  .setParameter("vocabulary", vocabulary);
     }

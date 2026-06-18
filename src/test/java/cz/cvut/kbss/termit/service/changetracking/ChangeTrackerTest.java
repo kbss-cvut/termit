@@ -99,8 +99,8 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     private List<AbstractChangeRecord> findRecords(HasIdentifier entity) {
         return em.createNativeQuery("SELECT ?x WHERE { ?x a ?changeRecord ; ?concerns ?entity . }",
                                     AbstractChangeRecord.class)
-                 .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
-                 .setParameter("concerns", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
+                 .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_change))
+                 .setParameter("concerns", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_changed_entity))
                  .setParameter("entity", entity.getUri())
                  .getResultList();
     }

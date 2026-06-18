@@ -44,7 +44,7 @@ public class UserGroup extends AccessControlAgent {
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private String label;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_member, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_member, fetch = FetchType.EAGER)
     private Set<User> members;
 
     public String getLabel() {

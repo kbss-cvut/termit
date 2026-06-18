@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.Objects;
 public class TermSnapshotLoader extends AssetSnapshotLoader<Term> {
 
     public TermSnapshotLoader(EntityManager em) {
-        super(em, URI.create(SKOS.CONCEPT), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu));
+        super(em, URI.create(SKOS.CONCEPT), URI.create(Vocabulary.s_c_term_version));
     }
 
     @Override
@@ -38,17 +39,13 @@ public class TermSnapshotLoader extends AssetSnapshotLoader<Term> {
                                                 """,
                                         "Snapshot")
                      .setParameter("snapshotType", snapshotType)
-                     .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                     .setParameter("hasCreated", URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
                      .setParameter("hasAuthor", URI.create(DC.Terms.CREATOR))
                      .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-                     .setParameter("firstName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
-                     .setParameter("lastName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni))
-                     .setParameter("accountName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uzivatelske_jmeno))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
+                     .setParameter("firstName", URI.create(Vocabulary.s_p_has_name))
+                     .setParameter("lastName", URI.create(Vocabulary.s_p_has_surname))
+                     .setParameter("accountName", URI.create(Vocabulary.s_p_has_username))
+                     .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
                      .setParameter("source", asset).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

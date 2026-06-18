@@ -219,7 +219,7 @@ class LocalizedSheetImporter {
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
         getAttributeValue(termRow, JsonLd.TYPE).map(str -> resolveTermTypes(splitIntoMultipleValues(str), term))
                                                .ifPresent(term::setTypes);
-        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null), term).ifPresent(
+        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_has_term_state).orElse(null), term).ifPresent(
                 term::setState);
 
     }

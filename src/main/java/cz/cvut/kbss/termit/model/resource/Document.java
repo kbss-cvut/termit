@@ -35,16 +35,16 @@ import java.util.Optional;
 import java.util.Set;
 
 @Audited
-@OWLClass(iri = Vocabulary.s_c_dokument)
+@OWLClass(iri = Vocabulary.s_c_document)
 @JsonLdAttributeOrder({"uri", "label", "description", "files"})
 public class Document extends Resource implements SupportsStorage {
 
     @JsonManagedReference
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_soubor, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_file, fetch = FetchType.EAGER)
     private Set<File> files;
 
     @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_dokumentovy_slovnik)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_document_vocabulary)
     private URI vocabulary;
 
     public Set<File> getFiles() {

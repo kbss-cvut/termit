@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -149,7 +148,7 @@ class SearchServiceTest {
                                                                                                        SKOS.CONCEPT)))
                                                                                    && params.stream().anyMatch(
                                                                                    p -> p.getProperty().toString()
-                                                                                         .equals(Vocabulary.s_p_je_pojmem_ze_slovniku)
+                                                                                         .equals(SKOS.IN_SCHEME)
                                                                                            && p.getMatchType() == MatchType.IRI
                                                                                            && p.getValue()
                                                                                                .equals(Set.of(

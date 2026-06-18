@@ -131,7 +131,7 @@ class HtmlTermOccurrenceResolverTest {
     private static File initFile() {
         final File file = new File();
         file.setLabel("rdfa-simple.html");
-        file.setUri(URI.create(Vocabulary.s_c_soubor + "/" + file.getLabel()));
+        file.setUri(URI.create(Vocabulary.s_c_file + "/" + file.getLabel()));
         return file;
     }
 

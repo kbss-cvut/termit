@@ -112,7 +112,7 @@ public class TermRelationshipAnnotationDao {
                                                     .setParameter("symmetricSkosProps", SYMMETRIC_SKOS_PROPERTIES)
                                                     .setParameter("atts", annotationProperties)
                                                     .setParameter("termSnapshot",
-                                                                  URI.create(Vocabulary.s_c_verze_pojmu))
+                                                                  URI.create(Vocabulary.s_c_term_version))
                                                     .getResultStream()
                                                     .collect(new TermRelationshipAnnotationCollector());
     }

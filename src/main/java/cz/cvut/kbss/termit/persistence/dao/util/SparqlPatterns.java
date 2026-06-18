@@ -44,8 +44,8 @@ public class SparqlPatterns {
     public static void bindVocabularyRelatedParameters(Query query) {
         query
                 .setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME))
-                .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_ma_dokumentovy_slovnik))
-                .setParameter("inDocument", URI.create(Vocabulary.s_p_je_casti_dokumentu))
+                .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_has_document_vocabulary))
+                .setParameter("inDocument", URI.create(Vocabulary.s_p_is_part_of_document))
                 .setParameter("vocabularyType", URI.create(SKOS.CONCEPT_SCHEME));
     }
 

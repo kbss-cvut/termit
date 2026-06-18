@@ -135,7 +135,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                               .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
                               .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                               .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
-                              .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
+                              .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
                               .setParameter("source", target.getUri())
                               .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector))
                               .setParameter("selectorType", URI.create(Vocabulary.s_c_selector))
@@ -185,11 +185,11 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                  .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_suggested_term_occurrence))
                  .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
                  .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
-                 .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
+                 .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
                  .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
                  .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
-                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
-                 .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
+                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_has_file))
+                 .setParameter("fileType", URI.create(Vocabulary.s_c_file))
                  .setParameter("langVal", config.getLanguage())
                  .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                  .setParameter("termType", URI.create(SKOS.CONCEPT))
@@ -250,7 +250,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
           .setParameter("toType", toType)
           .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
           .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
-          .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
+          .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
           .setParameter("asset", assetUri)
           .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector)).executeUpdate();
     }
@@ -305,7 +305,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                      "{ ?source ?hasTitle ?label . } " +
                                      "}}", URI.class)
           .setParameter("target", URI.create(Vocabulary.s_c_occurrence_target))
-          .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
+          .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
           .setParameter("hasLabel", URI.create(RDFS.LABEL))
           .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
           .getResultStream().forEach(a -> {

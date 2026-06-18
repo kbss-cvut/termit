@@ -36,17 +36,17 @@ public class User extends AccessControlAgent implements HasTypes, Serializable {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_name)
     String firstName;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_surname)
     String lastName;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_uzivatelske_jmeno)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_username)
     String username;
 
     @Types

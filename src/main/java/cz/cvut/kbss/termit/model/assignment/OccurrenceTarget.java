@@ -41,7 +41,7 @@ public abstract class OccurrenceTarget extends AbstractEntity implements Copyabl
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_resource)
     private URI source;
 
     @NotEmpty

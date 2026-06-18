@@ -36,7 +36,7 @@ import java.util.Set;
 public class TextAnalysisRecord extends AbstractEntity {
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    @OWLDataProperty(iri = DC.Terms.CREATED)
     private Instant date;
 
     @ParticipationConstraints(nonEmpty = true)

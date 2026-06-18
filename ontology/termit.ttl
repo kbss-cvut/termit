@@ -142,12 +142,12 @@ termit:text-analysis-record
 termit:user
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel> ;
+                <http://onto.fel.cvut.cz/ontologies/data-description/user> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "TermIt user"@en , "Uživatel TermItu"@cs ;
-        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel> .
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/data-description/user> .
 
 termit:has-term-definition-source
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
@@ -327,7 +327,7 @@ termit:has-analysis-vocabulary
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has analysis vocabulary"@en , "Má slovník pro analýzu"@cs ;
         rdfs:domain         termit:text-analysis-record ;
-        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
+        rdfs:range          <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
 
 termit:selector-fragment
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
@@ -435,7 +435,7 @@ termit:has-analyzed-resource
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has analyzed resource"@en , "Má analyzovaný zdroj"@cs ;
         rdfs:domain         termit:text-analysis-record ;
-        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> .
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/data-description/resource> .
 
 termit:term-occurrence
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
@@ -533,7 +533,7 @@ termit:has-access-control-list
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has access control list"@en , "Má seznam pro řízení přístupu"@cs ;
-        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/data-description/resource> ;
         rdfs:range          termit:access-control-list .
 
 termit:access-control-record
@@ -663,7 +663,7 @@ termit:terminal-term-state
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Terminal term state"@en , "Koncový stav pojmu"@cs ;
-        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/data-description/term-state> .
 
 termit:password-reset-request
     a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
@@ -690,12 +690,12 @@ termit:custom-attribute
 termit:has-last-backup-datetime
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty ;
         <http://www.w3.org/2004/02/skos/core#broader>
-                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> ;
+                <http://purl.org/dc/terms/modified> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has date and time of the last backup"@en , "Má datum a čas poslední zálohy"@cs ;
-        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace> ;
+        rdfs:subPropertyOf  <http://purl.org/dc/terms/modified> ;
         rdfs:range          xsd:dateTime .
 
 termit:personal-access-token

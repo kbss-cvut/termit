@@ -85,7 +85,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getUri(), record.getChangedEntity());
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument), record.getChangedAttribute());
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_describes_document), record.getChangedAttribute());
     }
 
     @Test
@@ -154,7 +154,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getUri(), record.getChangedEntity());
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik),
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary),
                 record.getChangedAttribute());
     }
 

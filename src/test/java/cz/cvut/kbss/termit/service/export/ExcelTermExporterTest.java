@@ -53,7 +53,7 @@ class ExcelTermExporterTest {
     @Test
     void exportExportsTermToExcelRow() {
         final Term term = Generator.generateTermWithId();
-        term.setTypes(Collections.singleton(Vocabulary.s_c_object));
+        term.setTypes(Collections.singleton(Vocabulary.s_c_Object));
         term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
                                                       MultilingualString.create("Construction",
                                                                                 Environment.LANGUAGE))));

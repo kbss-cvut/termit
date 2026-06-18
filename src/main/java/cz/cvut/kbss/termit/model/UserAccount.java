@@ -45,20 +45,20 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_name)
     String firstName;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_surname)
     String lastName;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_uzivatelske_jmeno)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_username)
     String username;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_password)
     private String password;
 
     @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)

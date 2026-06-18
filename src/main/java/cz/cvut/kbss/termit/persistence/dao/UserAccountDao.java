@@ -72,7 +72,7 @@ public class UserAccountDao extends BaseDao<UserAccount> {
         Objects.requireNonNull(username);
         return em.createNativeQuery("ASK WHERE { ?x a ?type ; ?hasUsername ?username . }", Boolean.class)
                  .setParameter("type", typeUri)
-                 .setParameter("hasUsername", URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
+                 .setParameter("hasUsername", URI.create(Vocabulary.s_p_has_username))
                  .setParameter("username", username, config.getLanguage()).getSingleResult();
     }
 
@@ -85,8 +85,8 @@ public class UserAccountDao extends BaseDao<UserAccount> {
                                                 "?hasFirstName ?firstName ." +
                                                 "} ORDER BY ?lastName ?firstName", type)
                      .setParameter("type", typeUri)
-                     .setParameter("hasLastName", URI.create(Vocabulary.s_p_ma_prijmeni))
-                     .setParameter("hasFirstName", URI.create(Vocabulary.s_p_ma_krestni_jmeno))
+                     .setParameter("hasLastName", URI.create(Vocabulary.s_p_has_surname))
+                     .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_name))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

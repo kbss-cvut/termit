@@ -35,7 +35,7 @@ import java.util.Objects;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @Audited
-@OWLClass(iri = Vocabulary.s_c_zdroj)
+@OWLClass(iri = Vocabulary.s_c_resource)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class Resource extends Asset<String> implements Serializable {
 

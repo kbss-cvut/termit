@@ -233,10 +233,10 @@ public class SearchDao {
 
     private static <T extends Query> T setCommonQueryParams(T q, Collection<URI> allowedVocabularies) {
         q.setParameter("term", URI.create(SKOS.CONCEPT))
-         .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+         .setParameter("snapshot", URI.create(Vocabulary.s_c_object_version))
          .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
          .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-         .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
+         .setParameter("hasState", URI.create(Vocabulary.s_p_has_term_state))
          .setParameter("allowedVocabularies", allowedVocabularies);
         return q;
     }

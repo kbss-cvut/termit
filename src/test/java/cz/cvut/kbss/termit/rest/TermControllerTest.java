@@ -267,7 +267,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
     void getTermReturnsTermWithUnmappedProperties() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
-        final String customProperty = Vocabulary.s_p_has_dataset;
+        final String customProperty = Vocabulary.s_p_has_resource;
         final String value = "Test";
         term.setProperties(Collections.singletonMap(customProperty, Collections.singleton(value)));
         term.setUri(termUri);
@@ -1176,7 +1176,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
             snapshot.setUri(Generator.generateUri());
             snapshot.setCreated(Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(i, ChronoUnit.DAYS));
             snapshot.setVersionOf(term.getUri());
-            snapshot.setTypes(Collections.singleton(Vocabulary.s_c_verze_pojmu));
+            snapshot.setTypes(Collections.singleton(Vocabulary.s_c_term_version));
             return snapshot;
         }).collect(Collectors.toList());
         when(termServiceMock.findSnapshots(term)).thenReturn(snapshots);
