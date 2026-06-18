@@ -1,16 +1,16 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
+@prefix dd: <http://onto.fel.cvut.cz/ontologies/data-description/> .
 @prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .
 
-termit:proposed-term a pdp:stav-pojmu , termit:initial-term-state ;
+termit:proposed-term a dd:term-state , termit:initial-term-state ;
     skos:prefLabel "Navrhovaný pojem"@cs , "Proposed term"@en ;
     skos:scopeNote "Pojem, který ještě nebyl schválen k publikaci."@cs , "A proposed term that has not been confirmed for publication, yet."@en .
 
-termit:published-term a pdp:stav-pojmu ;
+termit:published-term a dd:term-state ;
     skos:prefLabel "Publikovaný pojem"@cs , "Published term"@en ;
     skos:scopeNote "Pojem, který byl publikován a používá se."@cs , "A published term that is in use."@en .
 
-termit:cancelled-term a pdp:stav-pojmu , termit:terminal-term-state ;
+termit:cancelled-term a dd:term-state , termit:terminal-term-state ;
     skos:prefLabel "Zrušený pojem"@cs , "Cancelled term"@en ;
     skos:scopeNote "Pojem, který byl zrušen a již by se neměl používat."@cs , "A term that has been cancelled and should not be used anymore."@en .
