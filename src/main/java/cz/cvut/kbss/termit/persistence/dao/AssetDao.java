@@ -99,13 +99,13 @@ public class AssetDao {
                                 "} ORDER BY DESC(?modified)", "RecentlyModifiedAsset")
                 .setParameter("ent", asset.uri)
                 .setParameter("assetType", asset.type)
-                .setParameter("change", URI.create(Vocabulary.s_c_zmena))
+                .setParameter("change", URI.create(Vocabulary.s_c_change))
                 .setParameter("labelProperties", Arrays.asList(URI.create(SKOS.PREF_LABEL), URI.create(DC.Terms.TITLE)))
-                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
-                .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                .setParameter("persist", URI.create(Vocabulary.s_c_vytvoreni_entity))
-                .setParameter("update", URI.create(Vocabulary.s_c_uprava_entity))
+                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
+                .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_editor))
+                .setParameter("hasModificationDate", URI.create(DC.Terms.MODIFIED))
+                .setParameter("persist", URI.create(Vocabulary.s_c_creation_of_entity))
+                .setParameter("update", URI.create(Vocabulary.s_c_update_of_entity))
                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                 .setParameter("languageVal", config.getLanguage())
                 .setMaxResults(1);
@@ -126,8 +126,8 @@ public class AssetDao {
     private String insertVocabularyPattern(AssetWithType elem) {
         return switch (elem.type.toString()) {
             case SKOS.CONCEPT -> "?ent ?isFromVocabulary ?vocabulary . ";
-            case Vocabulary.s_c_dokument -> "?ent ?hasVocabulary ?vocabulary . ";
-            case Vocabulary.s_c_soubor -> "?ent ?inDocument/?hasVocabulary ?vocabulary . ";
+            case Vocabulary.s_c_document -> "?ent ?hasVocabulary ?vocabulary . ";
+            case Vocabulary.s_c_file -> "?ent ?inDocument/?hasVocabulary ?vocabulary . ";
             default -> "BIND (?ent as ?vocabulary)";
         };
     }
@@ -137,12 +137,12 @@ public class AssetDao {
             case SKOS.CONCEPT:
                 query.setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME));
                 break;
-            case Vocabulary.s_c_dokument:
-                query.setParameter("hasVocabulary", URI.create(Vocabulary.s_p_ma_dokumentovy_slovnik));
+            case Vocabulary.s_c_document:
+                query.setParameter("hasVocabulary", URI.create(Vocabulary.s_p_has_document_vocabulary));
                 break;
-            case Vocabulary.s_c_soubor:
-                query.setParameter("inDocument", URI.create(Vocabulary.s_p_je_casti_dokumentu))
-                     .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_ma_dokumentovy_slovnik));
+            case Vocabulary.s_c_file:
+                query.setParameter("inDocument", URI.create(Vocabulary.s_p_is_part_of_document))
+                     .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_has_document_vocabulary));
                 break;
             default:
                 break;
@@ -161,16 +161,16 @@ public class AssetDao {
                                                          "} ORDER BY DESC(?modified) } " +
                                                          "FILTER (?type IN (?assetTypes))" +
                                                          "}")
-                              .setParameter("change", URI.create(Vocabulary.s_c_zmena))
+                              .setParameter("change", URI.create(Vocabulary.s_c_change))
                               .setParameter("hasModificationDate",
-                                            URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
+                                            URI.create(DC.Terms.MODIFIED))
                               .setParameter("hasModifiedEntity",
-                                            URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                              .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
+                                            URI.create(Vocabulary.s_p_has_changed_entity))
+                              .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_editor))
                               .setParameter("assetTypes",
                                             Arrays.asList(URI.create(SKOS.CONCEPT), URI.create(SKOS.CONCEPT_SCHEME),
-                                                          URI.create(Vocabulary.s_c_dokument),
-                                                          URI.create(Vocabulary.s_c_soubor)))
+                                                          URI.create(Vocabulary.s_c_document),
+                                                          URI.create(Vocabulary.s_c_file)))
                               .setFirstResult(offset)
                               .setMaxResults(pageSpec.getPageSize());
         if (author != null) {

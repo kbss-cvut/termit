@@ -1424,7 +1424,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertEquals(Generator.TERM_STATES[1], result.getState());
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasState ?oldState . }", Boolean.class)
                       .setParameter("x", term)
-                      .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
+                      .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_state))
                       .setParameter("oldState", Generator.TERM_STATES[0]).getSingleResult());
     }
 

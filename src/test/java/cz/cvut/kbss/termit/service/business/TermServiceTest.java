@@ -501,7 +501,7 @@ class TermServiceTest {
                                                 .map(uri -> new RdfsResource(uri, MultilingualString.create(
                                                         "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
                                                                              null,
-                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
         terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
@@ -524,7 +524,7 @@ class TermServiceTest {
                                                 .map(uri -> new RdfsResource(uri, MultilingualString.create(
                                                         "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
                                                                              null,
-                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
         terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
@@ -661,7 +661,7 @@ class TermServiceTest {
                                                 .map(uri -> new RdfsResource(uri, MultilingualString.create(
                                                         "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
                                                                              null,
-                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
         terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);

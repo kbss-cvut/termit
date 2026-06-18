@@ -51,16 +51,16 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
                                                               @VariableResult(name = "authorFirstName", type = String.class),
                                                               @VariableResult(name = "authorLastName", type = String.class)
                                                       })})
-@OWLClass(iri = Vocabulary.s_c_verze_objektu)
+@OWLClass(iri = Vocabulary.s_c_object_version)
 public class Snapshot implements HasIdentifier, HasTypes, Serializable {
 
     @Id
     private URI uri;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_date_and_time_of_creation_of_version)
     private Instant created;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_verzi)
+    @OWLObjectProperty(iri = Vocabulary.s_p_is_version_of)
     private URI versionOf;
 
     @OWLObjectProperty(iri = DC.Terms.CREATOR, fetch = FetchType.EAGER)

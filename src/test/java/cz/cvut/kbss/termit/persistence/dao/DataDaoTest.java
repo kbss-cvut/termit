@@ -93,9 +93,9 @@ class DataDaoTest extends BaseDaoTestRunner {
         generateProperties();
         final List<RdfsResource> result = sut.findAllProperties();
         assertFalse(result.isEmpty());
-        assertTrue(result.stream().anyMatch(r -> r.getUri().equals(URI.create(Vocabulary.s_p_ma_krestni_jmeno))));
-        assertTrue(result.stream().anyMatch(r -> r.getUri().equals(URI.create(Vocabulary.s_p_ma_prijmeni))));
-        assertTrue(result.stream().anyMatch(r -> r.getUri().equals(URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))));
+        assertTrue(result.stream().anyMatch(r -> r.getUri().equals(URI.create(Vocabulary.s_p_has_name))));
+        assertTrue(result.stream().anyMatch(r -> r.getUri().equals(URI.create(Vocabulary.s_p_has_surname))));
+        assertTrue(result.stream().anyMatch(r -> r.getUri().equals(URI.create(Vocabulary.s_p_has_username))));
     }
 
     private void generateProperties() {
@@ -109,12 +109,12 @@ class DataDaoTest extends BaseDaoTestRunner {
                 connection.add(vf.createIRI(OWL.DATATYPE_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(OWL.OBJECT_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(OWL.ANNOTATION_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
-                connection.add(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDF.TYPE,
+                connection.add(vf.createIRI(Vocabulary.s_p_has_name), RDF.TYPE,
                                vf.createIRI(OWL.DATATYPE_PROPERTY));
-                connection.add(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
+                connection.add(vf.createIRI(Vocabulary.s_p_has_name), RDFS.LABEL,
                                vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE));
-                connection.add(vf.createIRI(Vocabulary.s_p_ma_prijmeni), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY));
-                connection.add(vf.createIRI(Vocabulary.s_p_ma_uzivatelske_jmeno), RDF.TYPE,
+                connection.add(vf.createIRI(Vocabulary.s_p_has_surname), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY));
+                connection.add(vf.createIRI(Vocabulary.s_p_has_username), RDF.TYPE,
                                vf.createIRI(OWL.DATATYPE_PROPERTY));
                 connection.commit();
             }
@@ -124,9 +124,9 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void findReturnsMatchingResource() {
         generateProperties();
-        final Optional<RdfsResource> result = sut.find(URI.create(Vocabulary.s_p_ma_krestni_jmeno));
+        final Optional<RdfsResource> result = sut.find(URI.create(Vocabulary.s_p_has_name));
         assertTrue(result.isPresent());
-        assertEquals(Vocabulary.s_p_ma_krestni_jmeno, result.get().getUri().toString());
+        assertEquals(Vocabulary.s_p_has_name, result.get().getUri().toString());
         assertEquals(MultilingualString.create(FIRST_NAME_LABEL, Environment.LANGUAGE), result.get().getLabel());
     }
 
@@ -264,11 +264,11 @@ class DataDaoTest extends BaseDaoTestRunner {
         readOnlyTransactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             final Model model = parseExportToModel(result);
-            assertAll(() -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
+            assertAll(() -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_has_name), RDFS.LABEL,
                                                       vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE))),
-                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_prijmeni), RDF.TYPE,
+                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_has_surname), RDF.TYPE,
                                                       vf.createIRI(OWL.DATATYPE_PROPERTY))),
-                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_uzivatelske_jmeno), RDF.TYPE,
+                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_has_username), RDF.TYPE,
                                                       vf.createIRI(OWL.DATATYPE_PROPERTY))));
         });
     }
@@ -290,7 +290,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final TypeAwareResource result = sut.exportDataAsTurtle(context);
             Model model = parseExportToModel(result);
             assertTrue(model.contains(SKOS.CONCEPT, RDFS.LABEL, vf.createLiteral("Term")));
-            assertFalse(model.contains(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), null, null));
+            assertFalse(model.contains(vf.createIRI(Vocabulary.s_p_has_name), null, null));
         });
     }
 
@@ -313,7 +313,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         final List<RdfsResource> result = sut.findAllProperties();
         assertFalse(result.isEmpty());
         final Optional<RdfsResource> firstName = result.stream().filter(r -> r.getUri().equals(URI.create(
-                Vocabulary.s_p_ma_krestni_jmeno))).findAny();
+                Vocabulary.s_p_has_name))).findAny();
         assertTrue(firstName.isPresent());
         assertEquals(2, firstName.get().getLabel().getLanguages().size());
     }
@@ -323,7 +323,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
+                connection.add(vf.createIRI(Vocabulary.s_p_has_name), RDFS.LABEL,
                                vf.createLiteral("Má křestní jméno", "cs"));
             }
         });

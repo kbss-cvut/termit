@@ -152,7 +152,7 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
                                                 "} ORDER BY LCASE(?label)", Resource.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", labelProperty())
-                     .setParameter("hasFile", URI.create(Vocabulary.s_p_ma_soubor))
+                     .setParameter("hasFile", URI.create(Vocabulary.s_p_has_file))
                      .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
                      .getResultList();
         } catch (RuntimeException e) {

@@ -644,11 +644,11 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
                 assertTrue(conn.hasStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null, false,
+                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_state), null, false,
                                              vf.createIRI(vocabulary.getUri().toString())));
                 assertEquals(1,
                              conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null).stream().count());
+                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_state), null).stream().count());
             }
         });
     }

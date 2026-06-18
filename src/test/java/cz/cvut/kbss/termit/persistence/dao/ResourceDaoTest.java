@@ -402,8 +402,8 @@ class ResourceDaoTest extends BaseDaoTestRunner {
             final Repository repository = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repository.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
-                conn.add(vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument), RDFS.SUBCLASSOF, vf.createIRI(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_c_zdroj));
+                conn.add(vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_document), RDFS.SUBCLASSOF, vf.createIRI(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_c_resource));
             }
             em.persist(doc);
             em.persist(fileOne);

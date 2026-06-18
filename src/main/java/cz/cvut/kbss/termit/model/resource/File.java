@@ -36,19 +36,19 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.time.Instant;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_soubor)
+@OWLClass(iri = Vocabulary.s_c_file)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class File extends Resource implements SupportsStorage {
 
     @JsonBackReference
     @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_casti_dokumentu, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_is_part_of_document, fetch = FetchType.EAGER)
     private Document document;
 
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String language;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
+    @OWLDataProperty(iri = DC.Terms.MODIFIED)
     private Instant modified;
 
     @OWLDataProperty(iri = Vocabulary.s_p_has_last_backup_datetime)

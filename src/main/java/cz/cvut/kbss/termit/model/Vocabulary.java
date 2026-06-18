@@ -62,14 +62,14 @@ public class Vocabulary extends Asset<MultilingualString>
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private MultilingualString description;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_describes_document, fetch = FetchType.EAGER)
     private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
 
     @JsonIgnore
@@ -243,7 +243,7 @@ public class Vocabulary extends Asset<MultilingualString>
 
     @Override
     public boolean isSnapshot() {
-        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version);
     }
 
     @Override

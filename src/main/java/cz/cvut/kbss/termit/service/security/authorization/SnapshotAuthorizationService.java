@@ -53,7 +53,7 @@ public class SnapshotAuthorizationService {
      */
     public boolean canRemove(Snapshot snapshot) {
         Objects.requireNonNull(snapshot);
-        if (snapshot.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)) {
+        if (snapshot.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version)) {
             final Vocabulary vocabulary = new Vocabulary(snapshot.getVersionOf());
             return vocabularyAuthorizationService.canRemoveSnapshot(vocabulary);
         }
