@@ -1,12 +1,12 @@
-PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
 
 SELECT (COUNT(DISTINCT ?asset) AS ?count) {
     GRAPH ?v {
         ?asset a skos:Concept ;
                skos:inScheme ?v .
         FILTER NOT EXISTS {
-            ?asset a pdp:verze-pojmu .
+            ?asset a dd:term-version .
         }
     }
 }

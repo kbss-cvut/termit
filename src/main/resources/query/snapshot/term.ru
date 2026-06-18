@@ -1,17 +1,17 @@
-PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 INSERT {
     GRAPH ?vocabularySnapshot {
-        ?tSnapshot a skos:Concept, pdp:verze-pojmu ;
+        ?tSnapshot a skos:Concept, dd:term-version ;
                skos:inScheme ?vocabularySnapshot ;
                skos:broader ?broaderSnapshot ;
                skos:broadMatch ?broadMatchSnapshot ;
                skos:related ?relatedSnapshot ;
                skos:relatedMatch ?relatedMatchSnapshot ;
                skos:exactMatch ?exactMatchSnapshot ;
-               pdp:je-verzí-pojmu ?t ;
-               pdp:má-datum-a-čas-vytvoření-verze ?created ;
+               dd:is-version-of-term ?t ;
+               dd:has-date-and-time-of-creation-of-version ?created ;
                ?y ?z .
     }
 } WHERE {
