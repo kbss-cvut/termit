@@ -48,7 +48,7 @@ public class ReadOnlyVocabulary extends Asset<MultilingualString> implements Has
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private MultilingualString description;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_imports_vocabulary, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
 
     public ReadOnlyVocabulary() {

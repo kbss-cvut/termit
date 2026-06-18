@@ -145,7 +145,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             assertEquals(vocabulary.getUri(), chr.getChangedEntity());
             assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
             assertThat(((UpdateChangeRecord) chr).getChangedAttribute().toString(), anyOf(equalTo(DC.Terms.TITLE),
-                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)));
+                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary)));
         });
     }
 
@@ -265,7 +265,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu),
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_state),
                 ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
     }
 

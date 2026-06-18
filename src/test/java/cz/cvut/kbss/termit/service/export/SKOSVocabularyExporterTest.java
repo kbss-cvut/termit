@@ -432,7 +432,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final Term participant = terms.get(0);
         final Term parent = terms.get(1);
         transactional(() -> {
-            insertPropertyAssertion(parent, cz.cvut.kbss.termit.util.Vocabulary.s_p_has_participant,
+            insertPropertyAssertion(parent, "http://onto.fel.cvut.cz/ontologies/ufo/has-participant",
                                     participant.getUri().toString());
             // Simulate inference
         });

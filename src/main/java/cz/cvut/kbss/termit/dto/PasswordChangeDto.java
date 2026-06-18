@@ -34,7 +34,7 @@ public class PasswordChangeDto implements Serializable {
     @OWLDataProperty(iri = DC.Terms.IDENTIFIER)
     private String token;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_password)
     private String newPassword;
 
     public URI getUri() {

@@ -19,7 +19,7 @@ import java.util.Objects;
 @NonEntity
 @OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/popis-zálohy-souboru")
 public class FileBackupDto {
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    @OWLAnnotationProperty(iri = DC.Terms.CREATED)
     private Instant timestamp;
     @OWLDataProperty(iri = DC.Terms.DESCRIPTION)
     private BackupReason backupReason;

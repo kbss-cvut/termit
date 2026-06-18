@@ -315,7 +315,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                      "GRAPH ?g {" +
                                      "?t ?inScheme ?glossary ." +
                                      "}}").setParameter("t", term)
-          .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
+          .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_state))
           .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
           .setParameter("newState", state).executeUpdate();
     }
@@ -710,7 +710,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                          .setParameter("included", includeTerms)
-                         .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
+                         .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version))
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
@@ -725,7 +725,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                       .setParameter("hasLabel", LABEL_PROP)
                                       .setParameter("hasTerm", URI.create(SKOS.HAS_TOP_CONCEPT));
         if (includeImports) {
-            tq.setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik));
+            tq.setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary));
         }
         return tq;
     }
@@ -918,7 +918,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                       .setParameter("hasLabel", LABEL_PROP)
                                       .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                       .setParameter("snapshot", URI.create(
-                                              cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
+                                              cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version))
                                       .setFirstResult((int) pageable.getOffset())
                                       .setMaxResults(pageable.getPageSize());
         if (!searchString.isBlank()) {
