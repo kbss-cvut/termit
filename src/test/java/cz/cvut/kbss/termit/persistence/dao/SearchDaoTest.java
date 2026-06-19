@@ -126,6 +126,17 @@ class SearchDaoTest {
     }
 
     @Test
+    void fullTextSearchDoesNotAddWildcardForShortLastToken() {
+        mockSearchQuery();
+        final String searchString = "ab";
+        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
+        assertTrue(captor.getAllValues().stream().anyMatch(s -> s.equals(searchString)));
+        assertFalse(captor.getAllValues().stream().anyMatch(s -> s.equals(searchString + SearchDao.LUCENE_WILDCARD)));
+    }
+
+    @Test
     void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
         final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Collections.emptyList(),
                                                              Constants.DEFAULT_PAGE_SPEC, List.of());

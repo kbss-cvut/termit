@@ -62,6 +62,7 @@ public class SearchDao {
     private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
     static final char LUCENE_WILDCARD = '*';
+    private static final int WILDCARD_MIN_LENGTH = 3;
 
     private final EntityManager em;
     private final DataDao dataDao;
@@ -93,6 +94,9 @@ public class SearchDao {
             return searchString;
         }
         final String[] split = searchString.trim().split("\\s+");
+        if (split[split.length - 1].length() < WILDCARD_MIN_LENGTH) {
+            return searchString;
+        }
         split[split.length - 1] += LUCENE_WILDCARD;
         return String.join(" ", split);
     }
