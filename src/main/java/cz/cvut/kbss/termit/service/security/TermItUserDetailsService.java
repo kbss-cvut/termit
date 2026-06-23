@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.security;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class TermItUserDetailsService implements UserDetailsService {
         this.userAccountDao = userAccountDao;
     }
 
+    @Cacheable(cacheNames = "userDetails", key = "#username")
     @Override
     public TermItUserDetails loadUserByUsername(String username) {
         return new TermItUserDetails(userAccountDao.findByUsername(username).orElseThrow(
