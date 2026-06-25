@@ -2,13 +2,16 @@ package cz.cvut.kbss.termit.service.validation;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.TooLargeToValidateException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -18,10 +21,12 @@ import java.net.URI;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @ExtendWith(MockitoExtension.class)
@@ -113,5 +118,36 @@ class ExternalServiceValidatorTest {
         final List<ValidationResult> result = sut.validate(List.of(context), Environment.LANGUAGE);
         assertTrue(result.isEmpty());
         mockServer.verify();
+    }
+
+    @Test
+    void validateThrowsTooLargeToValidateExceptionWhenValidationServiceReturnsPayloadTooLargeStatus() {
+        final URI context = Generator.generateUri();
+        final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.addAll("vocabularyContextIri", List.of(context.toString()));
+        params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
+        params.add("language", Environment.LANGUAGE);
+        mockServer.expect(requestTo(SERVICE_URL))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                  .andExpect(content().formData(params))
+                  .andRespond(withStatus(HttpStatus.PAYLOAD_TOO_LARGE));
+        assertThrows(TooLargeToValidateException.class, () -> sut.validate(List.of(context), Environment.LANGUAGE));
+    }
+
+    @Test
+    void validateDoesNotInvokeValidationServiceWhenAttemptingToValidateContextsThatWerePreviouslyTooLargeToValidate() {
+        final URI context = Generator.generateUri();
+        final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.addAll("vocabularyContextIri", List.of(context.toString()));
+        params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
+        params.add("language", Environment.LANGUAGE);
+        mockServer.expect(ExpectedCount.once(), requestTo(SERVICE_URL))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                  .andExpect(content().formData(params))
+                  .andRespond(withStatus(HttpStatus.PAYLOAD_TOO_LARGE));
+        assertThrows(TooLargeToValidateException.class, () -> sut.validate(List.of(context), Environment.LANGUAGE));
+        assertThrows(TooLargeToValidateException.class, () -> sut.validate(List.of(context), Environment.LANGUAGE));
     }
 }

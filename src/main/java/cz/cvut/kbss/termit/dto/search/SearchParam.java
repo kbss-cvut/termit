@@ -26,6 +26,9 @@ import java.util.Set;
 
 /**
  * Parameter of the faceted term search.
+ * <p>
+ * Provide {@link cz.cvut.kbss.jopa.vocabulary.RDF#NIL} as value to represent empty value (i.e., not any, but indeed
+ * none).
  */
 public class SearchParam {
 

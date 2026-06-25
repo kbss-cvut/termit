@@ -180,7 +180,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                 .setParameter("hasLabel", labelProperty())
                 .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                 .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_sioc_has_creator))
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_creator))
                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                 .setParameter("languageVal", config.getLanguage())
                 .setParameter("author", author);

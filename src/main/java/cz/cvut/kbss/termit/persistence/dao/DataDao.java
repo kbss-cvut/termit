@@ -21,15 +21,20 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.model.query.criteria.CriteriaBuilder;
+import cz.cvut.kbss.jopa.model.query.criteria.CriteriaQuery;
+import cz.cvut.kbss.jopa.model.query.criteria.Root;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.persistence.dao.spec.Specification;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -114,35 +119,33 @@ public class DataDao {
         return new ArrayList<>(map.values());
     }
 
-    /**
-     * Finds all user-defined attributes.
-     *
-     * @return List of custom attributes
-     */
-    public List<CustomAttribute> findAllCustomAttributes() {
-        return em.createQuery("SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
-                              CustomAttribute.class)
-                 .setDescriptor(descriptor())
-                 .getResultList();
-    }
-
     private static Descriptor descriptor() {
         return new EntityDescriptor(URI.create(CustomAttribute.CONTEXT));
     }
 
     /**
-     * Finds all user-defined attributes with the specified domain.
+     * Finds all user-defined attributes.
      *
-     * @param domain Property domain
-     * @return List of matching custom attributes
+     * @return List of matching custom attributes, ordered by label
      */
-    public List<CustomAttribute> findAllCustomAttributesByDomain(URI domain) {
-        return em.createQuery(
-                         "SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p WHERE p.domain = :domain ORDER BY p.label",
-                         CustomAttribute.class)
-                 .setParameter("domain", domain)
-                 .setDescriptor(descriptor())
-                 .getResultList();
+    public List<CustomAttribute> findAllCustomAttributes() {
+        return findAllCustomAttributes(List.of());
+    }
+
+    /**
+     * Finds all user-defined attributes corresponding to the specified (optional) specifications.
+     *
+     * @param specifications Selection specifications, optional
+     * @return List of matching custom attributes, ordered by label
+     */
+    public List<CustomAttribute> findAllCustomAttributes(List<Specification<CustomAttribute>> specifications) {
+        final CriteriaBuilder cb = em.getCriteriaBuilder();
+        final CriteriaQuery<CustomAttribute> query = cb.createQuery(CustomAttribute.class);
+        final Root<CustomAttribute> root = query.from(CustomAttribute.class);
+        query.select(root).where(specifications.stream().map(s -> s.toPredicate(root, query, cb)).toList())
+             .orderBy(cb.asc(root.getAttr(
+                     CustomAttribute_.label)));
+        return em.createQuery(query).setDescriptor(descriptor()).getResultList();
     }
 
     /**
@@ -303,6 +306,7 @@ public class DataDao {
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         try (final RepositoryConnection con = repo.getConnection()) {
             final ValueFactory vf = con.getValueFactory();
+            con.begin();
             data.forEach(quad -> {
                 Value v = quad.object() instanceof URI ? vf.createIRI(quad.object().toString()) :
                           Rdf4jUtils.createLiteral(quad.object(), config.getLanguage(), vf);
@@ -310,6 +314,7 @@ public class DataDao {
                 con.add(vf.createIRI(quad.subject().toString()), vf.createIRI(quad.predicate().toString()), v,
                         quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
             });
+            con.commit();
         }
     }
 }

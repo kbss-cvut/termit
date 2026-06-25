@@ -41,8 +41,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,7 +72,7 @@ class JwtUtilsTest {
 
     private UserAccount user;
 
-    private Key key;
+    private SecretKey key;
 
     private JwtUtils sut;
 
@@ -100,12 +100,12 @@ class JwtUtilsTest {
     }
 
     private void verifyJWToken(String token, UserAccount user, Collection<? extends GrantedAuthority> authorities) {
-        final Claims claims = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
+        final Claims claims = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
                                                                                           .getBytes(
                                                                                                   StandardCharsets.UTF_8)))
                                   .build()
-                                  .parseClaimsJws(token)
-                                  .getBody();
+                                  .parseSignedClaims(token)
+                                  .getPayload();
         assertEquals(user.getUsername(), claims.getSubject());
         assertThat(claims.getExpiration(), greaterThan(claims.getIssuedAt()));
         if (!authorities.isEmpty()) {
@@ -128,10 +128,10 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoExtractsDataOfUserWithoutAuthoritiesFromJWT() {
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId(user.getUri().toString())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .id(user.getUri().toString())
+                                 .issuedAt(new Date())
+                                 .expiration(
                                          new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
 
@@ -143,10 +143,10 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoExtractsDataOfUserWithAuthoritiesFromJWT() {
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId(user.getUri().toString())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .id(user.getUri().toString())
+                                 .issuedAt(new Date())
+                                 .expiration(
                                          new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
                                  .claim(SecurityConstants.JWT_ROLE_CLAIM,
                                         String.join(SecurityConstants.JWT_ROLE_DELIMITER, ROLES))
@@ -165,10 +165,10 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoThrowsJwtExceptionWhenUserIdentifierIsNotValidUri() {
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId("_:123")
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .id("_:123")
+                                 .issuedAt(new Date())
+                                 .expiration(
                                          new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
         assertThrows(JwtException.class, () -> sut.extractUserInfo(token));
@@ -176,9 +176,9 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoThrowsIncompleteJwtExceptionWhenUsernameIsMissing() {
-        final String token = Jwts.builder().setId(user.getUri().toString())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(
+        final String token = Jwts.builder().id(user.getUri().toString())
+                                 .issuedAt(new Date())
+                                 .expiration(
                                          new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
         final IncompleteJwtException ex = assertThrows(IncompleteJwtException.class, () -> sut.extractUserInfo(token));
@@ -187,9 +187,9 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoThrowsIncompleteJwtExceptionWhenIdentifierIsMissing() {
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .issuedAt(new Date())
+                                 .expiration(
                                          new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
         final IncompleteJwtException ex = assertThrows(IncompleteJwtException.class, () -> sut.extractUserInfo(token));
@@ -198,19 +198,19 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoThrowsTokenExpiredExceptionWhenExpirationIsInPast() {
-        final String token = Jwts.builder().setId(user.getUri().toString())
-                                 .setSubject(user.getUsername())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(new Date(System.currentTimeMillis() - 1000))
+        final String token = Jwts.builder().id(user.getUri().toString())
+                                 .subject(user.getUsername())
+                                 .issuedAt(new Date())
+                                 .expiration(new Date(System.currentTimeMillis() - 1000))
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
         assertThrows(TokenExpiredException.class, () -> sut.extractUserInfo(token));
     }
 
     @Test
     void extractUserInfoThrowsTokenExpiredExceptionWhenExpirationIsMissing() {
-        final String token = Jwts.builder().setId(user.getUri().toString())
-                                 .setSubject(user.getUsername())
-                                 .setIssuedAt(new Date())
+        final String token = Jwts.builder().id(user.getUri().toString())
+                                 .subject(user.getUsername())
+                                 .issuedAt(new Date())
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
         assertThrows(TokenExpiredException.class, () -> sut.extractUserInfo(token));
     }
@@ -218,15 +218,15 @@ class JwtUtilsTest {
     @Test
     void refreshTokenUpdatesIssuedDate() {
         final Date oldIssueDate = new Date(System.currentTimeMillis() - 10000);
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId(user.getUri().toString())
-                                 .setIssuedAt(oldIssueDate)
-                                 .setExpiration(new Date(oldIssueDate.getTime() + SecurityConstants.SESSION_TIMEOUT))
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .id(user.getUri().toString())
+                                 .issuedAt(oldIssueDate)
+                                 .expiration(new Date(oldIssueDate.getTime() + SecurityConstants.SESSION_TIMEOUT))
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
 
         final String result = sut.refreshToken(token);
-        final Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(result)
-                                  .getBody();
+        final Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(result)
+                                  .getPayload();
         assertTrue(claims.getIssuedAt().after(oldIssueDate));
     }
 
@@ -234,24 +234,24 @@ class JwtUtilsTest {
     void refreshTokenUpdatesExpirationDate() {
         final Date oldIssueDate = new Date();
         final Date oldExpiration = new Date(oldIssueDate.getTime() + 10000);
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId(user.getUri().toString())
-                                 .setIssuedAt(oldIssueDate)
-                                 .setExpiration(oldExpiration)
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .id(user.getUri().toString())
+                                 .issuedAt(oldIssueDate)
+                                 .expiration(oldExpiration)
                                  .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
 
         final String result = sut.refreshToken(token);
-        final Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(result)
-                                  .getBody();
+        final Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(result)
+                                  .getPayload();
         assertTrue(claims.getExpiration().after(oldExpiration));
     }
 
     @Test
     void extractUserInfoThrowsJwtExceptionWhenTokenIsSignedWithInvalidSecret() {
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId(user.getUri().toString())
-                                 .setIssuedAt(new Date())
-                                 .setExpiration(
+        final String token = Jwts.builder().subject(user.getUsername())
+                                 .id(user.getUri().toString())
+                                 .issuedAt(new Date())
+                                 .expiration(
                                          new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
                                  .signWith(Keys.hmacShaKeyFor(
                                                    "differentSecretKeyThatIsAlsoLongEnough".getBytes(StandardCharsets.UTF_8)),

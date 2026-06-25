@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
+import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@NonEntity
 @OWLClass(iri = SKOS.CONCEPT)
 public class ReadOnlyTerm extends AbstractTerm {
 
@@ -75,7 +77,7 @@ public class ReadOnlyTerm extends AbstractTerm {
     private Map<String, Set<Object>> properties;
 
     public ReadOnlyTerm() {
-        // Public no-arg constructor for marshalling support
+        // Public no-arg constructor for marshaling support
     }
 
     public ReadOnlyTerm(final Term term) {

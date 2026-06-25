@@ -114,7 +114,7 @@ public class File extends Resource implements SupportsStorage {
     public String toString() {
         return "File{" +
                 super.toString() + (language != null ? "@" + language : "") +
-                (document != null ? "document=<" + document.getUri() + ">" : "") + '}';
+                (document != null ? ", document=<" + document.getUri() + ">" : "") + '}';
     }
 
     /**

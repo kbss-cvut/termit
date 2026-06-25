@@ -19,12 +19,13 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -38,6 +39,8 @@ import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriterFactory;
 import org.slf4j.Logger;
@@ -65,14 +68,18 @@ public class SKOSExporter {
     private static final String GLOSSARY_EXPORT_QUERY = "export/skos/exportGlossary.rq";
     private static final String TERMS_EXPORT_QUERY = "export/skos/exportGlossaryTerms.rq";
     private static final String TERMS_FULL_EXPORT_QUERY = "export/full/exportGlossaryTerms.rq";
+    private static final String TERMS_HIERARCHY_EXPORT_QUERY = "export/full/exportHierarchy.rq";
+
+    private final VocabularyContextMapper vocabularyContextMapper;
 
     private final org.eclipse.rdf4j.repository.Repository repository;
     private final ValueFactory vf;
 
-    private final Model model = new LinkedHashModel();
+    private final Model model = new TreeModel();
 
     @Autowired
-    public SKOSExporter(EntityManager em) {
+    public SKOSExporter(VocabularyContextMapper vocabularyContextMapper, EntityManager em) {
+        this.vocabularyContextMapper = vocabularyContextMapper;
         this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         vf = repository.getValueFactory();
     }
@@ -164,12 +171,23 @@ public class SKOSExporter {
      * @param vocabulary Vocabulary to export
      */
     private void exportGlossaryTermsWithQuery(Vocabulary vocabulary, String queryFile) {
+        final long startTime = System.currentTimeMillis();
         LOG.trace("Exporting terms from {}.", vocabulary);
+        final IRI graphIri = vf.createIRI(vocabularyContextMapper.getVocabularyContext(vocabulary).toString());
+        final IRI vocabularyIri = vf.createIRI(vocabulary.getUri().toString());
         try (final RepositoryConnection conn = repository.getConnection()) {
-            final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(queryFile));
-            gq.setBinding("vocabulary", vf.createIRI(vocabulary.getUri().toString()));
+            GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(queryFile));
+            gq.setBinding("g", graphIri);
+            gq.setBinding("vocabulary", vocabularyIri);
+            evaluateAndAddToModel(gq);
+            gq = conn.prepareGraphQuery(Utils.loadQuery(TERMS_HIERARCHY_EXPORT_QUERY));
+            gq.setBinding("g", graphIri);
+            gq.setBinding("vocabulary", vocabularyIri);
+            gq.setIncludeInferred(false);
             evaluateAndAddToModel(gq);
         }
+        final long endTime = System.currentTimeMillis();
+        LOG.debug("Export query evaluation took {} ms.", endTime - startTime);
     }
 
     /**
@@ -276,6 +294,9 @@ public class SKOSExporter {
             case RDF_XML -> new RDFXMLPrettyWriterFactory().getWriter(bos);
             default -> throw new IllegalArgumentException("Unsupported SKOS export format " + format);
         };
+        final WriterConfig writerConfig = new WriterConfig();
+        writerConfig.set(BasicWriterSettings.PRETTY_PRINT, true);
+        writer.setWriterConfig(writerConfig);
         Rio.write(model, writer);
         return bos.toByteArray();
     }

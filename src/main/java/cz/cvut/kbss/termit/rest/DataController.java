@@ -87,7 +87,7 @@ public class DataController {
     @ApiResponse(responseCode = "200", description = "List of custom attributes.")
     @GetMapping(value = "/custom-attributes", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<CustomAttribute> getCustomAttributes() {
-        return dataService.findAllCustomProperties();
+        return dataService.findAllCustomAttributes();
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

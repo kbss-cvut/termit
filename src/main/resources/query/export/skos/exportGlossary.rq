@@ -3,6 +3,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX vann: <http://purl.org/vocab/vann/>
 
 CONSTRUCT {
     ?glossary a owl:Ontology ;
@@ -13,11 +14,12 @@ CONSTRUCT {
               dc:description ?description ;
               dc:creator ?fullName ;
               dc:created ?created ;
+              dc:modified ?latestMod ;
               dc:rights ?rights ;
               owl:imports ?imported ;
               owl:versionIRI ?versionIri ;
-              <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-              <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
+              vann:preferredNamespaceUri ?nsUri ;
+              vann:preferredNamespacePrefix ?nsPrefix ;
               <http://purl.org/ontology/bibo/status> ?status ;
               ?y ?z .
 } WHERE {
@@ -34,13 +36,16 @@ CONSTRUCT {
         OPTIONAL {
             ?glossary owl:versionIRI ?versionIri .
         }
-        OPTIONAL {
-            ?glossary dc:rights ?rights .
-        }
-        OPTIONAL {
-            ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-                      <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
-        }
+        OPTIONAL { ?glossary dc:rights ?glRights . }
+        OPTIONAL { ?vocabulary dc:rights ?vocRights . }
+        BIND(COALESCE(?glRights, ?vocRights) AS ?rights)
+        OPTIONAL { ?glossary vann:preferredNamespaceUri ?glNsUri . }
+        OPTIONAL { ?vocabulary vann:preferredNamespaceUri ?vocNsUri . }
+        BIND(COALESCE(?glNsUri, ?vocNsUri) AS ?nsUri)
+        OPTIONAL { ?glossary vann:preferredNamespacePrefix ?glNsPrefix . }
+        OPTIONAL { ?vocabulary vann:preferredNamespacePrefix ?vocNsPrefix . }
+        BIND(COALESCE(?glNsPrefix, ?vocNsPrefix) AS ?nsPrefix)
+
         OPTIONAL {
             ?glossary <http://purl.org/ontology/bibo/status> ?status .
         }
@@ -69,6 +74,22 @@ CONSTRUCT {
         }
         FILTER(?createdDateMax = ?created)
     }
+    OPTIONAL {
+        SELECT (MAX(?contentMod) as ?contentLatestMod) WHERE {
+            ?changeRecord a pdp:změna ;
+            pdp:má-změněnou-entitu ?t ;
+            pdp:má-datum-a-čas-modifikace ?contentMod .
+            ?t pdp:je-pojmem-ze-slovníku ?vocabulary .
+        }
+    }
+    OPTIONAL {
+        SELECT (MAX(?modified) as ?metadataLatestMod) WHERE {
+            ?changeRecord a pdp:změna ;
+            pdp:má-změněnou-entitu ?vocabulary ;
+            pdp:má-datum-a-čas-modifikace ?modified .
+        }
+    }
+    BIND (IF(?contentLatestMod > ?metadataLatestMod, ?contentLatestMod, ?metadataLatestMod) AS ?latestMod)
     BIND (CONCAT(?firstName, " ", ?lastName) AS ?fullName)
     BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
 }

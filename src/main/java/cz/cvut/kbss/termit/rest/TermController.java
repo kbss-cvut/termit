@@ -28,14 +28,15 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
-import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -152,6 +153,8 @@ public class TermController extends BaseController {
                            defaultValue = MediaType.ALL_VALUE) String acceptType,
             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+            @Parameter(description = "Boolean flag to determine whether to return full versions of the terms.")
+            @RequestParam(name = "full", required = false, defaultValue = "false") boolean full,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
@@ -159,35 +162,16 @@ public class TermController extends BaseController {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
-            if (flat) {
-                return ResponseEntity.ok(includeImported ?
-                                         termService.findAllFlatIncludingImported(searchString, vocabulary,
-                                                                                  createPageRequest(pageSize, pageNo)) :
-                                         termService.findAllFlat(searchString, vocabulary,
-                                                                 createPageRequest(pageSize, pageNo)));
-            }
-
-            return ResponseEntity.ok(includeImported ?
-                                     termService.findAllIncludingImported(searchString, vocabulary,
-                                                                          createPageRequest(pageSize, pageNo)) :
-                                     termService.findAll(searchString, vocabulary,
-                                                         createPageRequest(pageSize, pageNo)));
+            return ResponseEntity.ok(termService.findAll(searchString, vocabulary,
+                                                         new TermSelectionParams(flat, full, includeImported,
+                                                                                 createPageRequest(pageSize, pageNo))));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
-            if (flat) {
-                return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary,
-                                                                                                    createPageRequest(
-                                                                                                            pageSize,
-                                                                                                            pageNo)) :
-                                         termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)));
-            }
-
-            return ResponseEntity
-                    .ok(includeImported ?
-                        termService.findAllIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
-                        termService.findAll(vocabulary, createPageRequest(pageSize, pageNo)));
+            return ResponseEntity.ok(termService.findAll(vocabulary,
+                                                         new TermSelectionParams(flat, full, includeImported,
+                                                                                 createPageRequest(pageSize, pageNo))));
         });
     }
 
@@ -353,9 +337,13 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
+            @RequestParam(name = "populateCustomAttributeTermReferences",
+                          required = false) boolean populateCustomAttributes) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.findRequired(termUri);
+        return populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
+               termService.findRequired(termUri);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -371,9 +359,13 @@ public class TermController extends BaseController {
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
+            @RequestParam(name = "populateCustomAttributeTermReferences",
+                          required = false) boolean populateCustomAttributes) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return termService.findRequired(termUri);
+        return populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
+               termService.findRequired(termUri);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -394,8 +386,9 @@ public class TermController extends BaseController {
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
-        return idResolver.resolveIdentifier(namespaceResolver.resolveNamespace(getVocabularyUri(namespace, vocabIdFragment)),
-                                            termIdFragment);
+        return idResolver.resolveIdentifier(
+                namespaceResolver.resolveNamespace(getVocabularyUri(namespace, vocabIdFragment)),
+                termIdFragment);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -483,7 +476,7 @@ public class TermController extends BaseController {
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final Term parent = getById(localName, termLocalName, namespace);
+        final Term parent = getById(localName, termLocalName, namespace, false);
         return termService.findSubTerms(parent);
     }
 
@@ -505,7 +498,7 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final Term parent = getById(localName, namespace);
+        final Term parent = getById(localName, namespace, false);
         return termService.findSubTerms(parent);
     }
 
@@ -527,7 +520,7 @@ public class TermController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
             @Parameter(description = "The new term.")
             @RequestBody Term newTerm) {
-        final Term parent = getById(localName, termLocalName, namespace);
+        final Term parent = getById(localName, termLocalName, namespace, false);
         termService.persistChild(newTerm, parent);
         LOG.debug("Child term {} of parent {} created.", newTerm, parent);
         return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), termLocalName)).build();
@@ -555,7 +548,7 @@ public class TermController extends BaseController {
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
             @RequestBody Term newTerm) {
-        final Term parent = getById(localName, namespace);
+        final Term parent = getById(localName, namespace, false);
         termService.persistChild(newTerm, parent);
         LOG.debug("Child term {} of parent {} created.", newTerm, parent);
         return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), localName)).build();
@@ -665,7 +658,7 @@ public class TermController extends BaseController {
         LOG.warn(
                 "Called legacy endpoint intended for internal use or testing only! (/vocabularies/{}/terms/{}/text-analysis)",
                 localName, termLocalName);
-        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
+        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace, false),
                                           getVocabularyUri(namespace, localName));
     }
 
@@ -1021,7 +1014,7 @@ public class TermController extends BaseController {
             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo
     ) {
         if (flat) {
-            return ResponseEntity.ok(termService.findAllFlat(searchString,createPageRequest(pageSize, pageNo)));
+            return ResponseEntity.ok(termService.findAllFlat(searchString, createPageRequest(pageSize, pageNo)));
         }
         return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo)));
     }
@@ -1040,6 +1033,7 @@ public class TermController extends BaseController {
         public static final String ID_STANDALONE_NAMESPACE_DESCRIPTION = "Term identifier namespace";
         public static final String ID_STANDALONE_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/datovy-mpp-3.4/pojem/";
         public static final String ID_STANDALONE_NOT_FOUND_DESCRIPTION = "Term with the specified identifier not found.";
+        public static final String ID_POPULATE_CUSTOM_ATTS_DESCRIPTION = "Whether to populate custom attribute values that reference terms with actual terms (instead of just their URI)";
 
         private ApiDoc() {
             throw new AssertionError();

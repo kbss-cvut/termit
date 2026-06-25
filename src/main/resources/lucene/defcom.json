@@ -10,7 +10,7 @@
             "analyzed": true,
             "multivalued": true,
             "ignoreInvalidValues": false,
-            "facet": true
+            "facet": false
         },
         {
             "fieldName": "scopeNote",
@@ -22,7 +22,7 @@
             "analyzed": true,
             "multivalued": true,
             "ignoreInvalidValues": false,
-            "facet": true
+            "facet": false
         },
         {
             "fieldName": "description",
@@ -34,7 +34,7 @@
             "analyzed": true,
             "multivalued": true,
             "ignoreInvalidValues": false,
-            "facet": true
+            "facet": false
         }
     ],
     "types": [

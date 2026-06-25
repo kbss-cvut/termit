@@ -201,7 +201,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
     @Test
     void addReactionToCreatesLikeByCurrentUser() {
         final Comment comment = persistComment();
-        final URI reaction = URI.create(Vocabulary.s_c_as_Like);
+        final URI reaction = URI.create(Vocabulary.s_c_Like);
 
         sut.addReactionTo(comment, reaction.toString());
         assertTrue(doesReactionExist(comment, reaction));
@@ -213,9 +213,9 @@ class CommentServiceTest extends BaseServiceTestRunner {
                 "?hasAuthor ?author ;" +
                 "?reactsTo ?comment .}", Boolean.class)
                 .setParameter("type", type)
-                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_as_actor))
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_actor))
                 .setParameter("author", author)
-                .setParameter("reactsTo", URI.create(Vocabulary.s_p_as_object))
+                .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
                 .setParameter("comment", comment).getSingleResult();
     }
 
@@ -223,7 +223,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
     void addReactionToRemovesPreexistingCommentReaction() {
         final Comment comment = persistComment();
         final CommentReaction existingReaction = persistReaction(comment);
-        final URI reaction = URI.create(Vocabulary.s_c_as_Like);
+        final URI reaction = URI.create(Vocabulary.s_c_Like);
 
         sut.addReactionTo(comment, reaction.toString());
         assertNull(em.find(CommentReaction.class, existingReaction.getUri()));
@@ -232,7 +232,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
     private CommentReaction persistReaction(Comment toComment) {
         final CommentReaction reaction = new CommentReaction(author, toComment);
-        reaction.addType(Vocabulary.s_c_as_Dislike);
+        reaction.addType(Vocabulary.s_c_Dislike);
         transactional(
                 () -> em.persist(reaction, new EntityDescriptor(URI.create(config.getComments().getContext()))));
         return reaction;

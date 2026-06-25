@@ -29,6 +29,7 @@ import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 
 @PrimaryNotBlank({"label"})
 @MappedSuperclass
+@JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
 public abstract class AbstractTerm extends Asset<MultilingualString>
         implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
 

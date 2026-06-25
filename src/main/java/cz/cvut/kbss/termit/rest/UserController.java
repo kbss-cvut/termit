@@ -56,7 +56,7 @@ import java.util.Optional;
 
 /**
  * Controller for user management.
- *
+ * <p>
  * Enabled when internal security is used.
  */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
@@ -108,29 +108,6 @@ public class UserController extends BaseController {
                               @RequestBody UserUpdateDto update) {
         userService.updateCurrent(update);
         LOG.debug("User {} successfully updated.", update);
-    }
-
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Unlocks a previously locked user account. An account is locked when the number of login attempts reaches configured threshold.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User account unlocked."),
-            @ApiResponse(responseCode = "404", description = "Account not found.")
-    })
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @DeleteMapping(value = "/{localName}/lock")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void unlock(@Parameter(description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                  example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                       @PathVariable String localName,
-                       @Parameter(description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                  example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-                       @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                     required = false) Optional<String> namespace,
-                       @Parameter(description = "New password to set for the user.")
-                       @RequestBody String newPassword) {
-        final UserAccount user = getUserAccountForUpdate(namespace, localName);
-        userService.unlock(user, newPassword);
-        LOG.debug("User {} successfully unlocked.", user);
     }
 
     private UserAccount getUserAccountForUpdate(Optional<String> namespace, String identifierFragment) {

@@ -127,6 +127,7 @@ public class UserService {
 
     /**
      * Gets a reference (with empty attribute values) to the user with the specified id.
+     *
      * @param id User identifier
      * @return Reference to the matching user account
      * @throws NotFoundException When no matching account is found
@@ -159,9 +160,11 @@ public class UserService {
 
     /**
      * Persists a new user.
-     * When a password is null or blank,
-     * a random password is generated and an email for password creation is sent to the user.
-     * @param account
+     * <p>
+     * When a password is null or blank, a random password is generated and an email for password creation is sent to
+     * the user.
+     *
+     * @param account Account to save
      */
     @Transactional
     public void adminCreateUser(UserAccount account) {
@@ -235,25 +238,6 @@ public class UserService {
                     "User " + securityUtils.getCurrentUser() + " attempted to update their username.");
         }
         return currentUser;
-    }
-
-    /**
-     * Unlocks the specified user account.
-     * <p>
-     * The specified password is set as the new password of the user account.
-     *
-     * @param account     Account to unlock
-     * @param newPassword New password for the unlocked account
-     */
-    @Transactional
-    public void unlock(UserAccount account, String newPassword) {
-        Objects.requireNonNull(account);
-        Objects.requireNonNull(newPassword);
-        ensureNotOwnAccount(account, "unlock");
-        LOG.trace("Unlocking user account {}.", account);
-        account.unlock();
-        account.setPassword(newPassword);
-        repositoryService.update(account);
     }
 
     private void ensureNotOwnAccount(UserAccount account, String operation) {
@@ -361,22 +345,26 @@ public class UserService {
     @Transactional
     public void requestPasswordReset(String username) {
         final UserAccount account = repositoryService.findByUsername(username)
-                                               .orElseThrow(() -> NotFoundException.create(UserAccount.class, username));
+                                                     .orElseThrow(() -> NotFoundException.create(UserAccount.class,
+                                                                                                 username));
         PasswordChangeRequest request = createPasswordChangeRequest(account);
         passwordChangeNotifier.sendPasswordResetEmail(request);
     }
 
     private boolean isValid(PasswordChangeRequest request) {
-        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity()).isAfter(Utils.timestamp());
+        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity())
+                      .isAfter(Utils.timestamp());
     }
 
     /**
      * Changes the user's password if there is a valid password change request.
+     * <p>
      * Unlocks the user account if it is locked.
      */
     @Transactional
     public void changePassword(PasswordChangeDto passwordChangeDto) {
-        Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeRequestException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
+        Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeRequestException(
+                "Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
         PasswordChangeRequest request = passwordChangeRequestRepositoryService.find(passwordChangeDto.getUri())
                                                                               .orElseThrow(exception);
 
@@ -385,11 +373,12 @@ public class UserService {
         }
 
         UserAccount account = repositoryService.find(request.getUserAccount().getUri())
-                                                   .orElseThrow(exception);
+                                               .orElseThrow(exception);
 
         passwordChangeRequestRepositoryService.remove(request);
-
-        unlock(account, passwordChangeDto.getNewPassword());
+        account.unlock();
+        account.setPassword(passwordChangeDto.getNewPassword());
+        repositoryService.update(account);
         LOG.info("Password changed for user {}.", account.getUsername());
     }
 }

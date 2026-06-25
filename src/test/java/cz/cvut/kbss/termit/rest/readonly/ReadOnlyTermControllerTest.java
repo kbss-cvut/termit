@@ -27,10 +27,11 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.rest.BaseControllerTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
-import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -56,6 +57,7 @@ import java.util.stream.IntStream;
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static cz.cvut.kbss.termit.environment.Generator.generateComments;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
+import static cz.cvut.kbss.termit.rest.TermControllerTest.termSelectionParamsBuilder;
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SPEC;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
@@ -64,6 +66,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -119,15 +122,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
-        when(termService.findAll(any(), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termService).findAll(any(), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")).andExpect(status().isOk())
                                            .andReturn();
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termService).findAll(eq(vocabulary), captor.capture());
+        verify(termService).findAll(eq(vocabulary), eq(termSelectionParamsBuilder().build()));
     }
 
     private List<TermDto> generateTerms() {
@@ -140,7 +142,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
-        when(termService.findAll(any(), any(), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termService).findAll(any(), any(), any(TermSelectionParams.class));
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform((get(PATH + VOCABULARY_NAME + "/terms"))
@@ -152,8 +154,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termService).findAll(eq(searchString), eq(vocabulary), captor.capture());
+        verify(termService).findAll(eq(searchString), eq(vocabulary), eq(termSelectionParamsBuilder().build()));
     }
 
     @Test
@@ -163,7 +164,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
-        when(termService.findAllIncludingImported(any(), any(), any(Pageable.class))).thenReturn(terms);
+        doReturn(terms).when(termService).findAll(any(), any(), any(TermSelectionParams.class));
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform((get(PATH + VOCABULARY_NAME + "/terms"))
@@ -176,8 +177,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termService).findAllIncludingImported(eq(searchString), eq(vocabulary), captor.capture());
+        verify(termService).findAll(eq(searchString), eq(vocabulary), eq(termSelectionParamsBuilder().includeImported().build()));
     }
 
     @Test

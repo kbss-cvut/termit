@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -27,12 +26,14 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
@@ -47,13 +48,18 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import org.apache.commons.lang3.function.TriConsumer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigInteger;
@@ -64,6 +70,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -174,16 +181,6 @@ class TermServiceTest {
     }
 
     @Test
-    void findAllBySearchStringRetrievesMatchingTermsFromVocabularyUsingRepositoryService() {
-        final String searchString = "test";
-        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
-        assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
-    }
-
-    @Test
     void getOccurrenceInfoRetrievesTermOccurrenceInfoFromRepositoryService() {
         final Term term = generateTermWithId();
         final List<TermOccurrences> occurrences = Collections
@@ -250,15 +247,6 @@ class TermServiceTest {
     }
 
     @Test
-    void findAllRetrievesAllTermsFromVocabularyUsingRepositoryService() {
-        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
-        assertEquals(terms, result);
-        verify(termRepositoryService).findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
-    }
-
-    @Test
     void findAllCallsFindAllInRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         final String searchString = "test";
@@ -291,16 +279,6 @@ class TermServiceTest {
     }
 
     @Test
-    void findAllIncludingImportedBySearchStringRetrievesMatchingTermsUsingRepositoryService() {
-        final String searchString = "test";
-        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
-        final List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
-        assertEquals(terms, result);
-        verify(termRepositoryService).findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
-    }
-
-    @Test
     void removeRemovesTermViaRepositoryService() {
         final Term toRemove = generateTermWithId();
         sut.remove(toRemove);
@@ -314,7 +292,8 @@ class TermServiceTest {
         final Term toAnalyze = generateTermWithId();
         when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
-        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
+        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri(),
+                                                          vocabulary.getPrimaryLanguage());
     }
 
     @Test
@@ -346,7 +325,8 @@ class TermServiceTest {
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
         sut.update(toUpdate);
-        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary(), vocabulary.getPrimaryLanguage());
+        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary(),
+                                                          vocabulary.getPrimaryLanguage());
     }
 
     @Test
@@ -396,12 +376,6 @@ class TermServiceTest {
         final Term asset = Generator.generateTermWithId();
         sut.getChanges(asset);
         verify(changeRecordService).getChanges(asset, new ChangeRecordFilterDto());
-    }
-
-    @Test
-    void findAllIncludingImportedRetrievesAllTermsFromVocabularyImportsChain() {
-        sut.findAllIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC);
-        verify(termRepositoryService).findAllIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -707,5 +681,67 @@ class TermServiceTest {
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(original);
         assertThrows(InvalidTermStateException.class, () -> sut.update(term));
         verify(termRepositoryService, never()).update(term);
+    }
+
+    @ParameterizedTest
+    @MethodSource("findAllParams")
+    void findAllInvokesCorrectRepositoryServiceMethodBasedOnParams(TermSelectionParams params,
+                                                                   BiConsumer<TermRepositoryService, Vocabulary> verifier) {
+        sut.findAll(vocabulary, params);
+        verifier.accept(termRepositoryService, vocabulary);
+    }
+
+    static Stream<Arguments> findAllParams() {
+        return Stream.of(
+                Arguments.of(new TermSelectionParams(false, false, false, PageRequest.of(5, 10)),
+                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                     repositoryService).findAll(vocabulary, PageRequest.of(5, 10))),
+                Arguments.of(new TermSelectionParams(true, false, false, Constants.DEFAULT_PAGE_SPEC),
+                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                     repositoryService).findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(false, true, false, Constants.DEFAULT_PAGE_SPEC),
+                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                     repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(true, true, false, Constants.DEFAULT_PAGE_SPEC),
+                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                     repositoryService).findAllFullAndFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(true, false, true, Constants.DEFAULT_PAGE_SPEC),
+                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                     repositoryService).findAllFlatIncludingImported(vocabulary,
+                                                                                     Constants.DEFAULT_PAGE_SPEC))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("findAllWithSearchStringParams")
+    void findAllWithSearchStringInvokesCorrectRepositoryServiceMethodBasedOnParams(TermSelectionParams params,
+                                                                                   TriConsumer<TermRepositoryService, String, Vocabulary> verifier) {
+        final String searchString = "test";
+        sut.findAll(searchString, vocabulary, params);
+        verifier.accept(termRepositoryService, searchString, vocabulary);
+    }
+
+    static Stream<Arguments> findAllWithSearchStringParams() {
+        return Stream.of(
+                Arguments.of(new TermSelectionParams(false, false, false, PageRequest.of(5, 10)),
+                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                     repositoryService).findAll(searchString, vocabulary, PageRequest.of(5, 10))),
+                Arguments.of(new TermSelectionParams(true, false, false, Constants.DEFAULT_PAGE_SPEC),
+                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                     repositoryService).findAllFlat(searchString, vocabulary,
+                                                                    Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(false, true, false, Constants.DEFAULT_PAGE_SPEC),
+                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                     repositoryService).findAllFull(searchString, vocabulary,
+                                                                    Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(true, true, false, Constants.DEFAULT_PAGE_SPEC),
+                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                     repositoryService).findAllFullAndFlat(searchString, vocabulary,
+                                                                           Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(true, false, true, Constants.DEFAULT_PAGE_SPEC),
+                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                     repositoryService).findAllFlatIncludingImported(searchString, vocabulary,
+                                                                                     Constants.DEFAULT_PAGE_SPEC))
+        );
     }
 }

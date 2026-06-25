@@ -28,7 +28,10 @@ import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.FlatTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
@@ -38,6 +41,7 @@ import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
@@ -48,6 +52,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -71,11 +77,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private final TermOccurrenceService termOccurrenceService;
 
+    private final DataRepositoryService dataService;
+
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
                                  TermOccurrenceService termOccurrenceService,
                                  VocabularyRepositoryService vocabularyService,
-                                 VocabularyNamespaceResolver namespaceResolver) {
+                                 VocabularyNamespaceResolver namespaceResolver, DataRepositoryService dataService) {
         super(validator);
         this.idResolver = idResolver;
         this.termDao = termDao;
@@ -83,6 +91,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.vocabularyService = vocabularyService;
         this.termOccurrenceService = termOccurrenceService;
         this.namespaceResolver = namespaceResolver;
+        this.dataService = dataService;
     }
 
     @Override
@@ -101,6 +110,42 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
+    /**
+     * Finds a term and populates custom attributes with term references.
+     * <p>
+     * This means values of custom attributes that reference other terms and are by default represented only by the term
+     * identifier are replaced by {@link TermInfo} instances.
+     *
+     * @param id Term identifier
+     * @return Matching term
+     * @throws NotFoundException If no such term exists
+     */
+    @Transactional(readOnly = true)
+    public Term findRequiredWithPopulatedCustomAttributes(@Nonnull URI id) {
+        final Term result = findRequired(id);
+        termDao.detach(result);
+        final URI termTypeUri = Term_.entityClassIRI.toURI();
+        final List<CustomAttribute> termCustomAtts = dataService.findCustomAttributesByDomainAndRange(termTypeUri,
+                                                                                                      termTypeUri);
+        assert result.getProperties() != null;
+        termCustomAtts.stream().filter(ca -> result.getProperties().containsKey(ca.getUri().toString())).forEach(ca -> {
+            final Set<Object> values = result.getProperties().get(ca.getUri().toString());
+            final Set<TermInfo> toAdd = new HashSet<>();
+            final Iterator<Object> it = values.iterator();
+            while (it.hasNext()) {
+                final Object ref = it.next();
+                if (ref instanceof URI refUri) {
+                    termDao.findTermInfo(refUri).ifPresent(ti -> {
+                        it.remove();
+                        toAdd.add(ti);
+                    });
+                }
+            }
+            values.addAll(toAdd);
+        });
+        return result;
+    }
+
     @Override
     protected void preUpdate(@Nonnull Term instance) {
         if (instance.getPrimaryLanguage() == null) {
@@ -108,7 +153,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         }
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
-        final Term original = termDao.find(instance.getUri()).get();
+        final Optional<Term> originalOpt = termDao.find(instance.getUri());
+        assert originalOpt.isPresent();
+        final Term original = originalOpt.get();
         SnapshotProvider.verifySnapshotNotModified(original);
         termDao.detach(original);
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
@@ -274,7 +321,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all terms from vocabulary, regardless of their position in the term hierarchy.
+     * Gets all terms from the specified vocabulary, regardless of their position in the term hierarchy.
      * <p>
      * This returns the full versions of all terms (complete metadata) contained in vocabulary's glossary, and thus its
      * performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
@@ -283,8 +330,72 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return List of full terms ordered by label
      * @see #findAll(Vocabulary, Pageable)
      */
+    @Transactional(readOnly = true)
     public List<Term> findAllFull(Vocabulary vocabulary) {
-        return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
+        return findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+    }
+
+    /**
+     * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
+     * <p>
+     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, and thus its
+     * performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specifying result number and position
+     * @return List of full terms ordered by label
+     * @see #findAll(Vocabulary, Pageable)
+     */
+    @Transactional(readOnly = true)
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllFull(vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
+    }
+
+    /**
+     * Finds terms from the specified vocabulary whose label matches the specified search string.
+     *
+     * @param searchString Search string to filter terms by
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
+     * @return List of full terms ordered by label
+     */
+    @Transactional(readOnly = true)
+    public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllFull(searchString, vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
+    }
+
+    /**
+     * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
+     * <p>
+     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary except for the
+     * ancestors - only direct parents are loaded as {@link TermInfo} instances.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specifying result number and position
+     * @return List of full terms ordered by label
+     * @see #findAll(Vocabulary, Pageable)
+     * @see #findAllFull(Vocabulary, Pageable)
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTerm> findAllFullAndFlat(Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllFullAndFlat(vocabulary, pageSpec);
+    }
+
+    /**
+     * Gets a page of terms from the specified vocabulary, whose label matches the specified search string.
+     * <p>
+     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, but only
+     * their direct parents are loaded as {@link TermInfo} instances, not the full ancestor chain.
+     *
+     * @param searchString Search string to filter terms by
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
+     * @return List of full terms ordered by label
+     * @see #findAllFullAndFlat(Vocabulary, Pageable)
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTerm> findAllFullAndFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllFullAndFlat(searchString, vocabulary, pageSpec);
     }
 
     /**

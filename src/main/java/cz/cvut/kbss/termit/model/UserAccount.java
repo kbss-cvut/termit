@@ -61,7 +61,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
     private String password;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
+    @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)
     private Instant lastSeen;
 
     @Types

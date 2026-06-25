@@ -196,41 +196,6 @@ class UserServiceTest {
     }
 
     @Test
-    void unlockUnlocksUserAccountAndUpdatesItViaRepositoryService() {
-        when(securityUtilsMock.isAuthenticated()).thenReturn(true);
-        when(securityUtilsMock.getCurrentUser()).thenReturn(Generator.generateUserAccount());
-        final UserAccount account = Generator.generateUserAccount();
-        account.lock();
-        sut.unlock(account, "newPassword");
-        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
-        verify(repositoryServiceMock).update(captor.capture());
-        assertFalse(captor.getValue().isLocked());
-    }
-
-    @Test
-    void unlockSetsNewPasswordOnAccountSpecifiedAsArgument() {
-        when(securityUtilsMock.isAuthenticated()).thenReturn(true);
-        when(securityUtilsMock.getCurrentUser()).thenReturn(Generator.generateUserAccount());
-        final UserAccount account = Generator.generateUserAccount();
-        account.lock();
-        final String newPassword = "newPassword";
-        sut.unlock(account, newPassword);
-        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
-        verify(repositoryServiceMock).update(captor.capture());
-        assertEquals(newPassword, captor.getValue().getPassword());
-    }
-
-    @Test
-    void unlockThrowsUnsupportedOperationExceptionWhenAttemptingToUnlockOwnAccount() {
-        final UserAccount account = Generator.generateUserAccount();
-        account.lock();
-        when(securityUtilsMock.isAuthenticated()).thenReturn(true);
-        when(securityUtilsMock.getCurrentUser()).thenReturn(account);
-        assertThrows(UnsupportedOperationException.class, () -> sut.unlock(account, "newPassword"));
-        verify(repositoryServiceMock, never()).update(any());
-    }
-
-    @Test
     void disableDisablesUserAccountAndUpdatesItViaRepositoryService() {
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);
         when(securityUtilsMock.getCurrentUser()).thenReturn(Generator.generateUserAccount());

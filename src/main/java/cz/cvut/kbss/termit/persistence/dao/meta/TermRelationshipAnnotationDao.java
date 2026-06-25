@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
+import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
@@ -20,6 +21,8 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +73,8 @@ public class TermRelationshipAnnotationDao {
     }
 
     private List<TermRelationshipAnnotation> findAnnotationsForSubject(Term term, URI context) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
-                URI.create(RDF.STATEMENT));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
         return (List<TermRelationshipAnnotation>) em.createNativeQuery(
                                                             """
                                                                     SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
@@ -92,8 +95,8 @@ public class TermRelationshipAnnotationDao {
      * @return List of resolved annotations
      */
     private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSkosSymmetricProperties(Term term) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributesByDomain(
-                URI.create(RDF.STATEMENT));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
         // Must use FILTER for ?attribute and ?predicate because setting the value directly results in VALUES clause
         // (which is there because ?subject is projected out of the query)
         // causing incorrect query results, because mismatch in the number of items in VALUES meant UNDEF was used.
@@ -182,16 +185,22 @@ public class TermRelationshipAnnotationDao {
      * @param annotationProperty Annotation property
      */
     private void removeExistingValues(Pair<RdfStatement, URI> annotatedStatement, URI annotationProperty) {
-        em.createNativeQuery("DELETE WHERE {" +
-                                     "GRAPH ?g {" +
-                                     "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
-                                     "} }")
-          .setParameter("g", annotatedStatement.getSecond())
-          .setParameter("subject", annotatedStatement.getFirst().getSubject())
-          .setParameter("predicate", annotatedStatement.getFirst().getRelation())
-          .setParameter("object", annotatedStatement.getFirst().getObject())
-          .setParameter("annotationProperty", annotationProperty)
-          .executeUpdate();
+        LOG.trace("Remove existing values of annotation {} - {}", annotatedStatement, annotationProperty);
+        final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            conn.begin();
+            final Update u = conn.prepareUpdate("DELETE WHERE {" +
+                                                        "GRAPH ?g {" +
+                                                        "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
+                                                        "} }");
+            u.setBinding("g", Values.iri(annotatedStatement.getSecond().toString()));
+            u.setBinding("subject", Values.iri(annotatedStatement.getFirst().getSubject().toString()));
+            u.setBinding("predicate", Values.iri(annotatedStatement.getFirst().getRelation().toString()));
+            u.setBinding("object", Values.iri(annotatedStatement.getFirst().getObject().toString()));
+            u.setBinding("annotationProperty", Values.iri(annotationProperty.toString()));
+            u.execute();
+            conn.commit();
+        }
     }
 
     /**

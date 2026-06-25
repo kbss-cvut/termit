@@ -19,14 +19,15 @@ package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,28 +58,32 @@ public class ReadOnlyTermService {
         return termService.findVocabularyRequired(vocabularyUri);
     }
 
-    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAll(vocabulary, pageSpec);
+    /**
+     * Retrieves all terms from the specified vocabulary.
+     * <p>
+     * The provided selection params specify how many terms and in what form they will be returned.
+     *
+     * @param vocabulary      Vocabulary whose terms will be returned. A reference is sufficient
+     * @param selectionParams Term selection parameters
+     * @return Matching terms
+     */
+    public List<? extends AbstractTerm> findAll(Vocabulary vocabulary, TermSelectionParams selectionParams) {
+        return termService.findAll(vocabulary, selectionParams.withNotFull());
     }
 
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllFlat(vocabulary, pageSpec);
-    }
-
-    public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAll(searchString, vocabulary, pageSpec);
-    }
-
-    public List<FlatTermDto> findAllFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllFlat(searchString, vocabulary, pageSpec);
-    }
-
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllIncludingImported(searchString, vocabulary, pageSpec);
-    }
-
-    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
+    /**
+     * Retrieves all terms from the specified vocabulary whose label matches the specified search string.
+     * <p>
+     * The provided selection params specify how many terms and in what form they will be returned.
+     *
+     * @param searchString    String to search terms by
+     * @param vocabulary      Vocabulary whose terms will be returned. A reference is sufficient
+     * @param selectionParams Term selection parameters
+     * @return Matching terms
+     */
+    public List<? extends AbstractTerm> findAll(String searchString, Vocabulary vocabulary,
+                                                TermSelectionParams selectionParams) {
+        return termService.findAll(searchString, vocabulary, selectionParams.withNotFull());
     }
 
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
@@ -89,12 +94,16 @@ public class ReadOnlyTermService {
         return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
     }
 
-    public ReadOnlyTerm findRequired(URI termId) {
-        return create(termService.findRequired(termId));
+    public ReadOnlyTerm findRequired(URI id) {
+        return create(termService.findRequired(id));
     }
 
-    public TermInfo findRequiredTermInfo(URI termId) {
-        return termService.findRequiredTermInfo(termId);
+    public ReadOnlyTerm findRequiredWithPopulatedCustomAttributes(URI id) {
+        return create(termService.findRequiredWithPopulatedCustomAttributes(id));
+    }
+
+    public TermInfo findRequiredTermInfo(URI id) {
+        return termService.findRequiredTermInfo(id);
     }
 
     private ReadOnlyTerm create(final Term term) {

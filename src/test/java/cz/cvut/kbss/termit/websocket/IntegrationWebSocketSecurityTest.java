@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.Utils;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Nonnull;
@@ -172,13 +171,13 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
 
         final Instant issued = Utils.timestamp();
         // creates "valid" JWT token but with invalid signature
-        final String token = Jwts.builder().setSubject(userDetails.getUser().getUsername())
-                                 .setId(userDetails.getUser().getUri().toString()).setIssuedAt(Date.from(issued))
-                                 .setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
+        final String token = Jwts.builder().subject(userDetails.getUser().getUsername())
+                                 .id(userDetails.getUser().getUri().toString()).issuedAt(Date.from(issued))
+                                 .expiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
                                  .signWith(Keys.hmacShaKeyFor(
                                                    "my very secure and really private key".getBytes(StandardCharsets.UTF_8)),
-                                           SignatureAlgorithm.HS256)
-                                 .serializeToJsonWith(new JacksonSerializer<>(objectMapper)).compact();
+                                           Jwts.SIG.HS256)
+                                 .json(new JacksonSerializer<>(objectMapper)).compact();
 
         final TextMessage message = new TextMessage(
                 StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + token + "\n\n\0");

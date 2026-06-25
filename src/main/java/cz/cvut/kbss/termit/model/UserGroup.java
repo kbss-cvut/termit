@@ -31,13 +31,13 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_sioc_Usergroup)
+@OWLClass(iri = Vocabulary.s_c_Usergroup)
 public class UserGroup extends AccessControlAgent {
 
     /**
      * Namespace of UserGroup identifiers.
      */
-    public static final String NAMESPACE = Vocabulary.ONTOLOGY_IRI_SIOC;
+    public static final String NAMESPACE = Vocabulary.ONTOLOGY_IRI_NS;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)

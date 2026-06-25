@@ -50,6 +50,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
@@ -149,7 +150,9 @@ public class RestExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorInfo> authenticationException(HttpServletRequest request, AuthenticationException e) {
         LOG.warn("Authentication failure during HTTP request to {}: {}", request.getRequestURI(), e.getMessage());
-        LOG.atDebug().setCause(e).log(e.getMessage());
+        if (ExceptionUtils.findCause(e, InvalidBearerTokenException.class).isEmpty()) {
+            LOG.atDebug().setCause(e).log(e.getMessage());
+        }
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNAUTHORIZED);
     }
 
