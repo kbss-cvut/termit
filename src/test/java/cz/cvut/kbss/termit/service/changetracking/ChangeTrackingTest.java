@@ -265,7 +265,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_state),
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term),
                 ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
     }
 

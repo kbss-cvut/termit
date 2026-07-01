@@ -37,8 +37,8 @@ public class SnapshotDao {
      * Supported snapshot types.
      */
     private static final List<URI> SNAPSHOT_TYPES = List.of(
-            URI.create(Vocabulary.s_c_vocabulary_version),
-            URI.create(Vocabulary.s_c_term_version)
+            URI.create(Vocabulary.s_c_version_of_vocabulary),
+            URI.create(Vocabulary.s_c_version_of_term)
     );
 
     private final EntityManager em;
@@ -65,14 +65,14 @@ public class SnapshotDao {
                                                                        "BIND (?id as ?s)" +
                                                                        "}", "Snapshot")
                                             .setParameter("id", uri)
-                                            .setParameter("snapshotType", URI.create(Vocabulary.s_c_object_version))
+                                            .setParameter("snapshotType", URI.create(Vocabulary.s_c_version_of_object))
                                             .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
                                             .setParameter("hasCreated",
                                                           URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
                                             .setParameter("creator",
                                                           URI.create(DC.Terms.CREATOR))
                                             .setParameter("firstName",
-                                                          URI.create(Vocabulary.s_p_has_name))
+                                                          URI.create(Vocabulary.s_p_has_first_name))
                                             .setParameter("lastName",
                                                           URI.create(Vocabulary.s_p_has_surname))
                                             .setParameter("accountName",

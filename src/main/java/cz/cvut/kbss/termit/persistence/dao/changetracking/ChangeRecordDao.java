@@ -194,7 +194,7 @@ public class ChangeRecordDao {
                                                    .setParameter("hasTime", URI.create(DC.Terms.MODIFIED))
                                                    .setParameter("hasAuthor", URI.create(
                                                            Vocabulary.s_p_has_editor)) // record has author
-                                                   .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_name))
+                                                   .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_first_name))
                                                    .setParameter("hasLastName", URI.create(Vocabulary.s_p_has_surname))
                                                    // Optional - update change record
                                                    .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_has_changed_attribute))

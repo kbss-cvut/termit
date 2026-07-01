@@ -418,7 +418,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updateOfSnapshotThrowsSnapshotNotEditableException() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version);
+        vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
         setPrimaryLabel(vocabulary, "Updated label");

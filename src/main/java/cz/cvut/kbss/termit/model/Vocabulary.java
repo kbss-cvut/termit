@@ -243,7 +243,7 @@ public class Vocabulary extends Asset<MultilingualString>
 
     @Override
     public boolean isSnapshot() {
-        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version);
+        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
     }
 
     @Override

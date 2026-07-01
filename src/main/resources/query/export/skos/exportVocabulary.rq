@@ -56,7 +56,7 @@ CONSTRUCT {
             dd:has-changed-entity ?vocabulary ;
             dd:has-editor ?author ;
             dc:modified ?created .
-        ?author dd:has-name ?firstName ;
+        ?author dd:has-first-name ?firstName ;
             dd:has-surname ?lastName .
         {
           SELECT (max(?createdDate) AS ?createdDateMax) ?vocabulary

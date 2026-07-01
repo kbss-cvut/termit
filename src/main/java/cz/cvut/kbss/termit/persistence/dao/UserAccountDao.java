@@ -86,7 +86,7 @@ public class UserAccountDao extends BaseDao<UserAccount> {
                                                 "} ORDER BY ?lastName ?firstName", type)
                      .setParameter("type", typeUri)
                      .setParameter("hasLastName", URI.create(Vocabulary.s_p_has_surname))
-                     .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_name))
+                     .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_first_name))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

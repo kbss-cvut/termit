@@ -66,7 +66,7 @@ public class TermRepositoryServiceSnapshotsTest extends BaseServiceTestRunner {
 
     private Term generateAndPersistSnapshot() {
         final Term t = Generator.generateTermWithId();
-        t.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version);
+        t.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term);
         vocabulary.addRootTerm(t);
         t.setVocabulary(vocabulary.getUri());
         transactional(() -> {
