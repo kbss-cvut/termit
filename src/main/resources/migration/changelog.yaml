@@ -398,10 +398,10 @@ changeSets:
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-resource
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-stav-pojmu
-                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-term-state
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-state-of-term
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-pojmu
-                newIri: http://onto.fel.cvut.cz/ontologies/data-description/term-version
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/version-of-term
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/změna
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/change
@@ -416,7 +416,10 @@ changeSets:
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/update-of-entity
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-objektu
-                newIri: http://onto.fel.cvut.cz/ontologies/data-description/object-version
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/version-of-object
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-slovníku
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/version-of-vocabulary
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-version-of
@@ -443,7 +446,7 @@ changeSets:
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-username
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-křestní-jméno
-                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-name
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-first-name
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-příjmení
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-surname

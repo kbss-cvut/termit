@@ -104,7 +104,7 @@ class ReadOnlyTermTest {
     void isSnapshotReturnsTrueWhenInstanceHasSnapshotType() {
         final ReadOnlyTerm original = new ReadOnlyTerm(Generator.generateTermWithId());
         final ReadOnlyTerm snapshot = new ReadOnlyTerm(Generator.generateTermWithId());
-        snapshot.addType(Vocabulary.s_c_term_version);
+        snapshot.addType(Vocabulary.s_c_version_of_term);
         assertFalse(original.isSnapshot());
         assertTrue(snapshot.isSnapshot());
     }

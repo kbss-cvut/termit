@@ -51,7 +51,7 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
                                                               @VariableResult(name = "authorFirstName", type = String.class),
                                                               @VariableResult(name = "authorLastName", type = String.class)
                                                       })})
-@OWLClass(iri = Vocabulary.s_c_object_version)
+@OWLClass(iri = Vocabulary.s_c_version_of_object)
 public class Snapshot implements HasIdentifier, HasTypes, Serializable {
 
     @Id
