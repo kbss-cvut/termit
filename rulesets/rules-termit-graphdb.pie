@@ -5,7 +5,7 @@ Prefices
     owl  :  http://www.w3.org/2002/07/owl#
     xsd  :  http://www.w3.org/2001/XMLSchema#
     skos :  http://www.w3.org/2004/02/skos/core#
-    pdp  :  http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/
+    dd  :   http://onto.fel.cvut.cz/ontologies/data-description/
     psys :  http://proton.semanticweb.org/protonsys#
     termit : http://onto.fel.cvut.cz/ontologies/application/termit/
     activity: https://www.w3.org/ns/activitystreams#
@@ -51,40 +51,40 @@ Rules
     ---------------
     x p z
 
-  Id: pdp_dokument_1
+  Id: dd_document_1
 
-    vocabulary <pdp:popisuje-dokument> this
+    vocabulary <dd:describes-document> this
     -------------------------------
-    this <pdp:má-dokumentový-slovník> vocabulary
+    this <dd:has-document-vocabulary> vocabulary
 
-  Id: pdp_dokument_2
+  Id: dd_document_2
 
-    doc <pdp:má-soubor> this
+    doc <dd:has-file> this
     -------------------------------
-    this <pdp:je-částí-dokumentu> doc
+    this <dd:is-part-of-document> doc
 
-  Id: pdp_term_1
+  Id: term_1
 
     this <rdf:type> <skos:Concept>
     this <skos:broader> parent
     -------------------------------
     parent <skos:narrower> this
 
-  Id: pdp_term_2
+  Id: term_2
 
     source <rdf:type> <termit:term-definition-source>
     source <termit:is-assignment-of-term> this
     -------------------------------
     this <termit:has-term-definition-source> source
 
-  Id: pdp_term_3
+  Id: term_3
 
     this <rdf:type> <skos:Concept>
     this <skos:related> related
     -------------------------------
     related <skos:related> this
 
-  Id: pdp_term_4
+  Id: term_4
 
     this <rdf:type> <skos:Concept>
     this <skos:relatedMatch> related
