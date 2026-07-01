@@ -1176,7 +1176,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
             snapshot.setUri(Generator.generateUri());
             snapshot.setCreated(Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(i, ChronoUnit.DAYS));
             snapshot.setVersionOf(term.getUri());
-            snapshot.setTypes(Collections.singleton(Vocabulary.s_c_term_version));
+            snapshot.setTypes(Collections.singleton(Vocabulary.s_c_version_of_term));
             return snapshot;
         }).collect(Collectors.toList());
         when(termServiceMock.findSnapshots(term)).thenReturn(snapshots);

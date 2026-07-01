@@ -15,7 +15,7 @@ public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
 
     public VocabularySnapshotLoader(EntityManager em) {
         super(em, URI.create(SKOS.CONCEPT_SCHEME), URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version));
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
     }
 
     @Override
@@ -44,7 +44,7 @@ public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
                      .setParameter("hasAuthor",
                                    URI.create(DC.Terms.CREATOR))
                      .setParameter("firstName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_name))
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_first_name))
                      .setParameter("lastName",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_surname))
                      .setParameter("accountName",

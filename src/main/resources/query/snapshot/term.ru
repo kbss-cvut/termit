@@ -3,7 +3,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 INSERT {
     GRAPH ?vocabularySnapshot {
-        ?tSnapshot a skos:Concept, dd:term-version ;
+        ?tSnapshot a skos:Concept, dd:version-of-term ;
                skos:inScheme ?vocabularySnapshot ;
                skos:broader ?broaderSnapshot ;
                skos:broadMatch ?broadMatchSnapshot ;

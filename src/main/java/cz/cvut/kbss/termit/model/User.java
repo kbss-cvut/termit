@@ -36,7 +36,7 @@ public class User extends AccessControlAgent implements HasTypes, Serializable {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_has_name)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_first_name)
     String firstName;
 
     @NotBlank

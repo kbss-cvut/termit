@@ -61,7 +61,7 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
     }
 
     private void ensureCanRemove(Snapshot snapshot) {
-        if (!Utils.emptyIfNull(snapshot.getTypes()).contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version)) {
+        if (!Utils.emptyIfNull(snapshot.getTypes()).contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)) {
             throw new UnsupportedAssetOperationException("Only removal of vocabulary snapshots is supported.");
         }
         final Vocabulary toRemove = vocabularyDao.getReference(snapshot.getUri());
@@ -73,7 +73,7 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
     private URI resolveSnapshotContext(URI snapshot) {
         return em.createNativeQuery("SELECT ?g WHERE { GRAPH ?g { ?snapshot a ?snapshotType . } }", URI.class)
                  .setParameter("snapshot", snapshot)
-                 .setParameter("snapshotType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version))
+                 .setParameter("snapshotType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
                  .getSingleResult();
     }
 

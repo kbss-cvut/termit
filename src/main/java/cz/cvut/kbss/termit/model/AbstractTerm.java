@@ -75,7 +75,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_term_state)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_state_of_term)
     private URI state;
 
     @Types
@@ -193,7 +193,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @JsonIgnore
     @Override
     public boolean isSnapshot() {
-        return hasType(Vocabulary.s_c_term_version);
+        return hasType(Vocabulary.s_c_version_of_term);
     }
 
     @Override

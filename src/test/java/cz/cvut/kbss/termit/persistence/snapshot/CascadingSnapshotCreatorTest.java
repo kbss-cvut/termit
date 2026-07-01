@@ -125,7 +125,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
             final Snapshot result = sut.createSnapshot(vocabulary);
             assertNotNull(result);
             assertEquals(vocabulary.getUri(), result.getVersionOf());
-            assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version));
+            assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
         });
         final Vocabulary result = findRequiredSnapshot(vocabulary, Vocabulary.class);
         assertEquals(vocabulary.getLabel(), result.getLabel());
@@ -153,7 +153,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         assertEquals(term.getDefinition(), result.getDefinition());
         assertEquals(term.getDescription(), result.getDescription());
         assertEquals(vocabularyResult.getUri(), result.getVocabulary());
-        assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version));
+        assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term));
     }
 
     private <T extends Asset<?>> T findRequiredSnapshot(HasIdentifier asset, Class<T> cls) {
