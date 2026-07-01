@@ -15,7 +15,7 @@ import java.util.Objects;
 public class TermSnapshotLoader extends AssetSnapshotLoader<Term> {
 
     public TermSnapshotLoader(EntityManager em) {
-        super(em, URI.create(SKOS.CONCEPT), URI.create(Vocabulary.s_c_term_version));
+        super(em, URI.create(SKOS.CONCEPT), URI.create(Vocabulary.s_c_version_of_term));
     }
 
     @Override
@@ -42,7 +42,7 @@ public class TermSnapshotLoader extends AssetSnapshotLoader<Term> {
                      .setParameter("hasCreated", URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
                      .setParameter("hasAuthor", URI.create(DC.Terms.CREATOR))
                      .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-                     .setParameter("firstName", URI.create(Vocabulary.s_p_has_name))
+                     .setParameter("firstName", URI.create(Vocabulary.s_p_has_first_name))
                      .setParameter("lastName", URI.create(Vocabulary.s_p_has_surname))
                      .setParameter("accountName", URI.create(Vocabulary.s_p_has_username))
                      .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))

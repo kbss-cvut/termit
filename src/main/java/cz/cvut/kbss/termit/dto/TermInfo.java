@@ -58,7 +58,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_term_state)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_state_of_term)
     private URI state;
 
     @Types

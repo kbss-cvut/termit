@@ -206,7 +206,7 @@ class TermTest {
     void isSnapshotReturnsTrueWhenInstanceHasSnapshotType() {
         final Term original = Generator.generateTermWithId();
         final Term snapshot = Generator.generateTermWithId();
-        snapshot.addType(Vocabulary.s_c_term_version);
+        snapshot.addType(Vocabulary.s_c_version_of_term);
         assertFalse(original.isSnapshot());
         assertTrue(snapshot.isSnapshot());
     }

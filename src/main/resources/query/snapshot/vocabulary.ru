@@ -5,7 +5,7 @@ PREFIX dc: <http://purl.org/dc/terms/>
 
 INSERT {
     GRAPH ?vocabularySnapshot {
-    ?vocabularySnapshot a dd:vocabulary-version, skos:ConceptScheme ;
+    ?vocabularySnapshot a dd:version-of-vocabulary, skos:ConceptScheme ;
               dd:is-version-of-vocabulary ?vocabulary ;
               dd:has-date-and-time-of-creation-of-version ?created ;
               dc:creator ?author ;

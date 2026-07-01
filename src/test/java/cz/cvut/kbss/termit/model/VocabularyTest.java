@@ -29,7 +29,7 @@ class VocabularyTest {
     void isSnapshotReturnsTrueWhenInstanceHasSnapshotType() {
         final Vocabulary original = Generator.generateVocabularyWithId();
         final Vocabulary snapshot = Generator.generateVocabularyWithId();
-        snapshot.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version);
+        snapshot.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
         assertFalse(original.isSnapshot());
         assertTrue(snapshot.isSnapshot());
     }

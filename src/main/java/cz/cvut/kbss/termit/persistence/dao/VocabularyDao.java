@@ -114,7 +114,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                 "}} ORDER BY ?title", type)
                      .setParameter("type", typeUri)
                      .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
-                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version))
+                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

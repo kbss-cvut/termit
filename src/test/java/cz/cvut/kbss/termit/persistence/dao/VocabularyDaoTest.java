@@ -514,7 +514,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 connection.add(stubIri,
                                vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version),
                                vf.createLiteral(Date.from(timestamp)), stubIri);
-                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version),
+                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary),
                                stubIri);
                 connection.commit();
             }
@@ -572,7 +572,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         final List<Vocabulary> result = sut.findAll();
         assertThat(result, hasItem(vocabulary));
-        assertTrue(result.stream().noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vocabulary_version)));
+        assertTrue(result.stream().noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)));
     }
 
     @Test

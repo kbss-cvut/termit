@@ -114,7 +114,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
                 connection.add(stubIri,
                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version),
                         vf.createLiteral(Date.from(timestamp)), vf.createIRI(vocSnapshotUri.toString()));
-                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version),
+                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term),
                         vf.createIRI(vocSnapshotUri.toString()));
                 connection.commit();
             }
@@ -196,7 +196,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
 
         final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptySet());
         assertThat(result, hasItem(new TermDto(term)));
-        assertTrue(result.stream().noneMatch(dto -> dto.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_term_version)));
+        assertTrue(result.stream().noneMatch(dto -> dto.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term)));
     }
 
     @Test
