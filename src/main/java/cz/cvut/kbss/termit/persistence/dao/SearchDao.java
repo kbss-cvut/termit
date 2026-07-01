@@ -53,8 +53,9 @@ import java.util.stream.Collectors;
  * Search data access object using Lucene-based repositories. These support rich search strings with wildcards and
  * operators.
  * <p>
- * This DAO automatically adds a wildcard to the last token in the search string, so that results for incomplete words
- * are returned as well.
+ * Every token in the search string is marked as required (AND semantics), so that multi-token searches do not produce
+ * excessively large candidate sets via the Lucene default OR operator. A wildcard is automatically added to the last
+ * token, so that results for incomplete words are returned as well.
  */
 @Repository
 public class SearchDao {
@@ -88,16 +89,20 @@ public class SearchDao {
         return query;
     }
 
-    private static String addWildcard(String searchString) {
-        // Search string already contains a wildcard
+    private static String buildLuceneQueryString(String searchString) {
+        // Respect explicitly provided wildcards/operators - pass the query through unchanged
         if (searchString.charAt(searchString.length() - 1) == LUCENE_WILDCARD) {
             return searchString;
         }
         final String[] split = searchString.trim().split("\\s+");
-        if (split[split.length - 1].length() < WILDCARD_MIN_LENGTH) {
-            return searchString;
+        final int lastIdx = split.length - 1;
+        if (split[lastIdx].length() >= WILDCARD_MIN_LENGTH) {
+            split[lastIdx] = split[lastIdx] + LUCENE_WILDCARD;
         }
-        split[split.length - 1] += LUCENE_WILDCARD;
+        // Require every token (AND) to avoid huge OR candidate sets that are expensive to rank
+        for (int i = 0; i < split.length; i++) {
+            split[i] = "+" + split[i];
+        }
         return String.join(" ", split);
     }
 
@@ -161,16 +166,16 @@ public class SearchDao {
         String queryStr = adjustQueryForLanguage(baseQueryStr, searchString.language());
         final String filters = buildSearchParamConditions(searchParams);
         queryStr = queryStr.replace("#FACETED_SEARCH_FILTERS#", filters);
-        final String wildcardString = addWildcard(searchString.searchString());
+        final String luceneQuery = buildLuceneQueryString(searchString.searchString());
 
         T query = (T) setCommonQueryParams(queryCreator.apply(queryStr), allowedVocabularies)
-                .setParameter("wildCardSearchString", wildcardString, null);
+                .setParameter("wildCardSearchString", luceneQuery, null);
         String langSuffix = searchString.language() == null ? "" : searchString.language();
         URI labelIndex = URI.create(Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX + langSuffix);
         URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
         query.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
         if (searchString.language() != null) {
-            query.setParameter("requestedLanguageVal", searchString.language());
+            query.setParameter("requestedLanguage", searchString.language());
         }
         return query;
     }

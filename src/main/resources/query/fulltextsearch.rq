@@ -20,6 +20,19 @@ SELECT DISTINCT ?entity
     {
         ?search a ?defcom_index .
     }
+    ?search :query ?wildCardSearchString ;
+            :snippetSize 250 ;
+            :entities ?entity .
+    {
+        ?entity a ?term .
+        BIND(?term AS ?type)
+    }
+    UNION
+    {
+        ?entity a ?vocabulary .
+        BIND(?vocabulary AS ?type)
+    }
+    FILTER NOT EXISTS { ?entity a ?snapshot . }
     {
         ?entity skos:prefLabel ?label ;
                 ?inVocabulary ?authorized .
@@ -29,6 +42,10 @@ SELECT DISTINCT ?entity
         OPTIONAL {
             ?entity skos:scopeNote ?scopeNote .
         }
+        OPTIONAL {
+            ?entity ?hasState ?state .
+        }
+        BIND (?authorized as ?vocabularyUri)
     } UNION {
         ?entity dc:title ?label .
         OPTIONAL {
@@ -36,22 +53,11 @@ SELECT DISTINCT ?entity
         }
         BIND(?entity AS ?authorized)
     }
-    ?search :query ?wildCardSearchString ;
-        :snippetSize 250 ;
-        :entities ?entity .
-    ?entity a ?type ;
-        :score ?initScore ;
+    ?entity :score ?initScore ;
         :snippets _:s .
     _:s :snippetText ?snippetText ;
         :snippetField ?snippetField .
-    OPTIONAL {
-        ?entity ?inVocabulary ?vocabularyUri .
-    }
-    OPTIONAL {
-        ?entity ?hasState ?state .
-    }
-    FILTER (?type = ?term || ?type = ?vocabulary)
-    FILTER NOT EXISTS { ?entity a ?snapshot . }
+
     FILTER (?authorized IN (?allowedVocabularies))
     BIND (?requestedLanguageVal AS ?requestedLanguage)
     FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)

@@ -40,6 +40,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -86,20 +89,20 @@ class SearchDaoTest {
     }
 
     @Test
-    void fullTextSearchUsesOneTokenSearchStringAsWildcardMatch() {
+    void fullTextSearchUsesOneTokenSearchStringAsRequiredWildcardMatch() {
         mockSearchQuery();
         final String searchString = "test";
         sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals(searchString + SearchDao.LUCENE_WILDCARD))
+                                                .filter(s -> s.equals("+" + searchString + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
 
     @Test
-    void fullTextSearchUsesLastTokenInMultiTokenSearchStringAsWildcardMatch() {
+    void fullTextSearchUsesLastTokenInMultiTokenSearchStringAsRequiredWildcardMatch() {
         mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
@@ -107,7 +110,7 @@ class SearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals("termOne termTwo " + lastToken + SearchDao.LUCENE_WILDCARD))
+                                                .filter(s -> s.equals("+termOne +termTwo +" + lastToken + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
@@ -132,8 +135,8 @@ class SearchDaoTest {
         sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
-        assertTrue(captor.getAllValues().stream().anyMatch(s -> s.equals(searchString)));
-        assertFalse(captor.getAllValues().stream().anyMatch(s -> s.equals(searchString + SearchDao.LUCENE_WILDCARD)));
+        assertTrue(captor.getAllValues().stream().anyMatch(s -> s.equals("+" + searchString)));
+        assertFalse(captor.getAllValues().stream().anyMatch(s -> s.equals("+" + searchString + SearchDao.LUCENE_WILDCARD)));
     }
 
     @Test
@@ -158,9 +161,10 @@ class SearchDaoTest {
         final ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
         verify(emMock).createNativeQuery(queryCaptor.capture(), anyString());
         final String query = queryCaptor.getValue();
-        assertTrue(query.contains("FILTER (?type = ?term || ?type = ?vocabulary)"));
-        assertTrue(query.contains("?entity <" + RDF.TYPE.stringValue() + "> ?v0"));
-        assertFalse(query.contains("FILTER (?type IN ("));
+        assertThat(query, containsString("?entity a ?term"));
+        assertThat(query, containsString("?entity a ?vocabulary"));
+        assertThat(query, containsString("?entity <" + RDF.TYPE.stringValue() + "> ?v0"));
+        assertThat(query, not(containsString("FILTER (?type IN (")));
     }
 
     @Test
