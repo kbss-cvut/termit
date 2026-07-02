@@ -615,11 +615,25 @@ changeSets:
                 iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/číselník
             -   type: deleteResource
                 iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/číselníková-hodnota
-
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term
     -   id: 8
         changes:
-            # Now import the new data description ontology, but into a specific context to simplify future updates
+            -   type: sparqlUpdate
+                query: |
+                    # Delete data description migrated from popis dat because it may be in the default context
+                    # We will re-import it next
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    
+                    DELETE {
+                        ?x ?y ?z .
+                    } WHERE {
+                      ?x a skos:Concept ;
+                        skos:inScheme <http://onto.fel.cvut.cz/ontologies/data-description> ;
+                        ?y ?z .
+                    }
             -   type: importFromUrl
+                # Import data description ontology into a specific context (simpler future updates)
                 sourceUrl: https://onto.fel.cvut.cz/ontologies/data-description/version/2.0.0.ttl
                 graph: http://onto.fel.cvut.cz/ontologies/data-description
                 replace: true
