@@ -96,6 +96,7 @@ changeSets:
                 iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář
             -   type: deleteClass
                 iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-glosáře
+
     -   id: 3
         changes:
             -   type: renameResource
@@ -388,6 +389,9 @@ changeSets:
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/soubor
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/file
             -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/resource
+            -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-částí-dokumentu
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-part-of-document
             -   type: renameResource
@@ -424,6 +428,12 @@ changeSets:
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-version-of
             -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí-pojmu
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-version-of-term
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí-slovníku
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/is-version-of-vocabulary
+            -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-změněnou-entitu
                 newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-changed-entity
             -   type: renameResource
@@ -459,6 +469,157 @@ changeSets:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-modifikace
                 newIri: http://purl.org/dc/terms/modified
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-posledního-editora
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-last-editor
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-autora
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/has-author
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/diagram
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/diagram
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel
+                newIri: http://onto.fel.cvut.cz/ontologies/data-description/user
+    -   id: 7
+        # Delete unmigrated parts of the popis dat ontology
+        # Because it may not be in a specific context, we have to delete them like this
+        changes:
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/cíl
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/dokumentový-slovník
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-glosář
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-model
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/obsahuje-kořenový-pojem
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/definuje-funkci
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-atributem
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-atributem-databázové-tabulky
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-atributem-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-datovým-atributem-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-pojmem
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-pojmem-ze-slovníku
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-referenčním-atributem-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-statistickým-atributem-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-v-kontextu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-v-kontextu-datové-sady
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí-glosáře
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí-modelu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-záznamem
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-záznamem-datové-sady
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/katalogizuje-datovou-sadu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-atribut
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-atribut-databázové-tabulky
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datový-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datový-typ
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-hodnotu-z-číselníku
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-referenční-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-statistický-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-verzi-glosáře
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-verzi-modelu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-číselníkovou-hodnotu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/obsahuje-pojem
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/popisuje-legislativní-dokument
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/poskytuje-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/poskytuje-datovou-sadu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/poskytuje-záznam
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/agendový-slovník
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/atribut
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/atribut-databázové-tabulky
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/databáze
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/databázová-tabulka
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/databázová-tabulka-jako-zdroj-dat
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/datová-sada
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/datový-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/datový-slovník
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/dokument-legislativní-povahy
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/dotaz-sql-databáze
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/funkce
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/geometrický-atribut
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/katalog
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/kontext
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/legislativní-slovník
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/referenční-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/statistický-atribut-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj-atributu-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj-dat
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj-datové-sady
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj-záznamu
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/záznam
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/číselník
+            -   type: deleteResource
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/číselníková-hodnota
 
-
-
+    -   id: 8
+        changes:
+            # Now import the new data description ontology, but into a specific context to simplify future updates
+            -   type: importFromUrl
+                sourceUrl: https://onto.fel.cvut.cz/ontologies/data-description/version/2.0.0.ttl
+                graph: http://onto.fel.cvut.cz/ontologies/data-description
+                replace: true
