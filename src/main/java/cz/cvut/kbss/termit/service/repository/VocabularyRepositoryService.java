@@ -41,7 +41,6 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,8 +72,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final VocabularyDao vocabularyDao;
 
-    private final EditableVocabularies editableVocabularies;
-
     private final Configuration config;
 
     private final VocabularyImporters importers;
@@ -85,13 +82,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
-                                       Validator validator, EditableVocabularies editableVocabularies,
-                                       Configuration config, VocabularyImporters importers,
+                                       Validator validator, Configuration config, VocabularyImporters importers,
                                        VocabularyNamespaceResolver namespaceResolver, DtoMapper dtoMapper) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
-        this.editableVocabularies = editableVocabularies;
         this.config = config;
         this.importers = importers;
         this.namespaceResolver = namespaceResolver;
@@ -104,21 +99,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Transactional(readOnly = true)
-    // Cache only if all vocabularies are editable
-    @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable",
-               cacheNames = "vocabularies")
+    @Cacheable(cacheNames = "vocabularies")
     @Override
     public List<VocabularyDto> findAll() {
         return super.findAll();
-    }
-
-    @Override
-    protected Vocabulary postLoad(@Nonnull Vocabulary instance) {
-        super.postLoad(instance);
-        if (!editableVocabularies.isEditable(instance)) {
-            instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_read_only);
-        }
-        return instance;
     }
 
     @Override
