@@ -38,8 +38,6 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * <p>
  * This incurs a performance penalty of executing a simple query, but does not suffer from potentially stale cache
  * data.
- * <p>
- * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
 @Profile("no-cache")

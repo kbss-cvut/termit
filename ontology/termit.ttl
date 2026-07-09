@@ -21,7 +21,7 @@
                 "termit" ;
         <http://purl.org/vocab/vann/preferredNamespaceUri>
                 "http://onto.fel.cvut.cz/ontologies/application/termit/" ;
-        owl:imports     <http://onto.fel.cvut.cz/ontologies/data-description> , <https://slovník.gov.cz/datový/pracovní-prostor/glosář> , <https://slovník.gov.cz/datový/pracovní-prostor/model> , <http://rdfs.org/sioc/ns#> , <http://www.w3.org/ns/activitystreams#> , <http://purl.org/vocab/vann/> ;
+        owl:imports     <http://onto.fel.cvut.cz/ontologies/data-description> , <http://rdfs.org/sioc/ns#> , <http://www.w3.org/ns/activitystreams#> , <http://purl.org/vocab/vann/> ;
         owl:versionInfo "2.0.0" ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/2.0.0> ;
         <http://www.w3.org/2004/02/skos/core#hasTopConcept>
