@@ -93,8 +93,8 @@ termit:
     publicView:
         whiteListProperties:
             - http://www.w3.org/2004/02/skos/core#notation
-            - http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-verzí-pojmu
-            - http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-datum-a-čas-vytvoření-verze
+            - http://onto.fel.cvut.cz/ontologies/data-description/is-version-of-term
+            - http://onto.fel.cvut.cz/ontologies/data-description/has-date-and-time-of-creation-of-version
 logging:
     pattern:
         console: "%date{dd-MM-yyyy HH:mm:ss.SSS} [%X{username}] [%thread] %-5level %logger{30} - %msg%n"

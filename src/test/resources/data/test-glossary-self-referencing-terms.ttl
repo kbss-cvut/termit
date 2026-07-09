@@ -2,11 +2,10 @@
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 
-<http://onto.fel.cvut.cz/ontologies/application/termit>  a        owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář> , skos:ConceptScheme ;
+<http://onto.fel.cvut.cz/ontologies/application/termit>  a        owl:Ontology , skos:ConceptScheme ;
         <http://purl.org/dc/terms/creator>
                 " Martin Ledvinka" , "Michal Med" ;
         <http://purl.org/dc/terms/language>
