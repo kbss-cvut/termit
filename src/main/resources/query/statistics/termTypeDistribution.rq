@@ -11,7 +11,7 @@ SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) ?language WHERE {
             dc:language ?language .
     }
     FILTER NOT EXISTS {
-        ?vocabulary a dd:object-version .
+        ?vocabulary a dd:version-of-object .
     }
     OPTIONAL {
         ?term a ?t .
