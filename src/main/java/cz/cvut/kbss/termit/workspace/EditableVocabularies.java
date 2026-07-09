@@ -20,16 +20,12 @@ package cz.cvut.kbss.termit.workspace;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-
-import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
  * Provides access to editable vocabularies.
@@ -46,35 +42,13 @@ public class EditableVocabularies implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(EditableVocabularies.class);
 
-    private static final EditableVocabulariesHolder SHARED = new EditableVocabulariesHolder.SharedEditableVocabulariesHolder();
-
     private final boolean allVocabulariesEditable = true;
-
-    private final ObjectProvider<EditableVocabulariesHolder> editableVocabularies;
-
-    public EditableVocabularies(ObjectProvider<EditableVocabulariesHolder> editableVocabularies) {
-        this.editableVocabularies = editableVocabularies;
-    }
-
-    /**
-     * Registers an editable copy of the vocabulary with the specified identifier to the specified repository context.
-     *
-     * @param vocabularyUri Vocabulary identifier
-     * @param contextUri    Identifier of the context in which the editable data are
-     */
-    public void registerEditableVocabulary(URI vocabularyUri, URI contextUri) {
-        Objects.requireNonNull(vocabularyUri);
-        Objects.requireNonNull(contextUri);
-        LOG.debug("Registering working context {} for vocabulary {}.", uriToString(contextUri),
-                  uriToString(vocabularyUri));
-        editableVocabularies.getObject().registerEditableVocabulary(vocabularyUri, contextUri);
-    }
 
     /**
      * Clears the registered contexts.
      */
     public void clear() {
-        editableVocabularies.ifAvailable(EditableVocabulariesHolder::clear);
+
     }
 
     public boolean isEditable(Vocabulary vocabulary) {
@@ -84,8 +58,7 @@ public class EditableVocabularies implements Serializable {
 
     public boolean isEditable(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return allVocabulariesEditable || editableVocabularies.getIfAvailable(() -> SHARED)
-                                                              .hasRegisteredVocabulary(vocabularyUri);
+        return allVocabulariesEditable;
     }
 
     public Optional<URI> getVocabularyContext(Vocabulary vocabulary) {
@@ -95,15 +68,6 @@ public class EditableVocabularies implements Serializable {
 
     public Optional<URI> getVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return editableVocabularies.getIfAvailable(() -> SHARED).getVocabularyContext(vocabularyUri);
-    }
-
-    /**
-     * Gets a set of contexts containing the registered editable vocabularies.
-     *
-     * @return Set of context identifiers
-     */
-    public Set<URI> getRegisteredContexts() {
-        return editableVocabularies.getIfAvailable(() -> SHARED).getRegisteredContexts();
+        return Optional.empty();
     }
 }
