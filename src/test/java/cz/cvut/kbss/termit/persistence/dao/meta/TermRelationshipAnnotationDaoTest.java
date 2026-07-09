@@ -275,7 +275,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
     void updateTermRelationshipAnnotationReplacesExistingValuesWithoutRemovingOtherAnnotations() {
         final String data = """
                 <http://onto.fel.cvut.cz/ontologies/application/termit> {
-                <http://onto.fel.cvut.cz/ontologies/application/termit> a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
+                <http://onto.fel.cvut.cz/ontologies/application/termit> a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
                   <http://onto.fel.cvut.cz/ontologies/application/termit/subject> a <http://www.w3.org/2004/02/skos/core#Concept> ;
                     <http://www.w3.org/2004/02/skos/core#prefLabel> "Subject"@en ;
                     <http://www.w3.org/2004/02/skos/core#related> <http://onto.fel.cvut.cz/ontologies/application/termit/object> .
@@ -289,8 +289,8 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                         rdfs:label "Approved"@en ;
                         rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
                 }
-                <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-pojmem-ze-slovníku> <http://onto.fel.cvut.cz/ontologies/application/termit> .
-                <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/je-pojmem-ze-slovníku> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
                 """;
         transactional(() -> loadData(data));
 
