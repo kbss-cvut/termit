@@ -26,8 +26,8 @@ import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService;
-import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -55,9 +55,6 @@ import static org.mockito.Mockito.when;
 class VocabularyAuthorizationServiceTest {
 
     @Mock
-    private EditableVocabularies editableVocabularies;
-
-    @Mock
     private AccessControlListBasedAuthorizationService aclBasedAuthService;
 
     @Mock
@@ -72,6 +69,11 @@ class VocabularyAuthorizationServiceTest {
     private final UserAccount user = Generator.generateUserAccount();
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+    @BeforeEach
+    void setUp() {
+        Environment.resetCurrentUser();
+    }
 
     @AfterEach
     void tearDown() {
@@ -95,21 +97,9 @@ class VocabularyAuthorizationServiceTest {
     }
 
     @Test
-    void canReadChecksIfVocabularyIsInCurrentWorkspace() {
-        Environment.setCurrentUser(user);
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-        when(aclBasedAuthService.canRead(user, vocabulary)).thenReturn(true);
-
-        assertTrue(sut.canRead(vocabulary));
-        verify(editableVocabularies).isEditable(vocabulary);
-    }
-
-    @Test
     void canReadChecksIfCurrentUserHasAccessBasedOnAccessControlList() {
         Environment.setCurrentUser(user);
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
         when(aclBasedAuthService.canRead(user, vocabulary)).thenReturn(true);
 
         assertTrue(sut.canRead(vocabulary));
@@ -117,19 +107,8 @@ class VocabularyAuthorizationServiceTest {
     }
 
     @Test
-    void canModifyChecksIfVocabularyIsEditableInCurrentWorkspace() {
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-        when(aclBasedAuthService.canModify(user, vocabulary)).thenReturn(true);
-
-        assertTrue(sut.canModify(vocabulary));
-        verify(editableVocabularies).isEditable(vocabulary);
-    }
-
-    @Test
     void canModifyChecksIfCurrentUserHasAccessBasedOnAccessControlList() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
         when(aclBasedAuthService.canModify(user, vocabulary)).thenReturn(true);
 
         assertTrue(sut.canModify(vocabulary));
@@ -137,19 +116,8 @@ class VocabularyAuthorizationServiceTest {
     }
 
     @Test
-    void canRemoveChecksIfVocabularyIsEditableInCurrentWorkspace() {
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-        when(aclBasedAuthService.canRemove(user, vocabulary)).thenReturn(true);
-
-        assertTrue(sut.canRemove(vocabulary));
-        verify(editableVocabularies).isEditable(vocabulary);
-    }
-
-    @Test
     void canRemoveChecksIfCurrentUserHasAccessBasedOnAccessControlList() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
         when(aclBasedAuthService.canRemove(user, vocabulary)).thenReturn(true);
 
         assertTrue(sut.canRemove(vocabulary));
@@ -169,20 +137,8 @@ class VocabularyAuthorizationServiceTest {
     void canCreateSnapshotRequiresCurrentUserToBeAdmin() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
         user.addType(UserRole.ADMIN.getType());
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-
         assertTrue(sut.canCreateSnapshot(vocabulary));
         verify(aclBasedAuthService, never()).hasAccessLevel(any(), eq(user), eq(vocabulary));
-    }
-
-    @Test
-    void canCreateSnapshotChecksIfVocabularyIsEditableInCurrentWorkspace() {
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        user.addType(UserRole.ADMIN.getType());
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-
-        assertTrue(sut.canCreateSnapshot(vocabulary));
-        verify(editableVocabularies).isEditable(vocabulary);
     }
 
     @Test
@@ -190,22 +146,9 @@ class VocabularyAuthorizationServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
         when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(true);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-
         assertTrue(sut.canReimport(vocabulary.getUri()));
         verify(vocabularyRepositoryService).exists(vocabulary.getUri());
         verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
-    }
-
-    @Test
-    void canReimportChecksIfVocabularyWithSpecifiedIriIsEditableInCurrentWorkspace() {
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
-        when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(true);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-
-        assertTrue(sut.canReimport(vocabulary.getUri()));
-        verify(editableVocabularies).isEditable(vocabulary);
     }
 
     @Test
@@ -216,7 +159,6 @@ class VocabularyAuthorizationServiceTest {
 
         assertFalse(sut.canReimport(vocabulary.getUri()));
         verify(aclBasedAuthService, never()).hasAccessLevel(any(), any(), any());
-        verify(editableVocabularies, never()).isEditable(any(Vocabulary.class));
     }
 
     @Test
@@ -227,7 +169,6 @@ class VocabularyAuthorizationServiceTest {
 
         assertTrue(sut.canReimport(vocabulary.getUri()));
         verify(aclBasedAuthService, never()).hasAccessLevel(any(), any(), any());
-        verify(editableVocabularies, never()).isEditable(any(Vocabulary.class));
     }
 
     @Test
@@ -243,20 +184,8 @@ class VocabularyAuthorizationServiceTest {
     void canRemoveSnapshotRequiresCurrentUserToBeAdmin() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
         user.addType(UserRole.ADMIN.getType());
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-
         assertTrue(sut.canRemoveSnapshot(vocabulary));
         verify(aclBasedAuthService, never()).hasAccessLevel(any(), eq(user), eq(vocabulary));
-    }
-
-    @Test
-    void canRemoveSnapshotChecksIfVocabularyIsEditableInCurrentWorkspace() {
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        user.addType(UserRole.ADMIN.getType());
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
-
-        assertTrue(sut.canRemoveSnapshot(vocabulary));
-        verify(editableVocabularies).isEditable(vocabulary);
     }
 
     @Test
@@ -264,19 +193,9 @@ class VocabularyAuthorizationServiceTest {
         Environment.setCurrentUser(user);
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(aclBasedAuthService.getAccessLevel(user, vocabulary)).thenReturn(AccessLevel.WRITE);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
 
         assertEquals(AccessLevel.WRITE, sut.getAccessLevel(vocabulary));
         verify(aclBasedAuthService).getAccessLevel(user, vocabulary);
-    }
-
-    @Test
-    void getAccessLevelReturnsNoneWhenVocabularyIsNotEditableInCurrentWorkspace() {
-        Environment.setCurrentUser(user);
-        when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(editableVocabularies.isEditable(vocabulary)).thenReturn(false);
-
-        assertEquals(AccessLevel.NONE, sut.getAccessLevel(vocabulary));
     }
 
     @Test
