@@ -25,7 +25,6 @@ import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService;
-import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,18 +40,14 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     private final AccessControlListBasedAuthorizationService aclAuthorizationService;
 
-    private final EditableVocabularies editableVocabularies;
-
     private final VocabularyRepositoryService vocabularyRepositoryService;
 
     private final SecurityUtils securityUtils;
 
     public VocabularyAuthorizationService(AccessControlListBasedAuthorizationService aclAuthorizationService,
-                                          EditableVocabularies editableVocabularies,
                                           VocabularyRepositoryService vocabularyRepositoryService,
                                           SecurityUtils securityUtils) {
         this.aclAuthorizationService = aclAuthorizationService;
-        this.editableVocabularies = editableVocabularies;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.securityUtils = securityUtils;
     }
@@ -86,7 +81,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canCreateSnapshot(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = securityUtils.getCurrentUser();
-        return user.isAdmin() && editableVocabularies.isEditable(asset);
+        return user.isAdmin();
     }
 
     /**
@@ -102,7 +97,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canRemoveSnapshot(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = securityUtils.getCurrentUser();
-        return user.isAdmin() && editableVocabularies.isEditable(asset);
+        return user.isAdmin();
     }
 
     /**
@@ -145,9 +140,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canReimport(URI vocabularyIri) {
         final UserAccount user = securityUtils.getCurrentUser();
         if (vocabularyRepositoryService.exists(vocabularyIri)) {
-            final Vocabulary voc = new Vocabulary(vocabularyIri);
-            return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, new Vocabulary(
-                    vocabularyIri)) && editableVocabularies.isEditable(voc);
+            return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, new Vocabulary(vocabularyIri));
         }
         return canCreate();
     }
@@ -159,7 +152,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
             return aclAuthorizationService.canReadAnonymously(asset);
         }
         final UserAccount user = securityUtils.getCurrentUser();
-        return aclAuthorizationService.canRead(user, asset) && editableVocabularies.isEditable(asset);
+        return aclAuthorizationService.canRead(user, asset);
     }
 
     public boolean canRead(VocabularyDto dto) {
@@ -177,14 +170,14 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canModify(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = securityUtils.getCurrentUser();
-        return aclAuthorizationService.canModify(user, asset) && editableVocabularies.isEditable(asset);
+        return aclAuthorizationService.canModify(user, asset);
     }
 
     @Override
     public boolean canRemove(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = securityUtils.getCurrentUser();
-        return aclAuthorizationService.canRemove(user, asset) && editableVocabularies.isEditable(asset);
+        return aclAuthorizationService.canRemove(user, asset);
     }
 
     /**
@@ -199,17 +192,17 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
             return aclAuthorizationService.canReadAnonymously(asset) ? AccessLevel.READ : AccessLevel.NONE;
         }
         final UserAccount user = securityUtils.getCurrentUser();
-        return editableVocabularies.isEditable(asset) ? aclAuthorizationService.getAccessLevel(user, asset) :
-               AccessLevel.NONE;
+        return aclAuthorizationService.getAccessLevel(user, asset);
     }
 
     /**
      * Gets a list of vocabularies that are readable by the current user.
+     *
      * @return List of readable vocabularies
      */
     @Transactional(readOnly = true)
     public List<VocabularyDto> getReadableVocabularies() {
         return vocabularyRepositoryService.findAll().stream()
-                .filter(this::canRead).toList();
+                                          .filter(this::canRead).toList();
     }
 }
