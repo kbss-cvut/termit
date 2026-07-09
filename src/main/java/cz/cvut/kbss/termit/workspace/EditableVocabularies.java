@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.workspace;
 
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -49,13 +48,11 @@ public class EditableVocabularies implements Serializable {
 
     private static final EditableVocabulariesHolder SHARED = new EditableVocabulariesHolder.SharedEditableVocabulariesHolder();
 
-    private final boolean allVocabulariesEditable;
+    private final boolean allVocabulariesEditable = true;
 
     private final ObjectProvider<EditableVocabulariesHolder> editableVocabularies;
 
-    public EditableVocabularies(Configuration configuration,
-                                ObjectProvider<EditableVocabulariesHolder> editableVocabularies) {
-        this.allVocabulariesEditable = configuration.getWorkspace().isAllVocabulariesEditable();
+    public EditableVocabularies(ObjectProvider<EditableVocabulariesHolder> editableVocabularies) {
         this.editableVocabularies = editableVocabularies;
     }
 
@@ -80,16 +77,6 @@ public class EditableVocabularies implements Serializable {
         editableVocabularies.ifAvailable(EditableVocabulariesHolder::clear);
     }
 
-    /**
-     * Checks whether the specified vocabulary is editable.
-     * <p>
-     * A vocabulary is editable either if all vocabularies are editable (configured via {@link
-     * cz.cvut.kbss.termit.util.Configuration.Workspace}) or when this instance contains a reference to a context
-     * containing a working copy of the specified vocabulary.
-     *
-     * @param vocabulary Vocabulary to check
-     * @return {@code true} when vocabulary is editable, {@code false otherwise}
-     */
     public boolean isEditable(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return isEditable(vocabulary.getUri());
