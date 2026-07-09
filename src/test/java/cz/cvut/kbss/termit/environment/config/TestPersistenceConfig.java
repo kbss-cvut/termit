@@ -18,16 +18,12 @@
 package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.config.PersistenceConfig;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.TestPersistenceFactory;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.validation.NoopRepositoryContextValidator;
 import cz.cvut.kbss.termit.service.validation.RepositoryContextValidator;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.workspace.EditableVocabularies;
-import cz.cvut.kbss.termit.workspace.EditableVocabulariesHolder;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.environment.Environment;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -37,8 +33,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @TestConfiguration
@@ -47,12 +43,6 @@ import static org.mockito.Mockito.when;
 @ComponentScan(basePackages = "cz.cvut.kbss.termit.persistence")
 @EnableTransactionManagement
 public class TestPersistenceConfig {
-
-    @Bean
-    public EditableVocabularies editableVocabularies(Configuration config,
-                                                     ObjectProvider<EditableVocabulariesHolder> editableVocabulariesHolder) {
-        return new EditableVocabularies(config, editableVocabulariesHolder);
-    }
 
     @Bean("spiedPublisher")
     @Primary
