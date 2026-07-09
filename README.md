@@ -49,7 +49,7 @@ via [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator
 ## Ontologies
 
 The ontology on which TermIt is based can be found in the `ontology` folder. It extends the
-_popis-dat_ ontology (http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat). TermIt vocabularies and terms
+_data-description_ ontology (http://onto.fel.cvut.cz/ontologies/data-description). TermIt vocabularies and terms
 use the SKOS vocabulary (http://www.w3.org/TR/skos-reference/skos.rdf).
 
 Relevant ontologies need to be loaded into the repository for proper inference functionality.

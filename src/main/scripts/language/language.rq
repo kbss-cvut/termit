@@ -1,12 +1,12 @@
 PREFIX ufo: <http://onto.fel.cvut.cz/ontologies/ufo/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX a-popis-dat: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+
 CONSTRUCT {
-    ?type a a-popis-dat:term .
+    ?type a skos:Concept .
     ?type rdfs:label ?typeLabel .
 	?type rdfs:comment ?typeDefinition .
-    ?category a a-popis-dat:term .
+    ?category a skos:Concept .
 	?category rdfs:label ?categoryLabel .
 #	?category rdfs:comment ?categoryDefinition .
 	?category skos:narrower ?type .
