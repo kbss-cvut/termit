@@ -1056,7 +1056,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_TERMIT + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc
@@ -1096,7 +1096,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_TERMIT + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc
