@@ -126,8 +126,6 @@ public class Configuration {
     @Valid
     private External external = new External();
     @Valid
-    private Workspace workspace = new Workspace();
-    @Valid
     private Cors cors = new Cors();
     @Valid
     private Schedule schedule = new Schedule();
@@ -276,14 +274,6 @@ public class Configuration {
 
     public void setExternal(External external) {
         this.external = external;
-    }
-
-    public Workspace getWorkspace() {
-        return workspace;
-    }
-
-    public void setWorkspace(Workspace workspace) {
-        this.workspace = workspace;
     }
 
     public Cors getCors() {
@@ -777,29 +767,6 @@ public class Configuration {
 
         public void setWhiteListProperties(final Set<String> whiteListProperties) {
             this.whiteListProperties = whiteListProperties;
-        }
-    }
-
-    @Validated
-    public static class Workspace {
-
-        /**
-         * Whether all vocabularies in the repository are editable.
-         * <p>
-         * Allows running TermIt in two modes - one is that all vocabularies represent the current version and can be
-         * edited. The other mode is that working copies of vocabularies are created and the user only selects a subset
-         * of these working copies to edit (the so-called workspace), while all other vocabularies are read-only for
-         * them.
-         */
-        @NotNull
-        private boolean allVocabulariesEditable = true;
-
-        public boolean isAllVocabulariesEditable() {
-            return allVocabulariesEditable;
-        }
-
-        public void setAllVocabulariesEditable(boolean allVocabulariesEditable) {
-            this.allVocabulariesEditable = allVocabulariesEditable;
         }
     }
 
