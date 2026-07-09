@@ -39,7 +39,7 @@
     ],
     "types": [
         "http://www.w3.org/2004/02/skos/core#Concept",
-        "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník"
+        "http://www.w3.org/2004/02/skos/core#ConceptScheme"
     ],
     "readonly": false,
     "detectFields": false,
