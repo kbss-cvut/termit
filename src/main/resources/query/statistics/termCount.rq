@@ -6,7 +6,7 @@ SELECT (COUNT(DISTINCT ?asset) AS ?count) {
         ?asset a skos:Concept ;
                skos:inScheme ?v .
         FILTER NOT EXISTS {
-            ?asset a dd:term-version .
+            ?asset a dd:version-of-term .
         }
     }
 }

@@ -11,6 +11,6 @@ SELECT ?vocabulary ?label ( COUNT(DISTINCT ?term) AS ?count ) ?language {
             dc:language ?language .
     }
     FILTER NOT EXISTS {
-        ?vocabulary a dd:vocabulary-version .
+        ?vocabulary a dd:version-of-vocabulary .
     }
 } GROUP BY ?vocabulary ?label ?language
