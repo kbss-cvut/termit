@@ -5,6 +5,28 @@ possible implications and lessons learnt for future.
 
 Status options are: _proposed_, _accepted_, _superseded_.
 
+### Term Hierarchy Representation Change
+
+- **Status**: accepted
+- **Date**: 2026-07-14
+
+##### Context
+
+Up until now, when retrieving a term, all its ancestors were loaded with it using the same class as the term. This is
+inefficient and causes problems when the same term is loaded multiple times with different classes (once as `Term` in 
+term's ancestors and once as `TermInfo` in term's related terms). JOPA does not support this.
+
+##### Decision outcome
+
+The proposal is to change the way term hierarchy is represented in the data model. Instead of loading all ancestors 
+with the term, only the immediate parent will be accessible. The hierarchy is still traversable in this way, but it
+requires explicitly loading the parents.
+
+##### Consequences
+
+Client applications need to be updated if they rely on the old behavior. Also, `TermInfo` needs to be updated to support
+holding references to subterms.
+
 ### Refactoring for 5.0.0
 
 - **Status**: accepted
