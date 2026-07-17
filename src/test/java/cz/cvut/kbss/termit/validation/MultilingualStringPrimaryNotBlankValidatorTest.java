@@ -23,8 +23,6 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -39,7 +37,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
 class MultilingualStringPrimaryNotBlankValidatorTest {
     private static final String LANGUAGE = "testLanguage";
@@ -104,16 +101,15 @@ class MultilingualStringPrimaryNotBlankValidatorTest {
     }
 
     /**
-     * Resolves the cache map {@link MultilingualStringPrimaryNotBlankValidator#CACHE}
-     * and clears its contents.
+     * Resolves the cache map {@link FieldConstraintExecutor#CACHE} and clears its contents.
      */
     @SuppressWarnings("rawtypes")
-    private void resetStaticReflectionCache() throws NoSuchFieldException, IllegalAccessException {
-        final Class<?> validatorClass = MultilingualStringPrimaryNotBlankValidator.class;
+    static void resetStaticReflectionCache() throws NoSuchFieldException, IllegalAccessException {
+        final Class<?> executorClass = FieldConstraintExecutor.class;
         MethodHandles.Lookup lookup = MethodHandles.lookup();
-        lookup = MethodHandles.privateLookupIn(validatorClass, lookup);
+        lookup = MethodHandles.privateLookupIn(executorClass, lookup);
         final ConcurrentMap cacheMap = (ConcurrentMap) lookup.findStaticVarHandle(
-                validatorClass, "CACHE", ConcurrentMap.class).get();
+                executorClass, "CACHE", ConcurrentMap.class).get();
         cacheMap.clear();
     }
 
