@@ -702,9 +702,6 @@ class TermServiceTest {
                 Arguments.of(new TermSelectionParams(false, true, false, Constants.DEFAULT_PAGE_SPEC),
                              (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
                                      repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, true, false, Constants.DEFAULT_PAGE_SPEC),
-                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                     repositoryService).findAllFullAndFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
                 Arguments.of(new TermSelectionParams(true, false, true, Constants.DEFAULT_PAGE_SPEC),
                              (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
                                      repositoryService).findAllFlatIncludingImported(vocabulary,
@@ -734,10 +731,6 @@ class TermServiceTest {
                              (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
                                      repositoryService).findAllFull(searchString, vocabulary,
                                                                     Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, true, false, Constants.DEFAULT_PAGE_SPEC),
-                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                     repositoryService).findAllFullAndFlat(searchString, vocabulary,
-                                                                           Constants.DEFAULT_PAGE_SPEC)),
                 Arguments.of(new TermSelectionParams(true, false, true, Constants.DEFAULT_PAGE_SPEC),
                              (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
                                      repositoryService).findAllFlatIncludingImported(searchString, vocabulary,
