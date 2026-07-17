@@ -93,11 +93,11 @@ class ReadOnlyTermTest {
     @Test
     void constructorCopiesParentTermsAsReadonly() {
         final Term term = Generator.generateTermWithId();
-        final Term parent = Generator.generateTermWithId();
+        final TermInfo parent = Generator.generateTermInfoWithId();
         term.setParentTerms(Collections.singleton(parent));
 
         final ReadOnlyTerm result = new ReadOnlyTerm(term);
-        assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getParentTerms());
+        assertEquals(Set.of(parent), result.getParentTerms());
     }
 
     @Test

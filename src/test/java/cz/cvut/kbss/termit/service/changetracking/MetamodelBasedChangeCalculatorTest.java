@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,8 +119,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesDiscoversChangesInPluralReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
         final Term changed = cloneOf(original);
-        original.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
-        changed.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
+        original.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
+        changed.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
@@ -184,7 +185,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesHandlesChangeToNullInReference() {
         final Term original = Generator.generateTermWithId();
         final Term changed = cloneOf(original);
-        original.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
+        original.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
@@ -253,7 +254,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesDiscoversMultipleChangesAtOnce() {
         final Term original = Generator.generateTermWithId();
         final Term changed = cloneOf(original);
-        original.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
+        original.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
         changed.setTypes(Collections.singleton(Generator.generateUri().toString()));
         changed.getLabel().set(Environment.LANGUAGE, "Updated label");
 
@@ -310,15 +311,15 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfPluralReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
         final Term changed = cloneOf(original);
-        original.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
-        changed.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
+        original.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
+        changed.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(original.getParentTerms().stream().map(Term::getUri).collect(Collectors.toSet()),
+        assertEquals(original.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
                 record.getOriginalValue());
-        assertEquals(changed.getParentTerms().stream().map(Term::getUri).collect(Collectors.toSet()),
+        assertEquals(changed.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
                 record.getNewValue());
     }
 
@@ -399,13 +400,13 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     void calculateChangesReturnsChangeRecordWithEmptyOriginalAndAddedNewValueOfReferenceAttribute() {
         final Term original = Generator.generateTermWithId();
         final Term changed = cloneOf(original);
-        changed.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
+        changed.setParentTerms(Collections.singleton(Generator.generateTermInfoWithId()));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertThat(record.getOriginalValue(), anyOf(nullValue(), emptyCollectionOf(Object.class)));
-        assertEquals(changed.getParentTerms().stream().map(Term::getUri).collect(Collectors.toSet()),
+        assertEquals(changed.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
                 record.getNewValue());
     }
 

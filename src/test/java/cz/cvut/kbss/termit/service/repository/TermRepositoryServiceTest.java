@@ -52,6 +52,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -210,7 +211,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         Term result = em.find(Term.class, child.getUri());
         assertNotNull(result);
-        assertEquals(Collections.singleton(parent), result.getParentTerms());
+        assertEquals(Collections.singleton(new TermInfo(parent)), result.getParentTerms());
     }
 
     @Test
@@ -298,13 +299,13 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addRootTerm(termTwo);
         termTwo.setVocabulary(vocabulary.getUri());
         transactional(() -> {
-            em.persist(childOne, descriptorFactory.termDescriptor(vocabulary));
             em.persist(t, descriptorFactory.termDescriptor(vocabulary));
             em.persist(termTwo, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
+        transactional(() -> em.persist(childOne, descriptorFactory.termDescriptor(vocabulary)));
 
-        childOne.setParentTerms(Collections.singleton(termTwo));
+        childOne.setParentTerms(Collections.singleton(new TermInfo(termTwo)));
         final String newLabel = "new term label";
         childOne.getLabel().set(Environment.LANGUAGE, newLabel);
         // This is normally inferred
@@ -312,7 +313,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> sut.update(childOne));
         final Term result = em.find(Term.class, childOne.getUri());
         assertEquals(newLabel, result.getLabel().get(Environment.LANGUAGE));
-        assertEquals(Collections.singleton(termTwo), result.getParentTerms());
+        assertEquals(Collections.singleton(new TermInfo(termTwo)), result.getParentTerms());
     }
 
     @Test
@@ -348,7 +349,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(child);
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                                        descriptorFactory.vocabularyDescriptor(vocabulary));
+                                          descriptorFactory.vocabularyDescriptor(vocabulary));
         assertThat(result.getRootTerms(), hasItem(parent.getUri()));
         assertThat(result.getRootTerms(), not(hasItem(child.getUri())));
     }
@@ -363,14 +364,14 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             vocabulary.addRootTerm(parent);
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
+        transactional(() -> em.persist(child, descriptorFactory.termDescriptor(vocabulary)));
         child.setParentTerms(null);
         sut.update(child);
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                                        descriptorFactory.vocabularyDescriptor(vocabulary));
+                                          descriptorFactory.vocabularyDescriptor(vocabulary));
         assertThat(result.getRootTerms(), hasItems(parent.getUri(), child.getUri()));
     }
 
@@ -437,12 +438,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             childVocabulary.addRootTerm(oldParentTerm);
             em.persist(oldParentTerm, descriptorFactory.termDescriptor(childVocabulary));
-            em.persist(childTerm, descriptorFactory.termDescriptor(childVocabulary));
             em.merge(childVocabulary, descriptorFactory.vocabularyDescriptor(childVocabulary));
         });
+        transactional(() -> em.persist(childTerm, descriptorFactory.termDescriptor(childVocabulary)));
 
         em.getEntityManagerFactory().getCache().evictAll();
-        childTerm.setExternalParentTerms(Collections.singleton(newParentTerm));
+        childTerm.setExternalParentTerms(Collections.singleton(new TermInfo(newParentTerm)));
         sut.update(childTerm);
         assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
                       .contains(new TermDto(childTerm)));
@@ -572,12 +573,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(externalParent, descriptorFactory.termDescriptor(externalParent));
         });
 
-        term.setParentTerms(new HashSet<>(Arrays.asList(internalParent, externalParent)));
+        term.setParentTerms(new HashSet<>(Arrays.asList(new TermInfo(internalParent), new TermInfo(externalParent))));
         sut.update(term);
 
         final Term result = em.find(Term.class, term.getUri());
-        assertThat(result.getParentTerms(), hasItem(internalParent));
-        assertThat(result.getExternalParentTerms(), hasItem(externalParent));
+        assertThat(result.getParentTerms(), hasItem(new TermInfo(internalParent)));
+        assertThat(result.getExternalParentTerms(), hasItem(new TermInfo(externalParent)));
     }
 
     @Test
@@ -588,11 +589,11 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         externalParent.setVocabulary(vocabulary.getUri());
         transactional(() -> em.persist(externalParent, descriptorFactory.termDescriptor(externalParent)));
 
-        term.setParentTerms(Collections.singleton(externalParent));
+        term.setParentTerms(Collections.singleton(new TermInfo(externalParent)));
         sut.addRootTermToVocabulary(term, childVocabulary);
 
         final Term result = em.find(Term.class, term.getUri());
-        assertThat(result.getExternalParentTerms(), hasItem(externalParent));
+        assertThat(result.getExternalParentTerms(), hasItem(new TermInfo(externalParent)));
     }
 
     @Test
@@ -608,12 +609,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(externalParent, descriptorFactory.termDescriptor(externalParent));
         });
 
-        term.setParentTerms(new HashSet<>(Arrays.asList(internalParent, externalParent)));
+        term.setParentTerms(new HashSet<>(List.of(new TermInfo(internalParent), new TermInfo(externalParent))));
         sut.addChildTerm(term, internalParent);
 
         final Term result = em.find(Term.class, term.getUri());
-        assertThat(result.getParentTerms(), hasItem(internalParent));
-        assertThat(result.getExternalParentTerms(), hasItem(externalParent));
+        assertThat(result.getParentTerms(), hasItem(new TermInfo(internalParent)));
+        assertThat(result.getExternalParentTerms(), hasItem(new TermInfo(externalParent)));
     }
 
     @Test
@@ -648,7 +649,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                                              vf.createIRI(vocabulary.getUri().toString())));
                 assertEquals(1,
                              conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term), null).stream().count());
+                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term), null).stream()
+                                 .count());
             }
         });
     }
@@ -741,7 +743,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addRootTerm(toRemove);
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.addRootTerm(referencing);
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                                                                  new DefinitionalOccurrenceTarget(referencing));
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {
             em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
@@ -762,7 +765,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addRootTerm(toRemove);
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.addRootTerm(referencing);
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                                                                  new DefinitionalOccurrenceTarget(referencing));
         occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {

@@ -131,8 +131,8 @@ class TermTest {
         parentToAdd.setVocabulary(vocabulary.getUri());
 
         sut.addParentTerm(parentToAdd);
-        assertThat(sut.getParentTerms(), hasItem(parentToAdd));
-        assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+        assertThat(sut.getParentTerms(), hasItem(parentToAdd.toTermInfo()));
+        assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
     }
 
     @Test
@@ -144,22 +144,22 @@ class TermTest {
         parentToAdd.setVocabulary(Generator.generateUri());
 
         sut.addParentTerm(parentToAdd);
-        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
-        assertThat(sut.getExternalParentTerms(), hasItem(parentToAdd));
+        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+        assertThat(sut.getExternalParentTerms(), hasItem(parentToAdd.toTermInfo()));
     }
 
     @Test
     void consolidateParentsCopiesExternalParentTermsToParentTerms() {
         final Term sut = Generator.generateTermWithId();
-        final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
-            final Term t = Generator.generateTermWithId();
+        final Set<TermInfo> externalParents = IntStream.range(0, 5).mapToObj(i -> {
+            final TermInfo t = Generator.generateTermInfoWithId();
             t.setVocabulary(Generator.generateUri());
             return t;
         }).collect(Collectors.toSet());
         sut.setExternalParentTerms(externalParents);
 
         sut.consolidateParents();
-        assertThat(sut.getParentTerms(), hasItems(externalParents.toArray(new Term[0])));
+        assertThat(sut.getParentTerms(), hasItems(externalParents.toArray(new TermInfo[0])));
     }
 
     @Test
@@ -167,7 +167,7 @@ class TermTest {
         final Term sut = Generator.generateTermWithId();
 
         sut.consolidateParents();
-        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
     }
 
     @Test
@@ -175,17 +175,17 @@ class TermTest {
         final URI glossaryUri = Generator.generateUri();
         final Term sut = Generator.generateTermWithId();
         sut.setVocabulary(glossaryUri);
-        final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
-            final Term t = Generator.generateTermWithId();
+        final Set<TermInfo> externalParents = IntStream.range(0, 5).mapToObj(i -> {
+            final TermInfo t = Generator.generateTermInfoWithId();
             t.setVocabulary(Generator.generateUri());
             return t;
         }).collect(Collectors.toSet());
-        final Set<Term> internalParents = IntStream.range(0, 5).mapToObj(i -> {
-            final Term t = Generator.generateTermWithId();
+        final Set<TermInfo> internalParents = IntStream.range(0, 5).mapToObj(i -> {
+            final TermInfo t = Generator.generateTermInfoWithId();
             t.setVocabulary(glossaryUri);
             return t;
         }).collect(Collectors.toSet());
-        final Set<Term> allParents = new HashSet<>(externalParents);
+        final Set<TermInfo> allParents = new HashSet<>(externalParents);
         allParents.addAll(internalParents);
         sut.setParentTerms(allParents);
 
@@ -198,8 +198,8 @@ class TermTest {
     void splitExternalAndInternalParentsDoesNothingWhenTermHasNoParents() {
         final Term sut = Generator.generateTermWithId();
         sut.splitExternalAndInternalParents();
-        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
-        assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+        assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
     }
 
     @Test

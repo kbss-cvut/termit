@@ -312,7 +312,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                             "} } }", Boolean.class)
                  .setParameter("isTermFromVocabulary", URI.create(SKOS.IN_SCHEME))
                  .setParameter("subjectVocabulary", subjectVocabulary)
-                 .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
+                 .setParameter("hasParentTerm", URI.create(SKOS.BROAD_MATCH))
                  .setParameter("targetVocabulary", targetVocabulary)
                  .setParameter("importsVocabulary",
                                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary))

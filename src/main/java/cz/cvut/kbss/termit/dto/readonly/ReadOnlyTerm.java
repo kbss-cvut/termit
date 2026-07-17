@@ -56,7 +56,7 @@ public class ReadOnlyTerm extends AbstractTerm {
     private Set<String> sources;
 
     @OWLObjectProperty(iri = SKOS.BROADER)
-    private Set<ReadOnlyTerm> parentTerms;
+    private Set<TermInfo> parentTerms;
 
     @OWLDataProperty(iri = SKOS.NOTATION, simpleLiteral = true)
     private Set<String> notations;
@@ -99,7 +99,7 @@ public class ReadOnlyTerm extends AbstractTerm {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
-            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, propertiesToExport))
+            this.parentTerms = term.getParentTerms().stream().map(TermInfo::new)
                                    .collect(Collectors.toSet());
         }
         if (term.getRelated() != null) {
@@ -157,11 +157,11 @@ public class ReadOnlyTerm extends AbstractTerm {
         this.sources = sources;
     }
 
-    public Set<ReadOnlyTerm> getParentTerms() {
+    public Set<TermInfo> getParentTerms() {
         return parentTerms;
     }
 
-    public void setParentTerms(Set<ReadOnlyTerm> parentTerms) {
+    public void setParentTerms(Set<TermInfo> parentTerms) {
         this.parentTerms = parentTerms;
     }
 
