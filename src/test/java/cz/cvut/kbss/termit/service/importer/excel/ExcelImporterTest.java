@@ -279,11 +279,12 @@ class ExcelImporterTest {
     @Test
     void importCreatesTermHierarchy() {
         initVocabularyResolution();
-        doAnswer(inv -> {
-            return idResolver.generateIdentifier(vocabulary.getUri() + SEPARATOR,
-                                          inv.getArgument(1, MultilingualString.class).get(Environment.LANGUAGE));
-        }).when(termService).generateIdentifier(any(Vocabulary.class),
-                                                any(MultilingualString.class));
+        doAnswer(inv -> idResolver.generateIdentifier(vocabulary.getUri() + SEPARATOR,
+                                                      inv.getArgument(1, MultilingualString.class)
+                                                         .get(Environment.LANGUAGE))).when(termService)
+                                                                                     .generateIdentifier(
+                                                                                             any(Vocabulary.class),
+                                                                                             any(MultilingualString.class));
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -519,8 +520,8 @@ class ExcelImporterTest {
                                      URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
                                      vocabulary.getUri()),
                             new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.EXACT_MATCH),
-                                      URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
-                                      vocabulary.getUri())));
+                                     URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
+                                     vocabulary.getUri())));
     }
 
     @Test
