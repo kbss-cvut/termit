@@ -29,7 +29,6 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
-import cz.cvut.kbss.termit.model.FlatTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -362,40 +361,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         return termDao.findAllFull(searchString, vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
-    }
-
-    /**
-     * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
-     * <p>
-     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary except for the
-     * ancestors - only direct parents are loaded as {@link TermInfo} instances.
-     *
-     * @param vocabulary Vocabulary whose terms should be returned
-     * @param pageSpec   Page specifying result number and position
-     * @return List of full terms ordered by label
-     * @see #findAll(Vocabulary, Pageable)
-     * @see #findAllFull(Vocabulary, Pageable)
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTerm> findAllFullAndFlat(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFullAndFlat(vocabulary, pageSpec);
-    }
-
-    /**
-     * Gets a page of terms from the specified vocabulary, whose label matches the specified search string.
-     * <p>
-     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, but only
-     * their direct parents are loaded as {@link TermInfo} instances, not the full ancestor chain.
-     *
-     * @param searchString Search string to filter terms by
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return List of full terms ordered by label
-     * @see #findAllFullAndFlat(Vocabulary, Pageable)
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTerm> findAllFullAndFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFullAndFlat(searchString, vocabulary, pageSpec);
     }
 
     /**
