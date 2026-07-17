@@ -95,14 +95,11 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_definition_source, fetch = FetchType.EAGER)
     private TermDefinitionSource definitionSource;
 
-    @Properties(fetchType = FetchType.EAGER)
-    private Map<String, Set<Object>> properties;
-
     /**
      * Parent terms from the same vocabulary.
      */
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
-    private Set<Term> parentTerms;
+    private Set<TermInfo> parentTerms;
 
     /**
      * Parent terms from different vocabularies.
@@ -111,107 +108,16 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
      */
     @JsonIgnore
     @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
-    private Set<Term> externalParentTerms;
+    private Set<TermInfo> externalParentTerms;
+
+    @Properties(fetchType = FetchType.EAGER)
+    private Map<String, Set<Object>> properties;
 
     public Term() {
     }
 
     public Term(URI uri) {
         setUri(uri);
-    }
-
-    public Set<Term> getParentTerms() {
-        return parentTerms;
-    }
-
-    public void setParentTerms(Set<Term> parentTerms) {
-        this.parentTerms = parentTerms;
-    }
-
-    public Set<Term> getExternalParentTerms() {
-        return externalParentTerms;
-    }
-
-    public void setExternalParentTerms(Set<Term> externalParentTerms) {
-        this.externalParentTerms = externalParentTerms;
-    }
-
-    /**
-     * Adds the specified term to the parent terms of this instance.
-     * <p>
-     * If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
-     * the {@code importedParentTerms}.
-     *
-     * @param term Term to add as parent
-     */
-    public void addParentTerm(Term term) {
-        Objects.requireNonNull(term);
-        if (!Objects.equals(getVocabulary(), term.getVocabulary())) {
-            if (externalParentTerms == null) {
-                setExternalParentTerms(new HashSet<>());
-            }
-            externalParentTerms.add(term);
-        } else {
-            if (parentTerms == null) {
-                setParentTerms(new HashSet<>());
-            }
-            parentTerms.add(term);
-        }
-    }
-
-    /**
-     * Checks whether this term has a parent term in the same vocabulary.
-     *
-     * @return Whether this term has a parent in its vocabulary. Returns {@code false} also if this term has no parent
-     * term at all.
-     */
-    public boolean hasParentInSameVocabulary() {
-        return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
-    }
-
-    /**
-     * Consolidates parent and external parent terms into just parent terms.
-     * <p>
-     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a
-     * sub-property of broader). Clients need not know about their distinction, which is important only at repository
-     * level.
-     *
-     * @see #splitExternalAndInternalParents()
-     */
-    public void consolidateParents() {
-        if (externalParentTerms != null && !externalParentTerms.isEmpty()) {
-            if (parentTerms == null) {
-                setParentTerms(new LinkedHashSet<>());
-            }
-            parentTerms.addAll(externalParentTerms);
-        }
-    }
-
-    /**
-     * Splits consolidated parent terms into external and (internal) parent terms.
-     * <p>
-     * This split is driven by the fact that external parents belong to a different glossary than this term and should
-     * thus be differentiated on repository level.
-     * <p>
-     * This method does the inverse of {@link #consolidateParents()}.
-     *
-     * @see #consolidateParents()
-     */
-    public void splitExternalAndInternalParents() {
-        if (parentTerms == null || parentTerms.isEmpty()) {
-            return;
-        }
-        final Set<Term> parents = new LinkedHashSet<>();
-        final Set<Term> externalParents = new LinkedHashSet<>();
-        for (Term p : parentTerms) {
-            if (Objects.equals(getVocabulary(), p.getVocabulary())) {
-                parents.add(p);
-            } else {
-                externalParents.add(p);
-            }
-        }
-        this.parentTerms = parents;
-        this.externalParentTerms = externalParents;
     }
 
     public Set<MultilingualString> getAltLabels() {
@@ -368,5 +274,103 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
         if (inverseExactMatchTerms != null) {
             inverseExactMatchTerms.forEach(ti -> addExactMatch(new TermInfo(ti)));
         }
+    }
+
+    public Set<TermInfo> getParentTerms() {
+        return parentTerms;
+    }
+
+    public void setParentTerms(Set<TermInfo> parentTerms) {
+        this.parentTerms = parentTerms;
+    }
+
+    public Set<TermInfo> getExternalParentTerms() {
+        return externalParentTerms;
+    }
+
+    public void setExternalParentTerms(Set<TermInfo> externalParentTerms) {
+        this.externalParentTerms = externalParentTerms;
+    }
+
+    /**
+     * Adds the specified term to the parent terms of this instance.
+     * <p>
+     * If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
+     * the {@code importedParentTerms}.
+     *
+     * @param term Term to add as parent
+     */
+    public void addParentTerm(Term term) {
+        Objects.requireNonNull(term);
+        if (!Objects.equals(getVocabulary(), term.getVocabulary())) {
+            if (externalParentTerms == null) {
+                setExternalParentTerms(new HashSet<>());
+            }
+            externalParentTerms.add(new TermInfo(term));
+        } else {
+            if (parentTerms == null) {
+                setParentTerms(new HashSet<>());
+            }
+            parentTerms.add(new TermInfo(term));
+        }
+    }
+
+    /**
+     * Checks whether this term has a parent term in the same vocabulary.
+     *
+     * @return Whether this term has a parent in its vocabulary. Returns {@code false} also if this term has no parent
+     * term at all.
+     */
+    public boolean hasParentInSameVocabulary() {
+        return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
+    }
+
+    /**
+     * Consolidates parent and external parent terms into just parent terms.
+     * <p>
+     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a
+     * sub-property of broader). Clients need not know about their distinction, which is important only at repository
+     * level.
+     *
+     * @see #splitExternalAndInternalParents()
+     */
+    public void consolidateParents() {
+        if (externalParentTerms != null && !externalParentTerms.isEmpty()) {
+            if (parentTerms == null) {
+                setParentTerms(new LinkedHashSet<>());
+            }
+            parentTerms.addAll(externalParentTerms);
+        }
+    }
+
+    /**
+     * Splits consolidated parent terms into external and (internal) parent terms.
+     * <p>
+     * This split is driven by the fact that external parents belong to a different glossary than this term and should
+     * thus be differentiated on repository level.
+     * <p>
+     * This method does the inverse of {@link #consolidateParents()}.
+     *
+     * @see #consolidateParents()
+     */
+    public void splitExternalAndInternalParents() {
+        if (parentTerms == null || parentTerms.isEmpty()) {
+            return;
+        }
+        final Set<TermInfo> parents = new LinkedHashSet<>();
+        final Set<TermInfo> externalParents = new LinkedHashSet<>();
+        for (TermInfo p : parentTerms) {
+            if (Objects.equals(getVocabulary(), p.getVocabulary())) {
+                parents.add(p);
+            } else {
+                externalParents.add(p);
+            }
+        }
+        this.parentTerms = parents;
+        this.externalParentTerms = externalParents;
+    }
+
+    public TermInfo toTermInfo() {
+        return new TermInfo(this);
     }
 }

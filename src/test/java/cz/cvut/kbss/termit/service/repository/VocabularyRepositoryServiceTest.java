@@ -266,24 +266,26 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertThrows(AssetRemovalException.class, () -> sut.remove(vocabulary));
     }
 
-
     @Test
     void updateThrowsVocabularyImportExceptionWhenTryingToDeleteVocabularyImportRelationshipAndTermsAreStillRelated() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
         final Term child = Generator.generateTermWithId();
+        child.setVocabulary(subjectVocabulary.getUri());
         final Term parentTerm = Generator.generateTermWithId();
+        parentTerm.setVocabulary(targetVocabulary.getUri());
         child.addParentTerm(parentTerm);
         subjectVocabulary.addRootTerm(child);
         targetVocabulary.addRootTerm(parentTerm);
         transactional(() -> {
-            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setVocabulary(subjectVocabulary.getUri());
-            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
+        });
+        transactional(() -> {
+            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
+
         });
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
