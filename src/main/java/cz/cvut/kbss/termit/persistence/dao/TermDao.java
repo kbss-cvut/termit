@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.query.QueryHints;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -188,6 +189,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                  .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
                  .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                  .setParameter("exclude", exclude)
+                 .setHint(QueryHints.ENABLE_ENTITY_LOADING_OPTIMIZER, true)
                  .getResultStream()
                  .peek(em::detach)
                  .collect(Collectors.toCollection(LinkedHashSet::new));
