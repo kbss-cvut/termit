@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
+import cz.cvut.kbss.termit.validation.Disjoint;
 
 import java.net.URI;
 import java.util.HashSet;
@@ -45,6 +46,9 @@ import java.util.Set;
 
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
+@Disjoint({"parentTerms", "related"})
+@Disjoint({"parentTerms", "relatedMatch"})
+@Disjoint({"parentTerms", "exactMatchTerms"})
 public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
