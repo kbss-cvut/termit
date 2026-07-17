@@ -279,6 +279,11 @@ class ExcelImporterTest {
     @Test
     void importCreatesTermHierarchy() {
         initVocabularyResolution();
+        doAnswer(inv -> {
+            return idResolver.generateIdentifier(vocabulary.getUri() + SEPARATOR,
+                                          inv.getArgument(1, MultilingualString.class).get(Environment.LANGUAGE));
+        }).when(termService).generateIdentifier(any(Vocabulary.class),
+                                                any(MultilingualString.class));
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -833,6 +838,7 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setLabel(MultilingualString.create("Parent", "en"));
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final Vocabulary result = sut.importVocabulary(
@@ -844,7 +850,7 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         final Term resultTerm = captor.getValue();
-        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent.toTermInfo()));
     }
 
     @Test
@@ -884,7 +890,7 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         final Term resultTerm = captor.getValue();
-        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent.toTermInfo()));
     }
 
     @Test
@@ -923,6 +929,7 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
+        referencedParent.setLabel(MultilingualString.create("Parent", "en"));
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         sut.importVocabulary(

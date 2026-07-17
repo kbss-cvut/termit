@@ -225,7 +225,16 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         pruneAndNormalizeTranslations(instance);
     }
 
-    private URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
+    /**
+     * Generates an identifier for a term based on the vocabulary namespace and the specified term label.
+     *
+     * @param vocabulary Vocabulary to which the term would belong
+     * @param termLabel  Label of the term
+     * @return Term identifier
+     */
+    public URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(termLabel);
         return idResolver.generateIdentifier(namespaceResolver.resolveNamespace(vocabulary.getUri()),
                                              termLabel.get(vocabulary.getPrimaryLanguage()));
     }

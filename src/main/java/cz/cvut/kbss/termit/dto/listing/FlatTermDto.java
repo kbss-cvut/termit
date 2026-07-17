@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 
 import java.net.URI;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class FlatTermDto extends AbstractTerm {
         super(other);
         if (other.getParentTerms() != null) {
             setParentTerms(other.getParentTerms().stream()
-                .map(AbstractTerm::getUri)
+                .map(HasIdentifier::getUri)
                 .collect(Collectors.toSet()));
         }
     }

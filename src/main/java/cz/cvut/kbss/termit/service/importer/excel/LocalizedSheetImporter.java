@@ -187,6 +187,10 @@ class LocalizedSheetImporter {
                     labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
                 }
             }
+            // Ensure term has an identifier before it can be referenced by other terms
+            if (term.getUri() == null) {
+                term.setUri(termRepositoryService.generateIdentifier(targetVocabulary, term.getLabel()));
+            }
         }
         LOG.trace("Found {} term rows.", i - 1);
     }
