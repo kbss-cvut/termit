@@ -391,7 +391,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importConnectsExistingDocumentToReimportedVocabulary() {
         final Document document = Generator.generateDocumentWithId();
         transactional(() -> {
-            final cz.cvut.kbss.termit.model.Vocabulary existing = findVocabulary(VOCABULARY_IRI);
+            final cz.cvut.kbss.termit.model.Vocabulary existing = findVocabulary();
             existing.setDocument(document);
             em.persist(document, descriptorFactory.documentDescriptor(VOCABULARY_IRI));
         });
@@ -402,16 +402,16 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                  new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
                                                                     Environment.loadFile("data/test-glossary.ttl")));
         });
-        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary(VOCABULARY_IRI);
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertNotNull(result.getDocument());
         assertEquals(document, result.getDocument());
     }
 
-    private cz.cvut.kbss.termit.model.Vocabulary findVocabulary(URI vocabularyUri) {
+    private cz.cvut.kbss.termit.model.Vocabulary findVocabulary() {
         return em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
-                       vocabularyUri,
-                       descriptorFactory.vocabularyDescriptor(vocabularyUri));
+                       SKOSImporterTest.VOCABULARY_IRI,
+                       descriptorFactory.vocabularyDescriptor(SKOSImporterTest.VOCABULARY_IRI));
     }
 
     @Test
@@ -451,7 +451,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     @Test
     void importConnectsExistingAccessControlListToImportedVocabulary() {
         transactional(() -> {
-            final cz.cvut.kbss.termit.model.Vocabulary existing = findVocabulary(VOCABULARY_IRI);
+            final cz.cvut.kbss.termit.model.Vocabulary existing = findVocabulary();
             final AccessControlList acl = Generator.generateAccessControlList(false);
             existing.setAcl(acl.getUri());
             em.persist(acl, descriptorFactory.accessControlListDescriptor());
@@ -463,7 +463,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                                     Environment.loadFile("data/test-glossary.ttl")));
         });
 
-        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary(VOCABULARY_IRI);
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertNotNull(result.getAcl());
     }
@@ -528,7 +528,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                                     Environment.loadFile("data/test-glossary.ttl")));
         });
 
-        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary(VOCABULARY_IRI);
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertThat(result.getProperties().keySet(),
                    hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
@@ -547,7 +547,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                                             "data/test-glossary-with-language.ttl")));
         });
 
-        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary(VOCABULARY_IRI);
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertEquals(lang, result.getPrimaryLanguage());
     }
@@ -563,7 +563,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                                             "data/test-glossary-without-language.ttl")));
         });
 
-        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary(VOCABULARY_IRI);
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertEquals(lang, result.getPrimaryLanguage());
         assertEquals("Słownictwo systemu TermIt - glosariusz", result.getPrimaryLabel());
@@ -580,7 +580,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                                             "data/test-glossary-without-language-and-label-matching-instance.ttl")));
         });
 
-        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary(VOCABULARY_IRI);
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertEquals(Environment.LANGUAGE, result.getPrimaryLanguage());
         assertEquals("Vocabulary of system TermIt - glossary", result.getPrimaryLabel());
