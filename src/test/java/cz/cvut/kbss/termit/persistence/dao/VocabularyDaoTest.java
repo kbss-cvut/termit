@@ -228,19 +228,17 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
-        final Term child = Generator.generateTermWithId();
-        final Term parentTerm = Generator.generateTermWithId();
+        final Term child = Generator.generateTermWithId(subjectVocabulary.getUri());
+        final Term parentTerm = Generator.generateTermWithId(targetVocabulary.getUri());
         child.addParentTerm(parentTerm);
         subjectVocabulary.addRootTerm(child);
         targetVocabulary.addRootTerm(parentTerm);
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setVocabulary(subjectVocabulary.getUri());
-            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setVocabulary(targetVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
         });
+        transactional(() -> em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary)));
 
         assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
@@ -252,8 +250,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
         targetVocabulary.setImportedVocabularies(Collections.singleton(transitiveVocabulary.getUri()));
-        final Term child = Generator.generateTermWithId();
-        final Term parentTerm = Generator.generateTermWithId();
+        final Term child = Generator.generateTermWithId(subjectVocabulary.getUri());
+        final Term parentTerm = Generator.generateTermWithId(transitiveVocabulary.getUri());
         child.addParentTerm(parentTerm);
         subjectVocabulary.addRootTerm(child);
         transitiveVocabulary.addRootTerm(parentTerm);
@@ -261,11 +259,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
-            child.setVocabulary(subjectVocabulary.getUri());
-            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setVocabulary(transitiveVocabulary.getUri());
             em.persist(parentTerm, descriptorFactory.termDescriptor(transitiveVocabulary));
         });
+        transactional(() -> em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary)));
 
         assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }

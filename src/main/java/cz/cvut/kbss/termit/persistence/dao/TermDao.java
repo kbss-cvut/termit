@@ -93,6 +93,25 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     @Override
+    public List<Term> findAll() {
+        final List<URI> termIris = em.createNativeQuery(
+                                             "SELECT ?x WHERE { ?x a ?type ; ?inVocabulary ?vocabulary . } ORDER BY ?x",
+                                             URI.class)
+                                     .setParameter("type", typeUri)
+                                     .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                     .getResultList();
+        return termIris.stream().map(id -> {
+                           final Term t = em.find(type, id, descriptorFactory.termDescriptor(id));
+                           if (t != null) {
+                               postLoad(t);
+                               em.clear();
+                           }
+                           return t;
+                       }).filter(Objects::nonNull)
+                       .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<Term> find(URI id) {
         Objects.requireNonNull(id);
         try {
@@ -316,10 +335,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
           .setParameter("newState", state).executeUpdate();
     }
 
-    private void evictCachedSubTerms(Set<? extends AbstractTerm> originalParents,
-                                     Set<? extends AbstractTerm> newParents) {
-        final Set<AbstractTerm> originalCopy = new HashSet<>(Utils.emptyIfNull(originalParents));
-        final Set<AbstractTerm> newCopy = new HashSet<>(Utils.emptyIfNull(newParents));
+    private void evictCachedSubTerms(Set<TermInfo> originalParents,
+                                     Set<TermInfo> newParents) {
+        final Set<TermInfo> originalCopy = new HashSet<>(Utils.emptyIfNull(originalParents));
+        final Set<TermInfo> newCopy = new HashSet<>(Utils.emptyIfNull(newParents));
         originalCopy.removeAll(newCopy);
         newCopy.removeAll(originalCopy);
         originalCopy.forEach(t -> subTermsCache.evict(t.getUri()));

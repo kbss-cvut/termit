@@ -62,7 +62,7 @@ class ExcelTermExporterTest {
                                             MultilingualString.create("Construction", Environment.LANGUAGE))));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
-        term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
+        term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5).stream().map(TermInfo::new).collect(Collectors.toSet())));
         term.setSubTerms(IntStream.range(0, 5).mapToObj(i -> generateTermInfo()).collect(Collectors.toSet()));
         term.setNotations(Collections.singleton("A"));
         term.setExamples(Collections.singleton(MultilingualString.create("hospital", Environment.LANGUAGE)));

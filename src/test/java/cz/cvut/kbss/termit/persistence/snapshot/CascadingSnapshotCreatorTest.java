@@ -202,9 +202,9 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
                 final Term relatedMatchSnapshot = findRequiredSnapshot(relatedMatch, Term.class);
                 assertThat(snapshot.getRelatedMatch(), hasItem(new TermInfo(relatedMatchSnapshot)));
             } else if (term.getExternalParentTerms() != null) {
-                final Term parent = term.getExternalParentTerms().iterator().next();
+                final TermInfo parent = term.getExternalParentTerms().iterator().next();
                 final Term parentSnapshot = findRequiredSnapshot(parent, Term.class);
-                assertThat(snapshot.getExternalParentTerms(), hasItem(parentSnapshot));
+                assertThat(snapshot.getExternalParentTerms(), hasItem(parentSnapshot.toTermInfo()));
             }
         }
     }

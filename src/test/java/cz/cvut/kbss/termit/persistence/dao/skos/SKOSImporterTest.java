@@ -18,13 +18,13 @@
 package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.importing.MissingLanguageTagException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -615,7 +615,9 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
         final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
         assertTrue(result.isPresent());
-        final List<Term> terms = em.createQuery("SELECT t FROM Term t", Term.class).getResultList();
+        final List<TermInfo> terms = em.createQuery("SELECT t FROM TermInfo t WHERE t.vocabulary = :vocabulary",
+                                                    TermInfo.class)
+                                       .setParameter("vocabulary", VOCABULARY_IRI).getResultList();
         terms.forEach(t -> {
             assertThat(t.getUri().toString(), startsWith(VOCABULARY_IRI_S));
             assertThat(t.getUri().toString(), not(containsString("/pojem")));

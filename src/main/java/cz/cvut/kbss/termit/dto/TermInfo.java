@@ -90,6 +90,14 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.types = new HashSet<>(Utils.emptyIfNull(other.getTypes()));
     }
 
+    public Term toTerm() {
+        final Term result = new Term(getUri());
+        result.setLabel(getLabel());
+        result.setVocabulary(getVocabulary());
+        result.setState(getState());
+        return result;
+    }
+
     @Override
     public URI getUri() {
         return uri;

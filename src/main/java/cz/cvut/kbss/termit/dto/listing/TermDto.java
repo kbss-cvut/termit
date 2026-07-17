@@ -24,7 +24,9 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.util.Utils;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,7 +52,15 @@ public class TermDto extends AbstractTerm {
     public TermDto(Term other) {
         super(other);
         if (other.getParentTerms() != null) {
-            setParentTerms(other.getParentTerms().stream().map(TermDto::new).collect(Collectors.toSet()));
+            setParentTerms(other.getParentTerms().stream().map(ti -> {
+                final TermDto result = new TermDto();
+                result.setUri(ti.getUri());
+                result.setLabel(ti.getLabel());
+                result.setVocabulary(ti.getVocabulary());
+                result.setState(ti.getState());
+                result.setTypes(new HashSet<>(Utils.emptyIfNull(ti.getTypes())));
+                return result;
+            }).collect(Collectors.toSet()));
         }
     }
 

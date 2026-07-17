@@ -238,7 +238,7 @@ public class ExcelImporter implements VocabularyImporter {
              .forEach(t -> {
                  t.setVocabulary(targetVocabulary.getUri());
                  LOG.trace("Persisting child term {}.", t);
-                 termService.addChildTerm(t, t.getParentTerms().iterator().next());
+                 termService.addChildTerm(t, t.getParentTerms().iterator().next().toTerm());
              });
         // Insert term relationships as raw data because of possible object conflicts in the persistence context -
         // the same term being as multiple types (Term, TermInfo) in the same persistence context
