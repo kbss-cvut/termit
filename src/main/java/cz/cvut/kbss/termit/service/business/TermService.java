@@ -151,9 +151,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(selectionParams);
         if (selectionParams.full()) {
             // includeImported is not supported for finding full versions of terms
-            return selectionParams.flat() ?
-                   repositoryService.findAllFullAndFlat(vocabulary, selectionParams.pageSpec()) :
-                   repositoryService.findAllFull(vocabulary, selectionParams.pageSpec());
+            return repositoryService.findAllFull(vocabulary, selectionParams.pageSpec());
         } else {
             final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {
@@ -189,9 +187,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(selectionParams);
         if (selectionParams.full()) {
             // includeImported is not supported for finding full versions of terms
-            return selectionParams.flat() ?
-                   repositoryService.findAllFullAndFlat(searchString, vocabulary, selectionParams.pageSpec()) :
-                   repositoryService.findAllFull(searchString, vocabulary, selectionParams.pageSpec());
+            return repositoryService.findAllFull(searchString, vocabulary, selectionParams.pageSpec());
         } else {
             final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {

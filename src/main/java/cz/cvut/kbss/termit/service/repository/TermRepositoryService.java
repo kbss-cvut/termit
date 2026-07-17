@@ -29,7 +29,6 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
-import cz.cvut.kbss.termit.model.FlatTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
