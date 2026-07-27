@@ -17,8 +17,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.rest.handler.RestExceptionHandler;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +24,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.accept.ContentNegotiationManager;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import static cz.cvut.kbss.termit.environment.Environment.createDefaultMessageConverter;
 import static cz.cvut.kbss.termit.environment.Environment.createJsonLdMessageConverter;
@@ -67,7 +67,7 @@ public class BaseControllerTestRunner {
         return objectMapper.writeValueAsString(object);
     }
 
-    protected String toJsonLd(Object object) throws Exception {
+    protected String toJsonLd(Object object) {
         return jsonLdObjectMapper.writeValueAsString(object);
     }
 

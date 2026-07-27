@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.LanguageController;
@@ -39,6 +38,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -103,8 +103,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private Optional<TermItUserDetails> authenticate(String token) {
         final Authentication authentication = getAuthenticationManager().authenticate(new BearerTokenAuthenticationToken(token));
 
-        return Optional.ofNullable(authentication)
-                .map(SecurityUtils::extractUserDetails);
+        return Optional.of(authentication).map(SecurityUtils::extractUserDetails);
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)

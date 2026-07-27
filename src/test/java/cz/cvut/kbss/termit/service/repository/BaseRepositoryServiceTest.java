@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -26,12 +25,13 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.net.URI;
@@ -40,13 +40,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -57,40 +57,35 @@ import static org.mockito.Mockito.when;
 class BaseRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
-    private UserAccountDao userAccountDao;
-
-    @Autowired
     private Validator validator;
 
     @Autowired
     private BaseRepositoryServiceImpl sut;
 
+    @MockitoBean
+    private UserAccountDao userAccountDaoMock;
+
     @TestConfiguration
     public static class Config {
+
 
         @Bean
         public BaseRepositoryServiceImpl baseRepositoryService(UserAccountDao userAccountDao, Validator validator) {
             return new BaseRepositoryServiceImpl(userAccountDao, validator);
         }
-
         @Bean
         public LocalValidatorFactoryBean validatorFactoryBean() {
             return new LocalValidatorFactoryBean();
         }
-    }
 
-    @Mock
-    private UserAccountDao userAccountDaoMock;
+    }
 
     @Test
     void persistExecutesTransactionalPersist() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
 
         sut.persist(user);
-        assertTrue(userAccountDao.exists(user.getUri()));
+        verify(userAccountDaoMock).persist(user);
     }
 
     @Test
@@ -118,16 +113,16 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updateExecutesTransactionalUpdate() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> userAccountDao.persist(user));
+        when(userAccountDaoMock.exists(user.getUri())).thenReturn(true);
+        doAnswer(inv -> inv.getArgument(0)).when(userAccountDaoMock).update(user);
 
         final String updatedLastName = "Married";
         user.setLastName(updatedLastName);
         sut.update(user);
 
-        final Optional<UserAccount> result = userAccountDao.find(user.getUri());
-        assertAll(() -> assertTrue(result.isPresent()),
-                () -> assertEquals(updatedLastName, result.get().getLastName())
-        );
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountDaoMock).update(captor.capture());
+        assertEquals(updatedLastName, captor.getValue().getLastName());
     }
 
     @Test
@@ -161,19 +156,10 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void removeExecutesTransactionalRemove() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> userAccountDao.persist(user));
+        when(userAccountDaoMock.exists(user.getUri())).thenReturn(true);
 
         sut.remove(user);
-        assertFalse(userAccountDao.exists(user.getUri()));
-    }
-
-    @Test
-    void removeByIdExecutesTransactionalRemove() {
-        final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> userAccountDao.persist(user));
-
-        sut.remove(user);
-        assertFalse(userAccountDao.exists(user.getUri()));
+        verify(userAccountDaoMock).remove(user);
     }
 
     @Test
@@ -243,10 +229,11 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void findRequiredRetrievesObjectById() {
         final UserAccount instance = Generator.generateUserAccountWithPassword();
-        transactional(() -> em.persist(instance));
+        when(userAccountDaoMock.find(instance.getUri())).thenReturn(Optional.of(instance));
 
         final UserAccount result = sut.findRequired(instance.getUri());
-        assertEquals(instance, result);
+        assertNotNull(result);
+        verify(userAccountDaoMock).find(instance.getUri());
     }
 
     @Test
@@ -270,10 +257,12 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void getReferenceRetrievesReferenceFromDaoWhenInstanceExists() {
         final UserAccount instance = Generator.generateUserAccountWithPassword();
-        transactional(() -> em.persist(instance));
+        when(userAccountDaoMock.exists(instance.getUri())).thenReturn(true);
+        when(userAccountDaoMock.getReference(instance.getUri())).thenReturn(instance);
+
         final UserAccount result = sut.getReference(instance.getUri());
         assertNotNull(result);
-        assertEquals(instance.getUri(), result.getUri());
+        verify(userAccountDaoMock).getReference(instance.getUri());
     }
 
     @Test

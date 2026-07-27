@@ -17,14 +17,13 @@
  */
 package cz.cvut.kbss.termit.util.json;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 
 public class MultilingualStringDeserializer extends StdDeserializer<MultilingualString> {
@@ -34,17 +33,14 @@ public class MultilingualStringDeserializer extends StdDeserializer<Multilingual
     }
 
     @Override
-    public MultilingualString deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
-            throws IOException {
-        final JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+    public MultilingualString deserialize(JsonParser jsonParser, DeserializationContext ctxt) throws JacksonException {
+        final JsonNode node = jsonParser.objectReadContext().readTree(jsonParser);
         final MultilingualString result = new MultilingualString();
-        final Iterator<Map.Entry<String, JsonNode>> fieldIterator = node.fields();
-        while (fieldIterator.hasNext()) {
-            final Map.Entry<String, JsonNode> field = fieldIterator.next();
+        for (Map.Entry<String, JsonNode> field : node.properties()) {
             if (field.getKey().isEmpty()) {
-                result.set(field.getValue().textValue());
+                result.set(field.getValue().stringValue());
             } else {
-                result.set(field.getKey(), field.getValue().textValue());
+                result.set(field.getKey(), field.getValue().stringValue());
             }
         }
         return result;

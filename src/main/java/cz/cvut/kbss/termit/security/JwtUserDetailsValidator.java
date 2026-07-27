@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.security;
 
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import io.jsonwebtoken.Claims;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -9,16 +8,17 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 
 /**
- * Ensures that the token contains {@link UserDetails} in {@link Claims#SUBJECT sub} claim
+ * Ensures that the token contains {@link UserDetails} in {@link JwtClaimNames#SUB sub} claim
  * and validates the details with {@link AccountStatusUserDetailsChecker}.
  */
 public class JwtUserDetailsValidator implements OAuth2TokenValidator<Jwt> {
 
     @Override
     public OAuth2TokenValidatorResult validate(Jwt token) {
-        final Object subject = token.getClaim(Claims.SUBJECT);
+        final Object subject = token.getClaim(JwtClaimNames.SUB);
         try {
             if (subject instanceof UserDetails userDetails) {
                 SecurityUtils.verifyUserDetailsStatus(userDetails);

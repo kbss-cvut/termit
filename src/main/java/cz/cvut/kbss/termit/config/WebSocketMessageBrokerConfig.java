@@ -22,13 +22,14 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import jakarta.annotation.Nonnull;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
@@ -45,6 +46,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -65,7 +67,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     private final StringMessageConverter termitStringMessageConverter;
 
-    private final MappingJackson2MessageConverter termitJsonLdMessageConverter;
+    private final JacksonJsonMessageConverter termitJsonLdMessageConverter;
 
     private final WebSocketExceptionHandler webSocketExceptionHandler;
 
@@ -74,7 +76,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
                                         WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor,
                                         @Lazy SimpMessagingTemplate simpMessagingTemplate,
                                         StringMessageConverter termitStringMessageConverter,
-                                        MappingJackson2MessageConverter termitJsonLdMessageConverter,
+                                        @Qualifier("jsonLdMapper") JsonMapper jsonLdMapper,
                                         cz.cvut.kbss.termit.util.Configuration configuration,
                                         WebSocketExceptionHandler webSocketExceptionHandler) {
         this.messageAuthorizationManager = messageAuthorizationManager;
@@ -82,7 +84,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
         this.webSocketJwtAuthorizationInterceptor = webSocketJwtAuthorizationInterceptor;
         this.simpMessagingTemplate = simpMessagingTemplate;
         this.termitStringMessageConverter = termitStringMessageConverter;
-        this.termitJsonLdMessageConverter = termitJsonLdMessageConverter;
+        this.termitJsonLdMessageConverter = new JacksonJsonMessageConverter(jsonLdMapper);
 
         this.allowedOrigins = configuration.getCors().getAllowedOrigins();
         this.webSocketExceptionHandler = webSocketExceptionHandler;

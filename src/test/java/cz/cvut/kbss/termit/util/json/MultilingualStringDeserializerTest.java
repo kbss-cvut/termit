@@ -17,11 +17,12 @@
  */
 package cz.cvut.kbss.termit.util.json;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,14 +35,14 @@ class MultilingualStringDeserializerTest {
 
     @BeforeEach
     void setUp() {
-        this.mapper = new ObjectMapper();
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(MultilingualString.class, sut);
-        mapper.registerModule(module);
+        this.mapper = JsonMapper.builder()
+                .addModule(module).build();
     }
 
     @Test
-    void deserializeDeserializesMapOfTranslationsIntoMultilingualString() throws Exception {
+    void deserializeDeserializesMapOfTranslationsIntoMultilingualString() {
         final String input = "{" +
                 "\"en\": \"building\"," +
                 "\"cs\": \"budova\"" +
@@ -53,7 +54,7 @@ class MultilingualStringDeserializerTest {
     }
 
     @Test
-    void deserializeInterpretsValueWithEmptyKeyAsSimpleLiteral() throws Exception {
+    void deserializeInterpretsValueWithEmptyKeyAsSimpleLiteral() {
         final String input = "{" +
                 "\"en\": \"building\"," +
                 "\"\": \"budova\"" +

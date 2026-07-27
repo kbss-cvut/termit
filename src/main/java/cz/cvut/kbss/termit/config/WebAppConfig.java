@@ -17,12 +17,6 @@
  */
 package cz.cvut.kbss.termit.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.ConfigParam;
 import cz.cvut.kbss.jsonld.JsonLd;
@@ -61,12 +55,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -98,20 +96,15 @@ public class WebAppConfig implements WebMvcConfigurer {
      *
      * @return {@code ObjectMapper} instance
      */
-    public static ObjectMapper createJsonObjectMapper() {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public static JsonMapper createJsonObjectMapper() {
         final SimpleModule multilingualStringModule = new SimpleModule();
         multilingualStringModule.addSerializer(MultilingualString.class, new MultilingualStringSerializer());
         multilingualStringModule.addDeserializer(MultilingualString.class, new MultilingualStringDeserializer());
         multilingualStringModule.addSerializer(LangString.class, new LangStringSerializer());
-        objectMapper.registerModule(multilingualStringModule);
-        // JSR 310 (Java 8 DateTime API)
-        objectMapper.registerModule(new JavaTimeModule());
-        // Serialize datetime as ISO strings
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        return objectMapper;
+        return JsonMapper.builder()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .addModule(multilingualStringModule)
+                .build();
     }
 
     /**
@@ -121,27 +114,25 @@ public class WebAppConfig implements WebMvcConfigurer {
      *
      * @return {@code ObjectMapper} instance
      */
-    public static ObjectMapper createJsonLdObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public static JsonMapper createJsonLdObjectMapper() {
         final JsonLdModule jsonLdModule = new JsonLdModule();
         jsonLdModule.configure(cz.cvut.kbss.jsonld.ConfigParam.SCAN_PACKAGE, "cz.cvut.kbss.termit");
         jsonLdModule.configure(ConfigParam.ASSUME_TARGET_TYPE, "true");
         jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
-        mapper.registerModule(jsonLdModule);
-        mapper.registerModule(new JavaTimeModule());
-        return mapper;
+        return JsonMapper.builder()
+                         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                         .addModule(jsonLdModule)
+                         .build();
     }
 
     @Bean(name = "objectMapper")
     @Primary
-    public ObjectMapper objectMapper() {
+    public JsonMapper objectMapper() {
         return createJsonObjectMapper();
     }
 
     @Bean(name = "jsonLdMapper")
-    public ObjectMapper jsonLdObjectMapper() {
+    public JsonMapper jsonLdObjectMapper() {
         return createJsonLdObjectMapper();
     }
 
@@ -152,17 +143,14 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Bean
     public HttpMessageConverter<?> termitJsonLdHttpMessageConverter() {
-        final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(
-                jsonLdObjectMapper());
+        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(jsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
         return converter;
     }
 
     @Bean
     public HttpMessageConverter<?> termitJsonHttpMessageConverter() {
-        final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-        converter.setObjectMapper(objectMapper());
-        return converter;
+        return new JacksonJsonHttpMessageConverter(objectMapper());
     }
 
     @Bean
