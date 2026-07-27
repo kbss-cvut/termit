@@ -126,7 +126,7 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                 for (JsonNode field: fields.values() ) { // for each field
                     JsonNode chainArray = field.get("propertyChain");
                     if (chainArray != null && chainArray.isArray()) { // extract the last node of propertyChain property
-                        indexedLiterals.add(chainArray.get(chainArray.size() - 1).stringValue());
+                        indexedLiterals.add(chainArray.get(chainArray.size() - 1).asString());
                     } else {
                         throw new TermItException("Connector field is missing propertyChain property or it is not an array!");
                     }
