@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.model.assignment;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.util.Copyable;
@@ -36,6 +37,7 @@ public class DefinitionalOccurrenceTarget extends OccurrenceTarget {
     public DefinitionalOccurrenceTarget() {
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public DefinitionalOccurrenceTarget(AbstractTerm source) {
         super(source);
     }

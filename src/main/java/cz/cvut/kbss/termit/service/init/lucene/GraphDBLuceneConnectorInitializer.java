@@ -1,12 +1,6 @@
 package cz.cvut.kbss.termit.service.init.lucene;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Constants;
@@ -17,13 +11,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -126,11 +123,10 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
         Set<String> indexedLiterals = new HashSet<>();
         for (JsonNode connectorOptions : connectorsOptions) { // for each connector
             if (connectorOptions.get("fields") instanceof ArrayNode fields) { // get fields property (which is an array)
-                for (Iterator<JsonNode> it = fields.values(); it.hasNext(); ) { // for each field
-                    JsonNode field = it.next();
+                for (JsonNode field: fields.values() ) { // for each field
                     JsonNode chainArray = field.get("propertyChain");
                     if (chainArray != null && chainArray.isArray()) { // extract the last node of propertyChain property
-                        indexedLiterals.add(chainArray.get(chainArray.size() - 1).textValue());
+                        indexedLiterals.add(chainArray.get(chainArray.size() - 1).stringValue());
                     } else {
                         throw new TermItException("Connector field is missing propertyChain property or it is not an array!");
                     }
@@ -206,11 +202,7 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                                       .setParameter("uri", uri)
                                       .setParameter("listOptionValues", LUCENE_LIST_OPTION_VALUES)
                                       .getSingleResult();
-        try {
-            return new LuceneConnector(uri, mapper.readTree(createString));
-        } catch (JsonProcessingException e) {
-            throw new PersistenceException("Error while reading Lucene connector options!", e);
-        }
+        return new LuceneConnector(uri, mapper.readTree(createString));
     }
 
     /**

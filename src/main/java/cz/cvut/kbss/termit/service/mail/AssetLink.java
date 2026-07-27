@@ -56,7 +56,7 @@ class AssetLink implements AssetVisitor {
         asset.accept(this);
         // We need to ensure that fragment is before query params, so first build the fragment with query params,
         // then build the whole URL
-        return ServletUriComponentsBuilder.fromHttpUrl(baseUrl).fragment(assetPath.toUriString()).toUriString();
+        return ServletUriComponentsBuilder.fromUriString(baseUrl).fragment(assetPath.toUriString()).toUriString();
     }
 
     @Override

@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.service.init.lucene;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -166,19 +165,13 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
                         FILTER(REGEX(str(?uri), STR(?lang))) .
                     }
                 """, String.class)
-                                           .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
-                                           .setParameter("lang", ".*" + lang + "$")
-                                           .getResultStream()
-                                           .map(options -> {
-                                               try {
-                                                   return Environment.getObjectMapper()
-                                                                     .readTree(options)
-                                                                     .get("analyzer")
-                                                                     .asText();
-                                               } catch (JsonProcessingException e) {
-                                                   throw new RuntimeException(e);
-                                               }
-                                           }).toList();
+                                       .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
+                                       .setParameter("lang", ".*" + lang + "$")
+                                       .getResultStream()
+                                       .map(options -> Environment.getObjectMapper()
+                                                          .readTree(options)
+                                                          .get("analyzer")
+                                                          .stringValue()).toList();
             assertEquals(2, analyzers.size());
             analyzers.forEach(value -> assertEquals(analyzer, value));
         });

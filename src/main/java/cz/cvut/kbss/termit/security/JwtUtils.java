@@ -17,9 +17,19 @@
  */
 package cz.cvut.kbss.termit.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import cz.cvut.kbss.termit.exception.IncompleteJwtException;
 import cz.cvut.kbss.termit.exception.JwtException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -27,31 +37,19 @@ import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.jackson.io.JacksonDeserializer;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.MacAlgorithm;
-import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.JoseHeaderNames;
-import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -66,23 +64,36 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    static final MacAlgorithm SIGNATURE_ALGORITHM = Jwts.SIG.HS256;
-
-    private final ObjectMapper objectMapper;
-
-    private final JwtParser jwtParser;
+    static final JWSAlgorithm SIGNATURE_ALGORITHM = JWSAlgorithm.HS256;
 
     private final SecretKey key;
 
-    @Autowired
-    public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
-        this.objectMapper = objectMapper;
-        this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? SIGNATURE_ALGORITHM.key().build() :
-                         Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+    private final JWSSigner signer;
 
-        this.jwtParser = Jwts.parser().verifyWith(key)
-                             .json(new JacksonDeserializer<>(objectMapper))
-                             .build();
+    private final JWSVerifier verifier;
+
+    @Autowired
+    public JwtUtils(Configuration config) {
+        this.key = initSigningKey(config);
+        try {
+            this.signer = new MACSigner(key);
+            this.verifier = new MACVerifier(key);
+        } catch (JOSEException e) {
+            throw new TermItException("Unable to initialize JWT signing/verification.", e);
+        }
+    }
+
+    private static SecretKey initSigningKey(Configuration config) {
+        if (Utils.isBlank(config.getJwt().getSecretKey())) {
+            try {
+                final KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+                keyGenerator.init(256);
+                return keyGenerator.generateKey();
+            } catch (NoSuchAlgorithmException e) {
+                throw new TermItException("Unable to generate JWT signing key.", e);
+            }
+        }
+        return new SecretKeySpec(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
     public SecretKey getJwtSigningKey() {
@@ -96,8 +107,8 @@ public class JwtUtils {
      * @return Generated JWT hash
      */
     public String generateToken(UserAccount user, Collection<? extends GrantedAuthority> authorities) {
-        return prebuildJwt(user.getUsername(), user.getUri(), authorities, null)
-                .compact();
+        final JWTClaimsSet claims = prebuildClaims(user.getUsername(), user.getUri(), authorities, null).build();
+        return sign(claims, null);
     }
 
     static Instant issueTimestamp() {
@@ -120,53 +131,55 @@ public class JwtUtils {
      */
     public TermItUserDetails extractUserInfo(String token) {
         Objects.requireNonNull(token);
-        try {
-            final Claims claims = getClaimsFromToken(token).getPayload();
-            return extractUserInfo(claims);
-        } catch (IllegalArgumentException e) {
-            throw new JwtException("Unable to parse user identifier from the specified JWT.", e);
-        }
+        return extractUserInfo(getClaimsFromToken(token));
     }
 
-    public TermItUserDetails extractUserInfo(final @Nonnull Claims claims) {
+    public TermItUserDetails extractUserInfo(final @Nonnull JWTClaimsSet claims) {
         Objects.requireNonNull(claims);
+        verifyAttributePresence(claims);
         try {
-            verifyAttributePresence(claims);
             final UserAccount user = new UserAccount();
-            user.setUri(URI.create(claims.getId()));
+            user.setUri(URI.create(claims.getJWTID()));
             user.setUsername(claims.getSubject());
-            final String roles = claims.get(SecurityConstants.JWT_ROLE_CLAIM, String.class);
+            final String roles = claims.getStringClaim(SecurityConstants.JWT_ROLE_CLAIM);
             return new TermItUserDetails(user, mapClaimToAuthorities(roles));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ParseException e) {
             throw new JwtException("Unable to parse user identifier from the specified JWT.", e);
         }
     }
 
-    public Jws<Claims> getClaimsFromToken(String token) {
+    /**
+     * Parses the specified compact JWT and verifies its signature.
+     *
+     * @param token JWT to parse
+     * @return Parsed claim set
+     */
+    public JWTClaimsSet getClaimsFromToken(String token) {
         try {
-            return parseClaims(token);
-        } catch (MalformedJwtException | UnsupportedJwtException e) {
+            final SignedJWT signedJWT = SignedJWT.parse(token);
+            if (!signedJWT.verify(verifier)) {
+                throw new JwtException("Invalid signature of the specified JWT.");
+            }
+            return signedJWT.getJWTClaimsSet();
+        } catch (ParseException e) {
             throw new JwtException("Unable to parse the specified JWT.", e);
-        } catch (SecurityException e) {
+        } catch (JOSEException e) {
             throw new JwtException("Invalid signature of the specified JWT.", e);
-        } catch (ExpiredJwtException e) {
-            throw new TokenExpiredException(e.getMessage());
         }
     }
 
-    private Jws<Claims> parseClaims(String token) {
-        return jwtParser.parseSignedClaims(token);
-    }
-
-    private static void verifyAttributePresence(Claims claims) {
+    private static void verifyAttributePresence(JWTClaimsSet claims) {
         if (claims.getSubject() == null) {
             throw new IncompleteJwtException("JWT is missing subject.");
         }
-        if (claims.getId() == null) {
+        if (claims.getJWTID() == null) {
             throw new IncompleteJwtException("JWT is missing id.");
         }
-        if (claims.getExpiration() == null) {
+        if (claims.getExpirationTime() == null) {
             throw new TokenExpiredException("Missing token expiration info. Assuming expired.");
+        }
+        if (claims.getExpirationTime().before(new Date())) {
+            throw new TokenExpiredException("The specified JWT has expired.");
         }
     }
 
@@ -190,50 +203,77 @@ public class JwtUtils {
      */
     public String refreshToken(String token) {
         Objects.requireNonNull(token);
-        final Claims claims = getClaimsFromToken(token).getPayload();
+        final JWTClaimsSet claims = getClaimsFromToken(token);
         final Instant issued = issueTimestamp();
-        return Jwts.builder().claims(claims)
-                .issuedAt(Date.from(issued))
-                .expiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
-                   .signWith(key, SIGNATURE_ALGORITHM)
-                   .json(new JacksonSerializer<>(objectMapper))
-                   .compact();
+        final JWTClaimsSet refreshed = new JWTClaimsSet.Builder(claims)
+                .issueTime(Date.from(issued))
+                .expirationTime(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
+                .build();
+        return sign(refreshed, null);
     }
 
     /**
-     * Builds common JWT parts.
-     * Generate the string token with {@link JwtBuilder#compact()}.
-     * @param subject The subject claim
-     * @param expiration The token expiration or null to use default session length
-     * @return JwtBuilder with common parts set
+     * Builds common JWT claims. Produce the compact token with {@link #sign(JWTClaimsSet, JOSEObjectType)}.
+     *
+     * @param subject     The subject claim
+     * @param userId      User identifier stored in the {@code jti} claim
+     * @param authorities User authorities stored in the role claim
+     * @param expiration  The token expiration or null to use default session length
+     * @return {@link JWTClaimsSet.Builder} with common parts set
      */
-    private JwtBuilder prebuildJwt(String subject, URI userId, Collection<? extends GrantedAuthority> authorities, Date expiration) {
+    private JWTClaimsSet.Builder prebuildClaims(String subject, URI userId,
+                                                Collection<? extends GrantedAuthority> authorities, Date expiration) {
         final Instant issued = issueTimestamp();
-        if (expiration == null) {
-            expiration = Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT));
+        final Date exp = expiration == null ? Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT))
+                                            : expiration;
+        return new JWTClaimsSet.Builder()
+                .subject(subject)
+                .issueTime(Date.from(issued))
+                .expirationTime(exp)
+                .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
+                .jwtID(userId.toString());
+    }
+
+
+    private String sign(JWTClaimsSet claims, JOSEObjectType type) {
+        return sign(claims, type, signer);
+    }
+
+    /**
+     * Signs the specified claims, producing a compact serialized JWT.
+     *
+     * @param claims Claims to sign
+     * @param type   Optional JOSE {@code typ} header value, or {@code null} for none
+     * @param signer The signer to use
+     * @return Compact serialized JWT
+     */
+    public static String sign(JWTClaimsSet claims, JOSEObjectType type, JWSSigner signer) {
+        final JWSHeader.Builder headerBuilder = new JWSHeader.Builder(SIGNATURE_ALGORITHM);
+        if (type != null) {
+            headerBuilder.type(type);
         }
-        return Jwts.builder().subject(subject)
-                   .issuedAt(Date.from(issued))
-                   .expiration(expiration)
-                   .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
-                   .claim(JwtClaimNames.JTI, userId.toString())
-                   .signWith(key, SIGNATURE_ALGORITHM)
-                   .json(new JacksonSerializer<>(objectMapper));
+        final SignedJWT signedJWT = new SignedJWT(headerBuilder.build(), claims);
+        try {
+            signedJWT.sign(signer);
+        } catch (JOSEException e) {
+            throw new TermItException("Unable to sign JWT.", e);
+        }
+        return signedJWT.serialize();
     }
 
     /**
      * Generates Access Token JWT.
+     *
      * @param newToken The token to generate
      * @return The token value
      */
     public String generatePAT(PersonalAccessToken newToken) {
-        final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
         Date expiration = new Date(Long.MAX_VALUE);
         if (newToken.getExpirationDate() != null) {
             expiration = Date.from(newToken.getExpirationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
         }
-        return prebuildJwt(newToken.getUri().toString(), newToken.getOwner().getUri(), List.of(), expiration)
-                .header().add(JoseHeaderNames.TYP,  type).and()
-                .compact();
+        final JWTClaimsSet claims = prebuildClaims(newToken.getUri().toString(), newToken.getOwner().getUri(),
+                                                   List.of(), expiration).build();
+        return sign(claims, new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN));
     }
 }

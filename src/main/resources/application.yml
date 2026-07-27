@@ -26,10 +26,6 @@ management:
 
 server:
     servlet:
-        encoding:
-            charset: UTF-8
-            enabled: true
-            force: true
         context-path: /termit
         session:
             cookie:
@@ -44,6 +40,10 @@ spring:
             max-request-size: 20MB
             file-size-threshold: 0B
             location: ${java.io.tmpdir}
+        encoding:
+            charset: UTF-8
+            enabled: true
+            force: true
     cache:
         jcache:
             config: classpath:ehcache.xml

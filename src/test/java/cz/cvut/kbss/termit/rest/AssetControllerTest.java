@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
@@ -37,13 +36,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.rest.AssetController.DEFAULT_PAGE;
 import static cz.cvut.kbss.termit.rest.AssetController.DEFAULT_PAGE_SIZE;
 import static java.lang.Integer.parseInt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,11 +73,10 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyModifiedAsset> assets = generateRecentlyModifiedAssetRecords();
         when(assetService.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/last-edited")).andExpect(status().isOk()).andReturn();
-        final List<RecentlyModifiedAsset> result = readValue(mvcResult,
-                                                             new TypeReference<List<RecentlyModifiedAsset>>() {
-                                                             });
+        final List<RecentlyModifiedAsset> result = readValue(mvcResult, new TypeReference<>() {
+        });
         assertEquals(assets, result);
-        verify(assetService).findLastEdited(PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findLastEdited(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     private static List<RecentlyModifiedAsset> generateRecentlyModifiedAssetRecords() {
@@ -110,7 +108,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         when(assetService.findMyLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-edited").param("forCurrentUserOnly", Boolean.TRUE.toString()))
                .andExpect(status().isOk());
-        verify(assetService).findMyLastEdited(PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findMyLastEdited(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     private static List<RecentlyCommentedAsset> generateRecentlyCommentedAssetRecords() {
@@ -128,7 +126,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         when(assetService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented")).andExpect(status().isOk());
         verify(assetService).findLastCommented(
-                PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
+                PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test
@@ -149,7 +147,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
         when(assetService.findMyLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/my-last-commented")).andExpect(status().isOk());
-        verify(assetService).findMyLastCommented(PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findMyLastCommented(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test
@@ -171,7 +169,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         when(assetService.findLastCommentedInReactionToMine(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented-in-reaction-to-mine")).andExpect(status().isOk());
         verify(assetService).findLastCommentedInReactionToMine(
-                PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
+                PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test

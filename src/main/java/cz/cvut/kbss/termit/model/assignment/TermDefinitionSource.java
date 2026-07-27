@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.model.assignment;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -31,6 +32,7 @@ public class TermDefinitionSource extends TermFileOccurrence {
     public TermDefinitionSource() {
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public TermDefinitionSource(URI term, FileOccurrenceTarget target) {
         super(term, target);
     }

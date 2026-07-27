@@ -1,6 +1,9 @@
 package cz.cvut.kbss.termit.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestAuthenticationStackConfig;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
@@ -14,9 +17,6 @@ import cz.cvut.kbss.termit.rest.UserController;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
-import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -24,21 +24,22 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -54,7 +55,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static cz.cvut.kbss.termit.security.JwtUtils.SIGNATURE_ALGORITHM;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,9 +67,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration test for the authentication stack using MockMvc.
- * This test initializes almost whole application and mocks only DAOs,
- * the goal is to test the security configuration close to production.
+ * Integration test for the authentication stack using MockMvc. This test initializes almost whole application and mocks
+ * only DAOs, the goal is to test the security configuration close to production.
  */
 @ContextConfiguration(classes = {
         TestAuthenticationStackConfig.class,
@@ -93,6 +92,8 @@ public class RestAuthenticationStackTest {
     @Autowired
     private JwtUtils validJwtUtils;
 
+    private JWSSigner signer;
+
     @Autowired
     private Configuration configuration;
 
@@ -107,7 +108,7 @@ public class RestAuthenticationStackTest {
     private PersonalAccessToken patToken;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         plainPassword = "secretPassword";
 
         staticUser = Generator.generateUserAccount();
@@ -119,6 +120,7 @@ public class RestAuthenticationStackTest {
 
         mockExistingToken(() -> patToken);
         setUserToContext(staticUser);
+        this.signer = new MACSigner(getValidSecretKey());
     }
 
     private void setUserToContext(UserAccount account) {
@@ -130,7 +132,7 @@ public class RestAuthenticationStackTest {
     private JwtUtils getInvalidKeyJwtUtils() {
         Configuration config = new Configuration();
         config.getJwt().setSecretKey("TermItSecretKeyThatWillNotMatchSecretForTesting");
-        return new JwtUtils(objectMapper, config);
+        return new JwtUtils(config);
     }
 
     private String generateJwtWithInvalidSignature() {
@@ -152,52 +154,48 @@ public class RestAuthenticationStackTest {
     }
 
     private SecretKey getValidSecretKey() {
-        return Keys.hmacShaKeyFor(configuration.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+        return new SecretKeySpec(configuration.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8),
+                                 "HmacSHA256");
     }
 
     /**
-     * @see JwtUtils#generateToken(UserAccount, Collection)
      * @return JWT token for {@link #staticUser} with expiration in the past
+     * @see JwtUtils#generateToken(UserAccount, Collection)
      */
     private String generateExpiredJwt() {
         final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
-        final String token = Jwts.builder().subject(staticUser.getUsername())
-                                 .issuedAt(Date.from(issued))
-                                 .expiration(Date.from(issued.plus(1, ChronoUnit.DAYS)))
-                                 .signWith(getValidSecretKey(), SIGNATURE_ALGORITHM)
-                                 .json(new JacksonSerializer<>(objectMapper))
-                                 .compact();
+        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject(staticUser.getUsername())
+                                                                     .issueTime(Date.from(issued))
+                                                                     .expirationTime(
+                                                                             Date.from(issued.plus(1, ChronoUnit.DAYS)))
+                                                                     .build(), null, signer);
         return SecurityConstants.JWT_TOKEN_PREFIX + token;
     }
 
     /**
-     * @see JwtUtils#generatePAT(PersonalAccessToken)
      * @return PAT JWT token for {@link #staticUser} from {@link #patToken} with expiration in the past.
+     * @see JwtUtils#generatePAT(PersonalAccessToken)
      */
     private String generateExpiredPat() {
         final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
-        final String type = Constants.MediaType.JWT_ACCESS_TOKEN;
         final Date expiration = Date.from(issued.plus(1, ChronoUnit.DAYS));
-        return Jwts.builder().subject(patToken.getUri().toString())
-                   .issuedAt(Date.from(issued))
-                   .expiration(expiration)
-                   .header().add(JoseHeaderNames.TYP,  type).and()
-                   .claim(JoseHeaderNames.TYP, type)
-                   .signWith(getValidSecretKey(), SIGNATURE_ALGORITHM)
-                   .json(new JacksonSerializer<>(objectMapper))
-                   .compact();
+        return JwtUtils.sign(new JWTClaimsSet.Builder().subject(patToken.getUri().toString())
+                                                       .issueTime(Date.from(issued))
+                                                       .expirationTime(expiration)
+                                                       .build(),
+                             new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN), signer);
     }
 
     private ResultActions makeRequestWithJwt(String authToken) throws Exception {
         return mockMvc.perform(get(Constants.REST_MAPPING_PATH + UserController.PATH + UserController.CURRENT_USER_PATH)
-                .header(HttpHeaders.AUTHORIZATION, authToken));
+                                       .header(HttpHeaders.AUTHORIZATION, authToken));
     }
 
     private String performLogin() throws Exception {
         MvcResult result = mockMvc.perform(post(SecurityConstants.LOGIN_PATH)
-                                          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                                          .param("username", staticUser.getUsername())
-                                          .param("password", plainPassword))
+                                                   .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                                                   .param("username", staticUser.getUsername())
+                                                   .param("password", plainPassword))
                                   .andExpect(status().isOk())
                                   .andReturn();
 
@@ -208,9 +206,9 @@ public class RestAuthenticationStackTest {
 
     private String requestPat(String userJWT) throws Exception {
         MvcResult result = mockMvc.perform(post(Constants.REST_MAPPING_PATH + PersonalAccessTokenController.PATH)
-                                          .header(HttpHeaders.AUTHORIZATION, userJWT))
-                .andExpect(status().isOk())
-                .andReturn();
+                                                   .header(HttpHeaders.AUTHORIZATION, userJWT))
+                                  .andExpect(status().isOk())
+                                  .andReturn();
         String patToken = result.getResponse().getContentAsString();
         assertFalse(Utils.isBlank(patToken));
         return SecurityConstants.JWT_TOKEN_PREFIX + patToken;
@@ -260,8 +258,7 @@ public class RestAuthenticationStackTest {
     }
 
     /**
-     * Validates that create PAT rest endpoint
-     * generates new valid token which works for authentication of the owner.
+     * Validates that create PAT rest endpoint generates new valid token which works for authentication of the owner.
      */
     @Test
     void createPatGeneratesValidPat() throws Exception {
@@ -280,7 +277,8 @@ public class RestAuthenticationStackTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        final UserAccount currentUser = objectMapper.readValue(result.getResponse().getContentAsString(), UserAccount.class);
+        final UserAccount currentUser = objectMapper.readValue(result.getResponse().getContentAsString(),
+                                                               UserAccount.class);
 
         assertEquals(staticUser, currentUser);
     }
@@ -341,7 +339,7 @@ public class RestAuthenticationStackTest {
                 customizeAccount(UserAccount::disable)
         );
     }
-    
+
     @ParameterizedTest
     @MethodSource("invalidUserAccountSource")
     void validJwtAndPatAreRejectedForInvalidUserAccount(UserAccount userAccount) throws Exception {
