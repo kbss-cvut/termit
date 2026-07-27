@@ -1,11 +1,10 @@
 package cz.cvut.kbss.termit.util.json;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import cz.cvut.kbss.ontodriver.model.LangString;
-
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 public class LangStringSerializer extends StdSerializer<LangString> {
 
@@ -14,8 +13,8 @@ public class LangStringSerializer extends StdSerializer<LangString> {
     }
 
     @Override
-    public void serialize(LangString langString, JsonGenerator jsonGenerator,
-                          SerializerProvider serializerProvider) throws IOException {
+    public void serialize(LangString langString, JsonGenerator jsonGenerator, SerializationContext ctxt)
+            throws JacksonException {
         jsonGenerator.writeString(langString.toString());
     }
 }

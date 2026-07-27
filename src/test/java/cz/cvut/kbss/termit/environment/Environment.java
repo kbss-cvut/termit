@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.environment;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.config.WebAppConfig;
@@ -41,11 +40,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,9 +66,9 @@ public class Environment {
 
     public static final String LANGUAGE = Constants.DEFAULT_LANGUAGE;
 
-    private static ObjectMapper objectMapper;
+    private static JsonMapper objectMapper;
 
-    private static ObjectMapper jsonLdObjectMapper;
+    private static JsonMapper jsonLdObjectMapper;
 
     private static final DtoMapper DTO_MAPPER = initDtoMapper();
 
@@ -109,11 +109,12 @@ public class Environment {
 
     public static UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        if (context == null || context.getAuthentication() == null) {
+        if (context.getAuthentication() == null) {
             return null;
         }
 
         final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        assert userDetails != null;
         return userDetails.getUser();
     }
 
@@ -125,11 +126,11 @@ public class Environment {
     }
 
     /**
-     * Gets a Jackson {@link ObjectMapper} for mapping JSON to Java and vice versa.
+     * Gets a Jackson {@link JsonMapper} for mapping JSON to Java and vice versa.
      *
      * @return {@code ObjectMapper}
      */
-    public static ObjectMapper getObjectMapper() {
+    public static JsonMapper getObjectMapper() {
         if (objectMapper == null) {
             objectMapper = WebAppConfig.createJsonObjectMapper();
         }
@@ -137,11 +138,11 @@ public class Environment {
     }
 
     /**
-     * Gets a Jackson {@link ObjectMapper} for mapping JSON-LD to Java and vice versa.
+     * Gets a Jackson {@link JsonMapper} for mapping JSON-LD to Java and vice versa.
      *
      * @return {@code ObjectMapper}
      */
-    public static ObjectMapper getJsonLdObjectMapper() {
+    public static JsonMapper getJsonLdObjectMapper() {
         if (jsonLdObjectMapper == null) {
             jsonLdObjectMapper = WebAppConfig.createJsonLdObjectMapper();
         }
@@ -158,14 +159,14 @@ public class Environment {
      * @return JSON-LD message converter
      */
     public static HttpMessageConverter<?> createJsonLdMessageConverter() {
-        final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(
+        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(
                 getJsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
         return converter;
     }
 
     public static HttpMessageConverter<?> createDefaultMessageConverter() {
-        return new MappingJackson2HttpMessageConverter(getObjectMapper());
+        return new JacksonJsonHttpMessageConverter(getObjectMapper());
     }
 
     public static HttpMessageConverter<?> createStringEncodingMessageConverter() {

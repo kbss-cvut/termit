@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.security.model.LoginStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +28,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import tools.jackson.databind.ObjectMapper;
 
 import static cz.cvut.kbss.termit.security.AuthenticationSuccessTest.request;
 import static cz.cvut.kbss.termit.security.AuthenticationSuccessTest.response;

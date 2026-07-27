@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.security.AuthenticationFailure;
@@ -27,7 +26,6 @@ import cz.cvut.kbss.termit.service.business.PersonalAccessTokenService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -47,9 +45,8 @@ import static org.mockito.Mockito.mock;
 public class TestRestSecurityConfig {
 
     @Bean
-    public JwtUtils jwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper,
-                             cz.cvut.kbss.termit.util.Configuration configuration) {
-        return new JwtUtils(objectMapper, configuration);
+    public JwtUtils jwtUtils(cz.cvut.kbss.termit.util.Configuration configuration) {
+        return new JwtUtils(configuration);
     }
 
     @Bean

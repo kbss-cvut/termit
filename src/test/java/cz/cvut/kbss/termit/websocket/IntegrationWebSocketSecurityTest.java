@@ -17,18 +17,16 @@
  */
 package cz.cvut.kbss.termit.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.Utils;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
-import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
@@ -41,6 +39,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -65,9 +64,6 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
      * The number of seconds after which some operations will time out.
      */
     private static final int OPERATION_TIMEOUT = 15;
-
-    @Autowired
-    ObjectMapper objectMapper;
 
     /**
      * @return Stream of argument pairs with StompCommand (CONNECT & DISCONNECT excluded) and true + false value for
@@ -171,13 +167,7 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
 
         final Instant issued = Utils.timestamp();
         // creates "valid" JWT token but with invalid signature
-        final String token = Jwts.builder().subject(userDetails.getUser().getUsername())
-                                 .id(userDetails.getUser().getUri().toString()).issuedAt(Date.from(issued))
-                                 .expiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
-                                 .signWith(Keys.hmacShaKeyFor(
-                                                   "my very secure and really private key".getBytes(StandardCharsets.UTF_8)),
-                                           Jwts.SIG.HS256)
-                                 .json(new JacksonSerializer<>(objectMapper)).compact();
+        final String token = generateJwtToken(issued);
 
         final TextMessage message = new TextMessage(
                 StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + token + "\n\n\0");
@@ -200,6 +190,18 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
 
         verify(webSocketExceptionHandler).delegate(notNull(), notNull());
         verify(webSocketExceptionHandler).authenticationException(notNull(), notNull());
+    }
+
+    private String generateJwtToken(Instant issued) throws Exception {
+        final MACSigner signer = new MACSigner(
+                new SecretKeySpec("my very secure and really private key".getBytes(StandardCharsets.UTF_8),
+                                  "HmacSHA256"));
+        return JwtUtils.sign(new JWTClaimsSet.Builder().subject(userDetails.getUser().getUsername())
+                                                       .jwtID(userDetails.getUser().getUri().toString())
+                                                       .issueTime(Date.from(issued))
+                                                       .expirationTime(Date.from(
+                                                               issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
+                                                       .build(), null, signer);
     }
 
     /**

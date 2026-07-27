@@ -32,8 +32,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -117,7 +116,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrenceId)")
     @Async
     // Retry in case the occurrence has not been persisted, yet (see AsynchronousTermOccurrenceSaver)
-    @Retryable(retryFor = NotFoundException.class, maxAttempts = 3, backoff = @Backoff(delay = 30000L))
+    @Retryable(maxRetries = 3, includes = NotFoundException.class, delay = 30000L)
     @Transactional
     @Override
     public void approve(URI occurrenceId) {

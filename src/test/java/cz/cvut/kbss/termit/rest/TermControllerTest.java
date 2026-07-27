@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
@@ -67,6 +66,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import tools.jackson.core.type.TypeReference;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
