@@ -38,9 +38,9 @@ public class MultilingualStringDeserializer extends StdDeserializer<Multilingual
         final MultilingualString result = new MultilingualString();
         for (Map.Entry<String, JsonNode> field : node.properties()) {
             if (field.getKey().isEmpty()) {
-                result.set(field.getValue().stringValue());
+                result.set(field.getValue().asString());
             } else {
-                result.set(field.getKey(), field.getValue().stringValue());
+                result.set(field.getKey(), field.getValue().asString());
             }
         }
         return result;
