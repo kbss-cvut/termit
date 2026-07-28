@@ -38,13 +38,6 @@
     </properties>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-properties-migrator</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
@@ -267,7 +260,7 @@
         <dependency>
             <groupId>cz.cvut.kbss</groupId>
             <artifactId>ontology-migration-tool</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.1</version>
         </dependency>
 
         <!-- Test dependencies -->
