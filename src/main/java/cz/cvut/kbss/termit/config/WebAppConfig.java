@@ -51,7 +51,10 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -102,9 +105,9 @@ public class WebAppConfig implements WebMvcConfigurer {
         multilingualStringModule.addDeserializer(MultilingualString.class, new MultilingualStringDeserializer());
         multilingualStringModule.addSerializer(LangString.class, new LangStringSerializer());
         return JsonMapper.builder()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .addModule(multilingualStringModule)
-                .build();
+                         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                         .addModule(multilingualStringModule)
+                         .build();
     }
 
     /**
@@ -156,6 +159,17 @@ public class WebAppConfig implements WebMvcConfigurer {
     @Bean
     public HttpMessageConverter<?> termitResourceHttpMessageConverter() {
         return new ResourceHttpMessageConverter();
+    }
+
+    /**
+     * Registers a {@link ByteArrayHttpMessageConverter} with the highest precedence.
+     * <p>
+     * Fixes an issue with Springdoc returning base64 encoded binary data instead of JSON displayable by Swagger UI.
+     */
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public HttpMessageConverter<?> termitByteArrayHttpMessageConverter() {
+        return new ByteArrayHttpMessageConverter();
     }
 
     @Override
