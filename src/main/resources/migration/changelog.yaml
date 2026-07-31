@@ -629,9 +629,11 @@ changeSets:
                         ?x ?y ?z .
                     } WHERE {
                       ?x a skos:Concept ;
-                        skos:inScheme <http://onto.fel.cvut.cz/ontologies/data-description> ;
-                        ?y ?z .
+                         ?y ?z .
+                      FILTER (STRSTARTS(STR(?x), "http://onto.fel.cvut.cz/ontologies/data-description"))
                     }
+    -   id: 9
+        changes:
             -   type: importFromUrl
                 # Import data description ontology into a specific context (simpler future updates)
                 sourceUrl: https://onto.fel.cvut.cz/ontologies/data-description/version/2.0.0.ttl
