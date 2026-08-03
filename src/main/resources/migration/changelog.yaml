@@ -1,12 +1,6 @@
 changeSets:
     -   id: 1
         changes:
-            -   type: deleteClass
-                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/model
-            -   type: deleteClass
-                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-modelu
-    -   id: 2
-        changes:
             -   type: sparqlUpdate
                 query: |
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -92,6 +86,12 @@ changeSets:
                             ?vocabulary a pdp:slovník .
                         }
                     }
+    -   id: 2
+        changes:
+            -   type: deleteClass
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/model
+            -   type: deleteClass
+                iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/verze-modelu
             -   type: deleteClass
                 iri: http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář
             -   type: deleteClass
