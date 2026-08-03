@@ -175,7 +175,7 @@ public class SearchDao {
         URI defcomIndex = URI.create(Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX + langSuffix);
         query.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
         if (searchString.language() != null) {
-            query.setParameter("requestedLanguage", searchString.language());
+            query.setParameter("requestedLanguageVal", searchString.language());
         }
         return query;
     }
