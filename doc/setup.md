@@ -69,7 +69,7 @@ In order to support inference used by the application, a custom ruleset has to b
 2. Use the ruleset provided in TermIt at `rulesets/rules-termit-graphdb.pie`
 3. Create the repository, call it as you like (ensure the repository ID matches TermIt repository configuration).
 4. Upload the ontology files from https://github.com/kbss-cvut/termit-docker/tree/master/db-server/init-data into the
-   repository.
+   repository. These contain read-only mirrors of all the ontologies used by TermIt.
 5. Deploy TermIt. It will generate a default admin account, write its credentials to standard output and into a hidden
    file in the current user's home.
 
