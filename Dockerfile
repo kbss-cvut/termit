@@ -28,7 +28,7 @@ COPY ontology ontology
 COPY jopa-config jopa-config
 COPY src src
 
-RUN mvn package -B -P graphdb,standalone -DskipTests=true
+RUN mvn package -B -DskipTests=true
 
 FROM eclipse-temurin:25-jdk-alpine AS runtime
 COPY --from=build  /termit/target/termit.jar termit.jar
