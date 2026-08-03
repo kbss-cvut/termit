@@ -25,13 +25,22 @@
             </snapshots>
         </repository>
     </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>kbss-plugins</id>
+            <url>https://kbss.felk.cvut.cz/m2repo</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <properties>
         <java.version>17</java.version>
         <org.apache.tika.tika-core.version>3.3.1</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <org.springdoc.version>2.8.17</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>2.11.1</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>2.11.2-SNAPSHOT</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.17.0</cz.cvut.kbss.jsonld.version>
 
         <packaging>jar</packaging>
