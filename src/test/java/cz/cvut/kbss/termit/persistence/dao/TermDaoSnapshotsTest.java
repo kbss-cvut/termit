@@ -199,11 +199,11 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
     }
 
     @Test
-    void findAllRootsIncludingImportsDoesNotIncludeSnapshotsInResult() {
+    void findAllRootsInVocabulariesDoesNotIncludeSnapshotsInResult() {
         enableRdfsInference(em);
         final Term term = generateTermWithSnapshot();
 
-        final List<TermDto> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC,
+        final List<TermDto> result = sut.findAllRootsInVocabularies(Collections.singletonList(vocabulary.getUri()), Constants.DEFAULT_PAGE_SPEC,
                 Collections.emptySet());
         assertEquals(Collections.singletonList(new TermDto(term)), result);
     }
