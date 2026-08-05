@@ -20,14 +20,7 @@ package cz.cvut.kbss.termit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.exception.LazyLoadingException;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.CascadeType;
-import cz.cvut.kbss.jopa.model.annotations.FetchType;
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
-import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
-import cz.cvut.kbss.jopa.model.annotations.Properties;
-import cz.cvut.kbss.jopa.model.annotations.Types;
+import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
@@ -83,6 +76,9 @@ public class Vocabulary extends Asset<MultilingualString>
 
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
+
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_i_ma_souvisejici_slovnik)
+    private Set<URI> relatedVocabularies;
 
     @JsonIgnore
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_seznam_rizeni_pristupu, fetch = FetchType.EAGER)
@@ -175,6 +171,14 @@ public class Vocabulary extends Asset<MultilingualString>
 
     public void setImportedVocabularies(Set<URI> importedVocabularies) {
         this.importedVocabularies = importedVocabularies;
+    }
+
+    public Set<URI> getRelatedVocabularies() {
+        return relatedVocabularies;
+    }
+
+    public void setRelatedVocabularies(Set<URI> relatedVocabularies) {
+        this.relatedVocabularies = relatedVocabularies;
     }
 
     public URI getAcl() {

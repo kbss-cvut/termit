@@ -142,6 +142,8 @@ public class TermController extends BaseController {
             @RequestParam(name = "searchString", required = false) String searchString,
             @Parameter(description = "Whether to include terms from imported vocabularies.")
             @RequestParam(name = "includeImported", required = false) boolean includeImported,
+            @Parameter(description = "Whether to include terms from related vocabularies.")
+            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
             @Parameter(description = "Type of export (applicable if HTTP accept type is neither JSON nor JSON-LD).")
             @RequestParam(name = "exportType", required = false) ExportType exportType,
             @Parameter(description = "Identifiers of properties to include in the export.")
@@ -163,14 +165,14 @@ public class TermController extends BaseController {
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
             return ResponseEntity.ok(termService.findAll(searchString, vocabulary,
-                                                         new TermSelectionParams(flat, full, includeImported,
+                                                         new TermSelectionParams(flat, full, includeImported, includeRelated,
                                                                                  createPageRequest(pageSize, pageNo))));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
             return ResponseEntity.ok(termService.findAll(vocabulary,
-                                                         new TermSelectionParams(flat, full, includeImported,
+                                                         new TermSelectionParams(flat, full, includeImported, includeRelated,
                                                                                  createPageRequest(pageSize, pageNo))));
         });
     }
@@ -288,15 +290,16 @@ public class TermController extends BaseController {
             @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo,
             @Parameter(description = "Whether to include terms from imported vocabularies.")
             @RequestParam(name = "includeImported", required = false) boolean includeImported,
+            @Parameter(description = "Whether to include terms from related vocabularies.")
+            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
             @Parameter(
                     description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
 
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
-        return includeImported ?
-               termService
-                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+        return termService.findAllRoots(
+                vocabulary, includeImported, includeRelated, createPageRequest(pageSize, pageNo), includeTerms
+        );
 
     }
 

@@ -86,12 +86,9 @@ public class ReadOnlyTermService {
         return termService.findAll(searchString, vocabulary, selectionParams.withNotFull());
     }
 
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRoots(vocabulary, pageSpec, Collections.emptyList());
-    }
-
-    public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, boolean includeImported, boolean includeRelated,
+                                      Pageable pageSpec) {
+        return termService.findAllRoots(vocabulary, includeImported, includeRelated, pageSpec, Collections.emptyList());
     }
 
     public ReadOnlyTerm findRequired(URI id) {

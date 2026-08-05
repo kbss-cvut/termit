@@ -712,3 +712,12 @@ termit-pojem:má-datum-expirace
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has expiration date"@en , "Má datum expirace"@cs .
+
+termit-pojem:má-související-slovník
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has related vocabulary"@en , "Má související slovník"@cs .

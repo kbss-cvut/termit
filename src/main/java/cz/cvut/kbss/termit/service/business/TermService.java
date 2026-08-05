@@ -61,6 +61,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -153,14 +155,19 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
                    repositoryService.findAllFullAndFlat(vocabulary, selectionParams.pageSpec()) :
                    repositoryService.findAllFull(vocabulary, selectionParams.pageSpec());
         } else {
+            final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {
-                return selectionParams.includeImported() ?
-                       repositoryService.findAllFlatIncludingImported(vocabulary, selectionParams.pageSpec()) :
-                       repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec());
+                if (includeFromOther) {
+                    final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
+                    return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec());
+                }
+                return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec());
             } else {
-                return selectionParams.includeImported() ?
-                       repositoryService.findAllIncludingImported(vocabulary, selectionParams.pageSpec()) :
-                       repositoryService.findAll(vocabulary, selectionParams.pageSpec());
+                if (includeFromOther) {
+                    final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
+                    return repositoryService.findAllInVocabularies(vocabularies, selectionParams.pageSpec());
+                }
+                return repositoryService.findAll(vocabulary, selectionParams.pageSpec());
             }
         }
     }
@@ -186,18 +193,33 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
                    repositoryService.findAllFullAndFlat(searchString, vocabulary, selectionParams.pageSpec()) :
                    repositoryService.findAllFull(searchString, vocabulary, selectionParams.pageSpec());
         } else {
+            final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {
-                return selectionParams.includeImported() ?
-                       repositoryService.findAllFlatIncludingImported(searchString, vocabulary,
-                                                                      selectionParams.pageSpec()) :
-                       repositoryService.findAllFlat(searchString, vocabulary, selectionParams.pageSpec());
+                if (includeFromOther) {
+                    final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
+                    return repositoryService.findAllFlatInVocabularies(searchString, vocabularies, selectionParams.pageSpec());
+                }
+                return repositoryService.findAllFlat(searchString, vocabulary, selectionParams.pageSpec());
             } else {
-                return selectionParams.includeImported() ?
-                       repositoryService.findAllIncludingImported(searchString, vocabulary,
-                                                                  selectionParams.pageSpec()) :
-                       repositoryService.findAll(searchString, vocabulary, selectionParams.pageSpec());
+                if (includeFromOther) {
+                    final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
+                    return repositoryService.findAllInVocabularies(searchString, vocabularies, selectionParams.pageSpec());
+                }
+                return repositoryService.findAll(searchString, vocabulary, selectionParams.pageSpec());
             }
         }
+    }
+
+    private Collection<URI> resolveTargetVocabularies(Vocabulary vocabulary, TermSelectionParams selectionParams) {
+        final Set<URI> vocabularies = new HashSet<>();
+        vocabularies.add(vocabulary.getUri());
+        if (selectionParams.includeImported()) {
+            vocabularies.addAll(vocabularyService.getTransitivelyImportedVocabularies(vocabulary));
+        }
+        if (selectionParams.includeRelated()) {
+            vocabularies.addAll(vocabularyService.getRelatedVocabularies(vocabulary));
+        }
+        return vocabularies;
     }
 
     /**
@@ -234,10 +256,22 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms
      */
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, boolean includeImported, boolean includeRelated,
+                                      Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
-        return repositoryService.findAllRoots(vocabulary, pageSpec, includeTerms);
+        if (!includeImported && !includeRelated) {
+            return repositoryService.findAllRoots(vocabulary, pageSpec, includeTerms);
+        }
+        final Set<URI> vocabularies = new HashSet<>();
+        vocabularies.add(vocabulary.getUri());
+        if (includeImported) {
+            vocabularies.addAll(vocabularyService.getTransitivelyImportedVocabularies(vocabulary));
+        }
+        if (includeRelated) {
+            vocabularies.addAll(vocabularyService.getRelatedVocabularies(vocabulary));
+        }
+        return repositoryService.findAllRootsInVocabularies(vocabularies, pageSpec, includeTerms);
     }
 
     /**
@@ -254,28 +288,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(pageSpec);
         return repositoryService.findAllRoots(pageSpec, includeTerms);
-    }
-
-    /**
-     * Finds all root terms (terms without parent term) in the specified vocabulary or any of its imported
-     * vocabularies.
-     * <p>
-     * Basically, this does a transitive closure over the vocabulary import relationship, starting at the specified
-     * vocabulary, and returns all parent-less terms.
-     * <p>
-     * Terms with a label in the instance language are prepended.
-     *
-     * @param vocabulary   Base vocabulary for the vocabulary import closure
-     * @param pageSpec     Page specifying result number and position
-     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
-     * @return Matching root terms
-     * @see #findAllRoots(Vocabulary, Pageable, Collection)
-     */
-    public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
-                                                       Collection<URI> includeTerms) {
-        Objects.requireNonNull(vocabulary);
-        Objects.requireNonNull(pageSpec);
-        return repositoryService.findAllRootsIncludingImported(vocabulary, pageSpec, includeTerms);
     }
 
     /**

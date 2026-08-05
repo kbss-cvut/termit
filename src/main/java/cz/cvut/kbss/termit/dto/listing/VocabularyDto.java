@@ -45,6 +45,9 @@ public class VocabularyDto extends AbstractEntity {
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)
     private Set<URI> importedVocabularies;
 
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_i_ma_souvisejici_slovnik)
+    private Set<URI> relatedVocabularies;
+
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument)
     private DocumentDto document;
 
@@ -73,6 +76,14 @@ public class VocabularyDto extends AbstractEntity {
 
     public void setImportedVocabularies(Set<URI> importedVocabularies) {
         this.importedVocabularies = importedVocabularies;
+    }
+
+    public Set<URI> getRelatedVocabularies() {
+        return relatedVocabularies;
+    }
+
+    public void setRelatedVocabularies(Set<URI> relatedVocabularies) {
+        this.relatedVocabularies = relatedVocabularies;
     }
 
     public DocumentDto getDocument() {

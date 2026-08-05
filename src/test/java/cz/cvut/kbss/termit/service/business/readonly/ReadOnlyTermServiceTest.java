@@ -86,23 +86,27 @@ class ReadOnlyTermServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAllRoots(any(), any(), anyCollection())).thenReturn(terms);
 
-        final List<TermDto> result = sut.findAllRoots(vocabulary, pageSpec);
+        when(termService.findAllRoots(any(Vocabulary.class), eq(false), eq(false), any(Pageable.class), anyCollection())).thenReturn(terms);
+
+        final List<TermDto> result = sut.findAllRoots(vocabulary, false, false, pageSpec);
+
         assertEquals(terms, result);
-        verify(termService).findAllRoots(vocabulary, pageSpec, Collections.emptyList());
+        verify(termService).findAllRoots(vocabulary, false, false, pageSpec, Collections.emptyList());
     }
 
     @Test
-    void findAllRootsIncludingImportedGetsRootTermsFromServiceAndTransformsThemToReadOnlyVersion() {
+    void findAllRootsWithIncludesGetsRootTermsFromServiceAndTransformsThemToReadOnlyVersion() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAllRootsIncludingImported(any(), any(), anyCollection())).thenReturn(terms);
 
-        final List<TermDto> result = sut.findAllRootsIncludingImported(vocabulary, pageSpec);
+        when(termService.findAllRoots(any(Vocabulary.class), eq(true), eq(true), any(Pageable.class), anyCollection())).thenReturn(terms);
+
+        final List<TermDto> result = sut.findAllRoots(vocabulary, true, true, pageSpec);
+
         assertEquals(terms, result);
-        verify(termService).findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
+        verify(termService).findAllRoots(vocabulary, true, true, pageSpec, Collections.emptyList());
     }
 
     @Test

@@ -399,36 +399,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
-     * term hierarchy.
-     * <p>
-     * This returns all terms contained in the vocabulary glossaries.
-     *
-     * @param vocabulary Base vocabulary for the vocabulary import closure
-     * @param pageSpec   Page specifying result number and position
-     * @return List of terms ordered by label
-     */
-    @Transactional(readOnly = true)
-    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllIncludingImported(vocabulary, pageSpec);
-    }
-
-    /**
-     * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
-     * term hierarchy and returns them in a flat structure.
-     * <p>
-     * This returns all terms contained in the vocabulary glossaries.
-     *
-     * @param vocabulary Base vocabulary for the vocabulary import closure
-     * @param pageSpec   Page specifying result number and position
-     * @return List of terms ordered by label in a flat structure
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFlatIncludingImported(vocabulary, pageSpec);
-    }
-
-    /**
      * Finds all root terms (terms without parent term) in the specified vocabulary.
      * <p>
      * Terms with a label in the instance language are prepended.
@@ -437,7 +407,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching root terms
-     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     @Transactional(readOnly = true)
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
@@ -453,7 +422,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching root terms
-     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     @Transactional(readOnly = true)
     public List<TermDto> findAllRoots(Pageable pageSpec,
@@ -462,24 +430,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Finds all root terms (terms without parent term) in the specified vocabulary or any of its imported
-     * vocabularies.
-     * <p>
-     * Basically, this does a transitive closure over the vocabulary import relationship, starting at the specified
-     * vocabulary, and returns all parent-less terms.
+     * Finds all root terms (terms without parent term) in the specified collection of vocabularies.
      * <p>
      * Terms with a label in the instance language are prepended.
      *
-     * @param vocabulary   Base vocabulary for the vocabulary import closure
+     * @param vocabularies Collection of vocabulary URIs whose terms should be returned
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching root terms
-     * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
-                                                       Collection<URI> includeTerms) {
-        return termDao.findAllRootsIncludingImports(vocabulary, pageSpec, includeTerms);
+    public List<TermDto> findAllRootsInVocabularies(Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
+        return termDao.findAllRootsInVocabularies(vocabularies, pageSpec, includeTerms);
     }
 
     /**
@@ -534,32 +496,29 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
-     * (transitively) imports.
-     *
-     * @param searchString Search string
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return Matching terms
+     * Gets all terms from an explicit set of vocabularies.
+     * <p>
+     * This is used to implement listing that combines imports and/or related vocabularies.
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllIncludingImported(searchString, vocabulary, pageSpec);
+    public List<TermDto> findAllInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
+        return termDao.findAllInVocabularies(vocabularies, pageSpec);
     }
 
-    /**
-     * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
-     * (transitively) imports and returns them in a flat structure.
-     *
-     * @param searchString Search string
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return Matching terms in a flat structure
-     */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary,
-                                                          Pageable pageSpec) {
-        return termDao.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
+    public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
+        return termDao.findAllFlatInVocabularies(vocabularies, pageSpec);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TermDto> findAllInVocabularies(String searchString, Collection<URI> vocabularies, Pageable pageSpec) {
+        return termDao.findAllInVocabularies(searchString, vocabularies, pageSpec);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlatInVocabularies(String searchString, Collection<URI> vocabularies,
+                                                      Pageable pageSpec) {
+        return termDao.findAllFlatInVocabularies(searchString, vocabularies, pageSpec);
     }
 
     /**

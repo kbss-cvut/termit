@@ -93,6 +93,8 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = "searchString", required = false) String searchString,
                             @Parameter(description = "Whether to include terms from imported vocabularies.")
                             @RequestParam(name = "includeImported", required = false) boolean includeImported,
+                            @Parameter(description = "Wheter to include terms from related vocabularies.")
+                            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
                             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
                             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
                             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
@@ -101,11 +103,11 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         if (searchString != null) {
-            return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported,
+            return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
                                                                                          createPageRequest(pageSize,
                                                                                                            pageNo)));
         } else {
-            return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported,
+            return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
                                                                            createPageRequest(pageSize, pageNo)));
         }
     }
@@ -135,11 +137,13 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
             @Parameter(description = "Whether to include terms from imported vocabularies.")
-            @RequestParam(name = "includeImported", required = false) boolean includeImported) {
+            @RequestParam(name = "includeImported", required = false) boolean includeImported,
+            @Parameter(description = "Whether to include terms from related vocabularies.")
+            @RequestParam(name = "includeRelated", required = false) boolean includeRelated
+    ) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         final Pageable pageSpec = RestUtils.createPageRequest(pageSize, pageNo);
-        return includeImported ? termService.findAllRootsIncludingImported(vocabulary, pageSpec) :
-               termService.findAllRoots(vocabulary, pageSpec);
+        return termService.findAllRoots(vocabulary, includeImported, includeRelated, pageSpec);
     }
 
     @Operation(
