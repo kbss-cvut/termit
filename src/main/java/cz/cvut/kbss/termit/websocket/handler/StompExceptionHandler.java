@@ -52,9 +52,25 @@ public class StompExceptionHandler extends StompSubProtocolErrorHandler {
         final boolean handled = webSocketExceptionHandler.delegate(message, causeToHandle);
 
         if (!handled) {
-            LOG.error("STOMP sub-protocol exception", cause);
+            if (isUnknownStompSession(causeToHandle)) {
+                // Client sent a non-CONNECT frame before establishing a STOMP session (protocol violation),
+                // this is expected behavior and not an actual error
+                LOG.debug("STOMP sub-protocol exception", cause);
+            } else {
+                LOG.error("STOMP sub-protocol exception", cause);
+            }
         }
 
         return super.handleInternal(errorHeaderAccessor, errorPayload, cause, clientHeaderAccessor);
+    }
+
+    /**
+     * Checks whether the throwable is the {@link IllegalStateException} thrown by
+     * {@code StompSubProtocolHandler#handleMessageFromClient} when a non-CONNECT frame is received for a session that
+     * has not (yet) completed the STOMP CONNECT handshake.
+     */
+    private static boolean isUnknownStompSession(@Nullable Throwable cause) {
+        return cause instanceof IllegalStateException && cause.getMessage() != null
+                && cause.getMessage().startsWith("Unknown session");
     }
 }
