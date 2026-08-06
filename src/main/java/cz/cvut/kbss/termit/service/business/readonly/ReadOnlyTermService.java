@@ -31,7 +31,6 @@ import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -86,9 +85,15 @@ public class ReadOnlyTermService {
         return termService.findAll(searchString, vocabulary, selectionParams.withNotFull());
     }
 
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, boolean includeImported, boolean includeRelated,
-                                      Pageable pageSpec) {
-        return termService.findAllRoots(vocabulary, includeImported, includeRelated, pageSpec, Collections.emptyList());
+    /**
+     * Retrieves all root terms from the specified vocabulary.
+     *
+     * @param vocabulary      Vocabulary whose root terms will be returned. A reference is sufficient
+     * @param selectionParams Term selection parameters
+     * @return List of root terms
+     */
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams) {
+        return termService.findAllRoots(vocabulary, selectionParams, Collections.emptyList());
     }
 
     public ReadOnlyTerm findRequired(URI id) {

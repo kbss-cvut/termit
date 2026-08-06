@@ -42,7 +42,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -142,8 +141,10 @@ public class ReadOnlyTermController extends BaseController {
             @RequestParam(name = "includeRelated", required = false) boolean includeRelated
     ) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
-        final Pageable pageSpec = RestUtils.createPageRequest(pageSize, pageNo);
-        return termService.findAllRoots(vocabulary, includeImported, includeRelated, pageSpec);
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)
+        );
+        return termService.findAllRoots(vocabulary, params);
     }
 
     @Operation(

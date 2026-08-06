@@ -424,8 +424,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return Matching root terms
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllRoots(Pageable pageSpec,
-                                      Collection<URI> includeTerms) {
+    public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
         return termDao.findAllRoots(pageSpec, includeTerms);
     }
 
@@ -496,25 +495,59 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all terms from an explicit set of vocabularies.
+     * Finds all terms contained in any of the specified vocabularies.
      * <p>
-     * This is used to implement listing that combines imports and/or related vocabularies.
+     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     * necessary, prefer {@link #findAllFlatInVocabularies(Collection, Pageable)}.
+     *
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return List of matching terms
      */
     @Transactional(readOnly = true)
     public List<TermDto> findAllInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
         return termDao.findAllInVocabularies(vocabularies, pageSpec);
     }
 
+    /**
+     * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
+     * <p>
+     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
+     *
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return Flat list of matching terms
+     */
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
         return termDao.findAllFlatInVocabularies(vocabularies, pageSpec);
     }
 
+    /**
+     * Finds terms whose label contains the specified search string in any of the specified vocabularies.
+     * <p>
+     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     * necessary, prefer {@link #findAllFlatInVocabularies(String, Collection, Pageable)}.+
+     *
+     * @param searchString String to search term labels by
+     * @param vocabularies Identifiers of vocabularies whose terms should be searched
+     * @param pageSpec     Page specification
+     * @return List of matching terms
+     */
     @Transactional(readOnly = true)
     public List<TermDto> findAllInVocabularies(String searchString, Collection<URI> vocabularies, Pageable pageSpec) {
         return termDao.findAllInVocabularies(searchString, vocabularies, pageSpec);
     }
 
+    /**
+     * Finds terms whose label contains the specified search string in any of the specified vocabularies and returns
+     * them as a flat list of DTOs.
+     *
+     * @param searchString String to search term labels by
+     * @param vocabularies Identifiers of vocabularies whose terms should be searched
+     * @param pageSpec     Page specification
+     * @return Flat list of matching terms
+     */
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlatInVocabularies(String searchString, Collection<URI> vocabularies,
                                                       Pageable pageSpec) {

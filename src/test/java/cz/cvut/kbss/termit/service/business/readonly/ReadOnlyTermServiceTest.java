@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -87,12 +88,15 @@ class ReadOnlyTermServiceTest {
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
 
-        when(termService.findAllRoots(any(Vocabulary.class), eq(false), eq(false), any(Pageable.class), anyCollection())).thenReturn(terms);
+        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
 
-        final List<TermDto> result = sut.findAllRoots(vocabulary, false, false, pageSpec);
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, false, false, pageSpec
+        );
+        final List<TermDto> result = sut.findAllRoots(vocabulary, params);
 
         assertEquals(terms, result);
-        verify(termService).findAllRoots(vocabulary, false, false, pageSpec, Collections.emptyList());
+        verify(termService).findAllRoots(vocabulary, params, Collections.emptyList());
     }
 
     @Test
@@ -101,12 +105,15 @@ class ReadOnlyTermServiceTest {
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
 
-        when(termService.findAllRoots(any(Vocabulary.class), eq(true), eq(true), any(Pageable.class), anyCollection())).thenReturn(terms);
+        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
 
-        final List<TermDto> result = sut.findAllRoots(vocabulary, true, true, pageSpec);
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, true, true, pageSpec
+        );
+        final List<TermDto> result = sut.findAllRoots(vocabulary, params);
 
         assertEquals(terms, result);
-        verify(termService).findAllRoots(vocabulary, true, true, pageSpec, Collections.emptyList());
+        verify(termService).findAllRoots(vocabulary, params, Collections.emptyList());
     }
 
     @Test
