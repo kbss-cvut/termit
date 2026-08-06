@@ -210,6 +210,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         }
     }
 
+    /**
+     * Resolves a collection of target vocabulary identifiers based on the provided base vocabulary and selection
+     * parameters.
+     * <p>
+     * The resulting collection always contains the base vocabulary identifier. If the selection parameters specify
+     * the inclusion of imported or related vocabularies, their respective identifiers are fetched and added to the
+     * collection.
+     *
+     * @param vocabulary      Base vocabulary being queried
+     * @param selectionParams Parameters specifying whether to include imported or related vocabularies
+     * @return Collection of target vocabulary identifiers
+     */
     private Collection<URI> resolveTargetVocabularies(Vocabulary vocabulary, TermSelectionParams selectionParams) {
         final Set<URI> vocabularies = new HashSet<>();
         vocabularies.add(vocabulary.getUri());
@@ -251,27 +263,27 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * <p>
      * The page specification parameter allows configuration of the number of results and their offset.
      *
-     * @param vocabulary   Vocabulary whose terms will be returned
-     * @param pageSpec     Paging specification
-     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @param vocabulary      Vocabulary whose terms will be returned
+     * @param selectionParams Parameters for selecting terms
+     * @param includeTerms    Identifiers of terms which should be included in the result
      * @return Matching terms
      */
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, boolean includeImported, boolean includeRelated,
-                                      Pageable pageSpec, Collection<URI> includeTerms) {
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams,
+                                      Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
-        Objects.requireNonNull(pageSpec);
-        if (!includeImported && !includeRelated) {
-            return repositoryService.findAllRoots(vocabulary, pageSpec, includeTerms);
+        Objects.requireNonNull(selectionParams);
+        if (!selectionParams.includeImported() && !selectionParams.includeRelated()) {
+            return repositoryService.findAllRoots(vocabulary, selectionParams.pageSpec(), includeTerms);
         }
         final Set<URI> vocabularies = new HashSet<>();
         vocabularies.add(vocabulary.getUri());
-        if (includeImported) {
+        if (selectionParams.includeImported()) {
             vocabularies.addAll(vocabularyService.getTransitivelyImportedVocabularies(vocabulary));
         }
-        if (includeRelated) {
+        if (selectionParams.includeRelated()) {
             vocabularies.addAll(vocabularyService.getRelatedVocabularies(vocabulary));
         }
-        return repositoryService.findAllRootsInVocabularies(vocabularies, pageSpec, includeTerms);
+        return repositoryService.findAllRootsInVocabularies(vocabularies, selectionParams.pageSpec(), includeTerms);
     }
 
     /**

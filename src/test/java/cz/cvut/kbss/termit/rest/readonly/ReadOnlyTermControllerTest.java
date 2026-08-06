@@ -44,7 +44,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.net.URI;
@@ -208,13 +207,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), eq(false), eq(false), any(Pageable.class))).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class))).thenReturn(terms);
+
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
                 .andExpect(status().isOk());
 
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termService).findAllRoots(eq(vocabulary), eq(false), eq(false), captor.capture());
-        assertEquals(PageRequest.of(5, 100), captor.getValue());
+        final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
+        verify(termService).findAllRoots(eq(vocabulary), captor.capture());
+        assertEquals(PageRequest.of(5, 100), captor.getValue().pageSpec());
     }
 
     @Test
@@ -223,12 +223,13 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), eq(false), eq(false), any(Pageable.class))).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class))).thenReturn(terms);
+
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
 
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termService).findAllRoots(eq(vocabulary), eq(false), eq(false), captor.capture());
-        assertEquals(DEFAULT_PAGE_SPEC, captor.getValue());
+        final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
+        verify(termService).findAllRoots(eq(vocabulary), captor.capture());
+        assertEquals(DEFAULT_PAGE_SPEC, captor.getValue().pageSpec());
     }
 
     @Test
@@ -237,7 +238,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                 URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), eq(true), eq(false), any(Pageable.class))).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class))).thenReturn(terms);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeImported", Boolean.TRUE.toString()))
@@ -246,7 +247,8 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         });
 
         assertEquals(terms, result);
-        verify(termService).findAllRoots(eq(vocabulary), eq(true), eq(false), any(PageRequest.class));
+        final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
+        verify(termService).findAllRoots(eq(vocabulary), captor.capture());
     }
 
     @Test

@@ -114,6 +114,7 @@ public class TermController extends BaseController {
      * @param searchString    String to filter term labels by. Optional
      * @param includeImported Whether to include imported vocabularies when searching for terms. Does not apply to term
      *                        export. Optional, defaults to false
+     * @param includeRelated  Whether to include terms from related vocabularies. Optional, defaults to false
      * @param exportType      Type of the export. Optional
      * @param properties      A set of properties representing references to terms from other vocabularies to take into
      *                        account in export. Relevant only for term export. Optional
@@ -269,6 +270,7 @@ public class TermController extends BaseController {
      * @param pageNo          Number of the page to return. Optional
      * @param includeImported Whether a transitive closure of vocabulary imports should be used when getting the root
      *                        terms. Optional, defaults to {@code false}
+     * @param includeRelated  Whether to include terms from related vocabularies. Optional, defaults to {@code false}
      * @return List of root terms of the specific vocabulary
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -297,10 +299,10 @@ public class TermController extends BaseController {
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
 
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
-        return termService.findAllRoots(
-                vocabulary, includeImported, includeRelated, createPageRequest(pageSize, pageNo), includeTerms
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)
         );
-
+        return termService.findAllRoots(vocabulary, params, includeTerms);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
