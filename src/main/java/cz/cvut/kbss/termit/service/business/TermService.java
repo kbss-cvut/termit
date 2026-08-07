@@ -275,14 +275,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         if (!selectionParams.includeImported() && !selectionParams.includeRelated()) {
             return repositoryService.findAllRoots(vocabulary, selectionParams.pageSpec(), includeTerms);
         }
-        final Set<URI> vocabularies = new HashSet<>();
-        vocabularies.add(vocabulary.getUri());
-        if (selectionParams.includeImported()) {
-            vocabularies.addAll(vocabularyService.getTransitivelyImportedVocabularies(vocabulary));
-        }
-        if (selectionParams.includeRelated()) {
-            vocabularies.addAll(vocabularyService.getRelatedVocabularies(vocabulary));
-        }
+        final Collection<URI> vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
         return repositoryService.findAllRootsInVocabularies(vocabularies, selectionParams.pageSpec(), includeTerms);
     }
 
