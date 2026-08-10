@@ -193,13 +193,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             if (selectionParams.flat()) {
                 if (includeFromOther) {
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
-                    return repositoryService.findAllFlatInVocabularies(searchString, vocabularies, selectionParams.pageSpec());
+                    return repositoryService.findAllFlatInVocabularies(searchString, vocabularies,
+                                                                       selectionParams.pageSpec());
                 }
                 return repositoryService.findAllFlat(searchString, vocabulary, selectionParams.pageSpec());
             } else {
                 if (includeFromOther) {
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
-                    return repositoryService.findAllInVocabularies(searchString, vocabularies, selectionParams.pageSpec());
+                    return repositoryService.findAllInVocabularies(searchString, vocabularies,
+                                                                   selectionParams.pageSpec());
                 }
                 return repositoryService.findAll(searchString, vocabulary, selectionParams.pageSpec());
             }
@@ -210,8 +212,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Resolves a collection of target vocabulary identifiers based on the provided base vocabulary and selection
      * parameters.
      * <p>
-     * The resulting collection always contains the base vocabulary identifier. If the selection parameters specify
-     * the inclusion of imported or related vocabularies, their respective identifiers are fetched and added to the
+     * The resulting collection always contains the base vocabulary identifier. If the selection parameters specify the
+     * inclusion of imported or related vocabularies, their respective identifiers are fetched and added to the
      * collection.
      *
      * @param vocabulary      Base vocabulary being queried
@@ -311,11 +313,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param searchString string to search the label by
      * @param pageSpec     Page specifying result number and position
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms
      */
-    public List<TermDto> findAll(String searchString, Pageable pageSpec) {
+    public List<TermDto> findAll(String searchString, Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(searchString);
-        return repositoryService.findAll(searchString, pageSpec);
+        return repositoryService.findAll(searchString, pageSpec, includeTerms);
     }
 
     /**
@@ -324,10 +327,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param pageSpec Page specification
      * @return Terms in a flat structure
      */
-    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(pageSpec);
-        return repositoryService.findAllFlat(searchString, pageSpec);
+        return repositoryService.findAllFlat(searchString, pageSpec, includeTerms);
     }
 
     /**

@@ -1112,7 +1112,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
     void getAllTermsCallsServiceWithSearchString() throws Exception {
         final String searchString = "test";
         mockMvc.perform(get("/terms").param("searchString", searchString)).andExpect(status().isOk());
-        verify(termServiceMock).findAll(searchString, DEFAULT_PAGE_SPEC);
+        verify(termServiceMock).findAll(searchString, DEFAULT_PAGE_SPEC, List.of());
     }
 
     @Test
@@ -1302,7 +1302,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
     void getAllTermsFlatCallsServiceWithSearchStringAndPagination() throws Exception {
         final String searchString = "test";
         final List<FlatTermDto> terms = Environment.termsToFlatDtos(Generator.generateTermsWithIds(3));
-        when(termServiceMock.findAllFlat(eq(searchString), any(Pageable.class))).thenReturn(terms);
+        when(termServiceMock.findAllFlat(eq(searchString), any(Pageable.class), anyCollection())).thenReturn(terms);
 
         final MvcResult mvcResult = mockMvc.perform(get("/terms")
                                                             .param("searchString", searchString)
@@ -1317,9 +1317,9 @@ public class TermControllerTest extends BaseControllerTestRunner {
         assertEquals(terms, result);
 
         final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllFlat(eq(searchString), captor.capture());
+        verify(termServiceMock).findAllFlat(eq(searchString), captor.capture(), eq(List.of()));
         assertEquals(PageRequest.of(2, 50), captor.getValue());
-        verify(termServiceMock, never()).findAll(anyString(), eq(PageRequest.of(2, 50)));
+        verify(termServiceMock, never()).findAll(anyString(), eq(PageRequest.of(2, 50)), anyCollection());
     }
 
     public static class TermSelectionParamsBuilder {
