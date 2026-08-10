@@ -69,10 +69,10 @@ public class Vocabulary extends Asset<MultilingualString>
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary)
     private Set<URI> importedVocabularies;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_souvisejici_slovnik)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_related_vocabulary)
     private Set<URI> relatedVocabularies;
 
     @JsonIgnore

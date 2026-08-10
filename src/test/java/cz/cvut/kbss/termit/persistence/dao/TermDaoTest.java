@@ -475,12 +475,14 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             em.persist(anotherVocab, descriptorFactory.vocabularyDescriptor(anotherVocab));
         });
         final List<Term> anotherVocabTerms = generateTerms(3);
-        IntStream.range(0, anotherVocabTerms.size()).forEach(i -> setPrimaryLabel(anotherVocabTerms.get(i), "Common-OTHER-" + i));
+        IntStream.range(0, anotherVocabTerms.size())
+                 .forEach(i -> setPrimaryLabel(anotherVocabTerms.get(i), "Common-OTHER-" + i));
         addTermsAndSave(anotherVocabTerms, anotherVocab);
 
         final String searchString = "common";
         final List<URI> vocabularies = Arrays.asList(vocabulary.getUri(), anotherVocab.getUri());
-        final List<FlatTermDto> result = sut.findAllFlatInVocabularies(searchString, vocabularies, PageRequest.of(0, 50));
+        final List<FlatTermDto> result = sut.findAllFlatInVocabularies(searchString, vocabularies,
+                                                                       PageRequest.of(0, 50));
 
         final List<Term> all = new ArrayList<>();
         all.addAll(localTerms);
@@ -654,7 +656,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         allTerms.sort(Comparator.comparing(Environment::getPrimaryLabel));
 
         final List<URI> vocabularies = Arrays.asList(vocabulary.getUri(), parent.getUri(), grandParent.getUri());
-        final List<TermDto> result = sut.findAllRootsInVocabularies(vocabularies, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<TermDto> result = sut.findAllRootsInVocabularies(vocabularies, Constants.DEFAULT_PAGE_SPEC,
+                                                                    Collections.emptyList());
         assertEquals(toDtos(allTerms), result);
     }
 
@@ -663,7 +666,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<TermDto> result = sut.findAllRootsInVocabularies(Collections.singletonList(vocabulary.getUri()), Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<TermDto> result = sut.findAllRootsInVocabularies(Collections.singletonList(vocabulary.getUri()),
+                                                                    Constants.DEFAULT_PAGE_SPEC,
+                                                                    Collections.emptyList());
         assertEquals(toDtos(terms), result);
     }
 
@@ -684,7 +689,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         addTermsAndSave(parentTerms, parentVoc);
         // This is normally inferred
         parentTerms.forEach(pt -> pt.setVocabulary(parentVoc.getUri()));
-        allTerms.addAll(parentTerms);
         final List<Term> grandParentTerms = generateTerms(2);
         addTermsAndSave(grandParentTerms, grandParent);
         // This is normally inferred
@@ -694,18 +698,20 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             directTerms.get(1).setExternalParentTerms(Collections.singleton(new TermInfo(parentTerms.get(1))));
             // Parents are in different contexts, so we have to deal with that
             em.merge(directTerms.get(0), descriptorFactory.termDescriptor(vocabulary)
-                    .addAttributeDescriptor(Term_.externalParentTerms,
-                            descriptorFactory.vocabularyDescriptor(
-                                    parent)));
-            em.merge(directTerms.get(1), descriptorFactory.termDescriptor(vocabulary)
-                    .addAttributeDescriptor(Term_.externalParentTerms,
-                            descriptorFactory.vocabularyDescriptor(
-                                    parent)));
-            em.merge(parentTerms.get(0), descriptorFactory.termDescriptor(parent)
                                                           .addAttributeDescriptor(Term_.externalParentTerms,
                                                                                   descriptorFactory.vocabularyDescriptor(
-                                                                                          grandParent)));
+                                                                                          parentVoc)));
+            em.merge(directTerms.get(1), descriptorFactory.termDescriptor(vocabulary)
+                                                          .addAttributeDescriptor(Term_.externalParentTerms,
+                                                                                  descriptorFactory.vocabularyDescriptor(
+                                                                                          parentVoc)));
         });
+
+        transactional(() -> em.merge(parentTerms.get(0), descriptorFactory.termDescriptor(parentVoc)
+                                                                          .addAttributeDescriptor(
+                                                                                  Term_.externalParentTerms,
+                                                                                  descriptorFactory.vocabularyDescriptor(
+                                                                                          grandParent))));
 
         final List<Term> allTerms = new ArrayList<>(directTerms);
         allTerms.addAll(parentTerms);
@@ -714,16 +720,16 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final String searchString = getPrimaryLabel(directTerms.get(0))
                 .substring(0, getPrimaryLabel(directTerms.get(0)).length() - 2);
 
-        final List<URI> vocabularies = Arrays.asList(vocabulary.getUri(), parent.getUri(), grandParent.getUri());
+        final List<URI> vocabularies = Arrays.asList(vocabulary.getUri(), parentVoc.getUri(), grandParent.getUri());
         final List<TermDto> result = sut.findAllInVocabularies(searchString, vocabularies, Constants.DEFAULT_PAGE_SPEC);
 
         assertFalse(result.isEmpty());
         assertThat(result.size(), lessThan(directTerms.size() + parentTerms.size() + grandParentTerms.size()));
 
         final List<Term> matching = allTerms.stream().filter(t -> getPrimaryLabel(t).toLowerCase()
-                        .contains(
-                                searchString.toLowerCase()))
-                .collect(Collectors.toList());
+                                                                                    .contains(
+                                                                                            searchString.toLowerCase()))
+                                            .collect(Collectors.toList());
         assertTrue(result.containsAll(toDtos(matching)));
     }
 

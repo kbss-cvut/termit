@@ -1016,12 +1016,14 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo
+            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
+            @Parameter(description = "List of identifiers of terms that should be included in the result.")
+            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms
     ) {
         if (flat) {
-            return ResponseEntity.ok(termService.findAllFlat(searchString, createPageRequest(pageSize, pageNo)));
+            return ResponseEntity.ok(termService.findAllFlat(searchString, createPageRequest(pageSize, pageNo), includeTerms));
         }
-        return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo)));
+        return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo), includeTerms));
     }
 
     /**

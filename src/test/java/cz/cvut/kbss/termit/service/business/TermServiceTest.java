@@ -253,10 +253,10 @@ class TermServiceTest {
     void findAllCallsFindAllInRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         final String searchString = "test";
-        when(termRepositoryService.findAll(eq(searchString), any(Pageable.class))).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
+        when(termRepositoryService.findAll(eq(searchString), any(Pageable.class), anyCollection())).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString, Constants.DEFAULT_PAGE_SPEC, Set.of());
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
+        verify(termRepositoryService).findAll(searchString, Constants.DEFAULT_PAGE_SPEC, Set.of());
     }
 
     @Test
@@ -716,9 +716,6 @@ class TermServiceTest {
                 Arguments.of(new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
                                 repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, true, false, false, Constants.DEFAULT_PAGE_SPEC),
-                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                repositoryService).findAllFullAndFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
                 Arguments.of(new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
                                 repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
@@ -751,9 +748,6 @@ class TermServiceTest {
                 Arguments.of(new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
                                 repositoryService).findAllFull(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, true, false, false, Constants.DEFAULT_PAGE_SPEC),
-                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                repositoryService).findAllFullAndFlat(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)),
                 Arguments.of(new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
                         (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
                                 repositoryService).findAllFlatInVocabularies(eq(searchString), anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),

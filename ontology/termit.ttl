@@ -712,3 +712,10 @@ termit:has-expiration-date
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has expiration date"@en , "Má datum expirace"@cs ;
         rdfs:range          xsd:date .
+
+termit:has-related-vocabulary
+        a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has related vocabulary"@en , "Má související slovník"@cs .

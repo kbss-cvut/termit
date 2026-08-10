@@ -336,6 +336,10 @@ changeSets:
             -   type: renameResource
                 oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-adresu-modelovacího-nástroje
                 newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-modeling-tool-address
+            -   type: renameResource
+                oldIri: http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-související-slovník
+                newIri: http://onto.fel.cvut.cz/ontologies/application/termit/has-related-vocabulary
+
 
 
     -   id: 4

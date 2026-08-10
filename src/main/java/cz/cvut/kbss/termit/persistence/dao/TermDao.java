@@ -202,7 +202,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      */
     private Set<TermInfo> loadInverseRelatedMatchTerms(Term term) {
         return loadInverseTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term
-                .getRelatedMatch() : Collections.emptySet());
+                                                                                              .getRelatedMatch() :
+                                                             Collections.emptySet());
     }
 
     /**
@@ -212,7 +213,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      */
     private Set<TermInfo> loadInverseExactMatchTerms(Term term) {
         return loadInverseTermInfo(term, SKOS.EXACT_MATCH, term.getExactMatchTerms() != null ? term
-                .getExactMatchTerms() : Collections.emptySet());
+                                                                                               .getExactMatchTerms() :
+                                                           Collections.emptySet());
     }
 
     /**
@@ -896,6 +898,30 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
+    public List<TermDto> findAll(Pageable pageSpec, Collection<URI> includeTerms) {
+        final TypedQuery<TermDto> query = createFindAllQuery("", pageSpec, TermDto.class);
+        try {
+            final List<TermDto> result = executeQueryAndLoadSubTerms(query);
+            result.forEach(this::loadParentSubTerms);
+            result.addAll(loadIncludedTerms(includeTerms));
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    public List<FlatTermDto> findAllFlat(Pageable pageSpec, Collection<URI> includeTerms) {
+        final TypedQuery<FlatTermDto> query = createFindAllQuery("", pageSpec, FlatTermDto.class);
+        try {
+            final List<FlatTermDto> result = executeQueryAndLoadSubTerms(query);
+            result.addAll(includeTerms.stream().map(uri -> em.find(FlatTermDto.class, uri)).filter(Objects::nonNull)
+                                      .toList());
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     private void loadParentSubTerms(TermDto parent) {
         parent.setSubTerms(getSubTerms(parent));
         if (parent.getParentTerms() != null) {
@@ -916,21 +942,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<TermDto> findAllInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
         Objects.requireNonNull(vocabularies);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                            "?term a ?type ;" +
-                                                                            "?hasLabel ?label ;" +
-                                                                            "?inVocabulary ?vocabulary ." +
-                                                                            "?vocabulary ?hasLanguage ?labelLang ." +
-                                                                            "FILTER (lang(?label) = ?labelLang) ." +
-                                                                            "FILTER (?vocabulary IN (?vocabularies))" +
-                                                                            "} ORDER BY " + orderSentence("?label"),
-                                                                    TermDto.class)
-                                         .setParameter("type", typeUri)
-                                         .setParameter("hasLabel", LABEL_PROP)
-                                         .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                         .setParameter("vocabularies", vocabularies)
-                                         .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
-                                         .setMaxResults(pageSpec.getPageSize())
-                                         .setFirstResult((int) pageSpec.getOffset());
+                                                                       "?term a ?type ;" +
+                                                                       "?hasLabel ?label ;" +
+                                                                       "?inVocabulary ?vocabulary ." +
+                                                                       "?vocabulary ?hasLanguage ?labelLang ." +
+                                                                       "FILTER (lang(?label) = ?labelLang) ." +
+                                                                       "FILTER (?vocabulary IN (?vocabularies))" +
+                                                                       "} ORDER BY " + orderSentence("?label"),
+                                                               TermDto.class)
+                                            .setParameter("type", typeUri)
+                                            .setParameter("hasLabel", LABEL_PROP)
+                                            .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                            .setParameter("vocabularies", vocabularies)
+                                            .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                            .setMaxResults(pageSpec.getPageSize())
+                                            .setFirstResult((int) pageSpec.getOffset());
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
@@ -952,21 +978,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
         Objects.requireNonNull(vocabularies);
         final TypedQuery<FlatTermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                                 "?term a ?type ;" +
-                                                                                 "?hasLabel ?label ;" +
-                                                                                 "?inVocabulary ?vocabulary ." +
-                                                                                 "?vocabulary ?hasLanguage ?labelLang ." +
-                                                                                 "FILTER (lang(?label) = ?labelLang) ." +
-                                                                                 "FILTER (?vocabulary IN (?vocabularies))" +
-                                                                                 "} ORDER BY " + orderSentence("?label"),
-                                                                         FlatTermDto.class)
-                                              .setParameter("type", typeUri)
-                                              .setParameter("hasLabel", LABEL_PROP)
-                                              .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                              .setParameter("vocabularies", vocabularies)
-                                              .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
-                                              .setMaxResults(pageSpec.getPageSize())
-                                              .setFirstResult((int) pageSpec.getOffset());
+                                                                           "?term a ?type ;" +
+                                                                           "?hasLabel ?label ;" +
+                                                                           "?inVocabulary ?vocabulary ." +
+                                                                           "?vocabulary ?hasLanguage ?labelLang ." +
+                                                                           "FILTER (lang(?label) = ?labelLang) ." +
+                                                                           "FILTER (?vocabulary IN (?vocabularies))" +
+                                                                           "} ORDER BY " + orderSentence("?label"),
+                                                                   FlatTermDto.class)
+                                                .setParameter("type", typeUri)
+                                                .setParameter("hasLabel", LABEL_PROP)
+                                                .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                                .setParameter("vocabularies", vocabularies)
+                                                .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                                .setMaxResults(pageSpec.getPageSize())
+                                                .setFirstResult((int) pageSpec.getOffset());
         try {
             return query.getResultList();
         } catch (RuntimeException e) {
@@ -977,8 +1003,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Finds terms whose label contains the specified search string in any of the specified vocabularies.
      * <p>
-     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms
-     * are necessary, prefer {@link #findAllFlatInVocabularies(String, Collection, Pageable)}.
+     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     * necessary, prefer {@link #findAllFlatInVocabularies(String, Collection, Pageable)}.
      *
      * @param searchString String to search term labels by
      * @param vocabularies Identifiers of vocabularies whose terms should be searched
@@ -998,14 +1024,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                        "FILTER (?vocabulary IN (?vocabularies))" +
                                                                        "} ORDER BY " + orderSentence("?label"),
                                                                TermDto.class)
-                                             .setParameter("type", typeUri)
-                                             .setParameter("hasLabel", LABEL_PROP)
-                                             .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                             .setParameter("vocabularies", vocabularies)
-                                             .setParameter("searchString", searchString)
-                                             .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
-                                             .setMaxResults(pageSpec.getPageSize())
-                                             .setFirstResult((int) pageSpec.getOffset());
+                                            .setParameter("type", typeUri)
+                                            .setParameter("hasLabel", LABEL_PROP)
+                                            .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                            .setParameter("vocabularies", vocabularies)
+                                            .setParameter("searchString", searchString)
+                                            .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                            .setMaxResults(pageSpec.getPageSize())
+                                            .setFirstResult((int) pageSpec.getOffset());
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
@@ -1016,8 +1042,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Finds terms whose label contains the specified search string in any of the specified vocabularies
-     * and returns them as a flat list of DTOs.
+     * Finds terms whose label contains the specified search string in any of the specified vocabularies and returns
+     * them as a flat list of DTOs.
      *
      * @param searchString String to search term labels by
      * @param vocabularies Identifiers of vocabularies whose terms should be searched
@@ -1025,27 +1051,27 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @return Flat list of matching terms
      */
     public List<FlatTermDto> findAllFlatInVocabularies(String searchString, Collection<URI> vocabularies,
-                                                      Pageable pageSpec) {
+                                                       Pageable pageSpec) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabularies);
         final TypedQuery<FlatTermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                            "?term a ?type ; " +
-                                                                            "      ?hasLabel ?label ; " +
-                                                                            "      ?inVocabulary ?vocabulary ." +
-                                                                            "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
-                                                                            "?vocabulary ?hasLanguage ?labelLang ." +
-                                                                            "FILTER (lang(?label) = ?labelLang) ." +
-                                                                            "FILTER (?vocabulary IN (?vocabularies))" +
-                                                                            "} ORDER BY " + orderSentence("?label"),
-                                                                    FlatTermDto.class)
-                                                 .setParameter("type", typeUri)
-                                                 .setParameter("hasLabel", LABEL_PROP)
-                                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                                 .setParameter("vocabularies", vocabularies)
-                                                 .setParameter("searchString", searchString)
-                                                 .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
-                                                 .setMaxResults(pageSpec.getPageSize())
-                                                 .setFirstResult((int) pageSpec.getOffset());
+                                                                           "?term a ?type ; " +
+                                                                           "      ?hasLabel ?label ; " +
+                                                                           "      ?inVocabulary ?vocabulary ." +
+                                                                           "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                                                           "?vocabulary ?hasLanguage ?labelLang ." +
+                                                                           "FILTER (lang(?label) = ?labelLang) ." +
+                                                                           "FILTER (?vocabulary IN (?vocabularies))" +
+                                                                           "} ORDER BY " + orderSentence("?label"),
+                                                                   FlatTermDto.class)
+                                                .setParameter("type", typeUri)
+                                                .setParameter("hasLabel", LABEL_PROP)
+                                                .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                                .setParameter("vocabularies", vocabularies)
+                                                .setParameter("searchString", searchString)
+                                                .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                                .setMaxResults(pageSpec.getPageSize())
+                                                .setFirstResult((int) pageSpec.getOffset());
         try {
             return query.getResultList();
         } catch (RuntimeException e) {

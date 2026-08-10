@@ -373,40 +373,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
-     * <p>
-     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary except for the
-     * ancestors - only direct parents are loaded as {@link TermInfo} instances.
-     *
-     * @param vocabulary Vocabulary whose terms should be returned
-     * @param pageSpec   Page specifying result number and position
-     * @return List of full terms ordered by label
-     * @see #findAll(Vocabulary, Pageable)
-     * @see #findAllFull(Vocabulary, Pageable)
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTerm> findAllFullAndFlat(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFullAndFlat(vocabulary, pageSpec);
-    }
-
-    /**
-     * Gets a page of terms from the specified vocabulary, whose label matches the specified search string.
-     * <p>
-     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, but only
-     * their direct parents are loaded as {@link TermInfo} instances, not the full ancestor chain.
-     *
-     * @param searchString Search string to filter terms by
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return List of full terms ordered by label
-     * @see #findAllFullAndFlat(Vocabulary, Pageable)
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTerm> findAllFullAndFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFullAndFlat(searchString, vocabulary, pageSpec);
-    }
-
-    /**
      * Finds all root terms (terms without parent term) in the specified vocabulary.
      * <p>
      * Terms with a label in the instance language are prepended.
@@ -486,7 +452,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return List of terms ordered by label
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(String searchString, Pageable pageSpec) {
+    public List<TermDto> findAll(String searchString, Pageable pageSpec, Collection<URI> includeTerms) {
+        if (searchString.isBlank()) {
+            return termDao.findAll(pageSpec, includeTerms);
+        }
         return termDao.findAll(searchString, pageSpec);
     }
 
@@ -498,7 +467,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return List of terms ordered by label in a flat structure
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec, Collection<URI> includeTerms) {
+        if (searchString.isBlank()) {
+            return termDao.findAllFlat(pageSpec, includeTerms);
+        }
         return termDao.findAllFlat(searchString, pageSpec);
     }
 
