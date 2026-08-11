@@ -269,7 +269,7 @@
         <dependency>
             <groupId>cz.cvut.kbss</groupId>
             <artifactId>ontology-migration-tool</artifactId>
-            <version>0.3.2</version>
+            <version>0.4.0</version>
         </dependency>
 
         <!-- Test dependencies -->
