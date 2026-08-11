@@ -1,0 +1,14 @@
+changelog:
+    -   changeSet:
+            id: 10
+            changes:
+                -   type: sparqlUpdate
+                    query: |
+                        INSERT DATA {
+                            GRAPH <http://onto.fel.cvut.cz/ontologies/data-description> {
+                                <http://onto.fel.cvut.cz/ontologies/data-description> a <http://onto.fel.cvut.cz/ontologies/application/termit/read-only> .
+                            }
+                            GRAPH <http://onto.fel.cvut.cz/ontologies/application/termit> {
+                                <http://onto.fel.cvut.cz/ontologies/application/termit> a <http://onto.fel.cvut.cz/ontologies/application/termit/read-only> .
+                            }
+                        }
