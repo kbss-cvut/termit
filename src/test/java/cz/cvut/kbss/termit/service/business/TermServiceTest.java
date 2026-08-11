@@ -274,11 +274,10 @@ class TermServiceTest {
 
         final Vocabulary importedVocab = Generator.generateVocabularyWithId();
         final Vocabulary relatedVocab = Generator.generateVocabularyWithId();
+        vocabulary.setRelatedVocabularies(Set.of(relatedVocab.getUri()));
 
         when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary))
                 .thenReturn(Collections.singleton(importedVocab.getUri()));
-        when(vocabularyService.getRelatedVocabularies(vocabulary))
-                .thenReturn(Collections.singleton(relatedVocab.getUri()));
 
         when(termRepositoryService.findAllRootsInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
                 .thenReturn(terms);
@@ -291,24 +290,6 @@ class TermServiceTest {
 
         final Set<URI> expectedVocabularies = Set.of(vocabulary.getUri(), importedVocab.getUri(), relatedVocab.getUri());
         verify(termRepositoryService).findAllRootsInVocabularies(expectedVocabularies, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
-    }
-
-    @Test
-    void findAllWithIncludeRelatedRetrievesRelatedVocabulariesFromVocabularyService() {
-        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        final Vocabulary relatedVocab = Generator.generateVocabularyWithId();
-
-        when(vocabularyService.getRelatedVocabularies(vocabulary))
-                .thenReturn(Collections.singleton(relatedVocab.getUri()));
-        when(termRepositoryService.findAllInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC)))
-                .thenReturn(terms);
-
-        final TermSelectionParams params = new TermSelectionParams(false, false, false, true, Constants.DEFAULT_PAGE_SPEC);
-        final List<? extends AbstractTerm> result = sut.findAll(vocabulary, params);
-
-        assertEquals(terms, result);
-        verify(vocabularyService).getRelatedVocabularies(vocabulary);
-        verify(termRepositoryService).findAllInVocabularies(Set.of(vocabulary.getUri(), relatedVocab.getUri()), Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test

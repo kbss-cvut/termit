@@ -229,7 +229,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             vocabularies.addAll(vocabularyService.getTransitivelyImportedVocabularies(vocabulary));
         }
         if (selectionParams.includeRelated()) {
-            vocabularies.addAll(vocabularyService.getRelatedVocabularies(vocabulary));
+            vocabularies.addAll(Utils.emptyIfNull(vocabulary.getRelatedVocabularies()));
         }
         return vocabularies;
     }
