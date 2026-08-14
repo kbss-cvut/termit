@@ -109,7 +109,6 @@ public class SKOSImporter implements VocabularyImporter {
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
-    private String namespace;
     private IRI vocabularyIri;
 
     @Autowired
@@ -145,7 +144,6 @@ public class SKOSImporter implements VocabularyImporter {
         validateRequiredLanguageTags();
 
         this.vocabularyIri = resolveVocabularyIriFromImportedData();
-        this.namespace = resolveVocabularyNamespaceFromData();
         LOG.trace("Importing vocabulary {}.", this.vocabularyIri);
         removeTopConceptOfAssertions();
         insertHasTopConceptAssertions();
@@ -237,11 +235,7 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void ensureConceptIrisAreCompatibleWithTermIt(Vocabulary vocabulary) {
-        assert vocabulary.getProperties()
-                         .getOrDefault(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri, Set.of())
-                         .size() == 1;
-        final String ns = vocabulary.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)
-                                    .iterator().next().toString();
+        final String ns = vocabulary.getPreferredNamespaceUri();
         final char separator = ns.charAt(ns.length() - 1);
         final Statement[] statements = model.filter(null, RDF.TYPE, SKOS.CONCEPT).toArray(new Statement[]{});
         for (final Statement c : statements) {
@@ -387,7 +381,7 @@ public class SKOSImporter implements VocabularyImporter {
         if (!languageSet) {
             AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
             handleStringStringProperty(vocabularyIri, DCTERMS.TITLE, labelRef::set, config.getPersistence()
-                                                                                        .getLanguage());
+                                                                                          .getLanguage());
             MultilingualString label = labelRef.get();
             if (label == null || label.isEmpty() || label.contains(config.getPersistence().getLanguage())) {
                 vocabulary.setPrimaryLanguage(config.getPersistence().getLanguage());
@@ -398,9 +392,9 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     /**
-     * Looks up the language property in the vocabulary and/or glossary and sets it as the primary language.
-     * Looks up {@literal dcterms:language} in the glossary, loads the first value as string and passes it to the
-     * provided consumer.
+     * Looks up the language property in the vocabulary and/or glossary and sets it as the primary language. Looks up
+     * {@literal dcterms:language} in the glossary, loads the first value as string and passes it to the provided
+     * consumer.
      *
      * @param consumer Consumer to accept the literal string value if found
      * @return true if the property was found and the consumer was called, false otherwise
@@ -467,15 +461,18 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyNamespaceInfoFromData(Vocabulary vocabulary) {
-        namespaceResolver.setVocabularyPreferredNamespace(vocabulary, namespace);
+        namespaceResolver.setVocabularyPreferredNamespace(vocabulary, resolveVocabularyNamespaceFromData());
+        // Remove namespace URI declaration from model, it will be added with Vocabulary
+        model.removeAll(model.filter(null, vf.createIRI(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri), null));
         final Model prefixModel = model.filter(null, vf.createIRI(
                 cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix), null);
-        prefixModel.forEach(s -> {
-            final String prefix = s.getObject().stringValue();
+        if (!prefixModel.isEmpty()) {
+            final String prefix = prefixModel.iterator().next().getObject().stringValue();
             LOG.trace("Found preferred namespace prefix: {}", prefix);
-            vocabulary.addUnmappedPropertyValue(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix,
-                                                prefix);
-        });
+            vocabulary.setPreferredNamespacePrefix(prefix);
+            model.removeAll(prefixModel);
+        }
     }
 
     private void notifyReferencingTerms() {

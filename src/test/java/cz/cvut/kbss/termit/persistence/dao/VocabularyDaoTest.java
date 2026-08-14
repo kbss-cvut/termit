@@ -181,7 +181,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.update(vocabulary));
         final List<Vocabulary> result = sut.findAll();
         assertEquals(1, result.size());
-        assertEquals(newName, result.get(0).getLabel().get(Environment.LANGUAGE));
+        assertEquals(newName, result.getFirst().getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -595,10 +595,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         vocabulary.setProperties(new HashMap<>());
         final String prefix = "vocab";
         final String namespace = SKOS.CONCEPT_SCHEME + "/";
-        vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix,
-                                       Collections.singleton(prefix));
-        vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
-                                       Collections.singleton(namespace));
+        vocabulary.setPreferredNamespaceUri(namespace);
+        vocabulary.setPreferredNamespacePrefix(prefix);
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
         final PrefixDeclaration result = sut.resolvePrefix(vocabulary.getUri());
@@ -750,7 +748,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final List<RdfStatement> relations = sut.getIncomingTermRelations(vocabulary);
 
         assertEquals(1, relations.size());
-        final RdfStatement relation = relations.get(0);
+        final RdfStatement relation = relations.getFirst();
         assertEquals(secondTerm.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
         assertEquals(term.getUri(), relation.getObject());
@@ -810,7 +808,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void getPreferredNamespaceReturnsStoredVocabularyNamespace() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final String namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/') + 1);
-        vocabulary.setProperties(Map.of(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri, Set.of(namespace)));
+        vocabulary.setPreferredNamespaceUri(namespace);
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, descriptor));
 

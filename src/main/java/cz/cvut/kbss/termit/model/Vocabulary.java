@@ -69,6 +69,12 @@ public class Vocabulary extends Asset<MultilingualString>
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
 
+    @OWLAnnotationProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri, simpleLiteral = true)
+    private String preferredNamespaceUri;
+
+    @OWLAnnotationProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix, simpleLiteral = true)
+    private String preferredNamespacePrefix;
+
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary)
     private Set<URI> importedVocabularies;
 
@@ -145,6 +151,22 @@ public class Vocabulary extends Asset<MultilingualString>
 
     public void setPrimaryLanguage(String primaryLanguage) {
         this.primaryLanguage = primaryLanguage;
+    }
+
+    public String getPreferredNamespaceUri() {
+        return preferredNamespaceUri;
+    }
+
+    public void setPreferredNamespaceUri(String preferredNamespaceUri) {
+        this.preferredNamespaceUri = preferredNamespaceUri;
+    }
+
+    public String getPreferredNamespacePrefix() {
+        return preferredNamespacePrefix;
+    }
+
+    public void setPreferredNamespacePrefix(String preferredNamespacePrefix) {
+        this.preferredNamespacePrefix = preferredNamespacePrefix;
     }
 
     @Override
