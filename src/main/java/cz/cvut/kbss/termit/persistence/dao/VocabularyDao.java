@@ -428,8 +428,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     /**
      * Resolves preferred namespace prefix and URI of a vocabulary with the specified identifier.
-     * <p>
-     * This method expects that the prefix and namespace are declared on the vocabulary itself, not on its glossary.
      *
      * @param vocabularyUri Vocabulary identifier
      * @return Prefix declaration, possibly containing {@code null} values
@@ -449,9 +447,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             if (result.isEmpty()) {
                 return PrefixDeclaration.EMPTY_PREFIX;
             }
-            assert result.get(0) instanceof Object[];
-            return new PrefixDeclaration(((Object[]) result.get(0))[0].toString(),
-                                         ((Object[]) result.get(0))[1].toString());
+            assert result.getFirst() instanceof Object[];
+            return new PrefixDeclaration(((Object[]) result.getFirst())[0].toString(),
+                                         ((Object[]) result.getFirst())[1].toString());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

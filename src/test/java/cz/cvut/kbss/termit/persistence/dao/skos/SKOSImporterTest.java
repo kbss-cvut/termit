@@ -313,7 +313,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                  .map(Statement::getSubject).toList();
                 assertFalse(terms.isEmpty());
                 terms.forEach(t -> {
-                    final List<Statement> inScheme = conn.getStatements(t, SKOS.IN_SCHEME, vf.createIRI(VOCABULARY_IRI_S))
+                    final List<Statement> inScheme = conn.getStatements(t, SKOS.IN_SCHEME,
+                                                                        vf.createIRI(VOCABULARY_IRI_S))
                                                          .stream().toList();
                     assertFalse(inScheme.isEmpty());
                 });
@@ -530,10 +531,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
-        assertThat(result.getProperties().keySet(),
-                   hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
-        assertEquals(Set.of("http://onto.fel.cvut.cz/ontologies/application/termit/"),
-                     result.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
+        assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/", result.getPreferredNamespaceUri());
     }
 
     @Test
