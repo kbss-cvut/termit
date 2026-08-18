@@ -374,10 +374,17 @@ public class TermController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
             @Parameter(description = ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
-                          required = false) boolean populateCustomAttributes) {
+                          required = false) boolean populateCustomAttributes,
+            @Parameter(description = ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
+            @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
+        final Term term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
                termService.findRequired(termUri);
+
+        if (loadAllParents) {
+            return termService.resolveAllParents(term);
+        }
+        return term;
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -510,7 +517,7 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final Term parent = getById(localName, namespace, false);
+        final Term parent = getById(localName, namespace, false, false);
         return termService.findSubTerms(parent);
     }
 
@@ -560,7 +567,7 @@ public class TermController extends BaseController {
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
             @RequestBody Term newTerm) {
-        final Term parent = getById(localName, namespace, false);
+        final Term parent = getById(localName, namespace, false, false);
         termService.persistChild(newTerm, parent);
         LOG.debug("Child term {} of parent {} created.", newTerm, parent);
         return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), localName)).build();
@@ -1048,8 +1055,6 @@ public class TermController extends BaseController {
         public static final String ID_STANDALONE_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/datovy-mpp-3.4/pojem/";
         public static final String ID_STANDALONE_NOT_FOUND_DESCRIPTION = "Term with the specified identifier not found.";
         public static final String ID_POPULATE_CUSTOM_ATTS_DESCRIPTION = "Whether to populate custom attribute values that reference terms with actual terms (instead of just their URI)";
-
-        public static final String ID_LOAD_ALL_PARENTS_NAME = "loadAllParents";
         public static final String ID_LOAD_ALL_PARENTS_DESCRIPTION = "Whether to load all parent terms for the term";
 
         private ApiDoc() {

@@ -23,9 +23,11 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -39,6 +41,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ReadOnlyTermService {
@@ -172,5 +176,13 @@ public class ReadOnlyTermService {
         Objects.requireNonNull(asset);
         final Term arg = toTerm(asset);
         return create(termService.findVersionValidAt(arg, at));
+    }
+
+    public void resolveAllParents(ReadOnlyTerm roTerm) {
+        final Set<URI> directParentIdentifiers = roTerm.getParentTerms()
+                                                     .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        // FIXME: This may cause unauthorized access to parent terms?
+        final Set<TermInfoWithParents> fullParents = termService.findWithAllParents(directParentIdentifiers);
+        roTerm.setParentTerms(Collections.unmodifiableSet(fullParents));
     }
 }
