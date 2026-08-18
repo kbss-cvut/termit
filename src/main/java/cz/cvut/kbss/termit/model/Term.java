@@ -299,8 +299,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
     /**
      * Adds the specified term to the parent terms of this instance.
      * <p>
-     * If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
-     * the {@code importedParentTerms}.
+     * If the specified term is from the same glossary, it is added to {@link parentTerms}, otherwise, it is added to
+     * the {@link externalParentTerms}.
      *
      * @param term Term to add as parent
      */
