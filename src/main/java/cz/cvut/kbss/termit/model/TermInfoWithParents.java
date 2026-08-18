@@ -11,18 +11,16 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.model.util.HasIdentifier;
-import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
 @OWLClass(iri = SKOS.CONCEPT)
-public class TermInfoWithParents implements Serializable, HasIdentifier, HasTypes {
+public class TermInfoWithParents implements TermDescription {
 
     @Id
     private URI uri;
@@ -57,6 +55,7 @@ public class TermInfoWithParents implements Serializable, HasIdentifier, HasType
         this.uri = uri;
     }
 
+    @Override
     public MultilingualString getLabel() {
         return label;
     }
@@ -65,6 +64,7 @@ public class TermInfoWithParents implements Serializable, HasIdentifier, HasType
         this.label = label;
     }
 
+    @Override
     public URI getVocabulary() {
         return vocabulary;
     }
@@ -73,6 +73,7 @@ public class TermInfoWithParents implements Serializable, HasIdentifier, HasType
         this.vocabulary = vocabulary;
     }
 
+    @Override
     public URI getState() {
         return state;
     }

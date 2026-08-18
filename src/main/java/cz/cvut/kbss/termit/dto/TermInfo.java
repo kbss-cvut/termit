@@ -28,12 +28,9 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.util.HasIdentifier;
-import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Objects;
@@ -45,7 +42,7 @@ import java.util.Set;
  * This is not a full-blown entity and should not be used to modify data.
  */
 @OWLClass(iri = SKOS.CONCEPT)
-public class TermInfo implements Serializable, HasIdentifier, HasTypes {
+public class TermInfo implements TermDescription {
 
     @Id
     private URI uri;
@@ -108,6 +105,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.uri = uri;
     }
 
+    @Override
     public MultilingualString getLabel() {
         return label;
     }
@@ -116,6 +114,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.label = label;
     }
 
+    @Override
     public URI getVocabulary() {
         return vocabulary;
     }
@@ -124,6 +123,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.vocabulary = vocabulary;
     }
 
+    @Override
     public URI getState() {
         return state;
     }

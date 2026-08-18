@@ -404,17 +404,22 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         final Set<URI> directParentIdentifiers = term.getParentTerms()
                 .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
 
-        Set<TermInfoWithParents> fullParents =
-                Collections.unmodifiableSet(repositoryService.findWithAllParents(directParentIdentifiers));
-
-        Set<URI> fullParentIdentifiers = fullParents.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
-        for (URI uri : directParentIdentifiers) {
-            if (!fullParentIdentifiers.contains(uri)) {
-                throw new PersistenceException("Failed to resolve all parent terms for term: " + term.getUri());
-            }
-        }
+        final Set<TermInfoWithParents> fullParents = findWithAllParents(directParentIdentifiers);
 
         return dtoMapper.withFullParents(term, fullParents);
+    }
+
+    public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
+        Set<TermInfoWithParents> fullTerms =
+                Collections.unmodifiableSet(repositoryService.findWithAllParents(termUris));
+
+        Set<URI> fullParentIdentifiers = fullTerms.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        for (URI uri : termUris) {
+            if (!fullParentIdentifiers.contains(uri)) {
+                throw new PersistenceException("Failed to resolve all parent terms for term: " + uri);
+            }
+        }
+        return fullTerms;
     }
 
     /**
