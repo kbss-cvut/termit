@@ -38,6 +38,7 @@ import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
@@ -1203,5 +1204,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             subTermsCache.evict(evt.getTermUri());
         }
         // related, relatedMatch and exactMatch inverse are loaded separately and not cached
+    }
+
+    /**
+     * Finds terms by the specified identifiers including their full parent chain.
+     *
+     * @param termUris terms to fetch
+     * @return the requested terms with full parent chain
+     */
+    public Set<cz.cvut.kbss.termit.model.TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
+        try {
+            return em.createQuery("SELECT DISTINCT t FROM Term t WHERE t.uri IN :termUris", TermInfoWithParents.class)
+                     .setParameter("termUris", termUris)
+                     .getResultStream().collect(Collectors.toSet());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

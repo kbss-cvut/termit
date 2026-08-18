@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.TermInfoWithParents;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -1539,5 +1540,34 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                                           .toList();
 
         assertEquals(List.of("Beta", "Delta"), labels);
+    }
+
+    @Test
+    void findWithAllParentsReturnsRequestedTermsWithAllParents() {
+        final Term t1 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t2 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t3 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t4 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t5 = Generator.generateTermWithId(vocabulary.getUri());
+
+        setPrimaryLabel(t1, "Alpha");
+        setPrimaryLabel(t2, "Beta");
+        setPrimaryLabel(t3, "Gamma");
+        setPrimaryLabel(t4, "Delta");
+        setPrimaryLabel(t5, "Epsilon");
+
+        t1.addParentTerm(t2);
+        t1.addParentTerm(t3);
+        t3.addParentTerm(t4);
+        t2.addParentTerm(t5);
+
+        addTermsAndSave(List.of(t5), vocabulary);
+        addTermsAndSave(List.of(t4), vocabulary);
+        addTermsAndSave(List.of(t3), vocabulary);
+        addTermsAndSave(List.of(t2), vocabulary);
+        addTermsAndSave(List.of(t1), vocabulary);
+
+        List<TermInfoWithParents> dtos = sut.findWithAllParents(Set.of(t1.getUri()));
+        assertFalse(dtos.isEmpty());
     }
 }
