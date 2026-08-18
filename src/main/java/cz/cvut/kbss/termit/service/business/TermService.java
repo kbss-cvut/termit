@@ -17,22 +17,27 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.FullTermDtoWithParents;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
@@ -60,13 +65,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Service for term-related business logic.
@@ -93,13 +100,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     private final CommentService commentService;
 
     private final LanguageService languageService;
+    private final DtoMapper dtoMapper;
 
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
                        VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, LanguageService languageService) {
+                       CommentService commentService, LanguageService languageService, DtoMapper dtoMapper) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -109,6 +117,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.changeRecordService = changeRecordService;
         this.commentService = commentService;
         this.languageService = languageService;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -388,6 +397,24 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         assert result != null;
         consolidateAttributes(result);
         return result;
+    }
+
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    public FullTermDtoWithParents resolveAllParents(Term term) {
+        final Set<URI> directParentIdentifiers = term.getParentTerms()
+                .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+
+        Set<TermInfoWithParents> fullParents =
+                Collections.unmodifiableSet(repositoryService.findWithAllParents(directParentIdentifiers));
+
+        Set<URI> fullParentIdentifiers = fullParents.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        for (URI uri : directParentIdentifiers) {
+            if (!fullParentIdentifiers.contains(uri)) {
+                throw new PersistenceException("Failed to resolve all parent terms for term: " + term.getUri());
+            }
+        }
+
+        return dtoMapper.withFullParents(term, fullParents);
     }
 
     /**

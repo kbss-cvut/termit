@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
@@ -113,10 +114,9 @@ public abstract class DtoMapper {
 
     /**
      * Transforms normal term to {@link FullTermDtoWithParents}
-     * while removing all the parents allowing their population.
      */
-    @Mapping(target = "fullParentTerms", ignore = true)
+    @Mapping(source = "parents", target = "fullParentTerms")
     @Mapping(target = "parentTerms", ignore = true)
     @Mapping(target = "externalParentTerms", ignore = true)
-    public abstract FullTermDtoWithParents withFullParents(Term term);
+    public abstract FullTermDtoWithParents withFullParents(Term term, Set<TermInfoWithParents> parents);
 }

@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
@@ -681,5 +682,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     public Optional<Term> findVersionValidAt(Term asset, Instant at) {
         return termDao.findVersionValidAt(asset, at);
+    }
+
+    @Transactional
+    public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
+        return termDao.findWithAllParents(termUris);
     }
 }
