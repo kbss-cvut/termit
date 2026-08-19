@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
@@ -41,10 +42,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -53,7 +56,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
@@ -235,5 +240,29 @@ class ReadOnlyTermServiceTest {
         assertThat(result.getProperties(), hasEntry(DC.Terms.REFERENCES, term.getProperties()
                                                                              .get(DC.Terms.REFERENCES)));
         assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
+    }
+
+    @Test
+    void resolveAllParentsRetrievesAllParentsFromService() {
+        final Term term = Generator.generateTermWithId();
+        term.setParentTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
+        final ReadOnlyTerm roTerm = new ReadOnlyTerm(term);
+        final Set<TermInfoWithParents> resolvedParents = Set.of();
+
+        assertNotEquals(resolvedParents, roTerm.getParentTerms());
+
+        when(termService.findWithAllParents(any())).thenReturn(resolvedParents);
+
+        ArgumentCaptor<Set<URI>> requestedUris = ArgumentCaptor.captor();
+        sut.resolveAllParents(roTerm);
+
+        verify(termService).findWithAllParents(requestedUris.capture());
+
+        assertEquals(term.getParentTerms().size(), requestedUris.getValue().size());
+        for (TermInfo t : term.getParentTerms()) {
+            assertTrue(requestedUris.getValue().contains(t.getUri()));
+        }
+
+        assertEquals(resolvedParents, roTerm.getParentTerms());
     }
 }

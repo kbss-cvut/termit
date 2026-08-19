@@ -1594,6 +1594,26 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertTrue(term3.getParentTerms().iterator().next().getParentTerms().isEmpty(), "Term4 must not have any parents");
     }
 
+    @Test
+    void findWithAllParentsReturnsEveryRequestedTerm() {
+        final Term t1 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t2 = Generator.generateTermWithId(vocabulary.getUri());
+        final Term t3 = Generator.generateTermWithId(vocabulary.getUri());
+
+        setPrimaryLabel(t1, "Alpha");
+        setPrimaryLabel(t2, "Beta");
+        setPrimaryLabel(t3, "Gamma");
+
+        addTermsAndSave(List.of(t1, t2, t3), vocabulary);
+
+        final Set<URI> requestedUris = Set.of(t1.getUri(), t3.getUri());
+
+        Set<TermInfoWithParents> terms = sut.findWithAllParents(requestedUris);
+        assertEquals(2, terms.size(), "Must return both requested terms");
+
+        assertTrue(terms.stream().map(HasIdentifier::getUri).collect(Collectors.toSet()).containsAll(requestedUris));
+    }
+
     static Set<URI> mapToIdentifiers(Collection<? extends HasIdentifier> withIdentifier) {
         return withIdentifier.stream().map(HasIdentifier::getUri)
                 .collect(Collectors.toSet());
