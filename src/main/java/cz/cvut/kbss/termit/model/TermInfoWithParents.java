@@ -11,6 +11,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @OWLClass(iri = SKOS.CONCEPT)
+@JsonLdAttributeOrder({"uri", "label", "vocabulary", "state", "parentTerms"})
 public class TermInfoWithParents implements TermDescription {
 
     @Id
