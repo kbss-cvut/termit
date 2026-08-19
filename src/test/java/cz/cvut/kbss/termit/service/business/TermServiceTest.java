@@ -765,7 +765,7 @@ class TermServiceTest {
 
         assertEquals(term.getUri(), result.getUri());
         assertTrue(result.getFullParentTerms().isEmpty());
-        verify(termRepositoryService, never()).findWithAllParents(any());
+        verify(termRepositoryService).findWithAllParents(eq(Set.of()));
     }
 
 
