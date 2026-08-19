@@ -177,7 +177,6 @@ public class ReadOnlyTermController extends BaseController {
         if (loadAllParents) {
             termService.resolveAllParents(term);
         }
-
         return term;
     }
 
@@ -212,7 +211,6 @@ public class ReadOnlyTermController extends BaseController {
         if (loadAllParents) {
             termService.resolveAllParents(term);
         }
-
         return term;
     }
 

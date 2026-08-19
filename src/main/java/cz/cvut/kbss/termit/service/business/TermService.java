@@ -401,6 +401,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
     public FullTermDtoWithParents resolveAllParents(Term term) {
+        if (term.getParentTerms() == null) {
+            return dtoMapper.withFullParents(term, Set.of());
+        }
         final Set<URI> directParentIdentifiers = term.getParentTerms()
                 .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
 
@@ -409,6 +412,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         return dtoMapper.withFullParents(term, fullParents);
     }
 
+    @PostAuthorize("@termAuthorizationService.canRead(returnObject.stream())")
     public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
         Set<TermInfoWithParents> fullTerms =
                 Collections.unmodifiableSet(repositoryService.findWithAllParents(termUris));
