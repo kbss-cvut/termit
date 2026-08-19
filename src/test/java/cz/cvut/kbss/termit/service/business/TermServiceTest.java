@@ -18,17 +18,21 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.FullTermDtoWithParents;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
@@ -50,6 +54,7 @@ import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.commons.lang3.function.TriConsumer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -125,10 +130,18 @@ class TermServiceTest {
     @Spy
     private Configuration configuration = new Configuration();
 
+    @Spy
+    private DtoMapper dtoMapper = new DtoMapperImpl();
+
     @InjectMocks
     private TermService sut;
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+    @BeforeEach
+    void setUp() {
+        dtoMapper.setConfig(configuration);
+    }
 
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
@@ -704,6 +717,81 @@ class TermServiceTest {
         sut.findAll(vocabulary, params);
         verifier.accept(termRepositoryService, vocabulary);
     }
+
+    @Test
+    void findWithAllParentsReturnsTermsWithParentsResolvedByRepositoryService() {
+        final TermInfoWithParents t1 = new TermInfoWithParents();
+        final TermInfoWithParents t2 = new TermInfoWithParents();
+        t1.setUri(Generator.generateUri());
+        t2.setUri(Generator.generateUri());
+
+        final Set<URI> termUris = Set.of(t1.getUri(), t2.getUri());
+        when(termRepositoryService.findWithAllParents(termUris)).thenReturn(Set.of(t1, t2));
+
+        final Set<TermInfoWithParents> result = sut.findWithAllParents(termUris);
+
+        assertEquals(Set.of(t1, t2), result);
+        verify(termRepositoryService).findWithAllParents(termUris);
+    }
+
+    @Test
+    void findWithAllParentsThrowsPersistenceExceptionWhenRepositoryServiceDoesNotResolveAllRequestedTerms() {
+        final TermInfoWithParents t1 = new TermInfoWithParents();
+        t1.setUri(Generator.generateUri());
+
+        final Set<URI> termUris = Set.of(t1.getUri(), Generator.generateUri());
+        // Returning only one term and leaving other unresolved
+        when(termRepositoryService.findWithAllParents(termUris)).thenReturn(Set.of(t1));
+
+        assertThrows(PersistenceException.class, () -> sut.findWithAllParents(termUris));
+    }
+
+    @Test
+    void findWithAllParentsReturnsEmptySetWhenNoTermUrisAreSpecified() {
+        final Set<URI> termUris = Set.of();
+        when(termRepositoryService.findWithAllParents(termUris)).thenReturn(Set.of());
+
+        final Set<TermInfoWithParents> result = sut.findWithAllParents(termUris);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void resolveAllParentsReturnsDtoWithEmptyParentsWhenTermHasNoParentTerms() {
+        final Term term = generateTermWithId(vocabulary.getUri());
+        term.setParentTerms(Set.of());
+
+        final FullTermDtoWithParents result = sut.resolveAllParents(term);
+
+        assertEquals(term.getUri(), result.getUri());
+        assertTrue(result.getFullParentTerms().isEmpty());
+        verify(termRepositoryService, never()).findWithAllParents(any());
+    }
+
+
+    @Test
+    void resolveAllParentsResolvesFullParentChainUsingDirectParentIdentifiersOfTerm() {
+        final Term term = generateTermWithId(vocabulary.getUri());
+        final TermInfo directParentOne = Generator.generateTermInfoWithId();
+        final TermInfo directParentTwo = Generator.generateTermInfoWithId();
+        term.setParentTerms(Set.of(directParentOne, directParentTwo));
+        final Set<URI> directParentIdentifiers = Set.of(directParentOne.getUri(), directParentTwo.getUri());
+
+        final TermInfoWithParents resolvedParentOne = new TermInfoWithParents();
+        resolvedParentOne.setUri(directParentOne.getUri());
+        final TermInfoWithParents resolvedParentTwo = new TermInfoWithParents();
+        resolvedParentTwo.setUri(directParentTwo.getUri());
+        final Set<TermInfoWithParents> fullParents = Set.of(resolvedParentOne, resolvedParentTwo);
+        when(termRepositoryService.findWithAllParents(directParentIdentifiers)).thenReturn(fullParents);
+
+        final FullTermDtoWithParents result = sut.resolveAllParents(term);
+
+        assertEquals(term.getUri(), result.getUri());
+        assertEquals(fullParents, result.getFullParentTerms());
+        verify(termRepositoryService).findWithAllParents(directParentIdentifiers);
+        verify(dtoMapper).withFullParents(term, fullParents);
+    }
+
 
     static Stream<Arguments> findAllParams() {
         return Stream.of(
