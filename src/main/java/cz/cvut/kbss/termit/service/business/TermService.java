@@ -399,6 +399,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         return result;
     }
 
+    /**
+     * Resolves the full parent chain of the {@code term}.
+     *
+     * @param term term for which the full parent chain should be resolved
+     * @return {@link FullTermDtoWithParents} with {@link FullTermDtoWithParents#getFullParentTerms() fullParentTerms} set
+     */
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
     public FullTermDtoWithParents resolveAllParents(Term term) {
         if (term.getParentTerms() == null) {
@@ -412,6 +418,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         return dtoMapper.withFullParents(term, fullParents);
     }
 
+    /**
+     * Finds all terms using their URIs including all their parents.
+     *
+     * @param termUris term identifiers to find
+     * @return requested terms with their full parent chain
+     * @throws PersistenceException if any of the requested terms could not be found
+     */
     @PostAuthorize("@termAuthorizationService.canRead(returnObject.stream())")
     public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
         Set<TermInfoWithParents> fullTerms =
