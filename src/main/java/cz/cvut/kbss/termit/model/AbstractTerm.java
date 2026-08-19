@@ -29,16 +29,15 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
-import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -50,7 +49,7 @@ import java.util.stream.Collectors;
 @MappedSuperclass
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
 public abstract class AbstractTerm extends Asset<MultilingualString>
-        implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
+        implements SupportsSnapshots, HasPrimaryLanguage, TermDescription {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
@@ -164,6 +163,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.subTerms = subTerms;
     }
 
+    @Override
     public URI getVocabulary() {
         return vocabulary;
     }
@@ -172,6 +172,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.vocabulary = vocabulary;
     }
 
+    @Override
     public URI getState() {
         return state;
     }

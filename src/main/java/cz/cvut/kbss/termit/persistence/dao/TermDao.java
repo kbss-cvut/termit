@@ -1212,7 +1212,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @param termUris terms to fetch
      * @return the requested terms with full parent chain
      */
-    public Set<cz.cvut.kbss.termit.model.TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
+    public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
+        Objects.requireNonNull(termUris, "Term URIs cannot be null");
+        if (termUris.isEmpty()) {
+            return Set.of();
+        }
         try {
             return em.createQuery("SELECT DISTINCT t FROM Term t WHERE t.uri IN :termUris", TermInfoWithParents.class)
                      .setParameter("termUris", termUris)

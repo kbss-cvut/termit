@@ -181,7 +181,6 @@ public class ReadOnlyTermService {
     public void resolveAllParents(ReadOnlyTerm roTerm) {
         final Set<URI> directParentIdentifiers = roTerm.getParentTerms()
                                                      .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
-        // FIXME: This may cause unauthorized access to parent terms?
         final Set<TermInfoWithParents> fullParents = termService.findWithAllParents(directParentIdentifiers);
         roTerm.setParentTerms(Collections.unmodifiableSet(fullParents));
     }

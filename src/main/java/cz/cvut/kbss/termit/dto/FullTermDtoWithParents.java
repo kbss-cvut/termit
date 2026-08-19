@@ -11,6 +11,11 @@ import cz.cvut.kbss.termit.model.TermInfoWithParents;
 
 import java.util.Set;
 
+/**
+ * {@link Term} representation with blocked access to simple {@link #parentTerms parent} and {@link #externalParentTerms external parent}
+ * terms.
+ * Provides their extended representation allowing constructing full parent chain.
+ */
 public class FullTermDtoWithParents extends Term {
     /**
      * Parent terms from the same vocabulary.
@@ -20,6 +25,8 @@ public class FullTermDtoWithParents extends Term {
     private Set<TermInfoWithParents> fullParentTerms;
 
     /**
+     * Unsupported operation
+     * @throws UnsupportedOperationException always
      * @see #getFullParentTerms()
      */
     @JsonIgnore
@@ -29,6 +36,8 @@ public class FullTermDtoWithParents extends Term {
     }
 
     /**
+     * Unsupported operation
+     * @throws UnsupportedOperationException always
      * @see #setFullParentTerms(Set) ()
      */
     @Override
@@ -36,12 +45,20 @@ public class FullTermDtoWithParents extends Term {
         throw new UnsupportedOperationException("FullTermDtoWithParents must not contain simple TermInfo parent terms");
     }
 
+    /**
+     * Unsupported operation
+     * @throws UnsupportedOperationException always
+     */
     @JsonIgnore
     @Override
     public Set<TermInfo> getExternalParentTerms() {
         throw new UnsupportedOperationException("FullTermDtoWithParents must not contain simple TermInfo parent terms");
     }
 
+    /**
+     * Unsupported operation
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void setExternalParentTerms(Set<TermInfo> externalParentTerms) {
         throw new UnsupportedOperationException("FullTermDtoWithParents must not contain simple TermInfo parent terms");

@@ -17,10 +17,12 @@
  */
 package cz.cvut.kbss.termit.service.security.authorization;
 
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -82,5 +84,18 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
     @Override
     public boolean canRemove(AbstractTerm asset) {
         return vocabularyAuthorizationService.canRemove(getVocabulary(asset));
+    }
+
+    /**
+     * Checks that access to all the provided terms is allowed.
+     *
+     * @param terms Collection of terms to check
+     * @return {@code true} if access is allowed for all terms, {@code false} otherwise
+     */
+    public boolean canRead(Collection<? extends TermDescription> terms) {
+        return terms.stream().map(TermDescription::getVocabulary)
+                    .distinct()
+                    .map(Vocabulary::new)
+                    .allMatch(vocabularyAuthorizationService::canRead);
     }
 }
