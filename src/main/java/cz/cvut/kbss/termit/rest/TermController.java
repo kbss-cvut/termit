@@ -349,13 +349,7 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
             @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        final Term term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-               termService.findRequired(termUri);
-
-        if (loadAllParents) {
-            return termService.resolveAllParents(term);
-        }
-        return term;
+        return getById(termUri, populateCustomAttributes, loadAllParents);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -378,8 +372,12 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
             @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        return getById(termUri, populateCustomAttributes, loadAllParents);
+    }
+
+    private Term getById(URI termUri, boolean populateCustomAttributes, boolean loadAllParents) {
         final Term term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-               termService.findRequired(termUri);
+                termService.findRequired(termUri);
 
         if (loadAllParents) {
             return termService.resolveAllParents(term);

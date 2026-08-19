@@ -171,13 +171,7 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = TermController.ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
             @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        final ReadOnlyTerm term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-               termService.findRequired(termUri);
-
-        if (loadAllParents) {
-            termService.resolveAllParents(term);
-        }
-        return term;
+        return getById(termUri, populateCustomAttributes, loadAllParents);
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
@@ -205,8 +199,12 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = TermController.ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
             @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        return getById(termUri, populateCustomAttributes, loadAllParents);
+    }
+
+    private ReadOnlyTerm getById(URI termUri, boolean populateCustomAttributes, boolean loadAllParents) {
         final ReadOnlyTerm term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-               termService.findRequired(termUri);
+                termService.findRequired(termUri);
 
         if (loadAllParents) {
             termService.resolveAllParents(term);
