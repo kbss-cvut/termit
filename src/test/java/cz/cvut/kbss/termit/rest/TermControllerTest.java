@@ -1322,6 +1322,43 @@ public class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock, never()).findAll(anyString(), eq(PageRequest.of(2, 50)), anyCollection());
     }
 
+    @Test
+    void getByIdResolvesAllParentsWhenLoadAllParentsIsRequested() throws Exception {
+        final Term term = Generator.generateTerm();
+        term.setUri(URI.create(NAMESPACE + TERM_NAME));
+
+        when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
+        when(termServiceMock.findRequired(any())).thenReturn(term);
+
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                       .param("loadAllParents", "true")
+               )
+               .andExpect(status().isOk());
+
+        verify(termServiceMock).resolveAllParents(term);
+    }
+
+    @Test
+    void getByIdDoesNotResolvesAllParentsByDefault() throws Exception {
+        final Term term = Generator.generateTerm();
+        term.setUri(URI.create(NAMESPACE + TERM_NAME));
+
+        when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
+        when(termServiceMock.findRequired(any())).thenReturn(term);
+
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+               )
+               .andExpect(status().isOk());
+
+        verify(termServiceMock, never()).resolveAllParents(term);
+    }
+
     public static class TermSelectionParamsBuilder {
         private boolean flat = false;
         private boolean includeImported = false;
