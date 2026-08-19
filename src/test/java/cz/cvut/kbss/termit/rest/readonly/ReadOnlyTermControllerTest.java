@@ -66,6 +66,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -387,5 +388,42 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         assertThat(result, containsSameEntities(occurrences));
         verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedTargeting(term);
+    }
+
+    @Test
+    void getByIdResolvesAllParentsWhenLoadAllParentsIsRequested() throws Exception {
+        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
+        term.setUri(URI.create(NAMESPACE + TERM_NAME));
+
+        when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
+        when(termService.findRequired(any())).thenReturn(term);
+
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                       .param("loadAllParents", "true")
+               )
+               .andExpect(status().isOk());
+
+        verify(termService).resolveAllParents(term);
+    }
+
+    @Test
+    void getByIdDoesNotResolvesAllParentsByDefault() throws Exception {
+        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
+        term.setUri(URI.create(NAMESPACE + TERM_NAME));
+
+        when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
+        when(termService.findRequired(any())).thenReturn(term);
+
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+               )
+               .andExpect(status().isOk());
+
+        verify(termService, never()).resolveAllParents(term);
     }
 }
