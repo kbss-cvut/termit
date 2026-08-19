@@ -22,7 +22,6 @@ import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.TermInfoWithParents;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -32,12 +31,14 @@ import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
@@ -1567,7 +1568,34 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         addTermsAndSave(List.of(t2), vocabulary);
         addTermsAndSave(List.of(t1), vocabulary);
 
-        List<TermInfoWithParents> dtos = sut.findWithAllParents(Set.of(t1.getUri()));
-        assertFalse(dtos.isEmpty());
+        Set<TermInfoWithParents> terms = sut.findWithAllParents(Set.of(t1.getUri()));
+
+        assertEquals(1, terms.size(), "Term1 must be the only returned term");
+        final TermInfoWithParents term1 = terms.iterator().next();
+        assertEquals(t1.getUri(), term1.getUri());
+
+        assertEquals(2, term1.getParentTerms().size(), "Term1 must have two parents");
+        Set<URI> t1Parents = mapToIdentifiers(term1.getParentTerms());
+        assertTrue(t1Parents.containsAll(Set.of(t2.getUri(), t3.getUri())), "Term1 must have Term2 and Term3 as parents");
+
+        TermInfoWithParents term2 = term1.getParentTerms().stream().filter(t -> t.getUri().equals(t2.getUri())).findFirst().orElseThrow();
+        TermInfoWithParents term3 = term1.getParentTerms().stream().filter(t -> t.getUri().equals(t3.getUri())).findFirst().orElseThrow();
+
+        assertEquals(1, term2.getParentTerms().size(), "Term2 must have only a single parent");
+        assertEquals(1, term3.getParentTerms().size(), "Term3 must have only a single parent");
+
+        Set<URI> t2Parents = mapToIdentifiers(term2.getParentTerms());
+        assertTrue(t2Parents.contains(t5.getUri()), "Term2 must have Term5 as parent");
+
+        Set<URI> t3Parents = mapToIdentifiers(term3.getParentTerms());
+        assertTrue(t3Parents.contains(t4.getUri()), "Term3 must have Term4 as parent");
+
+        assertTrue(term2.getParentTerms().iterator().next().getParentTerms().isEmpty(), "Term5 must not have any paretns");
+        assertTrue(term3.getParentTerms().iterator().next().getParentTerms().isEmpty(), "Term4 must not have any parents");
+    }
+
+    static Set<URI> mapToIdentifiers(Collection<? extends HasIdentifier> withIdentifier) {
+        return withIdentifier.stream().map(HasIdentifier::getUri)
+                .collect(Collectors.toSet());
     }
 }
