@@ -410,7 +410,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getByIdDoesNotResolvesAllParentsByDefault() throws Exception {
+    void getByIdDoesNotResolvesAllAncestorsByDefault() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 

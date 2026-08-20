@@ -403,9 +403,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Resolves the full ancestors chain of the {@code term}.
+     * Resolves the full ancestor chain of the {@code term}.
      *
-     * @param term term for which the full ancestors chain should be resolved
+     * @param term term for which the full ancestor chain should be resolved
      * @return {@link FullTermDtoWithAncestors} with {@link FullTermDtoWithAncestors#getAncestorTerms() ancestorTerms} set
      */
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
