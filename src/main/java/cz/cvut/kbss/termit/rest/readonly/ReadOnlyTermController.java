@@ -169,9 +169,9 @@ public class ReadOnlyTermController extends BaseController {
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
             @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
-            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
+            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return getById(termUri, populateCustomAttributes, loadAllParents);
+        return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
@@ -197,16 +197,16 @@ public class ReadOnlyTermController extends BaseController {
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
             @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
-            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
+            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return getById(termUri, populateCustomAttributes, loadAllParents);
+        return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
-    private ReadOnlyTerm getById(URI termUri, boolean populateCustomAttributes, boolean loadAllParents) {
+    private ReadOnlyTerm getById(URI termUri, boolean populateCustomAttributes, boolean withAncestors) {
         final ReadOnlyTerm term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
                 termService.findRequired(termUri);
 
-        if (loadAllParents) {
+        if (withAncestors) {
             termService.resolveAllAncestors(term);
         }
         return term;
