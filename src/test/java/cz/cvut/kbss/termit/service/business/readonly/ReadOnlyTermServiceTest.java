@@ -243,26 +243,26 @@ class ReadOnlyTermServiceTest {
     }
 
     @Test
-    void resolveAllParentsRetrievesAllParentsFromService() {
+    void resolveAllAncestorsRetrievesAllAncestorsFromService() {
         final Term term = Generator.generateTermWithId();
         term.setParentTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
         final ReadOnlyTerm roTerm = new ReadOnlyTerm(term);
-        final Set<TermInfoWithParents> resolvedParents = Set.of();
+        final Set<TermInfoWithParents> resolvedAncestors = Set.of();
 
-        assertNotEquals(resolvedParents, roTerm.getParentTerms());
+        assertNotEquals(resolvedAncestors, roTerm.getParentTerms());
 
-        when(termService.findWithAllParents(any())).thenReturn(resolvedParents);
+        when(termService.findWithAllAncestors(any())).thenReturn(resolvedAncestors);
 
         ArgumentCaptor<Set<URI>> requestedUris = ArgumentCaptor.captor();
-        sut.resolveAllParents(roTerm);
+        sut.resolveAllAncestors(roTerm);
 
-        verify(termService).findWithAllParents(requestedUris.capture());
+        verify(termService).findWithAllAncestors(requestedUris.capture());
 
         assertEquals(term.getParentTerms().size(), requestedUris.getValue().size());
         for (TermInfo t : term.getParentTerms()) {
             assertTrue(requestedUris.getValue().contains(t.getUri()));
         }
 
-        assertEquals(resolvedParents, roTerm.getParentTerms());
+        assertEquals(resolvedAncestors, roTerm.getParentTerms());
     }
 }

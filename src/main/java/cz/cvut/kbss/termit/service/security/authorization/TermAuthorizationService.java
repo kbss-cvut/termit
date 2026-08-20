@@ -17,13 +17,16 @@
  */
 package cz.cvut.kbss.termit.service.security.authorization;
 
-import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Authorizes access to terms.
@@ -87,15 +90,61 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
     }
 
     /**
-     * Checks that access to all the provided terms is allowed.
+     * Removes all terms from the collection in-place
+     * including their ancestors
+     * if the current user lacks authorization to read their associated vocabulary.
      *
-     * @param terms Collection of terms to check
-     * @return {@code true} if access is allowed for all terms, {@code false} otherwise
+     * @param terms mutable collection of terms to filter
      */
-    public boolean canRead(Collection<? extends TermDescription> terms) {
-        return terms.stream().map(TermDescription::getVocabulary)
-                    .distinct()
-                    .map(Vocabulary::new)
-                    .allMatch(vocabularyAuthorizationService::canRead);
+    public void removeUnauthorizedTermsAndAncestors(Collection<TermInfoWithParents> terms) {
+        Set<URI> vocabularies = new HashSet<>();
+        collectAllAncestorVocabularies(terms, vocabularies);
+
+        // remove vocabulary if user CAN access it
+        vocabularies.removeIf(vocabulary -> vocabularyAuthorizationService.canRead(new Vocabulary(vocabulary)));
+        // only unauthorized vocabularies left
+
+        removeTermsFromVocabularies(terms, vocabularies);
+    }
+
+    /**
+     * Collects all vocabulary identifiers of the terms and their ancestors into the {@code vocabularies} set
+     *
+     * @param terms terms from which vocabularies should be collected
+     * @param vocabularies modifiable set of vocabulary identifiers that should be filled
+     */
+    private void collectAllAncestorVocabularies(Collection<TermInfoWithParents> terms, Set<URI> vocabularies) {
+        if (terms == null) {
+            return;
+        }
+        terms.forEach(term -> {
+            if (term.getVocabulary() != null) {
+                vocabularies.add(term.getVocabulary());
+            }
+            collectAllAncestorVocabularies(term.getParentTerms(), vocabularies);
+        });
+    }
+
+    /**
+     * Recursively remove terms and their ancestors from the mutable collection
+     * if they belong in one of {@code unauthorizedVocabularies}.
+     *
+     * @param terms mutable collection of terms to filter
+     * @param unauthorizedVocabularies vocabulary identifiers to exclude
+     */
+    private void removeTermsFromVocabularies(Collection<TermInfoWithParents> terms, Set<URI> unauthorizedVocabularies) {
+        if (terms == null) {
+            return;
+        }
+
+        terms.removeIf(term -> unauthorizedVocabularies.contains(term.getVocabulary()));
+        terms.forEach(term -> {
+            try {
+                removeTermsFromVocabularies(term.getParentTerms(), unauthorizedVocabularies);
+            } catch (UnsupportedOperationException e) {
+                term.setParentTerms(new HashSet<>(term.getParentTerms()));
+                removeTermsFromVocabularies(term.getParentTerms(), unauthorizedVocabularies);
+            }
+        });
     }
 }

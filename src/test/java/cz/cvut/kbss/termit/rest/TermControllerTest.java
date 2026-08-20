@@ -1323,7 +1323,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getByIdResolvesAllParentsWhenLoadAllParentsIsRequested() throws Exception {
+    void getByIdResolvesAllAncestorsWhenWithAncestorsIsRequested() throws Exception {
         final Term term = Generator.generateTerm();
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
@@ -1334,15 +1334,15 @@ public class TermControllerTest extends BaseControllerTestRunner {
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
-                       .param("loadAllParents", "true")
+                       .param("withAncestors", "true")
                )
                .andExpect(status().isOk());
 
-        verify(termServiceMock).resolveAllParents(term);
+        verify(termServiceMock).resolveAllAncestors(term);
     }
 
     @Test
-    void getByIdDoesNotResolvesAllParentsByDefault() throws Exception {
+    void getByIdDoesNotResolvesAllAncestorsByDefault() throws Exception {
         final Term term = Generator.generateTerm();
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
@@ -1356,7 +1356,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
                )
                .andExpect(status().isOk());
 
-        verify(termServiceMock, never()).resolveAllParents(term);
+        verify(termServiceMock, never()).resolveAllAncestors(term);
     }
 
     public static class TermSelectionParamsBuilder {

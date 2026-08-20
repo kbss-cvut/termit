@@ -1207,12 +1207,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Finds terms by the specified identifiers including their full parent chain.
+     * Finds terms by the specified identifiers including their full ancestor chain.
      *
      * @param termUris terms to fetch
-     * @return the requested terms with full parent chain
+     * @return the requested terms with full ancestor chain
      */
-    public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
+    public Set<TermInfoWithParents> findWithAllAncestors(Set<URI> termUris) {
         Objects.requireNonNull(termUris, "Term URIs cannot be null");
         if (termUris.isEmpty()) {
             return Set.of();
