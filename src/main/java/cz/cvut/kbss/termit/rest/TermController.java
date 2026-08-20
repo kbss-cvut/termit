@@ -347,9 +347,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
             @Parameter(description = ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
-            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
+            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return getById(termUri, populateCustomAttributes, loadAllParents);
+        return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -370,9 +370,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
             @Parameter(description = ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
-            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
+            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return getById(termUri, populateCustomAttributes, loadAllParents);
+        return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
     private Term getById(URI termUri, boolean populateCustomAttributes, boolean withAncestors) {
