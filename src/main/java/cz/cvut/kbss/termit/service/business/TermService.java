@@ -403,10 +403,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Resolves the full parent chain of the {@code term}.
+     * Resolves the full ancestors chain of the {@code term}.
      *
-     * @param term term for which the full parent chain should be resolved
-     * @return {@link FullTermDtoWithAncestors} with {@link FullTermDtoWithAncestors#getAncestorTerms() fullParentTerms} set
+     * @param term term for which the full ancestors chain should be resolved
+     * @return {@link FullTermDtoWithAncestors} with {@link FullTermDtoWithAncestors#getAncestorTerms() ancestorTerms} set
      */
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
     public FullTermDtoWithAncestors resolveAllAncestors(Term term) {
