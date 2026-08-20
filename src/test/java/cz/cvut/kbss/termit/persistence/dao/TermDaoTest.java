@@ -1580,6 +1580,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
         TermInfoWithParents term2 = term1.getParentTerms().stream().filter(t -> t.getUri().equals(t2.getUri())).findFirst().orElseThrow();
         TermInfoWithParents term3 = term1.getParentTerms().stream().filter(t -> t.getUri().equals(t3.getUri())).findFirst().orElseThrow();
+        TermInfoWithParents term4 = term3.getParentTerms().stream().filter(t -> t.getUri().equals(t4.getUri())).findFirst().orElseThrow();
+        TermInfoWithParents term5 = term2.getParentTerms().stream().filter(t -> t.getUri().equals(t5.getUri())).findFirst().orElseThrow();
 
         assertEquals(1, term2.getParentTerms().size(), "Term2 must have only a single parent");
         assertEquals(1, term3.getParentTerms().size(), "Term3 must have only a single parent");
@@ -1590,12 +1592,12 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         Set<URI> t3Parents = mapToIdentifiers(term3.getParentTerms());
         assertTrue(t3Parents.contains(t4.getUri()), "Term3 must have Term4 as parent");
 
-        assertTrue(term2.getParentTerms().iterator().next().getParentTerms().isEmpty(), "Term5 must not have any paretns");
-        assertTrue(term3.getParentTerms().iterator().next().getParentTerms().isEmpty(), "Term4 must not have any parents");
+        assertTrue(term5.getParentTerms().isEmpty(), "Term5 must not have any parents");
+        assertTrue(term4.getParentTerms().isEmpty(), "Term4 must not have any parents");
     }
 
     @Test
-    void findWithAllParentsReturnsEveryRequestedTerm() {
+    void findWithAllAncestorsReturnsEveryRequestedTerm() {
         final Term t1 = Generator.generateTermWithId(vocabulary.getUri());
         final Term t2 = Generator.generateTermWithId(vocabulary.getUri());
         final Term t3 = Generator.generateTermWithId(vocabulary.getUri());

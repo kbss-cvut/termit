@@ -90,8 +90,7 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
     }
 
     /**
-     * Removes all terms from the collection in-place
-     * including their ancestors
+     * Removes all terms from the collection in-place including their ancestors
      * if the current user lacks authorization to read their associated vocabulary.
      *
      * @param terms mutable collection of terms to filter
