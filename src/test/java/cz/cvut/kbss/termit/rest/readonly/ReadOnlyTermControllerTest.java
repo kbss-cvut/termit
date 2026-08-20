@@ -391,7 +391,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getByIdResolvesAllParentsWhenLoadAllParentsIsRequested() throws Exception {
+    void getByIdResolvesAllAncestorsWhenWithAncestorsIsRequested() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
@@ -402,11 +402,11 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
-                       .param("loadAllParents", "true")
+                       .param("withAncestors", "true")
                )
                .andExpect(status().isOk());
 
-        verify(termService).resolveAllParents(term);
+        verify(termService).resolveAllAncestors(term);
     }
 
     @Test
@@ -424,6 +424,6 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                )
                .andExpect(status().isOk());
 
-        verify(termService, never()).resolveAllParents(term);
+        verify(termService, never()).resolveAllAncestors(term);
     }
 }

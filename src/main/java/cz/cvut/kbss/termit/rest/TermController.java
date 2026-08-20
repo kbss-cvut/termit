@@ -346,8 +346,8 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
-            @Parameter(description = ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
-            @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
+            @Parameter(description = ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
+            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return getById(termUri, populateCustomAttributes, loadAllParents);
     }
@@ -369,18 +369,18 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
-            @Parameter(description = ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
-            @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
+            @Parameter(description = ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
+            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return getById(termUri, populateCustomAttributes, loadAllParents);
     }
 
-    private Term getById(URI termUri, boolean populateCustomAttributes, boolean loadAllParents) {
+    private Term getById(URI termUri, boolean populateCustomAttributes, boolean withAncestors) {
         final Term term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
                 termService.findRequired(termUri);
 
-        if (loadAllParents) {
-            return termService.resolveAllParents(term);
+        if (withAncestors) {
+            return termService.resolveAllAncestors(term);
         }
         return term;
     }
@@ -1053,7 +1053,7 @@ public class TermController extends BaseController {
         public static final String ID_STANDALONE_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/datovy-mpp-3.4/pojem/";
         public static final String ID_STANDALONE_NOT_FOUND_DESCRIPTION = "Term with the specified identifier not found.";
         public static final String ID_POPULATE_CUSTOM_ATTS_DESCRIPTION = "Whether to populate custom attribute values that reference terms with actual terms (instead of just their URI)";
-        public static final String ID_LOAD_ALL_PARENTS_DESCRIPTION = "Whether to load all parent terms for the term";
+        public static final String ID_WITH_ANCESTORS_DESCRIPTION = "Whether to load all ancestors for the term";
 
         private ApiDoc() {
             throw new AssertionError();

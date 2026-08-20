@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.dto.FullTermDtoWithParents;
+import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -719,53 +719,53 @@ class TermServiceTest {
     }
 
     @Test
-    void findWithAllParentsReturnsTermsWithParentsResolvedByRepositoryService() {
+    void findWithAllAncestorsReturnsTermsWithAncestorsResolvedByRepositoryService() {
         final TermInfoWithParents t1 = new TermInfoWithParents();
         final TermInfoWithParents t2 = new TermInfoWithParents();
         t1.setUri(Generator.generateUri());
         t2.setUri(Generator.generateUri());
 
         final Set<URI> termUris = Set.of(t1.getUri(), t2.getUri());
-        when(termRepositoryService.findWithAllParents(termUris)).thenReturn(Set.of(t1, t2));
+        when(termRepositoryService.findWithAllAncestors(termUris)).thenReturn(Set.of(t1, t2));
 
-        final Set<TermInfoWithParents> result = sut.findWithAllParents(termUris);
+        final Set<TermInfoWithParents> result = sut.findWithAllAncestors(termUris);
 
         assertEquals(Set.of(t1, t2), result);
-        verify(termRepositoryService).findWithAllParents(termUris);
+        verify(termRepositoryService).findWithAllAncestors(termUris);
     }
 
     @Test
-    void findWithAllParentsThrowsPersistenceExceptionWhenRepositoryServiceDoesNotResolveAllRequestedTerms() {
+    void findWithAllAncestorsThrowsPersistenceExceptionWhenRepositoryServiceDoesNotResolveAllRequestedTerms() {
         final TermInfoWithParents t1 = new TermInfoWithParents();
         t1.setUri(Generator.generateUri());
 
         final Set<URI> termUris = Set.of(t1.getUri(), Generator.generateUri());
         // Returning only one term and leaving other unresolved
-        when(termRepositoryService.findWithAllParents(termUris)).thenReturn(Set.of(t1));
+        when(termRepositoryService.findWithAllAncestors(termUris)).thenReturn(Set.of(t1));
 
-        assertThrows(PersistenceException.class, () -> sut.findWithAllParents(termUris));
+        assertThrows(PersistenceException.class, () -> sut.findWithAllAncestors(termUris));
     }
 
     @Test
-    void findWithAllParentsReturnsEmptySetWhenNoTermUrisAreSpecified() {
+    void findWithAllAncestorsReturnsEmptySetWhenNoTermUrisAreSpecified() {
         final Set<URI> termUris = Set.of();
-        when(termRepositoryService.findWithAllParents(termUris)).thenReturn(Set.of());
+        when(termRepositoryService.findWithAllAncestors(termUris)).thenReturn(Set.of());
 
-        final Set<TermInfoWithParents> result = sut.findWithAllParents(termUris);
+        final Set<TermInfoWithParents> result = sut.findWithAllAncestors(termUris);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void resolveAllParentsReturnsDtoWithEmptyParentsWhenTermHasNoParentTerms() {
+    void resolveAllAncestorsReturnsDtoWithEmptyAncestorsWhenTermHasNoAncestors() {
         final Term term = generateTermWithId(vocabulary.getUri());
         term.setParentTerms(Set.of());
 
-        final FullTermDtoWithParents result = sut.resolveAllParents(term);
+        final FullTermDtoWithAncestors result = sut.resolveAllAncestors(term);
 
         assertEquals(term.getUri(), result.getUri());
-        assertTrue(result.getFullParentTerms().isEmpty());
-        verify(termRepositoryService).findWithAllParents(eq(Set.of()));
+        assertTrue(result.getAncestorTerms().isEmpty());
+        verify(termRepositoryService).findWithAllAncestors(eq(Set.of()));
     }
 
 
@@ -782,14 +782,14 @@ class TermServiceTest {
         final TermInfoWithParents resolvedParentTwo = new TermInfoWithParents();
         resolvedParentTwo.setUri(directParentTwo.getUri());
         final Set<TermInfoWithParents> fullParents = Set.of(resolvedParentOne, resolvedParentTwo);
-        when(termRepositoryService.findWithAllParents(directParentIdentifiers)).thenReturn(fullParents);
+        when(termRepositoryService.findWithAllAncestors(directParentIdentifiers)).thenReturn(fullParents);
 
-        final FullTermDtoWithParents result = sut.resolveAllParents(term);
+        final FullTermDtoWithAncestors result = sut.resolveAllAncestors(term);
 
         assertEquals(term.getUri(), result.getUri());
-        assertEquals(fullParents, result.getFullParentTerms());
-        verify(termRepositoryService).findWithAllParents(directParentIdentifiers);
-        verify(dtoMapper).withFullParents(term, fullParents);
+        assertEquals(fullParents, result.getAncestorTerms());
+        verify(termRepositoryService).findWithAllAncestors(directParentIdentifiers);
+        verify(dtoMapper).withAncestors(term, fullParents);
     }
 
 

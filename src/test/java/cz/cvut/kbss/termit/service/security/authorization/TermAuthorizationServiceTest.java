@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,13 +27,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -95,34 +97,62 @@ class TermAuthorizationServiceTest {
         verify(vocabularyAuthorizationService).canRemove(v);
     }
 
-    @Test
-    void canReadTermCollectionChecksIfUserCanReadTermVocabularies() {
-        when(vocabularyAuthorizationService.canRead(any(Vocabulary.class))).thenReturn(true);
-        final Term term = Generator.generateTermWithId();
-        final Term term2 = Generator.generateTermWithId();
-        final Vocabulary v = Generator.generateVocabularyWithId();
-        final Vocabulary v2 = Generator.generateVocabularyWithId();
-        term.setVocabulary(v.getUri());
-        term2.setVocabulary(v2.getUri());
 
-        assertTrue(sut.canRead(Set.of(term, term2)));
-        verify(vocabularyAuthorizationService).canRead(v);
+    @Test
+    void removeUnauthorizedTermsAndAncestorsRemovesTermsFromUnauthorizedVocabulary() {
+        final Vocabulary authorizedVoc = Generator.generateVocabularyWithId();
+        final Vocabulary unauthorizedVoc = Generator.generateVocabularyWithId();
+
+        final TermInfoWithParents term = new TermInfoWithParents();
+        term.setUri(Generator.generateUri());
+        term.setVocabulary(authorizedVoc.getUri());
+        final TermInfoWithParents term2 = new TermInfoWithParents();
+        term2.setUri(Generator.generateUri());
+        term2.setVocabulary(unauthorizedVoc.getUri());
+
+        doAnswer(inv ->
+            inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVoc.getUri())
+        ).when(vocabularyAuthorizationService).canRead(any(Vocabulary.class));
+
+        Set<TermInfoWithParents> terms = new HashSet<>(Set.of(term, term2));
+
+        sut.removeUnauthorizedTermsAndAncestors(terms);
+
+        assertEquals(1, terms.size());
+        assertTrue(terms.contains(term));
+        assertFalse(terms.contains(term2));
     }
 
     @Test
-    void canReadTermCollectionReturnsFalseIfUserCannotReadTermVocabularies() {
-        final Term term = Generator.generateTermWithId();
-        final Term term2 = Generator.generateTermWithId();
-        final Vocabulary v = Generator.generateVocabularyWithId();
-        final Vocabulary v2 = Generator.generateVocabularyWithId();
-        term.setVocabulary(v.getUri());
-        term2.setVocabulary(v2.getUri());
+    void removeUnauthorizedTermsAndAncestorsRemovesAncestorsFromUnauthorizedVocabulary() {
+        final Vocabulary authorizedVocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary unauthorizedVocabulary = Generator.generateVocabularyWithId();
 
-        // lenient because of the process order is unknown and hence this stub may be unnecessary in some executions
-        lenient().when(vocabularyAuthorizationService.canRead(v)).thenReturn(true);
-        when(vocabularyAuthorizationService.canRead(v2)).thenReturn(false);
+        final TermInfoWithParents term = new TermInfoWithParents();
+        term.setUri(Generator.generateUri());
+        term.setVocabulary(authorizedVocabulary.getUri());
+        final TermInfoWithParents term2 = new TermInfoWithParents();
+        term2.setUri(Generator.generateUri());
+        term2.setVocabulary(authorizedVocabulary.getUri());
+        final TermInfoWithParents term3 = new TermInfoWithParents();
+        term3.setUri(Generator.generateUri());
+        term3.setVocabulary(unauthorizedVocabulary.getUri());
 
-        assertFalse(sut.canRead(Set.of(term, term2)));
-        verify(vocabularyAuthorizationService, atLeastOnce()).canRead(any(Vocabulary.class));
+        term.setParentTerms(Set.of(term2));
+        term2.setParentTerms(Set.of(term3));
+
+        doAnswer(inv ->
+                inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVocabulary.getUri())
+        ).when(vocabularyAuthorizationService).canRead(any(Vocabulary.class));
+
+        Set<TermInfoWithParents> terms = new HashSet<>(Set.of(term));
+
+        sut.removeUnauthorizedTermsAndAncestors(terms);
+
+        assertEquals(1, terms.size());
+        assertTrue(terms.contains(term));
+        assertEquals(1, term.getParentTerms().size());
+        assertTrue(term.getParentTerms().contains(term2));
+        assertTrue(term2.getParentTerms().isEmpty());
     }
 }

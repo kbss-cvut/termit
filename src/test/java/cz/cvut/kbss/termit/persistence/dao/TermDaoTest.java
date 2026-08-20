@@ -1544,7 +1544,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     }
 
     @Test
-    void findWithAllParentsReturnsRequestedTermsWithAllParents() {
+    void findWithAllAncestorsReturnsRequestedTermsWithAllAncestors() {
         final Term t1 = Generator.generateTermWithId(vocabulary.getUri());
         final Term t2 = Generator.generateTermWithId(vocabulary.getUri());
         final Term t3 = Generator.generateTermWithId(vocabulary.getUri());
@@ -1568,7 +1568,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         addTermsAndSave(List.of(t2), vocabulary);
         addTermsAndSave(List.of(t1), vocabulary);
 
-        Set<TermInfoWithParents> terms = sut.findWithAllParents(Set.of(t1.getUri()));
+        Set<TermInfoWithParents> terms = sut.findWithAllAncestors(Set.of(t1.getUri()));
 
         assertEquals(1, terms.size(), "Term1 must be the only returned term");
         final TermInfoWithParents term1 = terms.iterator().next();
@@ -1608,7 +1608,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
         final Set<URI> requestedUris = Set.of(t1.getUri(), t3.getUri());
 
-        Set<TermInfoWithParents> terms = sut.findWithAllParents(requestedUris);
+        Set<TermInfoWithParents> terms = sut.findWithAllAncestors(requestedUris);
         assertEquals(2, terms.size(), "Must return both requested terms");
 
         assertTrue(terms.stream().map(HasIdentifier::getUri).collect(Collectors.toSet()).containsAll(requestedUris));

@@ -178,10 +178,10 @@ public class ReadOnlyTermService {
         return create(termService.findVersionValidAt(arg, at));
     }
 
-    public void resolveAllParents(ReadOnlyTerm roTerm) {
+    public void resolveAllAncestors(ReadOnlyTerm roTerm) {
         final Set<URI> directParentIdentifiers = roTerm.getParentTerms()
                                                      .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
-        final Set<TermInfoWithParents> fullParents = termService.findWithAllParents(directParentIdentifiers);
-        roTerm.setParentTerms(Collections.unmodifiableSet(fullParents));
+        final Set<TermInfoWithParents> ancestors = termService.findWithAllAncestors(directParentIdentifiers);
+        roTerm.setParentTerms(Collections.unmodifiableSet(ancestors));
     }
 }

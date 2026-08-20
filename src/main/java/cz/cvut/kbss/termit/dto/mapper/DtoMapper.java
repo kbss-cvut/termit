@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.dto.FullTermDtoWithParents;
+import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -113,10 +113,10 @@ public abstract class DtoMapper {
     }
 
     /**
-     * Transforms normal term to {@link FullTermDtoWithParents}
+     * Transforms normal term to {@link FullTermDtoWithAncestors} and sets its ancestors
      */
-    @Mapping(source = "parents", target = "fullParentTerms")
+    @Mapping(source = "ancestors", target = "ancestorTerms")
     @Mapping(target = "parentTerms", ignore = true)
     @Mapping(target = "externalParentTerms", ignore = true)
-    public abstract FullTermDtoWithParents withFullParents(Term term, Set<TermInfoWithParents> parents);
+    public abstract FullTermDtoWithAncestors withAncestors(Term term, Set<TermInfoWithParents> ancestors);
 }

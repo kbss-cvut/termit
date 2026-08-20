@@ -168,8 +168,8 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = TermController.ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
-            @Parameter(description = TermController.ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
-            @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
+            @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
+            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return getById(termUri, populateCustomAttributes, loadAllParents);
     }
@@ -196,8 +196,8 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = TermController.ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
                           required = false) boolean populateCustomAttributes,
-            @Parameter(description = TermController.ApiDoc.ID_LOAD_ALL_PARENTS_DESCRIPTION)
-            @RequestParam(name = "loadAllParents", required = false) boolean loadAllParents) {
+            @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
+            @RequestParam(name = "withAncestors", required = false) boolean loadAllParents) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return getById(termUri, populateCustomAttributes, loadAllParents);
     }
@@ -207,7 +207,7 @@ public class ReadOnlyTermController extends BaseController {
                 termService.findRequired(termUri);
 
         if (loadAllParents) {
-            termService.resolveAllParents(term);
+            termService.resolveAllAncestors(term);
         }
         return term;
     }

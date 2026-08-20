@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.FullTermDtoWithParents;
+import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -48,6 +48,7 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -65,7 +66,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -101,13 +101,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private final LanguageService languageService;
     private final DtoMapper dtoMapper;
+    private final TermAuthorizationService termAuthorizationService;
 
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
                        VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, LanguageService languageService, DtoMapper dtoMapper) {
+                       CommentService commentService, LanguageService languageService, DtoMapper dtoMapper,
+                       TermAuthorizationService termAuthorizationService) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -118,6 +120,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.commentService = commentService;
         this.languageService = languageService;
         this.dtoMapper = dtoMapper;
+        this.termAuthorizationService = termAuthorizationService;
     }
 
     /**
@@ -403,40 +406,43 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Resolves the full parent chain of the {@code term}.
      *
      * @param term term for which the full parent chain should be resolved
-     * @return {@link FullTermDtoWithParents} with {@link FullTermDtoWithParents#getFullParentTerms() fullParentTerms} set
+     * @return {@link FullTermDtoWithAncestors} with {@link FullTermDtoWithAncestors#getAncestorTerms() fullParentTerms} set
      */
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
-    public FullTermDtoWithParents resolveAllParents(Term term) {
+    public FullTermDtoWithAncestors resolveAllAncestors(Term term) {
         if (term.getParentTerms() == null) {
-            return dtoMapper.withFullParents(term, Set.of());
+            return dtoMapper.withAncestors(term, Set.of());
         }
         final Set<URI> directParentIdentifiers = term.getParentTerms()
                 .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
 
-        final Set<TermInfoWithParents> fullParents = findWithAllParents(directParentIdentifiers);
+        final Set<TermInfoWithParents> ancestors = findWithAllAncestors(directParentIdentifiers);
 
-        return dtoMapper.withFullParents(term, fullParents);
+        return dtoMapper.withAncestors(term, ancestors);
     }
 
     /**
-     * Finds all terms using their URIs including all their parents.
+     * Finds all terms using their URIs including all their ancestors.
+     * The terms and ancestors are filtered based on the current user authorizations.
      *
      * @param termUris term identifiers to find
-     * @return requested terms with their full parent chain
+     * @return requested terms with their full ancestor chain
      * @throws PersistenceException if any of the requested terms could not be found
      */
-    @PostAuthorize("@termAuthorizationService.canRead(returnObject.stream())")
-    public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
-        Set<TermInfoWithParents> fullTerms =
-                Collections.unmodifiableSet(repositoryService.findWithAllParents(termUris));
+    public Set<TermInfoWithParents> findWithAllAncestors(Set<URI> termUris) {
+        Set<TermInfoWithParents> ancestors =
+                new HashSet<>(repositoryService.findWithAllAncestors(termUris));
 
-        Set<URI> fullParentIdentifiers = fullTerms.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        // verify that all requested terms were found
+        Set<URI> ancestorIds = ancestors.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
         for (URI uri : termUris) {
-            if (!fullParentIdentifiers.contains(uri)) {
-                throw new PersistenceException("Failed to resolve all parent terms for term: " + uri);
+            if (!ancestorIds.contains(uri)) {
+                throw new PersistenceException("Failed to resolve all ancestors for term: " + uri);
             }
         }
-        return fullTerms;
+
+        termAuthorizationService.removeUnauthorizedTermsAndAncestors(ancestors);
+        return ancestors;
     }
 
     /**

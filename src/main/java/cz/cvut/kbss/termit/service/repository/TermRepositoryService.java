@@ -685,7 +685,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Transactional
-    public Set<TermInfoWithParents> findWithAllParents(Set<URI> termUris) {
-        return termDao.findWithAllParents(termUris);
+    public Set<TermInfoWithParents> findWithAllAncestors(Set<URI> termUris) {
+        return termDao.findWithAllAncestors(termUris);
     }
 }
