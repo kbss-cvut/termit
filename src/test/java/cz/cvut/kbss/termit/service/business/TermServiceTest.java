@@ -48,6 +48,7 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
@@ -88,6 +89,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.eq;
@@ -132,6 +134,9 @@ class TermServiceTest {
 
     @Spy
     private DtoMapper dtoMapper = new DtoMapperImpl();
+
+    @Mock
+    private TermAuthorizationService termAuthorizationService;
 
     @InjectMocks
     private TermService sut;
@@ -770,7 +775,7 @@ class TermServiceTest {
 
 
     @Test
-    void resolveAllParentsResolvesFullParentChainUsingDirectParentIdentifiersOfTerm() {
+    void resolveAllAncestorsResolvesFullAncestorsChainUsingDirectAncestorIdentifiersOfTerm() {
         final Term term = generateTermWithId(vocabulary.getUri());
         final TermInfo directParentOne = Generator.generateTermInfoWithId();
         final TermInfo directParentTwo = Generator.generateTermInfoWithId();
@@ -790,6 +795,17 @@ class TermServiceTest {
         assertEquals(fullParents, result.getAncestorTerms());
         verify(termRepositoryService).findWithAllAncestors(directParentIdentifiers);
         verify(dtoMapper).withAncestors(term, fullParents);
+    }
+
+    @Test
+    void resolveAllAncestorsFiltersAncestorsWithTermAuthorizationService() {
+        final Term term = Generator.generateTermWithId();
+        final Set<TermInfo> parentTerms = Set.of();
+        term.setParentTerms(parentTerms);
+
+        sut.resolveAllAncestors(term);
+
+        verify(termAuthorizationService).removeUnauthorizedTermsAndAncestors(notNull());
     }
 
 
