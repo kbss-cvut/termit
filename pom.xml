@@ -228,9 +228,9 @@
 
         <!-- I18n - language tags and languages -->
         <dependency>
-            <groupId>com.neovisionaries</groupId>
+            <groupId>uk.co.foundationsedge</groupId>
             <artifactId>nv-i18n</artifactId>
-            <version>1.29</version>
+            <version>1.33</version>
         </dependency>
 
         <!-- Apache Velocity for templating -->
