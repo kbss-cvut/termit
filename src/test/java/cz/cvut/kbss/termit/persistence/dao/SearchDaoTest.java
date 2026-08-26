@@ -174,4 +174,23 @@ class SearchDaoTest {
                                                              Constants.DEFAULT_PAGE_SPEC, List.of());
         assertEquals(13, result.getTotalElements());
     }
+
+    @Test
+    void joinLuceneQueryWithWildcardMatchesTheExpectedPatternForSingleItemArray() {
+        final String[] tokens = new String[]{"+slovo"};
+
+        final String result = SearchDao.joinLuceneQueryWithWildcard(tokens, tokens[0].length());
+
+        assertEquals("(+slovo) OR (+slovo*)", result);
+    }
+
+    @Test
+    void joinLuceneQueryWithWildcardMatchesTheExpectedPatternForMultipleItemArray() {
+        final String[] tokens = new String[]{"+afrikán", "+slunečnice", "+růže"};
+        final int totalLength = String.join("", tokens).length();
+
+        final String result = SearchDao.joinLuceneQueryWithWildcard(tokens, totalLength);
+
+        assertEquals("(+afrikán +slunečnice ) AND ((+růže) OR (+růže*))", result);
+    }
 }
