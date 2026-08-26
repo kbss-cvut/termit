@@ -95,15 +95,75 @@ public class SearchDao {
             return searchString;
         }
         final String[] split = searchString.trim().split("\\s+");
-        final int lastIdx = split.length - 1;
-        if (split[lastIdx].length() >= WILDCARD_MIN_LENGTH) {
-            split[lastIdx] = split[lastIdx] + LUCENE_WILDCARD;
-        }
+
         // Require every token (AND) to avoid huge OR candidate sets that are expensive to rank
         for (int i = 0; i < split.length; i++) {
             split[i] = "+" + split[i];
         }
+
+        final int lastIdx = split.length - 1;
+        // -1 to compensate prepended '+'
+        if (split[lastIdx].length() - 1 >= WILDCARD_MIN_LENGTH) {
+            return joinLuceneQueryWithWildcard(split, searchString.length() + split.length);
+        }
         return String.join(" ", split);
+    }
+
+    /**
+     * Appends string following format {@code (token) OR (token*)} to the {@code builder}.
+     * <p>
+     * {@code (token)} allows Lucene to perform text operations (e.g. use <a href="https://lucene.apache.org/core/9_4_2/analysis/common/org/apache/lucene/analysis/cz/CzechStemmer.html">Stemmer</a>)
+     * <p>
+     * {@code (token*)} instruct Lucene to perform simple prefix matching on index entries
+     *
+     * @param token token to use
+     * @param builder String builder to which the query should be appended
+     * @return the {@code builder}
+     */
+    private static StringBuilder buildLuceneQueryWithWildcard(String token, StringBuilder builder) {
+        return builder
+                .append('(')
+                .append(token)
+                .append(") OR (")
+                .append(token)
+                .append(LUCENE_WILDCARD)
+                .append(')');
+    }
+
+    /**
+     * Joins the given tokens into a Lucene query following format
+     * {@code (tokens-1) AND ((lastToken) OR (lastToken*))}
+     *
+     * @param tokens tokens from which query should be constructed
+     * @param totalLength the total length of all strings in the {@code tokens} array
+     * @return constructed query
+     */
+    static String joinLuceneQueryWithWildcard(String[] tokens, int totalLength) {
+        int lastIndex = tokens.length - 1;
+        int lastTokenLength = tokens[lastIndex].length();
+
+        // totalLength = every token is appended
+        // lastTokenLength = the last token is appended once more
+        // "() AND (() OR (*))".length = 18
+        int additionalCharCount = "() OR (*)".length() + (tokens.length - 1) * "() AND ()".length();
+        StringBuilder builder = new StringBuilder(totalLength + lastTokenLength + additionalCharCount);
+
+        if (tokens.length == 1) {
+            return buildLuceneQueryWithWildcard(tokens[0], builder).toString();
+        }
+
+        builder.append('(');
+        for (int i = 0; i < lastIndex; i++) {
+            builder.append(tokens[i]).append(' ');
+        }
+        builder.append(") AND ((")
+                       .append(tokens[lastIndex])
+                       .append(") OR (")
+                       .append(tokens[lastIndex])
+                       .append(LUCENE_WILDCARD)
+                       .append("))");
+
+        return builder.toString();
     }
 
     private static String splitExactMatch(String searchString) {
