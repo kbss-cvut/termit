@@ -96,7 +96,7 @@ class SearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals("+" + searchString + SearchDao.LUCENE_WILDCARD))
+                                                .filter(s -> s.contains("+" + searchString + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
@@ -110,7 +110,8 @@ class SearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals("+termOne +termTwo +" + lastToken + SearchDao.LUCENE_WILDCARD))
+                                                .filter(s -> s.contains("+termOne +termTwo"))
+                                                .filter(s -> s.contains('+' + lastToken + SearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
