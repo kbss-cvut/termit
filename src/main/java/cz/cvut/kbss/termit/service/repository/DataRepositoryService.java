@@ -223,7 +223,7 @@ public class DataRepositoryService {
      */
     @Transactional
     public void removeCustomAttribute(URI identifier, boolean force) {
-        final boolean hasUsage = findCustomAttributeUsage(identifier, Pageable.ofSize(1)).hasContent();
+        final boolean hasUsage = dataDao.isCustomAttributeUsed(identifier);
         if (hasUsage && !force) {
             throw new ValidationException("Unable to remove a CustomAttribute with usages: " + Utils.uriToString(identifier));
         }
@@ -234,5 +234,9 @@ public class DataRepositoryService {
 
         dataDao.removeAllCustomAttributeUsages(attribute);
         dataDao.removeCustomAttribute(attribute);
+        // ensure the attribute is no longer used
+        if (dataDao.isCustomAttributeUsed(identifier)) {
+            throw new ValidationException("Failed to remove a CustomAttribute with usages: " + Utils.uriToString(identifier));
+        }
     }
 }

@@ -11,7 +11,6 @@ import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.eclipse.rdf4j.model.Statement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,11 +20,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -36,7 +32,6 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -149,10 +144,8 @@ class DataRepositoryServiceTest {
     @Test
     void removeCustomAttributeThrowsValidationExceptionWhenUsagesExistAndForceIsFalse() {
         final URI uri = Generator.generateUri();
-        final Statement statement = mock(Statement.class);
 
-        when(dataDao.findCustomAttributeUsage(uri, Pageable.ofSize(1)))
-                .thenReturn(new PageImpl<>(List.of(statement)));
+        when(dataDao.isCustomAttributeUsed(uri)).thenReturn(true);
 
         assertThrows(ValidationException.class, () -> sut.removeCustomAttribute(uri, false));
     }
@@ -163,10 +156,8 @@ class DataRepositoryServiceTest {
         final CustomAttribute attribute = new CustomAttribute();
         attribute.setUri(uri);
 
-        final Statement statement = mock(Statement.class);
-
-        when(dataDao.findCustomAttributeUsage(uri, Pageable.ofSize(1)))
-                .thenReturn(new PageImpl<>(List.of(statement)));
+        when(dataDao.isCustomAttributeUsed(uri)).thenReturn(true)
+                                                .thenReturn(false);
         when(dataDao.findCustomAttribute(uri))
                 .thenReturn(Optional.of(attribute));
 
