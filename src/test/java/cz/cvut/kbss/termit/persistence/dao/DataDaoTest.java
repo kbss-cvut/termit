@@ -35,6 +35,8 @@ import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -50,12 +52,15 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,6 +68,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -390,4 +396,161 @@ class DataDaoTest extends BaseDaoTestRunner {
                 CustomAttributeSpecifications.hasDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT))));
         assertEquals(List.of(pTwo), result);
     }
+
+    @Test
+    void findCustomAttributeUsageReturnsUsageOfRequestedAttributeWithSimpleSubject() {
+        // Subject of the custom attribute annotation is IRI
+
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("AttributeName", "en"), null);
+        attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        transactional(() -> em.persist(attribute));
+
+        final URI termIri = Generator.generateUri();
+        final URI context = Generator.generateUri();
+        final String value = "Custom attribute value";
+
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            final ValueFactory vf = repo.getValueFactory();
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                // term a skos:Concept
+                connection.add(
+                        vf.createIRI(termIri.toString()), // subject
+                        RDF.TYPE, // predicate
+                        SKOS.CONCEPT, // object
+                        vf.createIRI(context.toString()) // context
+                );
+                // term attribute value
+                connection.add(
+                        vf.createIRI(termIri.toString()), // subject
+                        vf.createIRI(attribute.getUri().toString()), // predicate
+                        vf.createLiteral(value), // object
+                        vf.createIRI(context.toString()) // context
+                );
+                connection.commit();
+            }
+        });
+
+        transactional(() -> {
+            final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+
+            assertEquals(1, result.getTotalElements());
+            final Statement statement = result.getContent().getFirst();
+            assertEquals(termIri.toString(), statement.getSubject().stringValue());
+            assertEquals(attribute.getUri().toString(), statement.getPredicate().stringValue());
+            assertEquals(value, statement.getObject().stringValue());
+        });
+    }
+
+    @Test
+    void findCustomAttributeUsageReturnsUsageOfRequestedAttributeWithTripleSubject() {
+        // subject of custom attribute is another triple
+
+        final URI relation = URI.create(SKOS.RELATED.stringValue());
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute", "en"), null);
+        attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.RDF.STATEMENT));
+        attribute.setAnnotatedRelationships(Set.of(relation));
+        transactional(() -> em.persist(attribute));
+
+        final URI termOne = Generator.generateUri();
+        final URI termTwo = Generator.generateUri();
+        final URI context = Generator.generateUri();
+        final String value = "Custom attribute value";
+
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            final ValueFactory vf = repo.getValueFactory();
+
+            // termOne skos:related termTwo
+            final Triple subjectTriple = vf.createTriple(
+                    vf.createIRI(termOne.toString()), // subject
+                    SKOS.RELATED, // predicate
+                    vf.createIRI(termTwo.toString()) // object
+            );
+
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                // triple attribute value
+                connection.add(subjectTriple, // subject (another triple)
+                        vf.createIRI(attribute.getUri().toString()), // predicate
+                        vf.createLiteral(value), // object
+                        vf.createIRI(context.toString()) // context
+                );
+                connection.commit();
+            }
+        });
+
+        transactional(() -> {
+            final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+
+            assertEquals(1, result.getTotalElements());
+            final Statement statement = result.getContent().getFirst();
+            assertInstanceOf(Triple.class, statement.getSubject());
+
+            final Triple resultTriple = (Triple) statement.getSubject();
+            assertEquals(termOne.toString(), resultTriple.getSubject().stringValue());
+            assertEquals(relation.toString(), resultTriple.getPredicate().stringValue());
+            assertEquals(termTwo.toString(), resultTriple.getObject().stringValue());
+
+            assertEquals(attribute.getUri().toString(), statement.getPredicate().stringValue());
+            assertEquals(value, statement.getObject().stringValue());
+        });
+    }
+
+    @Test
+    void findCustomAttributeUsageReturnsTotalElementsCountMatchingNumberOfUsagesOfRequestedAttribute() {
+        // Unrelated attribute has a single usage, attribute B has two usages
+        final CustomAttribute unrelated = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute A", "en"), null);
+        unrelated.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute B", "en"), null);
+        attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+
+        transactional(() -> {
+            em.persist(unrelated);
+            em.persist(attribute);
+        });
+
+        final URI termOne = Generator.generateUri();
+        final URI termTwo = Generator.generateUri();
+        final URI context = Generator.generateUri();
+
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            final ValueFactory vf = repo.getValueFactory();
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                // one usage of unrelated attribute
+                connection.add(
+                        vf.createIRI(termOne.toString()),
+                        vf.createIRI(unrelated.getUri().toString()),
+                        vf.createLiteral("A value"),
+                        vf.createIRI(context.toString())
+                );
+
+                // two usages of attribute
+                connection.add(
+                        vf.createIRI(termOne.toString()),
+                        vf.createIRI(attribute.getUri().toString()),
+                        vf.createLiteral("B value one"),
+                        vf.createIRI(context.toString())
+                );
+                connection.add(
+                        vf.createIRI(termTwo.toString()),
+                        vf.createIRI(attribute.getUri().toString()),
+                        vf.createLiteral("B value two"),
+                        vf.createIRI(context.toString())
+                );
+                connection.commit();
+            }
+        });
+
+        transactional(() -> {
+            final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            assertEquals(2, result.getTotalElements());
+        });
+    }
+
 }
