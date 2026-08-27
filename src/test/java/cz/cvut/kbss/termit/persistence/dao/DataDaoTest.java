@@ -647,4 +647,42 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertTrue(relatedStatementExists);
         });
     }
+
+    @Test
+    void isCustomAttributeUsedReturnsTrueWhenAttributeIsUsedAsPredicate() {
+        final URI attributeUri = Generator.generateUri();
+        final IRI subject = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
+        final Value object = Values.literal("Sample value");
+
+        withStatements(statement(subject, Values.iri(attributeUri.toString()), object, context));
+
+        final boolean result = sut.isCustomAttributeUsed(attributeUri);
+        assertTrue(result);
+    }
+
+    @Test
+    void isCustomAttributeUsedReturnsFalseWhenAttributeIsNotUsed() {
+        final URI attributeUri = Generator.generateUri();
+
+        final boolean result = sut.isCustomAttributeUsed(attributeUri);
+        assertFalse(result);
+    }
+
+    @Test
+    void isCustomAttributeUsedReturnsFalseWhenAttributeIsNotUsedAsPredicate() {
+        final URI attributeUri = Generator.generateUri();
+        final IRI subject = Values.iri(Generator.generateUri().toString());
+        final IRI attributeIri = Values.iri(attributeUri.toString());
+        final IRI predicate = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
+        final Value object = Values.literal("Sample value");
+
+        withStatements(statement(subject, predicate, object, context));
+        withStatements(statement(attributeIri, predicate, object, context));
+        withStatements(statement(subject, predicate, attributeIri, context));
+
+        final boolean result = sut.isCustomAttributeUsed(attributeUri);
+        assertFalse(result);
+    }
 }
