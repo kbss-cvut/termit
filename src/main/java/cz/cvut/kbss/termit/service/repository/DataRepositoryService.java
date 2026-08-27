@@ -232,7 +232,9 @@ public class DataRepositoryService {
                                                  .orElseThrow(() -> NotFoundException
                                                          .create(CustomAttribute.class, identifier));
 
+        LOG.debug("Removing all usage of custom attribute {}", identifier);
         dataDao.removeAllCustomAttributeUsages(attribute);
+        LOG.debug("Removing custom attribute {}", identifier);
         dataDao.removeCustomAttribute(attribute);
         // ensure the attribute is no longer used
         if (dataDao.isCustomAttributeUsed(identifier)) {
