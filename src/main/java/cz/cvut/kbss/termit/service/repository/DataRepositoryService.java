@@ -213,6 +213,14 @@ public class DataRepositoryService {
         return dataDao.findCustomAttributeUsage(identifier, pageable);
     }
 
+    /**
+     * Removes custom attribute identified by {@code identifier}.
+     * If usages exist, {@code force} needs to be enabled in order to remove the attribute and its usages.
+     *
+     * @param identifier the identifier of the {@link CustomAttribute}
+     * @param force whether to force removal of the attribute and its usages
+     * @throws ValidationException if attribute usage exists and {@code force} is {@code false}
+     */
     @Transactional
     public void removeCustomAttribute(URI identifier, boolean force) {
         final boolean hasUsage = findCustomAttributeUsage(identifier, Pageable.ofSize(1)).hasContent();
