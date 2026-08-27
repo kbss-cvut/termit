@@ -34,12 +34,16 @@ import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -61,6 +65,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -397,6 +402,24 @@ class DataDaoTest extends BaseDaoTestRunner {
         assertEquals(List.of(pTwo), result);
     }
 
+    private void withStatements(Statement... statements) {
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                Stream.of(statements).forEach(connection::add);
+                connection.commit();
+            }
+        });
+    }
+
+    private static Statement statement(Resource subject, IRI predicate, Value object, Resource context) {
+        return Values.getValueFactory().createStatement(
+                subject,
+                predicate,
+                object,
+                context);
+    }
+
     @Test
     void findCustomAttributeUsageReturnsUsageOfRequestedAttributeWithSimpleSubject() {
         // Subject of the custom attribute annotation is IRI
@@ -406,31 +429,23 @@ class DataDaoTest extends BaseDaoTestRunner {
         attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         transactional(() -> em.persist(attribute));
 
-        final URI termIri = Generator.generateUri();
-        final URI context = Generator.generateUri();
-        final String value = "Custom attribute value";
+        final IRI termIri = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
+        final Value value = Values.literal("Custom attribute value");
 
-        transactional(() -> {
-            final Repository repo = em.unwrap(Repository.class);
-            final ValueFactory vf = repo.getValueFactory();
-            try (final RepositoryConnection connection = repo.getConnection()) {
+        withStatements(
                 // term a skos:Concept
-                connection.add(
-                        vf.createIRI(termIri.toString()), // subject
-                        RDF.TYPE, // predicate
-                        SKOS.CONCEPT, // object
-                        vf.createIRI(context.toString()) // context
-                );
+                statement(termIri,
+                        RDF.TYPE,
+                        SKOS.CONCEPT,
+                        context),
+
                 // term attribute value
-                connection.add(
-                        vf.createIRI(termIri.toString()), // subject
-                        vf.createIRI(attribute.getUri().toString()), // predicate
-                        vf.createLiteral(value), // object
-                        vf.createIRI(context.toString()) // context
-                );
-                connection.commit();
-            }
-        });
+                statement(termIri,
+                        Values.iri(attribute.getUri().toString()),
+                        value,
+                        context)
+        );
 
         transactional(() -> {
             final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
@@ -439,7 +454,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Statement statement = result.getContent().getFirst();
             assertEquals(termIri.toString(), statement.getSubject().stringValue());
             assertEquals(attribute.getUri().toString(), statement.getPredicate().stringValue());
-            assertEquals(value, statement.getObject().stringValue());
+            assertEquals(value, statement.getObject());
         });
     }
 
@@ -454,32 +469,25 @@ class DataDaoTest extends BaseDaoTestRunner {
         attribute.setAnnotatedRelationships(Set.of(relation));
         transactional(() -> em.persist(attribute));
 
-        final URI termOne = Generator.generateUri();
-        final URI termTwo = Generator.generateUri();
-        final URI context = Generator.generateUri();
-        final String value = "Custom attribute value";
+        final IRI termOne = Values.iri(Generator.generateUri().toString());
+        final IRI termTwo = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
+        final Value value = Values.literal("Custom attribute value");
 
-        transactional(() -> {
-            final Repository repo = em.unwrap(Repository.class);
-            final ValueFactory vf = repo.getValueFactory();
+        // termOne skos:related termTwo
+        final Triple subjectTriple = Values.triple(
+                termOne,
+                SKOS.RELATED,
+                termTwo
+        );
 
-            // termOne skos:related termTwo
-            final Triple subjectTriple = vf.createTriple(
-                    vf.createIRI(termOne.toString()), // subject
-                    SKOS.RELATED, // predicate
-                    vf.createIRI(termTwo.toString()) // object
-            );
-
-            try (final RepositoryConnection connection = repo.getConnection()) {
+        withStatements(
                 // triple attribute value
-                connection.add(subjectTriple, // subject (another triple)
-                        vf.createIRI(attribute.getUri().toString()), // predicate
-                        vf.createLiteral(value), // object
-                        vf.createIRI(context.toString()) // context
-                );
-                connection.commit();
-            }
-        });
+                statement(subjectTriple,
+                        Values.iri(attribute.getUri().toString()),
+                        value,
+                        context)
+        );
 
         transactional(() -> {
             final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
@@ -489,12 +497,12 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertInstanceOf(Triple.class, statement.getSubject());
 
             final Triple resultTriple = (Triple) statement.getSubject();
-            assertEquals(termOne.toString(), resultTriple.getSubject().stringValue());
+            assertEquals(termOne, resultTriple.getSubject());
             assertEquals(relation.toString(), resultTriple.getPredicate().stringValue());
-            assertEquals(termTwo.toString(), resultTriple.getObject().stringValue());
+            assertEquals(termTwo, resultTriple.getObject());
 
             assertEquals(attribute.getUri().toString(), statement.getPredicate().stringValue());
-            assertEquals(value, statement.getObject().stringValue());
+            assertEquals(value, statement.getObject());
         });
     }
 
@@ -514,38 +522,29 @@ class DataDaoTest extends BaseDaoTestRunner {
             em.persist(attribute);
         });
 
-        final URI termOne = Generator.generateUri();
-        final URI termTwo = Generator.generateUri();
-        final URI context = Generator.generateUri();
+        final IRI termOne = Values.iri(Generator.generateUri().toString());
+        final IRI termTwo = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
 
-        transactional(() -> {
-            final Repository repo = em.unwrap(Repository.class);
-            final ValueFactory vf = repo.getValueFactory();
-            try (final RepositoryConnection connection = repo.getConnection()) {
+
+        withStatements(
                 // one usage of unrelated attribute
-                connection.add(
-                        vf.createIRI(termOne.toString()),
-                        vf.createIRI(unrelated.getUri().toString()),
-                        vf.createLiteral("A value"),
-                        vf.createIRI(context.toString())
-                );
+                statement(termOne,
+                        Values.iri(unrelated.getUri().toString()),
+                        Values.literal("unrelated value"),
+                        context),
 
                 // two usages of attribute
-                connection.add(
-                        vf.createIRI(termOne.toString()),
-                        vf.createIRI(attribute.getUri().toString()),
-                        vf.createLiteral("B value one"),
-                        vf.createIRI(context.toString())
-                );
-                connection.add(
-                        vf.createIRI(termTwo.toString()),
-                        vf.createIRI(attribute.getUri().toString()),
-                        vf.createLiteral("B value two"),
-                        vf.createIRI(context.toString())
-                );
-                connection.commit();
-            }
-        });
+                statement(termOne,
+                        Values.iri(attribute.getUri().toString()),
+                        Values.literal("B value one"),
+                        context),
+
+                statement(termTwo,
+                        Values.iri(attribute.getUri().toString()),
+                        Values.literal("B value two"),
+                        context)
+        );
 
         transactional(() -> {
             final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
@@ -553,4 +552,99 @@ class DataDaoTest extends BaseDaoTestRunner {
         });
     }
 
+    @Test
+    void removeAllCustomAttributeUsagesRemovesUsagesWithSimpleSubjectAndKeepsOtherStatements() {
+        // Subject of the custom attribute usage is a plain IRI
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute", "en"), null);
+        attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        attribute.setRange(URI.create(XSD.STRING));
+        transactional(() -> em.persist(attribute));
+
+        final IRI termIri = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
+        final Value value = Values.literal("Custom attribute value");
+
+        withStatements(
+                // term a skos:Concept
+                statement(
+                        termIri,
+                        RDF.TYPE,
+                        SKOS.CONCEPT,
+                        context
+                ),
+                // term attribute value
+                statement(
+                        termIri,
+                        Values.iri(attribute.getUri().toString()),
+                        value,
+                        context
+                )
+        );
+
+        transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
+
+        transactional(() -> {
+            final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            assertEquals(0, usage.getTotalElements());
+
+            boolean typeAssertionExists = em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x a ?type . } }", Boolean.class)
+              .setParameter("x", URI.create(termIri.stringValue()))
+              .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
+              .setParameter("ctx", URI.create(context.stringValue()))
+              .getSingleResult();
+            assertTrue(typeAssertionExists);
+        });
+    }
+
+    @Test
+    void removeAllCustomAttributeUsagesRemovesUsagesWithTripleSubjectAndKeepsOriginalAnnotatedRelationship() {
+        // Subject of the custom attribute usage is another triple
+        final URI relation = URI.create(SKOS.RELATED.stringValue());
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute", "en"), null);
+        attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.RDF.STATEMENT));
+        attribute.setRange(URI.create(XSD.STRING));
+        attribute.setAnnotatedRelationships(Set.of(relation));
+        transactional(() -> em.persist(attribute));
+
+        final IRI termOne = Values.iri(Generator.generateUri().toString());
+        final IRI termTwo = Values.iri(Generator.generateUri().toString());
+        final IRI context = Values.iri(Generator.generateUri().toString());
+        final Value value = Values.literal("Custom attribute value");
+
+        // termOne skos:related termTwo
+        final Statement subjectStatement = statement(
+                termOne,
+                Values.iri(relation.toString()),
+                termTwo,
+                context
+        );
+
+        withStatements(
+                subjectStatement,
+                // usage of the attribute on the relationship
+                statement(
+                        Values.triple(subjectStatement),
+                        Values.iri(attribute.getUri().toString()),
+                        value,
+                        context
+                )
+        );
+
+        transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
+
+        transactional(() -> {
+            final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            assertEquals(0, usage.getTotalElements());
+
+            final boolean relatedStatementExists = em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x ?related ?y . } }", Boolean.class)
+                                                     .setParameter("x", URI.create(termOne.stringValue()))
+                                                     .setParameter("y", URI.create(termTwo.stringValue()))
+                                                     .setParameter("related", relation)
+                                                     .setParameter("ctx", URI.create(context.stringValue()))
+                                                     .getSingleResult();
+            assertTrue(relatedStatementExists);
+        });
+    }
 }

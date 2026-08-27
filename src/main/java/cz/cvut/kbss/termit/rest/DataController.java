@@ -44,6 +44,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -159,6 +160,34 @@ public class DataController {
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Removes the custom attribute, " +
+                       "if it has usages, force parameter is required and the removal will remove all the usages as well.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Custom attribute was removed"),
+            @ApiResponse(responseCode = "400", description = "Force parameter is required for removal of attribute with usages"),
+            @ApiResponse(responseCode = "404", description = "Attribute not found")
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping(value = "/custom-attributes/{localName}")
+    public void removeCustomAttribute(@Parameter(
+                                                                           description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
+                                                                           example = "custom-attribute")
+                                                                   @PathVariable String localName,
+                                                                   @Parameter(
+                                                                           description = "Custom attribute identifier namespace",
+                                                                           example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
+                                                                   )
+                                                                   @RequestParam String namespace,
+                                                                   @Parameter(
+                                                                           description = "Indicates whether to force the removal of the attribute and its usages.",
+                                                                           example = "false"
+                                                                   )
+                                                                   @RequestParam boolean force) {
+        final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
+        dataService.removeCustomAttribute(identifier, force);
     }
 
     @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")

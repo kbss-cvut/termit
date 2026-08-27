@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Statement;
@@ -210,5 +211,20 @@ public class DataRepositoryService {
     @Transactional(readOnly = true)
     public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
         return dataDao.findCustomAttributeUsage(identifier, pageable);
+    }
+
+    @Transactional
+    public void removeCustomAttribute(URI identifier, boolean force) {
+        final boolean hasUsage = findCustomAttributeUsage(identifier, Pageable.ofSize(1)).hasContent();
+        if (hasUsage && !force) {
+            throw new ValidationException("Unable to remove a CustomAttribute with usages: " + Utils.uriToString(identifier));
+        }
+
+        final CustomAttribute attribute = dataDao.findCustomAttribute(identifier)
+                                                 .orElseThrow(() -> NotFoundException
+                                                         .create(CustomAttribute.class, identifier));
+
+        dataDao.removeAllCustomAttributeUsages(attribute);
+        dataDao.removeCustomAttribute(attribute);
     }
 }
