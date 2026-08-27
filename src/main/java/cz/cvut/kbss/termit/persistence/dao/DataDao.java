@@ -410,11 +410,14 @@ public class DataDao {
         }
     }
 
+    /**
+     * Removes all triples where the {@link CustomAttribute} is used as predicate
+     *
+     * @param attribute {@link CustomAttribute} whose usages should be removed
+     */
     public void removeAllCustomAttributeUsages(CustomAttribute attribute) {
         Objects.requireNonNull(attribute);
         Objects.requireNonNull(attribute.getUri());
-        Objects.requireNonNull(attribute.getDomain());
-        Objects.requireNonNull(attribute.getRange());
         try {
             em.createNativeQuery("""
             DELETE {
@@ -423,20 +426,11 @@ public class DataDao {
                 }
             } WHERE {
                 GRAPH ?context {
-                    {
-                        ?subject ?attribute ?object .
-                        FILTER((isLiteral(?object) && DATATYPE(?object) = ?range))
-                    } UNION {
-                        ?subject ?attribute ?object .
-                        ?object a ?range .
-                    }
-                    ?subject a ?domain .
+                    ?subject ?attribute ?object .
                 }
             }
         """)
               .setParameter("attribute", attribute.getUri())
-              .setParameter("domain", attribute.getDomain())
-              .setParameter("range", attribute.getRange())
               .executeUpdate();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to remove all custom attribute usages", e);
