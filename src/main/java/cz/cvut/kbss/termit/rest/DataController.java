@@ -21,18 +21,25 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import cz.cvut.kbss.termit.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -58,10 +65,12 @@ public class DataController {
     private static final Logger LOG = LoggerFactory.getLogger(DataController.class);
 
     private final DataRepositoryService dataService;
+    private final IdentifierResolver identifierResolver;
 
     @Autowired
-    public DataController(DataRepositoryService dataService) {
+    public DataController(DataRepositoryService dataService, IdentifierResolver identifierResolver) {
         this.dataService = dataService;
+        this.identifierResolver = identifierResolver;
     }
 
     @Operation(description = "Gets all unique RDF properties used by the data in the system.")
@@ -119,6 +128,37 @@ public class DataController {
                                       @RequestBody CustomAttribute update) {
         dataService.updateCustomAttribute(update);
         LOG.debug("Updated custom attribute {}.", update);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Retrieves the triples where the specified custom attribute is used as predicate.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "The list of triples with the custom attribute as predicate"),
+            @ApiResponse(responseCode = "404", description = "Attribute not found")
+    })
+    @GetMapping(value = "/custom-attributes/{localName}/usage", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<List<Statement>> getCustomAttributeUsage(@Parameter(
+                                                             description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
+                                                             example = "custom-attribute")
+                                                       @PathVariable String localName,
+                                                                    @Parameter(
+                                                               description = "Custom attribute identifier namespace",
+                                                               example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
+                                                       )
+                                                       @RequestParam String namespace,
+                                                                    @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                                                       @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+                                                                    @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                                                       @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
+        Pageable pageable = Constants.DEFAULT_PAGE_SPEC;
+        if (pageSize != null && pageNo != null) {
+            pageable = PageRequest.of(pageNo, pageSize);
+        }
+        final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
+        final Page<Statement> result = dataService.findCustomAttributeUsage(identifier, pageable);
+        return ResponseEntity.ok()
+                .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
+                .body(result.getContent());
     }
 
     @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")

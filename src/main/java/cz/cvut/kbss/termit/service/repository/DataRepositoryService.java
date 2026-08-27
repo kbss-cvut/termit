@@ -28,12 +28,14 @@ import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -196,5 +198,17 @@ public class DataRepositoryService {
     @Transactional(readOnly = true)
     public Optional<String> getLabel(URI id, @Nullable String language) {
         return dataDao.getLabel(id, language);
+    }
+
+    /**
+     * Finds statements where the specified custom attribute is used as a predicate.
+     *
+     * @param identifier Custom attribute identifier
+     * @param pageable {@link Pageable}
+     * @return Page of RDF statements
+     */
+    @Transactional(readOnly = true)
+    public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
+        return dataDao.findCustomAttributeUsage(identifier, pageable);
     }
 }

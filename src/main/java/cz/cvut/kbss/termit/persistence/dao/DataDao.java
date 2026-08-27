@@ -42,14 +42,24 @@ import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import jakarta.annotation.Nullable;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.io.ByteArrayOutputStream;
@@ -315,6 +325,88 @@ public class DataDao {
                         quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
             });
             con.commit();
+        }
+    }
+
+    private int countCustomAttributeUsage(RepositoryConnection con, String whereQuery, IRI predicate) {
+        final TupleQuery countQuery = con.prepareTupleQuery("SELECT (COUNT(*) AS ?count) " + whereQuery);
+
+        countQuery.setBinding("predicate", predicate);
+        countQuery.setIncludeInferred(false);
+
+        try (TupleQueryResult result = countQuery.evaluate()) {
+            final BindingSet bindings = result.next();
+            return ((Literal) bindings.getValue("count")).intValue();
+        }
+    }
+
+    private List<Statement> findCustomAttributeUsage(RepositoryConnection con, String whereQuery, IRI predicate, long offset, int resultLimit) {
+        final TupleQuery pageQuery = con.prepareTupleQuery("SELECT ?subject ?predicate ?object ?context "+
+                whereQuery +
+                "LIMIT  " + resultLimit +
+                " OFFSET " + offset);
+
+        pageQuery.setBinding("predicate", predicate);
+        pageQuery.setIncludeInferred(false);
+
+        final List<Statement> statements = new ArrayList<>(resultLimit);
+
+        try (TupleQueryResult result = pageQuery.evaluate()) {
+            while (result.hasNext()) {
+                final BindingSet bindings = result.next();
+
+                final Resource subject = (Resource) bindings.getValue("subject");
+                final IRI statementPredicate = (IRI) bindings.getValue("predicate");
+                final Value object = bindings.getValue("object");
+                final Resource context = (Resource) bindings.getValue("context");
+
+                statements.add(Values.getValueFactory().createStatement(
+                        subject,
+                        statementPredicate,
+                        object,
+                        context
+                ));
+            }
+        }
+
+        return statements;
+    }
+
+    /**
+     * Finds statements where the specified custom attribute is used as a predicate.
+     *
+     * @param identifier Custom attribute identifier
+     * @param pageable {@link Pageable}
+     * @return Page of RDF statements
+     */
+    public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
+        Objects.requireNonNull(identifier);
+        Objects.requireNonNull(pageable);
+
+        final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        final IRI predicate = Values.iri(identifier.toString());
+
+        final String whereQuery = """
+                WHERE {
+                    GRAPH ?context {
+                        ?subject ?predicate ?object .
+                    }
+                }
+                """;
+
+        try (RepositoryConnection con = repo.getConnection()) {
+            final int totalCount = countCustomAttributeUsage(con, whereQuery, predicate);
+
+            if (totalCount == 0 || pageable.getOffset() >= totalCount) {
+                return new PageImpl<>(List.of(), pageable, totalCount);
+            }
+
+            int maxResults = Math.min(totalCount, pageable.getPageSize());
+            final List<Statement> statements = findCustomAttributeUsage(con, whereQuery, predicate, pageable.getOffset(), maxResults);
+
+            return new PageImpl<>(statements, pageable, totalCount);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
         }
     }
 }
