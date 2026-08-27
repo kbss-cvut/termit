@@ -406,7 +406,49 @@ public class DataDao {
 
             return new PageImpl<>(statements, pageable, totalCount);
         } catch (RuntimeException e) {
-            throw new PersistenceException(e);
+            throw new PersistenceException("Failed to find custom attribute usage", e);
+        }
+    }
+
+    public void removeAllCustomAttributeUsages(CustomAttribute attribute) {
+        Objects.requireNonNull(attribute);
+        Objects.requireNonNull(attribute.getUri());
+        Objects.requireNonNull(attribute.getDomain());
+        Objects.requireNonNull(attribute.getRange());
+        try {
+            em.createNativeQuery("""
+            DELETE {
+                GRAPH ?context {
+                    ?subject ?attribute ?object .
+                }
+            } WHERE {
+                GRAPH ?context {
+                    {
+                        ?subject ?attribute ?object .
+                        FILTER((isLiteral(?object) && DATATYPE(?object) = ?range))
+                    } UNION {
+                        ?subject ?attribute ?object .
+                        ?object a ?range .
+                    }
+                    ?subject a ?domain .
+                }
+            }
+        """)
+              .setParameter("attribute", attribute.getUri())
+              .setParameter("domain", attribute.getDomain())
+              .setParameter("range", attribute.getRange())
+              .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove all custom attribute usages", e);
+        }
+    }
+
+    public void removeCustomAttribute(CustomAttribute attribute) {
+        Objects.requireNonNull(attribute);
+        try {
+            em.remove(attribute);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove custom attribute", e);
         }
     }
 }
