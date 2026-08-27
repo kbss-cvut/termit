@@ -190,6 +190,7 @@ public class DataController {
                                       @RequestParam boolean force) {
         final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
         dataService.removeCustomAttribute(identifier, force);
+        LOG.debug("Removed custom attribute: {}", identifier);
     }
 
     @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")
