@@ -139,18 +139,18 @@ public class DataController {
     })
     @GetMapping(value = "/custom-attributes/{localName}/usage", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<Statement>> getCustomAttributeUsage(@Parameter(
-                                                             description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
-                                                             example = "custom-attribute")
-                                                       @PathVariable String localName,
-                                                                    @Parameter(
-                                                               description = "Custom attribute identifier namespace",
-                                                               example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
-                                                       )
-                                                       @RequestParam String namespace,
-                                                                    @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-                                                       @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-                                                                    @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-                                                       @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
+                                                                           description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
+                                                                           example = "custom-attribute")
+                                                                   @PathVariable String localName,
+                                                                   @Parameter(
+                                                                           description = "Custom attribute identifier namespace",
+                                                                           example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
+                                                                   )
+                                                                   @RequestParam String namespace,
+                                                                   @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                                                                   @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+                                                                   @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                                                                   @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
         Pageable pageable = Constants.DEFAULT_PAGE_SPEC;
         if (pageSize != null && pageNo != null) {
             pageable = PageRequest.of(pageNo, pageSize);
@@ -173,19 +173,18 @@ public class DataController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(value = "/custom-attributes/{localName}")
     public void removeCustomAttribute(@Parameter(
-                                                                           description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
-                                                                           example = "custom-attribute")
-                                                                   @PathVariable String localName,
-                                                                   @Parameter(
-                                                                           description = "Custom attribute identifier namespace",
-                                                                           example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
-                                                                   )
-                                                                   @RequestParam String namespace,
-                                                                   @Parameter(
-                                                                           description = "Indicates whether to force the removal of the attribute and its usages.",
-                                                                           example = "false"
-                                                                   )
-                                                                   @RequestParam boolean force) {
+                                              description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
+                                              example = "custom-attribute")
+                                      @PathVariable String localName,
+                                      @Parameter(
+                                              description = "Custom attribute identifier namespace",
+                                              example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
+                                      )
+                                      @RequestParam String namespace,
+                                      @Parameter(
+                                              description = "Indicates whether to force the removal of the attribute and its usages."
+                                      )
+                                      @RequestParam boolean force) {
         final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
         dataService.removeCustomAttribute(identifier, force);
     }
