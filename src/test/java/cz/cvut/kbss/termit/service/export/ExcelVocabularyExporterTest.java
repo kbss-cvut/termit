@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -42,8 +43,10 @@ import org.springframework.http.MediaType;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.oneOf;
@@ -54,6 +57,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -202,5 +207,27 @@ class ExcelVocabularyExporterTest {
         terms.get(1).setDefinition(null);
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
         assertDoesNotThrow(() -> sut.exportVocabulary(vocabulary, exportConfig()));
+    }
+
+    @Test
+    void exportVocabularyConsolidatesTermsParentsToIncludeExternalParents() {
+        when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
+        final String[] languages = {"en", "cs"};
+        final TermInfo externalParent = Generator.generateTermInfoWithId();
+        final List<Term> terms = Stream.of(Generator.generateMultiLingualTerm(languages),
+                Generator.generateMultiLingualTerm(languages)).map(Mockito::spy).toList();
+        terms.forEach(t -> t.setParentTerms(Set.of(externalParent)));
+
+        when(termService.findAllFull(vocabulary)).thenReturn(terms);
+        sut.exportVocabulary(vocabulary, exportConfig());
+
+        verify(terms.get(0), atLeastOnce()).consolidateParents();
+        verify(terms.get(1), atLeastOnce()).consolidateParents();
+
+        verify(terms.get(0), never()).splitExternalAndInternalParents();
+        verify(terms.get(1), never()).splitExternalAndInternalParents();
+
+        assertTrue(terms.get(0).getParentTerms().contains(externalParent));
+        assertTrue(terms.get(1).getParentTerms().contains(externalParent));
     }
 }
