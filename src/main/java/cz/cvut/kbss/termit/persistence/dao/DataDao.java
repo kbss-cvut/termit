@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
+import cz.cvut.kbss.jopa.model.Cache;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
@@ -411,6 +412,30 @@ public class DataDao {
     }
 
     /**
+     * Finds contexts in which the custom attribute is used
+     *
+     * @param customAttribute the custom attribute to look up
+     * @return contexts where the attribute URI is used as a predicate
+     */
+    public List<URI> findCustomAttributeUsageContexts(CustomAttribute customAttribute) {
+        Objects.requireNonNull(customAttribute);
+        Objects.requireNonNull(customAttribute.getUri());
+        try {
+            return em.createNativeQuery("""
+                SELECT DISTINCT ?context WHERE {
+                    GRAPH ?context {
+                        ?subject ?attribute ?object .
+                    }
+                }
+            """, URI.class)
+                     .setParameter("attribute", customAttribute.getUri())
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find custom attribute usage contexts", e);
+        }
+    }
+
+    /**
      * Removes all triples where the {@link CustomAttribute} is used as predicate
      *
      * @param attribute {@link CustomAttribute} whose usages should be removed
@@ -461,5 +486,15 @@ public class DataDao {
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to remove custom attribute", e);
         }
+    }
+
+    /**
+     * Evicts {@link cz.cvut.kbss.jopa.model.EntityManagerFactory} cache for each specified context.
+     *
+     * @param contexts context to evict from cache
+     */
+    public void evictCacheForContexts(List<URI> contexts) {
+        final Cache emfCache = em.getEntityManagerFactory().getCache();
+        contexts.forEach(emfCache::evict);
     }
 }
