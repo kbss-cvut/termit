@@ -22,6 +22,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -165,5 +166,24 @@ class DataRepositoryServiceTest {
 
         verify(dataDao).removeAllCustomAttributeUsages(attribute);
         verify(dataDao).removeCustomAttribute(attribute);
+    }
+
+    @Test
+    void removeCustomAttributeEvictsCacheForAffectedContexts() {
+        final List<URI> affectedContexts = List.of(Generator.generateUri(), Generator.generateUri());
+        final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
+
+        when(dataDao.isCustomAttributeUsed(uri)).thenReturn(true)
+                                                .thenReturn(false);
+        when(dataDao.findCustomAttribute(uri))
+                .thenReturn(Optional.of(attribute));
+        when(dataDao.findCustomAttributeUsageContexts(attribute))
+                .thenReturn(affectedContexts);
+
+        sut.removeCustomAttribute(uri, true);
+
+        verify(dataDao).evictCacheForContexts(affectedContexts);
     }
 }

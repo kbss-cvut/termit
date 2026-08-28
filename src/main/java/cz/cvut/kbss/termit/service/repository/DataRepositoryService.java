@@ -44,6 +44,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DataRepositoryService {
@@ -232,6 +233,8 @@ public class DataRepositoryService {
                                                  .orElseThrow(() -> NotFoundException
                                                          .create(CustomAttribute.class, identifier));
 
+        final List<URI> affectedContexts = dataDao.findCustomAttributeUsageContexts(attribute);
+
         LOG.debug("Removing all usage of custom attribute {}", identifier);
         dataDao.removeAllCustomAttributeUsages(attribute);
         LOG.debug("Removing custom attribute {}", identifier);
@@ -240,5 +243,11 @@ public class DataRepositoryService {
         if (dataDao.isCustomAttributeUsed(identifier)) {
             throw new ValidationException("Failed to remove a CustomAttribute with usages: " + Utils.uriToString(identifier));
         }
+
+        LOG.atDebug()
+                .addArgument(() -> affectedContexts.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
+                .log("Evicting cache for contexts affected by custom attribute removal: {}");
+
+        dataDao.evictCacheForContexts(affectedContexts);
     }
 }
