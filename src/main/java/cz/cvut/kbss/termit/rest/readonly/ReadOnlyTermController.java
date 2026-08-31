@@ -138,13 +138,16 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = "Whether to include terms from imported vocabularies.")
             @RequestParam(name = "includeImported", required = false) boolean includeImported,
             @Parameter(description = "Whether to include terms from related vocabularies.")
-            @RequestParam(name = "includeRelated", required = false) boolean includeRelated
+            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
+            @Parameter(
+                    description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
+            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms
     ) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         final TermSelectionParams params = new TermSelectionParams(
                 false, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)
         );
-        return termService.findAllRoots(vocabulary, params);
+        return termService.findAllRoots(vocabulary, params, includeTerms);
     }
 
     @Operation(
