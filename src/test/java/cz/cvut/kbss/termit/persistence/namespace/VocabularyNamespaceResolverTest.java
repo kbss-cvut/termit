@@ -62,4 +62,14 @@ class VocabularyNamespaceResolverTest {
         sut.setVocabularyPreferredNamespace(vocabulary, null);
         assertEquals(vocabulary.getUri() + "/term/", vocabulary.getPreferredNamespaceUri());
     }
+
+    @Test
+    void generateNamespaceGeneratesNamespaceUsingSpecifiedVocabularyIriAndConfiguredSeparator() {
+        final Configuration config = new Configuration();
+        config.getNamespace().getTerm().setSeparator("/term");
+        final String vocabularyUri = Generator.generateUri().toString();
+        final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
+
+        assertEquals(vocabularyUri + "/term/", sut.generateNamespace(vocabularyUri));
+    }
 }
