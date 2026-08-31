@@ -94,10 +94,11 @@ public class ReadOnlyTermService {
      *
      * @param vocabulary      Vocabulary whose root terms will be returned. A reference is sufficient
      * @param selectionParams Term selection parameters
+     * @param includeTerms    Identifiers of terms which should be included in the result
      * @return List of root terms
      */
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams) {
-        return termService.findAllRoots(vocabulary, selectionParams, Collections.emptyList());
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams, List<URI> includeTerms) {
+        return termService.findAllRoots(vocabulary, selectionParams, includeTerms);
     }
 
     public ReadOnlyTerm findRequired(URI id) {
