@@ -152,6 +152,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyVocabularyImports(instance, original);
         // ACL reference does not change, but it can be missing in case the instance arrived from client
         instance.setAcl(original.getAcl());
+        // Preferred namespace URI must not change, it would break term IRI resolution
+        instance.setPreferredNamespaceUri(original.getPreferredNamespaceUri());
         // Client does not get root terms, restore them from the original instance
         instance.setRootTerms(original.getRootTerms());
         SnapshotProvider.verifySnapshotNotModified(original);
