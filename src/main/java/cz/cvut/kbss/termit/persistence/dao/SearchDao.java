@@ -144,9 +144,7 @@ public class SearchDao {
 
         // totalLength = every token is appended
         // lastTokenLength = the last token is appended once more
-        // "() AND (() OR (*))".length = 18
-        int additionalCharCount = "() OR (*)".length() + (tokens.length - 1) * "() AND ()".length();
-        StringBuilder builder = new StringBuilder(totalLength + lastTokenLength + additionalCharCount);
+        StringBuilder builder = new StringBuilder(totalLength + lastTokenLength);
 
         if (tokens.length == 1) {
             return buildLuceneQueryWithWildcard(tokens[0], builder).toString();
