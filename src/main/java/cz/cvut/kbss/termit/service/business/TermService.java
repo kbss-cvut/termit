@@ -167,11 +167,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         } else {
             final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {
-                if (includeFromOther) {
-                    final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
-                    return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec());
-                }
-                return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec());
+                return findAllFlat(vocabulary, List.of(), selectionParams);
             } else {
                 if (includeFromOther) {
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
@@ -760,5 +756,24 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public boolean exists(URI termId) {
         return repositoryService.exists(termId);
+    }
+
+    /**
+     * Finds all terms from the given vocabulary.
+     *
+     * @param vocabulary the vocabulary from which terms should be returned
+     * @param includeTerms terms that should always be included in the result, no matter on which page
+     * @param selectionParams term search parameters
+     * @return flattened list of terms
+     */
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
+        if (selectionParams.full()) {
+            throw new IllegalArgumentException("Full term representation is not supported");
+        }
+        if (selectionParams.includeImported() || selectionParams.includeRelated()) {
+            final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
+            return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec(), includeTerms);
+        }
+        return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec(), includeTerms);
     }
 }

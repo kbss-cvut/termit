@@ -424,6 +424,27 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy and returns them
+     * as a flat list of DTOs.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @param pageSpec   Page specification
+     * @param includeTerms Identifier of terms that should be additionally included in the result
+     * @return Flat list of vocabulary term DTOs
+     * @see #findAllFlat(Pageable, Collection)
+     */
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            final List<FlatTermDto> result =  findAllFlatQuery(vocabulary, pageSpec).getResultList();
+            loadIncludedTerms(includeTerms).forEach(dto -> result.add(new FlatTermDto(dto)));
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
      * that have label and definition in the instance language.
      * <p>
@@ -1040,6 +1061,27 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+
+    /**
+     * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
+     * <p>
+     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
+     *
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @param includeTerms Identifier of terms that should be additionally included in the result
+     * @return Flat list of matching terms
+     * @see #findAllFlatInVocabularies(String, Collection, Pageable)
+     */
+    public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies,
+                                                       Pageable pageSpec, Collection<URI> includeTerms) {
+        List<FlatTermDto> result = findAllFlatInVocabularies(vocabularies, pageSpec);
+        if (includeTerms != null && !includeTerms.isEmpty()) {
+            loadIncludedTerms(includeTerms).forEach(dto -> result.add(new FlatTermDto(dto)));
+        }
+        return result;
     }
 
     /**

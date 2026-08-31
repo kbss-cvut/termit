@@ -316,6 +316,23 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Gets all terms from vocabulary, regardless of their position in the term hierarchy and returns them in a flat
+     * structure.
+     * <p>
+     * This returns all terms contained in vocabulary's glossary.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
+     * @param pageSpec   Page specifying result number and position
+     * @return List of term DTOs ordered by label in a flat structure
+     * @param includeTerms Identifier of terms that should be additionally included in the result
+     * @see #findAllFlat(Vocabulary, Pageable)
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
+        return termDao.findAllFlat(vocabulary, pageSpec, includeTerms);
+    }
+
+    /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
      * that have label and definition in the instance language.
      * <p>
@@ -502,6 +519,20 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
         return termDao.findAllFlatInVocabularies(vocabularies, pageSpec);
+    }
+
+    /**
+     * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
+     * <p>
+     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
+     *
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return Flat list of matching terms
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
+        return termDao.findAllFlatInVocabularies(vocabularies, pageSpec, includeTerms);
     }
 
     /**
