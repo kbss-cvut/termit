@@ -38,6 +38,8 @@ public class VocabularyDto extends Vocabulary {
         setLabel(source.getLabel());
         setDescription(source.getDescription());
         setPrimaryLanguage(source.getPrimaryLanguage());
+        setPreferredNamespaceUri(source.getPreferredNamespaceUri());
+        setPreferredNamespacePrefix(source.getPreferredNamespacePrefix());
         setDocument(source.getDocument());
         setImportedVocabularies(source.getImportedVocabularies());
         setRelatedVocabularies(source.getRelatedVocabularies());
