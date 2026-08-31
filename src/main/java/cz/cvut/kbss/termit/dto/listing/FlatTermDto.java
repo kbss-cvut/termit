@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,11 +39,19 @@ public class FlatTermDto extends AbstractTerm {
     public FlatTermDto() {}
 
     public FlatTermDto(Term other) {
+        this(other, other.getParentTerms());
+    }
+
+    public FlatTermDto(TermDto dto) {
+        this(dto, dto.getParentTerms());
+    }
+
+    public FlatTermDto(AbstractTerm other, Collection<? extends HasIdentifier> parents) {
         super(other);
-        if (other.getParentTerms() != null) {
-            setParentTerms(other.getParentTerms().stream()
-                .map(HasIdentifier::getUri)
-                .collect(Collectors.toSet()));
+        if (parents != null) {
+            setParentTerms(parents.stream()
+                                  .map(HasIdentifier::getUri)
+                                  .collect(Collectors.toSet()));
         }
     }
 
