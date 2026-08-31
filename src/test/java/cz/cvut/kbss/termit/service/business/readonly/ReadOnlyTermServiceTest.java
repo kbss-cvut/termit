@@ -98,7 +98,7 @@ class ReadOnlyTermServiceTest {
         final TermSelectionParams params = new TermSelectionParams(
                 false, false, false, false, pageSpec
         );
-        final List<TermDto> result = sut.findAllRoots(vocabulary, params);
+        final List<TermDto> result = sut.findAllRoots(vocabulary, params, List.of());
 
         assertEquals(terms, result);
         verify(termService).findAllRoots(vocabulary, params, Collections.emptyList());
@@ -115,7 +115,7 @@ class ReadOnlyTermServiceTest {
         final TermSelectionParams params = new TermSelectionParams(
                 false, false, true, true, pageSpec
         );
-        final List<TermDto> result = sut.findAllRoots(vocabulary, params);
+        final List<TermDto> result = sut.findAllRoots(vocabulary, params, List.of());
 
         assertEquals(terms, result);
         verify(termService).findAllRoots(vocabulary, params, Collections.emptyList());
