@@ -37,7 +37,19 @@ public class VocabularyNamespaceResolver {
     public String resolveNamespace(@Nonnull URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return vocabularyDao.getPreferredNamespace(vocabularyUri)
-                            .orElseGet(() -> vocabularyUri + namespaceConfig.getSeparator());
+                            .orElseGet(() -> generateNamespace(vocabularyUri.toString()));
+    }
+
+    /**
+     * Generates vocabulary namespace using the specified identifier and the configured term namespace separator.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Generated namespace
+     */
+    @Nonnull
+    public String generateNamespace(@Nonnull String vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        return vocabularyUri + IdentifierResolver.ensureNamespaceSeparatorTermination(namespaceConfig.getSeparator());
     }
 
     /**
@@ -58,7 +70,7 @@ public class VocabularyNamespaceResolver {
         if (Utils.isBlank(vocabulary.getPreferredNamespaceUri())) {
             String configuredSep = namespaceConfig.getSeparator();
             vocabulary.setPreferredNamespaceUri(IdentifierResolver.ensureNamespaceSeparatorTermination(
-                                                        vocabulary.getUri() + configuredSep));
+                    vocabulary.getUri() + configuredSep));
         }
     }
 
