@@ -161,7 +161,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
-        assertEquals(result.getUri() + config.getNamespace().getTerm().getSeparator() + "/", result.getPreferredNamespaceUri());
+        assertEquals(result.getUri() + config.getNamespace().getTerm().getSeparator() + "/",
+                     result.getPreferredNamespaceUri());
     }
 
     @Test
@@ -477,5 +478,22 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
         assertEquals(expected, result.getLabel());
+    }
+
+    @Test
+    void updateEnsuresPreferredNamespaceUriIsPreserved() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final String namespace = vocabulary.getUri() + "/";
+        vocabulary.setPreferredNamespaceUri(namespace);
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final Vocabulary update = new Vocabulary(vocabulary.getUri());
+        setPrimaryLabel(update, vocabulary.getPrimaryLabel());
+        update.setPreferredNamespaceUri("http://some-diferent-uri/");
+
+        transactional(() -> sut.update(update));
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertEquals(namespace, result.getPreferredNamespaceUri());
     }
 }
