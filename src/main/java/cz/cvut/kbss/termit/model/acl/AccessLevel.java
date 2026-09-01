@@ -34,23 +34,23 @@ public enum AccessLevel {
     /**
      * The most restricted access level. The asset is not even visible to the user.
      */
-    @Individual(iri = Vocabulary.s_i_zadna)
-    NONE(Vocabulary.s_i_zadna),
+    @Individual(iri = Vocabulary.s_i_none)
+    NONE(Vocabulary.s_i_none),
     /**
      * Read access to an asset. May include exporting, commenting, or snapshot display.
      */
-    @Individual(iri = Vocabulary.s_i_cteni)
-    READ(Vocabulary.s_i_cteni, NONE),
+    @Individual(iri = Vocabulary.s_i_read)
+    READ(Vocabulary.s_i_read, NONE),
     /**
      * Write access to an asset. The user can edit the asset.
      */
-    @Individual(iri = Vocabulary.s_i_zapis)
-    WRITE(Vocabulary.s_i_zapis, NONE, READ),
+    @Individual(iri = Vocabulary.s_i_write)
+    WRITE(Vocabulary.s_i_write, NONE, READ),
     /**
      * User can edit or remove an asset and manage access of other users/user groups to it.
      */
-    @Individual(iri = Vocabulary.s_i_sprava)
-    SECURITY(Vocabulary.s_i_sprava, NONE, READ, WRITE);
+    @Individual(iri = Vocabulary.s_i_security)
+    SECURITY(Vocabulary.s_i_security, NONE, READ, WRITE);
 
     private final String iri;
 

@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -12,15 +13,15 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_osobni_pristupovy_token)
+@OWLClass(iri = Vocabulary.s_c_personal_access_token)
 public class PersonalAccessTokenDto implements HasIdentifier {
     @Id
     private URI uri;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    @OWLDataProperty(iri = DC.Terms.CREATED)
     private Instant created;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_expiration_date)
     private LocalDate expirationDate;
 
     @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)

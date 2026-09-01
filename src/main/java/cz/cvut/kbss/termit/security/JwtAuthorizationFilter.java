@@ -17,11 +17,11 @@
  */
 package cz.cvut.kbss.termit.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.LanguageController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import jakarta.annotation.Nonnull;
@@ -39,6 +39,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -103,8 +104,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private Optional<TermItUserDetails> authenticate(String token) {
         final Authentication authentication = getAuthenticationManager().authenticate(new BearerTokenAuthenticationToken(token));
 
-        return Optional.ofNullable(authentication)
-                .map(SecurityUtils::extractUserDetails);
+        return Optional.of(authentication).map(SecurityUtils::extractUserDetails);
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
@@ -116,7 +116,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private void refreshToken(String authToken, HttpServletResponse response) {
         final String newToken = jwtUtils.refreshToken(authToken);
-        response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + newToken);
+        RestUtils.setAuthHeader(response, newToken);
     }
 
     /**

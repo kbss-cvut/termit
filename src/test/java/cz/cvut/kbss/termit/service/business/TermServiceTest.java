@@ -18,16 +18,21 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
@@ -43,12 +48,14 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.commons.lang3.function.TriConsumer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -82,6 +89,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.eq;
@@ -124,10 +132,21 @@ class TermServiceTest {
     @Spy
     private Configuration configuration = new Configuration();
 
+    @Spy
+    private DtoMapper dtoMapper = new DtoMapperImpl();
+
+    @Mock
+    private TermAuthorizationService termAuthorizationService;
+
     @InjectMocks
     private TermService sut;
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+    @BeforeEach
+    void setUp() {
+        dtoMapper.setConfig(configuration);
+    }
 
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
@@ -165,7 +184,9 @@ class TermServiceTest {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         when(termRepositoryService.findAllRoots(eq(vocabulary), eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
                 .thenReturn(terms);
-        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<TermDto> result = sut.findAllRoots(vocabulary, new TermSelectionParams(
+                false, false, false, false, Constants.DEFAULT_PAGE_SPEC), Collections.emptyList()
+        );
         assertEquals(terms, result);
         verify(termRepositoryService).findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
     }
@@ -186,7 +207,7 @@ class TermServiceTest {
         final List<TermOccurrences> occurrences = Collections
                 .singletonList(
                         new TermOccurrences(term.getUri(), Generator.generateUri(), "test", BigInteger.valueOf(125L),
-                                            cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
+                                            cz.cvut.kbss.termit.util.Vocabulary.s_c_file_term_occurrence, true));
         when(termOccurrenceRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(occurrences, result);
@@ -250,10 +271,10 @@ class TermServiceTest {
     void findAllCallsFindAllInRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         final String searchString = "test";
-        when(termRepositoryService.findAll(eq(searchString), any(Pageable.class))).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
+        when(termRepositoryService.findAll(eq(searchString), any(Pageable.class), anyCollection())).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString, Constants.DEFAULT_PAGE_SPEC, Set.of());
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString, Constants.DEFAULT_PAGE_SPEC);
+        verify(termRepositoryService).findAll(searchString, Constants.DEFAULT_PAGE_SPEC, Set.of());
     }
 
     @Test
@@ -266,16 +287,27 @@ class TermServiceTest {
     }
 
     @Test
-    void findAllRootsIncludingImportsRetrievesRootTermsUsingRepositoryService() {
+    void findAllRootsWithIncludesRetrievesRootTermsUsingRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService
-                     .findAllRootsIncludingImported(eq(vocabulary), eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
+
+        final Vocabulary importedVocab = Generator.generateVocabularyWithId();
+        final Vocabulary relatedVocab = Generator.generateVocabularyWithId();
+        vocabulary.setRelatedVocabularies(Set.of(relatedVocab.getUri()));
+
+        when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary))
+                .thenReturn(Collections.singleton(importedVocab.getUri()));
+
+        when(termRepositoryService.findAllRootsInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
                 .thenReturn(terms);
-        final List<TermDto> result = sut.findAllRootsIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC,
-                                                                       Collections.emptyList());
+
+        final List<TermDto> result = sut.findAllRoots(
+                vocabulary, new TermSelectionParams(false, false, true, true, Constants.DEFAULT_PAGE_SPEC), Collections.emptyList()
+        );
+
         assertEquals(terms, result);
-        verify(termRepositoryService).findAllRootsIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC,
-                                                                    Collections.emptyList());
+
+        final Set<URI> expectedVocabularies = Set.of(vocabulary.getUri(), importedVocab.getUri(), relatedVocab.getUri());
+        verify(termRepositoryService).findAllRootsInVocabularies(expectedVocabularies, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
     }
 
     @Test
@@ -501,10 +533,10 @@ class TermServiceTest {
                                                 .map(uri -> new RdfsResource(uri, MultilingualString.create(
                                                         "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
                                                                              null,
-                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
-        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
         assertThat(term.getSubTerms().size(), lessThan(Generator.TERM_STATES.length));
         final Iterator<TermInfo> it = term.getSubTerms().iterator();
         int i = 0;
@@ -524,10 +556,10 @@ class TermServiceTest {
                                                 .map(uri -> new RdfsResource(uri, MultilingualString.create(
                                                         "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
                                                                              null,
-                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
-        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
         when(languageService.getTermStates()).thenReturn(states);
         assertThrows(InvalidTermStateException.class, () -> sut.setState(term, terminalState.getUri()));
         verify(termRepositoryService, never()).setState(eq(term), any(URI.class));
@@ -630,7 +662,7 @@ class TermServiceTest {
         final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0],
                                                            MultilingualString.create("Initial", Environment.LANGUAGE),
                                                            null,
-                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
+                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_initial_term_state);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(initialState));
 
         sut.persistRoot(toPersist, vocabulary);
@@ -645,7 +677,7 @@ class TermServiceTest {
         final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0],
                                                            MultilingualString.create("Initial", Environment.LANGUAGE),
                                                            null,
-                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
+                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_initial_term_state);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(initialState));
 
         sut.persistChild(toPersist, parent);
@@ -661,10 +693,10 @@ class TermServiceTest {
                                                 .map(uri -> new RdfsResource(uri, MultilingualString.create(
                                                         "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
                                                                              null,
-                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
-        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state);
         assertThat(term.getSubTerms().size(), lessThan(Generator.TERM_STATES.length));
         final Iterator<TermInfo> it = term.getSubTerms().iterator();
         int i = 0;
@@ -691,24 +723,112 @@ class TermServiceTest {
         verifier.accept(termRepositoryService, vocabulary);
     }
 
+    @Test
+    void findWithAllAncestorsReturnsTermsWithAncestorsResolvedByRepositoryService() {
+        final TermInfoWithParents t1 = new TermInfoWithParents();
+        final TermInfoWithParents t2 = new TermInfoWithParents();
+        t1.setUri(Generator.generateUri());
+        t2.setUri(Generator.generateUri());
+
+        final Set<URI> termUris = Set.of(t1.getUri(), t2.getUri());
+        when(termRepositoryService.findWithAllAncestors(termUris)).thenReturn(Set.of(t1, t2));
+
+        final Set<TermInfoWithParents> result = sut.findWithAllAncestors(termUris);
+
+        assertEquals(Set.of(t1, t2), result);
+        verify(termRepositoryService).findWithAllAncestors(termUris);
+    }
+
+    @Test
+    void findWithAllAncestorsThrowsPersistenceExceptionWhenRepositoryServiceDoesNotResolveAllRequestedTerms() {
+        final TermInfoWithParents t1 = new TermInfoWithParents();
+        t1.setUri(Generator.generateUri());
+
+        final Set<URI> termUris = Set.of(t1.getUri(), Generator.generateUri());
+        // Returning only one term and leaving other unresolved
+        when(termRepositoryService.findWithAllAncestors(termUris)).thenReturn(Set.of(t1));
+
+        assertThrows(PersistenceException.class, () -> sut.findWithAllAncestors(termUris));
+    }
+
+    @Test
+    void findWithAllAncestorsReturnsEmptySetWhenNoTermUrisAreSpecified() {
+        final Set<URI> termUris = Set.of();
+        when(termRepositoryService.findWithAllAncestors(termUris)).thenReturn(Set.of());
+
+        final Set<TermInfoWithParents> result = sut.findWithAllAncestors(termUris);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void resolveAllAncestorsReturnsDtoWithEmptyAncestorsWhenTermHasNoAncestors() {
+        final Term term = generateTermWithId(vocabulary.getUri());
+        term.setParentTerms(Set.of());
+
+        final FullTermDtoWithAncestors result = sut.resolveAllAncestors(term);
+
+        assertEquals(term.getUri(), result.getUri());
+        assertTrue(result.getAncestorTerms().isEmpty());
+        verify(termRepositoryService).findWithAllAncestors(eq(Set.of()));
+    }
+
+
+    @Test
+    void resolveAllAncestorsResolvesFullAncestorsChainUsingDirectAncestorIdentifiersOfTerm() {
+        final Term term = generateTermWithId(vocabulary.getUri());
+        final TermInfo directParentOne = Generator.generateTermInfoWithId();
+        final TermInfo directParentTwo = Generator.generateTermInfoWithId();
+        term.setParentTerms(Set.of(directParentOne, directParentTwo));
+        final Set<URI> directParentIdentifiers = Set.of(directParentOne.getUri(), directParentTwo.getUri());
+
+        final TermInfoWithParents resolvedParentOne = new TermInfoWithParents();
+        resolvedParentOne.setUri(directParentOne.getUri());
+        final TermInfoWithParents resolvedParentTwo = new TermInfoWithParents();
+        resolvedParentTwo.setUri(directParentTwo.getUri());
+        final Set<TermInfoWithParents> fullParents = Set.of(resolvedParentOne, resolvedParentTwo);
+        when(termRepositoryService.findWithAllAncestors(directParentIdentifiers)).thenReturn(fullParents);
+
+        final FullTermDtoWithAncestors result = sut.resolveAllAncestors(term);
+
+        assertEquals(term.getUri(), result.getUri());
+        assertEquals(fullParents, result.getAncestorTerms());
+        verify(termRepositoryService).findWithAllAncestors(directParentIdentifiers);
+        verify(dtoMapper).withAncestors(term, fullParents);
+    }
+
+    @Test
+    void resolveAllAncestorsFiltersAncestorsWithTermAuthorizationService() {
+        final Term term = Generator.generateTermWithId();
+        final Set<TermInfo> parentTerms = Set.of();
+        term.setParentTerms(parentTerms);
+
+        sut.resolveAllAncestors(term);
+
+        verify(termAuthorizationService).removeUnauthorizedTermsAndAncestors(notNull());
+    }
+
+
     static Stream<Arguments> findAllParams() {
         return Stream.of(
-                Arguments.of(new TermSelectionParams(false, false, false, PageRequest.of(5, 10)),
-                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                     repositoryService).findAll(vocabulary, PageRequest.of(5, 10))),
-                Arguments.of(new TermSelectionParams(true, false, false, Constants.DEFAULT_PAGE_SPEC),
-                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                     repositoryService).findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(false, true, false, Constants.DEFAULT_PAGE_SPEC),
-                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                     repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, true, false, Constants.DEFAULT_PAGE_SPEC),
-                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                     repositoryService).findAllFullAndFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, false, true, Constants.DEFAULT_PAGE_SPEC),
-                             (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                     repositoryService).findAllFlatIncludingImported(vocabulary,
-                                                                                     Constants.DEFAULT_PAGE_SPEC))
+                Arguments.of(new TermSelectionParams(false, false, false, false, PageRequest.of(5, 10)),
+                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                repositoryService).findAll(vocabulary, PageRequest.of(5, 10))),
+                Arguments.of(new TermSelectionParams(true, false, false, false, Constants.DEFAULT_PAGE_SPEC),
+                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                repositoryService).findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
+                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
+                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
+                Arguments.of(new TermSelectionParams(false, false, false, true, Constants.DEFAULT_PAGE_SPEC),
+                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                repositoryService).findAllInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
+                Arguments.of(new TermSelectionParams(true, false, false, true, Constants.DEFAULT_PAGE_SPEC),
+                        (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
+                                repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC)))
         );
     }
 
@@ -723,25 +843,24 @@ class TermServiceTest {
 
     static Stream<Arguments> findAllWithSearchStringParams() {
         return Stream.of(
-                Arguments.of(new TermSelectionParams(false, false, false, PageRequest.of(5, 10)),
-                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                     repositoryService).findAll(searchString, vocabulary, PageRequest.of(5, 10))),
-                Arguments.of(new TermSelectionParams(true, false, false, Constants.DEFAULT_PAGE_SPEC),
-                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                     repositoryService).findAllFlat(searchString, vocabulary,
-                                                                    Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(false, true, false, Constants.DEFAULT_PAGE_SPEC),
-                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                     repositoryService).findAllFull(searchString, vocabulary,
-                                                                    Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, true, false, Constants.DEFAULT_PAGE_SPEC),
-                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                     repositoryService).findAllFullAndFlat(searchString, vocabulary,
-                                                                           Constants.DEFAULT_PAGE_SPEC)),
-                Arguments.of(new TermSelectionParams(true, false, true, Constants.DEFAULT_PAGE_SPEC),
-                             (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
-                                     repositoryService).findAllFlatIncludingImported(searchString, vocabulary,
-                                                                                     Constants.DEFAULT_PAGE_SPEC))
+                Arguments.of(new TermSelectionParams(false, false, false, false, PageRequest.of(5, 10)),
+                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                repositoryService).findAll(searchString, vocabulary, PageRequest.of(5, 10))),
+                Arguments.of(new TermSelectionParams(true, false, false, false, Constants.DEFAULT_PAGE_SPEC),
+                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                repositoryService).findAllFlat(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
+                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                repositoryService).findAllFull(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                Arguments.of(new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
+                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                repositoryService).findAllFlatInVocabularies(eq(searchString), anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
+                Arguments.of(new TermSelectionParams(false, false, false, true, Constants.DEFAULT_PAGE_SPEC),
+                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                repositoryService).findAllInVocabularies(eq(searchString), anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
+                Arguments.of(new TermSelectionParams(true, false, false, true, Constants.DEFAULT_PAGE_SPEC),
+                        (TriConsumer<TermRepositoryService, String, Vocabulary>) (repositoryService, searchString, vocabulary) -> verify(
+                                repositoryService).findAllFlatInVocabularies(eq(searchString), anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC)))
         );
     }
 }

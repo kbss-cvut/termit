@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -18,7 +19,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 
-@OWLClass(iri = Vocabulary.s_c_osobni_pristupovy_token)
+@OWLClass(iri = Vocabulary.s_c_personal_access_token)
 public class PersonalAccessToken implements HasIdentifier, Serializable {
     @Id
     private URI uri;
@@ -30,11 +31,11 @@ public class PersonalAccessToken implements HasIdentifier, Serializable {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
+    @OWLDataProperty(iri = DC.Terms.CREATED)
     private Instant created;
 
     @FutureOrPresent
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_expirace)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_expiration_date)
     private LocalDate expirationDate;
 
     @PastOrPresent

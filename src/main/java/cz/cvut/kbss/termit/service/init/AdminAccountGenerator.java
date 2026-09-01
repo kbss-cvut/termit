@@ -111,7 +111,7 @@ public class AdminAccountGenerator {
         admin.setFirstName("System");
         admin.setLastName("Administrator");
         admin.setUsername("termit-admin@kbss.felk.cvut.cz");
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         return admin;
     }
 

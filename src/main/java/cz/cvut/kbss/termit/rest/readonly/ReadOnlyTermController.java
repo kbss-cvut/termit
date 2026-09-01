@@ -42,7 +42,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -93,6 +92,8 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = "searchString", required = false) String searchString,
                             @Parameter(description = "Whether to include terms from imported vocabularies.")
                             @RequestParam(name = "includeImported", required = false) boolean includeImported,
+                            @Parameter(description = "Wheter to include terms from related vocabularies.")
+                            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
                             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
                             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
                             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
@@ -101,11 +102,11 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         if (searchString != null) {
-            return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported,
+            return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
                                                                                          createPageRequest(pageSize,
                                                                                                            pageNo)));
         } else {
-            return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported,
+            return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
                                                                            createPageRequest(pageSize, pageNo)));
         }
     }
@@ -135,11 +136,18 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
             @Parameter(description = "Whether to include terms from imported vocabularies.")
-            @RequestParam(name = "includeImported", required = false) boolean includeImported) {
+            @RequestParam(name = "includeImported", required = false) boolean includeImported,
+            @Parameter(description = "Whether to include terms from related vocabularies.")
+            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
+            @Parameter(
+                    description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
+            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms
+    ) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
-        final Pageable pageSpec = RestUtils.createPageRequest(pageSize, pageNo);
-        return includeImported ? termService.findAllRootsIncludingImported(vocabulary, pageSpec) :
-               termService.findAllRoots(vocabulary, pageSpec);
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)
+        );
+        return termService.findAllRoots(vocabulary, params, includeTerms);
     }
 
     @Operation(
@@ -162,10 +170,11 @@ public class ReadOnlyTermController extends BaseController {
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
             @Parameter(description = TermController.ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
-                          required = false) boolean populateCustomAttributes) {
+                          required = false) boolean populateCustomAttributes,
+            @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
+            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-               termService.findRequired(termUri);
+        return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
@@ -189,10 +198,21 @@ public class ReadOnlyTermController extends BaseController {
             @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
             @Parameter(description = TermController.ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
             @RequestParam(name = "populateCustomAttributeTermReferences",
-                          required = false) boolean populateCustomAttributes) {
+                          required = false) boolean populateCustomAttributes,
+            @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
+            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-               termService.findRequired(termUri);
+        return getById(termUri, populateCustomAttributes, withAncestors);
+    }
+
+    private ReadOnlyTerm getById(URI termUri, boolean populateCustomAttributes, boolean withAncestors) {
+        final ReadOnlyTerm term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
+                termService.findRequired(termUri);
+
+        if (withAncestors) {
+            termService.resolveAllAncestors(term);
+        }
+        return term;
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -230,7 +250,7 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final ReadOnlyTerm parent = getById(localName, termLocalName, namespace, false);
+        final ReadOnlyTerm parent = getById(localName, termLocalName, namespace, false, false);
         return termService.findSubTerms(parent);
     }
 
@@ -248,7 +268,7 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
-        final ReadOnlyTerm parent = getById(localName, namespace, false);
+        final ReadOnlyTerm parent = getById(localName, namespace, false, false);
         return termService.findSubTerms(parent);
     }
 
@@ -376,7 +396,7 @@ public class ReadOnlyTermController extends BaseController {
                                                   description = "Timestamp (ISO-formatted) at which the returned version was valid.",
                                                   example = ApiDocConstants.DATETIME_EXAMPLE)
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
-        final ReadOnlyTerm term = getById(localName, termLocalName, namespace, false);
+        final ReadOnlyTerm term = getById(localName, termLocalName, namespace, false, false);
         return getTermSnapshots(at, term);
     }
 
@@ -407,7 +427,7 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = "Timestamp (ISO-formatted) at which the returned version was valid.",
                        example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "at", required = false) Optional<String> at) {
-        final ReadOnlyTerm term = getById(localName, namespace, false);
+        final ReadOnlyTerm term = getById(localName, namespace, false, false);
         return getTermSnapshots(at, term);
     }
 }

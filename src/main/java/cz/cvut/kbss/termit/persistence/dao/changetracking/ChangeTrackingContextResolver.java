@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -34,13 +33,10 @@ import java.util.Objects;
 @Component
 public class ChangeTrackingContextResolver {
 
-    private final EntityManager em;
-
     private final String contextExtension;
 
     @Autowired
-    public ChangeTrackingContextResolver(EntityManager em, Configuration config) {
-        this.em = em;
+    public ChangeTrackingContextResolver(Configuration config) {
         this.contextExtension = config.getChangetracking().getContext().getExtension();
     }
 
@@ -64,15 +60,7 @@ public class ChangeTrackingContextResolver {
     }
 
     private URI resolveTermVocabulary(Term term) {
-        if (term.getGlossary() != null) {
-            return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?v ?hasGlossary ?glossary . }", URI.class)
-                     .setParameter("hasGlossary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
-                     .setParameter("glossary", term.getGlossary()).getSingleResult();
-        } else {
-            return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
-                     .setParameter("inVocabulary",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                     .setParameter("t", term).getSingleResult();
-        }
+        assert term.getVocabulary() != null;
+        return term.getVocabulary();
     }
 }

@@ -48,7 +48,7 @@ class AssetToRdfsResourceMapper implements AssetVisitor {
         this.rdfsResource = new RdfsResource(vocabulary.getUri(),
                                              vocabulary.getLabel(),
                                              vocabulary.getDescription(),
-                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik);
+                                             SKOS.CONCEPT_SCHEME);
     }
 
     @Override

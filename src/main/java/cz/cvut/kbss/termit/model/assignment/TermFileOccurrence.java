@@ -25,7 +25,7 @@ import java.net.URI;
 /**
  * Represents an occurrence of a term in the content of a file.
  */
-@OWLClass(iri = Vocabulary.s_c_souborovy_vyskyt_termu)
+@OWLClass(iri = Vocabulary.s_c_file_term_occurrence)
 public class TermFileOccurrence extends TermOccurrence {
 
     public TermFileOccurrence() {

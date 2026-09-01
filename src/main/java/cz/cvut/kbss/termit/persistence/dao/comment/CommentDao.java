@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -104,10 +105,8 @@ public class CommentDao {
                                                                            "} } ORDER BY ?mod", Comment.class)
                                                 .setParameter("type", URI.create(Vocabulary.s_c_Comment))
                                                 .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
-                                                .setParameter("hasCreated",
-                                                              URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                                                .setParameter("hasModified", URI.create(
-                                                        Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace));
+                                                .setParameter("hasCreated",URI.create(DC.Terms.CREATED))
+                                                .setParameter("hasModified", URI.create(DC.Terms.MODIFIED));
             if (asset != null) {
                 query.setParameter("asset", asset);
             }
@@ -197,8 +196,8 @@ public class CommentDao {
                                  + "    "
                                  + "} ORDER BY DESC(?lastModified)", Comment.class)
                  .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
-                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                 .setParameter("hasCreationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                 .setParameter("hasModificationDate", URI.create(DC.Terms.MODIFIED))
+                 .setParameter("hasCreationDate", URI.create(DC.Terms.CREATED))
                  .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
                  .setParameter("author", author.getUri())
                  .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))

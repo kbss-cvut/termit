@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.environment;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.config.WebAppConfig;
@@ -41,17 +40,21 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -63,9 +66,9 @@ public class Environment {
 
     public static final String LANGUAGE = Constants.DEFAULT_LANGUAGE;
 
-    private static ObjectMapper objectMapper;
+    private static JsonMapper objectMapper;
 
-    private static ObjectMapper jsonLdObjectMapper;
+    private static JsonMapper jsonLdObjectMapper;
 
     private static final DtoMapper DTO_MAPPER = initDtoMapper();
 
@@ -106,11 +109,12 @@ public class Environment {
 
     public static UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        if (context == null || context.getAuthentication() == null) {
+        if (context.getAuthentication() == null) {
             return null;
         }
 
         final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        assert userDetails != null;
         return userDetails.getUser();
     }
 
@@ -122,11 +126,11 @@ public class Environment {
     }
 
     /**
-     * Gets a Jackson {@link ObjectMapper} for mapping JSON to Java and vice versa.
+     * Gets a Jackson {@link JsonMapper} for mapping JSON to Java and vice versa.
      *
      * @return {@code ObjectMapper}
      */
-    public static ObjectMapper getObjectMapper() {
+    public static JsonMapper getObjectMapper() {
         if (objectMapper == null) {
             objectMapper = WebAppConfig.createJsonObjectMapper();
         }
@@ -134,11 +138,11 @@ public class Environment {
     }
 
     /**
-     * Gets a Jackson {@link ObjectMapper} for mapping JSON-LD to Java and vice versa.
+     * Gets a Jackson {@link JsonMapper} for mapping JSON-LD to Java and vice versa.
      *
      * @return {@code ObjectMapper}
      */
-    public static ObjectMapper getJsonLdObjectMapper() {
+    public static JsonMapper getJsonLdObjectMapper() {
         if (jsonLdObjectMapper == null) {
             jsonLdObjectMapper = WebAppConfig.createJsonLdObjectMapper();
         }
@@ -155,14 +159,14 @@ public class Environment {
      * @return JSON-LD message converter
      */
     public static HttpMessageConverter<?> createJsonLdMessageConverter() {
-        final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(
+        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(
                 getJsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
         return converter;
     }
 
     public static HttpMessageConverter<?> createDefaultMessageConverter() {
-        return new MappingJackson2HttpMessageConverter(getObjectMapper());
+        return new JacksonJsonHttpMessageConverter(getObjectMapper());
     }
 
     public static HttpMessageConverter<?> createStringEncodingMessageConverter() {
@@ -190,9 +194,12 @@ public class Environment {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
-            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/popis-dat-model.ttl"), BASE_URI,
-                     RDFFormat.TURTLE);
-            conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
+            try (final DirectoryStream<Path> files = Files.newDirectoryStream(OntologyDownloader.getDirectory())) {
+                for (Path f : files) {
+                    conn.add(f.toFile(), BASE_URI, RDFFormat.TURTLE);
+                }
+            }
+            conn.add(new File("ontology/termit.ttl"), BASE_URI, RDFFormat.TURTLE);
             conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
                      RDFFormat.RDFXML);
             conn.commit();

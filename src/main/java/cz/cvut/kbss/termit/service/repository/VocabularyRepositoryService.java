@@ -27,23 +27,20 @@ import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.MessageFormatter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporters;
-import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,8 +72,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final VocabularyDao vocabularyDao;
 
-    private final EditableVocabularies editableVocabularies;
-
     private final Configuration config;
 
     private final VocabularyImporters importers;
@@ -87,13 +82,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
-                                       Validator validator, EditableVocabularies editableVocabularies,
-                                       Configuration config, VocabularyImporters importers,
+                                       Validator validator, Configuration config, VocabularyImporters importers,
                                        VocabularyNamespaceResolver namespaceResolver, DtoMapper dtoMapper) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
-        this.editableVocabularies = editableVocabularies;
         this.config = config;
         this.importers = importers;
         this.namespaceResolver = namespaceResolver;
@@ -106,21 +99,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Transactional(readOnly = true)
-    // Cache only if all vocabularies are editable
-    @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable",
-               cacheNames = "vocabularies")
+    @Cacheable(cacheNames = "vocabularies")
     @Override
     public List<VocabularyDto> findAll() {
         return super.findAll();
-    }
-
-    @Override
-    protected Vocabulary postLoad(@Nonnull Vocabulary instance) {
-        super.postLoad(instance);
-        if (!config.getWorkspace().isAllVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
-            instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-        }
-        return instance;
     }
 
     @Override
@@ -143,23 +125,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
-        initGlossaryAndModel(instance);
         initDocument(instance);
         namespaceResolver.setVocabularyPreferredNamespace(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
-        }
-    }
-
-    private void initGlossaryAndModel(Vocabulary vocabulary) {
-        final String iriBase = vocabulary.getUri().toString();
-        if (vocabulary.getGlossary() == null) {
-            vocabulary.setGlossary(new Glossary());
-            vocabulary.getGlossary().setUri(idResolver.generateIdentifier(iriBase, config.getGlossary().getFragment()));
-        }
-        if (vocabulary.getModel() == null) {
-            vocabulary.setModel(new Model());
-            vocabulary.getModel().setUri(idResolver.generateIdentifier(iriBase, Constants.DEFAULT_MODEL_IRI_COMPONENT));
         }
     }
 
@@ -183,6 +152,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyVocabularyImports(instance, original);
         // ACL reference does not change, but it can be missing in case the instance arrived from client
         instance.setAcl(original.getAcl());
+        // Preferred namespace URI must not change, it would break term IRI resolution
+        instance.setPreferredNamespaceUri(original.getPreferredNamespaceUri());
+        // Client does not get root terms, restore them from the original instance
+        instance.setRootTerms(original.getRootTerms());
         SnapshotProvider.verifySnapshotNotModified(original);
     }
 

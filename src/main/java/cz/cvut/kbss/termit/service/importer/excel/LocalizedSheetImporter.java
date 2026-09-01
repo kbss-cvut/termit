@@ -187,6 +187,10 @@ class LocalizedSheetImporter {
                     labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
                 }
             }
+            // Ensure term has an identifier before it can be referenced by other terms
+            if (term.getUri() == null) {
+                term.setUri(termRepositoryService.generateIdentifier(targetVocabulary, term.getLabel()));
+            }
         }
         LOG.trace("Found {} term rows.", i - 1);
     }
@@ -219,7 +223,7 @@ class LocalizedSheetImporter {
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
         getAttributeValue(termRow, JsonLd.TYPE).map(str -> resolveTermTypes(splitIntoMultipleValues(str), term))
                                                .ifPresent(term::setTypes);
-        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null), term).ifPresent(
+        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_has_state_of_term).orElse(null), term).ifPresent(
                 term::setState);
 
     }

@@ -27,7 +27,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 
-@OWLClass(iri = Vocabulary.s_c_pozadavek_na_zmenu_hesla)
+@OWLClass(iri = Vocabulary.s_c_password_reset_request)
 public class PasswordChangeRequest extends AbstractEntity {
     /**
      * Associated user account.

@@ -136,7 +136,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     private static Map<String, String> defaultPrefixes() {
-        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/pojem/");
+        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/",
+                      "termit-old", Legacy.NAMESPACE);
     }
 
     private boolean isNotTermOccurrence(Node rdfaElem) {
@@ -148,7 +149,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         // Perhaps we should check also for correct property?
         for (String type : types) {
             final String fullType = fullIri(type);
-            if (fullType.equals(cz.cvut.kbss.termit.util.Vocabulary.s_c_vyskyt_termu)) {
+            if (fullType.equals(Vocabulary.s_c_term_occurrence) || fullType.equals(Legacy.TERM_OCCURRENCE)) {
                 return false;
             }
         }
@@ -377,8 +378,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         annotationNode.text(tqs.getExactMatch());
         annotationNode.attr(Constants.RDFa.ABOUT, to.resolveElementAbout());
         annotationNode.attr(Constants.RDFa.RESOURCE, to.getTerm().toString());
-        annotationNode.attr(Constants.RDFa.TYPE, Vocabulary.s_c_vyskyt_termu);
-        annotationNode.attr(Constants.RDFa.PROPERTY, Vocabulary.s_p_je_prirazenim_termu);
+        annotationNode.attr(Constants.RDFa.TYPE, Vocabulary.s_c_term_occurrence);
+        annotationNode.attr(Constants.RDFa.PROPERTY, Vocabulary.s_p_is_assignment_of_term);
         return annotationNode;
     }
 
@@ -449,5 +450,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return probedContentType.isPresent() && (probedContentType.get()
                                                                   .equals(MediaType.TEXT_HTML_VALUE) || probedContentType.get()
                                                                                                                          .equals(MediaType.APPLICATION_XHTML_XML_VALUE));
+    }
+
+    private static class Legacy {
+        private static final String NAMESPACE = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/";
+        private static final String TERM_OCCURRENCE = NAMESPACE + "výskyt-termu";
     }
 }

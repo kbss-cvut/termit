@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.exception.LazyLoadingException;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.CascadeType;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
@@ -29,6 +28,7 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 
 @Audited
 @PrimaryNotBlank({"label"})
-@OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
+@OWLClass(iri = SKOS.CONCEPT_SCHEME)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class Vocabulary extends Asset<MultilingualString>
         implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
@@ -62,31 +62,36 @@ public class Vocabulary extends Asset<MultilingualString>
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private MultilingualString description;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_describes_document, fetch = FetchType.EAGER)
     private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
 
-    @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar,
-                       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-                       fetch = FetchType.EAGER)
-    private Glossary glossary;
+    @OWLAnnotationProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri, simpleLiteral = true)
+    private String preferredNamespaceUri;
 
-    @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_model,
-                       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-                       fetch = FetchType.EAGER)
-    private Model model;
+    @OWLAnnotationProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix, simpleLiteral = true)
+    private String preferredNamespacePrefix;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary)
     private Set<URI> importedVocabularies;
 
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_related_vocabulary)
+    private Set<URI> relatedVocabularies;
+
     @JsonIgnore
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_seznam_rizeni_pristupu, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_access_control_list, fetch = FetchType.EAGER)
     private URI acl;
+
+    /**
+     * This attribute should contain only root terms. The term hierarchy is modeled by terms having sub-terms, so all
+     * terms should be reachable.
+     */
+    @JsonIgnore
+    @OWLObjectProperty(iri = SKOS.HAS_TOP_CONCEPT)
+    private Set<URI> rootTerms;
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<Object>> properties;
@@ -148,25 +153,25 @@ public class Vocabulary extends Asset<MultilingualString>
         this.primaryLanguage = primaryLanguage;
     }
 
+    public String getPreferredNamespaceUri() {
+        return preferredNamespaceUri;
+    }
+
+    public void setPreferredNamespaceUri(String preferredNamespaceUri) {
+        this.preferredNamespaceUri = preferredNamespaceUri;
+    }
+
+    public String getPreferredNamespacePrefix() {
+        return preferredNamespacePrefix;
+    }
+
+    public void setPreferredNamespacePrefix(String preferredNamespacePrefix) {
+        this.preferredNamespacePrefix = preferredNamespacePrefix;
+    }
+
     @Override
     public String getPrimaryLabel() {
         return getLabel(getPrimaryLanguage());
-    }
-
-    public Glossary getGlossary() {
-        return glossary;
-    }
-
-    public void setGlossary(Glossary glossary) {
-        this.glossary = glossary;
-    }
-
-    public Model getModel() {
-        return model;
-    }
-
-    public void setModel(Model model) {
-        this.model = model;
     }
 
     public Set<URI> getImportedVocabularies() {
@@ -177,12 +182,55 @@ public class Vocabulary extends Asset<MultilingualString>
         this.importedVocabularies = importedVocabularies;
     }
 
+    public Set<URI> getRelatedVocabularies() {
+        return relatedVocabularies;
+    }
+
+    public void setRelatedVocabularies(Set<URI> relatedVocabularies) {
+        this.relatedVocabularies = relatedVocabularies;
+    }
+
     public URI getAcl() {
         return acl;
     }
 
     public void setAcl(URI acl) {
         this.acl = acl;
+    }
+
+    public Set<URI> getRootTerms() {
+        return rootTerms;
+    }
+
+    public void setRootTerms(Set<URI> rootTerms) {
+        this.rootTerms = rootTerms;
+    }
+
+    /**
+     * Adds the specified root term into this glossary.
+     *
+     * @param rootTerm Term to add
+     */
+    public void addRootTerm(Term rootTerm) {
+        Objects.requireNonNull(rootTerm);
+        // Call getter/setter to force lazy loading
+        if (getRootTerms() == null) {
+            setRootTerms(new HashSet<>());
+        }
+        getRootTerms().add(rootTerm.getUri());
+    }
+
+    /**
+     * Removes the specified term from root terms of this glossary, if it were present.
+     *
+     * @param toRemove The term to remove from root terms
+     */
+    public void removeRootTerm(Term toRemove) {
+        Objects.requireNonNull(toRemove);
+        // Call getter to force lazy loading
+        if (getRootTerms() != null) {
+            getRootTerms().remove(toRemove.getUri());
+        }
     }
 
     public Map<String, Set<Object>> getProperties() {
@@ -228,7 +276,7 @@ public class Vocabulary extends Asset<MultilingualString>
 
     @Override
     public boolean isSnapshot() {
-        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
     }
 
     @Override
@@ -258,7 +306,6 @@ public class Vocabulary extends Asset<MultilingualString>
                 getLabel() + " "
                 + Utils.uriToString(getUri());
         try {
-            result += ", glossary=" + glossary;
             if (importedVocabularies != null) {
                 result += ", importedVocabularies = [" +
                         importedVocabularies.stream().map(Utils::uriToString)

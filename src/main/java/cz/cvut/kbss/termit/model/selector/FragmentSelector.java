@@ -26,7 +26,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
-@OWLClass(iri = Vocabulary.s_c_selektor_fragmentem)
+@OWLClass(iri = Vocabulary.s_c_selector_fragment)
 public class FragmentSelector extends Selector {
 
     @NotBlank

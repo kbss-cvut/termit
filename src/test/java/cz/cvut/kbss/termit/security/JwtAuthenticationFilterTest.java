@@ -17,17 +17,14 @@
  */
 package cz.cvut.kbss.termit.security;
 
-import cz.cvut.kbss.termit.environment.Environment;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.SignedJWT;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -44,6 +41,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
@@ -77,7 +76,7 @@ class JwtAuthenticationFilterTest {
         this.mockRequest = new MockHttpServletRequest();
         this.mockResponse = new MockHttpServletResponse();
         this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class),
-                                               new JwtUtils(Environment.getObjectMapper(), config));
+                                               new JwtUtils(config));
     }
 
     @Test
@@ -89,10 +88,10 @@ class JwtAuthenticationFilterTest {
         assertNotNull(value);
         assertTrue(value.startsWith(SecurityConstants.JWT_TOKEN_PREFIX));
         final String jwtToken = value.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
-        final Jws<Claims> jwt = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
-                                                                            .getBytes(StandardCharsets.UTF_8)))
-                                    .build()
-                                    .parseSignedClaims(jwtToken);
-        assertFalse(jwt.getPayload().isEmpty());
+        final SecretKey key = new SecretKeySpec(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8),
+                                                "HmacSHA256");
+        final SignedJWT jwt = SignedJWT.parse(jwtToken);
+        assertTrue(jwt.verify(new MACVerifier(key)));
+        assertFalse(jwt.getJWTClaimsSet().getClaims().isEmpty());
     }
 }

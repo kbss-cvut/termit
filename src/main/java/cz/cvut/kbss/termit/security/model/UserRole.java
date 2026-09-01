@@ -37,32 +37,32 @@ public enum UserRole {
     /**
      * Anonymous (not logged in) user.
      * <p>
-     * Maps to {@link Vocabulary#s_c_anonymni_uzivatel_termitu}.
+     * Maps to {@link Vocabulary#s_c_anonymous}.
      */
-    ANONYMOUS_USER(Vocabulary.s_c_anonymni_uzivatel_termitu, ROLE_ANONYMOUS_USER),
+    ANONYMOUS_USER(Vocabulary.s_c_anonymous, ROLE_ANONYMOUS_USER),
 
     /**
      * Restricted TermIt user.
      * <p>
-     * Maps to {@link Vocabulary#s_c_omezeny_uzivatel_termitu}.
+     * Maps to {@link Vocabulary#s_c_reader}.
      */
-    RESTRICTED_USER(Vocabulary.s_c_omezeny_uzivatel_termitu, ROLE_RESTRICTED_USER, ANONYMOUS_USER),
+    RESTRICTED_USER(Vocabulary.s_c_reader, ROLE_RESTRICTED_USER, ANONYMOUS_USER),
 
     /**
      * Regular application user.
      * <p>
-     * Maps to {@link Vocabulary#s_c_plny_uzivatel_termitu}.
+     * Maps to {@link Vocabulary#s_c_editor}.
      * <p>
-     * Does not map to any specific subclass of {@link Vocabulary#s_c_uzivatel_termitu}.
+     * Does not map to any specific subclass of {@link Vocabulary#s_c_user}.
      */
-    FULL_USER(Vocabulary.s_c_plny_uzivatel_termitu, ROLE_FULL_USER, RESTRICTED_USER, ANONYMOUS_USER),
+    FULL_USER(Vocabulary.s_c_editor, ROLE_FULL_USER, RESTRICTED_USER, ANONYMOUS_USER),
 
     /**
      * Application administrator.
      * <p>
-     * Maps to {@link Vocabulary#s_c_administrator_termitu}.
+     * Maps to {@link Vocabulary#s_c_administrator}.
      */
-    ADMIN(Vocabulary.s_c_administrator_termitu, ROLE_ADMIN, FULL_USER, RESTRICTED_USER, ANONYMOUS_USER);
+    ADMIN(Vocabulary.s_c_administrator, ROLE_ADMIN, FULL_USER, RESTRICTED_USER, ANONYMOUS_USER);
 
     private final String type;
     private final String name;

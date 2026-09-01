@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
@@ -57,6 +56,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.core.type.TypeReference;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -436,9 +436,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history")).andExpect(status().isOk())
                        .andReturn();
-        final List<AbstractChangeRecord> result =
-                readValue(mvcResult, new TypeReference<>() {
-                });
+        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<>() {
+        });
         assertNotNull(result);
         assertEquals(records, result);
         verify(serviceMock).getChanges(vocabulary, emptyFilter);
@@ -452,8 +451,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
             final AggregatedChangeInfo ch = new AggregatedChangeInfo(LocalDate.now().minusDays(i).toString(),
                                                                      new BigInteger(Integer.toString(
                                                                              Generator.randomInt(1, 10))));
-            ch.addType(i % 2 == 0 ? cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity :
-                       cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity);
+            ch.addType(i % 2 == 0 ? cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity :
+                       cz.cvut.kbss.termit.util.Vocabulary.s_c_update_of_entity);
             return ch;
         }).collect(Collectors.toList());
         when(serviceMock.getChangesOfContent(vocabulary)).thenReturn(changes);
@@ -461,9 +460,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content"))
                        .andExpect(status().isOk())
                        .andReturn();
-        final List<AggregatedChangeInfo> result =
-                readValue(mvcResult, new TypeReference<>() {
-                });
+        final List<AggregatedChangeInfo> result = readValue(mvcResult, new TypeReference<>() {
+        });
         assertNotNull(result);
         assertEquals(changes, result);
         verify(serviceMock).getChangesOfContent(vocabulary);
@@ -677,9 +675,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content/detail"))
                                            .andExpect(status().isOk()).andReturn();
-        final List<AbstractChangeRecord> result =
-                readValue(mvcResult, new TypeReference<>() {
-                });
+        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<>() {
+        });
         assertNotNull(result);
         assertEquals(changeRecords, result);
         verify(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);

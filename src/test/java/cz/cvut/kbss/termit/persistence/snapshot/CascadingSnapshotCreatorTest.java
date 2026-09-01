@@ -82,7 +82,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         vocabularyTerms.keySet().forEach(
                 v -> assertTrue(em.createNativeQuery("ASK { ?snapshot ?isSnapshotOf ?v . }", Boolean.class)
                                   .setParameter("isSnapshotOf",
-                                          URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_slovniku))
+                                          URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
                                   .setParameter("v", v)
                                   .getSingleResult()));
     }
@@ -92,12 +92,10 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             if (rootTerm) {
-                vocabulary.getGlossary().addRootTerm(term);
+                vocabulary.addRootTerm(term);
             }
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
             em.persist(term, descriptorFactory.termDescriptor(term));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         vocabularyTerms.put(vocabulary, term);
         return vocabulary;
@@ -127,13 +125,11 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
             final Snapshot result = sut.createSnapshot(vocabulary);
             assertNotNull(result);
             assertEquals(vocabulary.getUri(), result.getVersionOf());
-            assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku));
+            assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
         });
         final Vocabulary result = findRequiredSnapshot(vocabulary, Vocabulary.class);
         assertEquals(vocabulary.getLabel(), result.getLabel());
         assertEquals(vocabulary.getDescription(), result.getDescription());
-        assertNotNull(result.getGlossary());
-        assertNotNull(result.getModel());
     }
 
     @Test
@@ -142,7 +138,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.createSnapshot(vocabulary));
         final Vocabulary result = findRequiredSnapshot(vocabulary, Vocabulary.class);
-        assertEquals(1, result.getGlossary().getRootTerms().size());
+        assertEquals(1, result.getRootTerms().size());
     }
 
     @Test
@@ -156,12 +152,12 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         assertEquals(term.getLabel(), result.getLabel());
         assertEquals(term.getDefinition(), result.getDefinition());
         assertEquals(term.getDescription(), result.getDescription());
-        assertEquals(vocabularyResult.getGlossary().getUri(), result.getGlossary());
-        assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu));
+        assertEquals(vocabularyResult.getUri(), result.getVocabulary());
+        assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term));
     }
 
     private <T extends Asset<?>> T findRequiredSnapshot(HasIdentifier asset, Class<T> cls) {
-        final String isSnapshotOf = Vocabulary.class.equals(cls) ? cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_slovniku : cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_pojmu;
+        final String isSnapshotOf = Vocabulary.class.equals(cls) ? cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary : cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term;
         final T result = em.createNativeQuery("SELECT ?s WHERE { ?s ?isSnapshotOf ?a }", cls)
                            .setParameter("isSnapshotOf", URI.create(isSnapshotOf))
                            .setParameter("a", asset)
@@ -178,16 +174,10 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         transactional(() -> sut.createSnapshot(vocabulary));
         final String queryString = "ASK { ?s ?isSnapshotOf ?a }";
         assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                             cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_slovniku)).setParameter("a", vocabulary)
+                             cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary)).setParameter("a", vocabulary)
                      .getSingleResult());
         assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                             cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_glosare)).setParameter("a", vocabulary.getGlossary())
-                     .getSingleResult());
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                             cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_modelu)).setParameter("a", vocabulary.getModel())
-                     .getSingleResult());
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_pojmu)).setParameter("a", term).getSingleResult());
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term)).setParameter("a", term).getSingleResult());
     }
 
     @Test
@@ -212,9 +202,9 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
                 final Term relatedMatchSnapshot = findRequiredSnapshot(relatedMatch, Term.class);
                 assertThat(snapshot.getRelatedMatch(), hasItem(new TermInfo(relatedMatchSnapshot)));
             } else if (term.getExternalParentTerms() != null) {
-                final Term parent = term.getExternalParentTerms().iterator().next();
+                final TermInfo parent = term.getExternalParentTerms().iterator().next();
                 final Term parentSnapshot = findRequiredSnapshot(parent, Term.class);
-                assertThat(snapshot.getExternalParentTerms(), hasItem(parentSnapshot));
+                assertThat(snapshot.getExternalParentTerms(), hasItem(parentSnapshot.toTermInfo()));
             }
         }
     }

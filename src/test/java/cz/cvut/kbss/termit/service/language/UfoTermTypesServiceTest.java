@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.language;
 
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -59,7 +58,7 @@ class UfoTermTypesServiceTest {
         when(languageTtlUrl.getInputStream()).thenReturn(url.openStream());
         List<Term> result = sut.getTypes();
         final Optional<Term> individual = result.stream()
-                                                .filter(t -> t.getUri().toString().equals(Vocabulary.s_c_individual))
+                                                .filter(t -> t.getUri().toString().equals("http://onto.fel.cvut.cz/ontologies/ufo/individual"))
                                                 .findAny();
         assertTrue(individual.isPresent());
         assertFalse(individual.get().getSubTerms().isEmpty());
@@ -71,7 +70,7 @@ class UfoTermTypesServiceTest {
         when(languageTtlUrl.getInputStream()).thenReturn(url.openStream());
         List<Term> result = sut.getTypes();
         final Optional<Term> individual = result.stream()
-                                                .filter(t -> t.getUri().toString().equals(Vocabulary.s_c_individual))
+                                                .filter(t -> t.getUri().toString().equals("http://onto.fel.cvut.cz/ontologies/ufo/individual"))
                                                 .findAny();
         assertTrue(individual.isPresent());
         assertFalse(individual.get().getSubTerms().isEmpty());

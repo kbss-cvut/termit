@@ -52,7 +52,7 @@ import static org.mockito.Mockito.when;
 class LanguageServiceTest {
 
     private static final List<RdfsResource> TERM_STATE_RESOURCES = Stream.of(Generator.TERM_STATES)
-                                                                         .map(u -> new RdfsResource(u, MultilingualString.create("Label", Environment.LANGUAGE), null, Vocabulary.s_c_stav_pojmu))
+                                                                         .map(u -> new RdfsResource(u, MultilingualString.create("Label", Environment.LANGUAGE), null, Vocabulary.s_c_term_state))
                                                                          .collect(Collectors.toList());
 
     @Mock
@@ -66,7 +66,7 @@ class LanguageServiceTest {
 
     @Test
     void getAccessLevelsRetrievesResourcesRepresentingEachOfAccessLevelConstants() {
-        final RdfsResource res = new RdfsResource(URI.create(Vocabulary.s_i_cteni), new LangString("Read",
+        final RdfsResource res = new RdfsResource(URI.create(Vocabulary.s_i_read), new LangString("Read",
                 Environment.LANGUAGE),
                 null, null);
         when(dataService.find(any(URI.class))).thenReturn(Optional.of(res));

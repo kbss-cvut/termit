@@ -34,10 +34,10 @@ import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.net.URI;
 import java.util.Collection;
@@ -63,13 +63,13 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     @Autowired
     private VocabularyContextMapper vocabularyContextMapper;
 
-    @Mock
+    @MockitoBean
     private VocabularyService vocabularyService;
 
-    @Mock
+    @MockitoBean
     private RepositoryContextValidator validator;
 
-    @Mock
+    @MockitoBean
     private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
@@ -128,7 +128,7 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.getLabel().remove(Constants.DEFAULT_LANGUAGE);
         term.getLabel().set("de", "Apfelbaum, der");
-        vocabulary.getGlossary().addRootTerm(term);
+        vocabulary.addRootTerm(term);
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));

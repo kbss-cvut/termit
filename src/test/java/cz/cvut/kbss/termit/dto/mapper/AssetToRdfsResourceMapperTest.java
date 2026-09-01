@@ -59,7 +59,7 @@ class AssetToRdfsResourceMapperTest {
         v.accept(sut);
         assertEquals(sut.getRdfsResource().getUri(), v.getUri());
         assertEquals(sut.getRdfsResource().getLabel(), v.getLabel());
-        assertThat(sut.getRdfsResource().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik));
+        assertThat(sut.getRdfsResource().getTypes(), hasItem(SKOS.CONCEPT_SCHEME));
     }
 
     @Test
@@ -68,6 +68,6 @@ class AssetToRdfsResourceMapperTest {
         d.accept(sut);
         assertEquals(sut.getRdfsResource().getUri(), d.getUri());
         assertEquals(sut.getRdfsResource().getLabel(), MultilingualString.create(d.getLabel(), Environment.LANGUAGE));
-        assertThat(sut.getRdfsResource().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument));
+        assertThat(sut.getRdfsResource().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_document));
     }
 }

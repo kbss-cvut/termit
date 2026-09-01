@@ -1,0 +1,86 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX vann: <http://purl.org/vocab/vann/>
+
+CONSTRUCT {
+    ?vocabulary a owl:Ontology ;
+              a skos:ConceptScheme ;
+              dc:language ?language ;
+              dc:title ?label ;
+              dc:description ?description ;
+              dc:creator ?fullName ;
+              dc:created ?created ;
+              dc:modified ?latestMod ;
+              dc:rights ?rights ;
+              owl:imports ?imported ;
+              owl:versionIRI ?versionIri ;
+              vann:preferredNamespaceUri ?nsUri ;
+              vann:preferredNamespacePrefix ?nsPrefix ;
+              <http://purl.org/ontology/bibo/status> ?status ;
+              ?y ?z .
+} WHERE {
+    GRAPH ?g {
+        ?vocabulary dc:title ?label ;
+            dc:language ?language .
+        OPTIONAL {
+            ?vocabulary dc:description ?description .
+        }
+        OPTIONAL {
+            ?vocabulary owl:versionIRI ?versionIri .
+        }
+        OPTIONAL {
+            ?vocabulary dc:rights ?rights .
+        }
+        OPTIONAL {
+            ?vocabulary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+                      <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+        }
+        OPTIONAL {
+            ?vocabulary <http://purl.org/ontology/bibo/status> ?status .
+        }
+        OPTIONAL {
+            ?vocabulary ?y ?z .
+            FILTER EXISTS {
+                    ?y a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> .
+                }
+        }
+    }
+    OPTIONAL {
+        ?vocabulary dd:imports-vocabulary ?imported .
+    }
+    OPTIONAL {
+        ?createRecord a dd:creation-of-entity ;
+            dd:has-changed-entity ?vocabulary ;
+            dd:has-editor ?author ;
+            dc:modified ?created .
+        ?author dd:has-first-name ?firstName ;
+            dd:has-surname ?lastName .
+        {
+          SELECT (max(?createdDate) AS ?createdDateMax) ?vocabulary
+          WHERE {   ?createRecord a dd:creation-of-entity ;
+                    dd:has-changed-entity ?vocabulary ;
+                    dc:modified ?createdDate . } GROUP BY ?vocabulary
+        }
+        FILTER(?createdDateMax = ?created)
+    }
+    OPTIONAL {
+        SELECT (MAX(?contentMod) as ?contentLatestMod) WHERE {
+            ?changeRecord a dd:change ;
+            dd:has-changed-entity ?t ;
+            dc:modified ?contentMod .
+            ?t skos:inScheme ?vocabulary .
+        }
+    }
+    OPTIONAL {
+        SELECT (MAX(?modified) as ?metadataLatestMod) WHERE {
+            ?changeRecord a dd:change ;
+            dd:has-changed-entity ?vocabulary ;
+            dc:modified ?modified .
+        }
+    }
+    BIND (IF(?contentLatestMod > ?metadataLatestMod, ?contentLatestMod, ?metadataLatestMod) AS ?latestMod)
+    BIND (CONCAT(?firstName, " ", ?lastName) AS ?fullName)
+}

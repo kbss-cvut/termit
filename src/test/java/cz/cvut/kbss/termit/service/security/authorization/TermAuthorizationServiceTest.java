@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,8 +27,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -88,5 +95,64 @@ class TermAuthorizationServiceTest {
 
         assertTrue(sut.canRemove(term));
         verify(vocabularyAuthorizationService).canRemove(v);
+    }
+
+
+    @Test
+    void removeUnauthorizedTermsAndAncestorsRemovesTermsFromUnauthorizedVocabulary() {
+        final Vocabulary authorizedVoc = Generator.generateVocabularyWithId();
+        final Vocabulary unauthorizedVoc = Generator.generateVocabularyWithId();
+
+        final TermInfoWithParents term = new TermInfoWithParents();
+        term.setUri(Generator.generateUri());
+        term.setVocabulary(authorizedVoc.getUri());
+        final TermInfoWithParents term2 = new TermInfoWithParents();
+        term2.setUri(Generator.generateUri());
+        term2.setVocabulary(unauthorizedVoc.getUri());
+
+        doAnswer(inv ->
+            inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVoc.getUri())
+        ).when(vocabularyAuthorizationService).canRead(any(Vocabulary.class));
+
+        Set<TermInfoWithParents> terms = new HashSet<>(Set.of(term, term2));
+
+        sut.removeUnauthorizedTermsAndAncestors(terms);
+
+        assertEquals(1, terms.size());
+        assertTrue(terms.contains(term));
+        assertFalse(terms.contains(term2));
+    }
+
+    @Test
+    void removeUnauthorizedTermsAndAncestorsRemovesAncestorsFromUnauthorizedVocabulary() {
+        final Vocabulary authorizedVocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary unauthorizedVocabulary = Generator.generateVocabularyWithId();
+
+        final TermInfoWithParents term = new TermInfoWithParents();
+        term.setUri(Generator.generateUri());
+        term.setVocabulary(authorizedVocabulary.getUri());
+        final TermInfoWithParents term2 = new TermInfoWithParents();
+        term2.setUri(Generator.generateUri());
+        term2.setVocabulary(authorizedVocabulary.getUri());
+        final TermInfoWithParents term3 = new TermInfoWithParents();
+        term3.setUri(Generator.generateUri());
+        term3.setVocabulary(unauthorizedVocabulary.getUri());
+
+        term.setParentTerms(Set.of(term2));
+        term2.setParentTerms(Set.of(term3));
+
+        doAnswer(inv ->
+                inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVocabulary.getUri())
+        ).when(vocabularyAuthorizationService).canRead(any(Vocabulary.class));
+
+        Set<TermInfoWithParents> terms = new HashSet<>(Set.of(term));
+
+        sut.removeUnauthorizedTermsAndAncestors(terms);
+
+        assertEquals(1, terms.size());
+        assertTrue(terms.contains(term));
+        assertEquals(1, term.getParentTerms().size());
+        assertTrue(term.getParentTerms().contains(term2));
+        assertTrue(term2.getParentTerms().isEmpty());
     }
 }

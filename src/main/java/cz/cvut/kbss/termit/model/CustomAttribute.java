@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.Set;
 
 @Context(CustomAttribute.CONTEXT)
-@OWLClass(iri = Vocabulary.s_c_vlastni_atribut)
+@OWLClass(iri = Vocabulary.s_c_custom_attribute)
 public class CustomAttribute extends RdfsResource {
 
     public static final String CONTEXT = Vocabulary.s_i_termit + "/custom-attributes";

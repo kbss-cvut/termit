@@ -98,18 +98,4 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
         sut.load(); // Event handler
         assertEquals(context, sut.getVocabularyContext(newVocabulary));
     }
-
-    @Test
-    void getVocabularyContextReturnsCanonicalContextWhenAnotherInstanceIsBasedOnIt() {
-        final Vocabulary v = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
-        final URI workingVersionCtx = Generator.generateUri();
-        transactional(() -> {
-            em.persist(v, new EntityDescriptor(workingVersionCtx));
-            DefaultVocabularyContextMapperTest.generateCanonicalContextReference(workingVersionCtx, v.getUri(), em);
-        });
-        sut.load();
-
-        assertEquals(v.getUri(), sut.getVocabularyContext(v.getUri()));
-    }
 }

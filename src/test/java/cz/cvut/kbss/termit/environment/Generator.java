@@ -24,8 +24,6 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -74,9 +72,9 @@ import java.util.stream.IntStream;
 public class Generator {
 
     public static URI[] TERM_STATES = new URI[]{
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/new-term"),
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/published-term"),
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cancelled-term")
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/new-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/published-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/cancelled-term")
     };
 
     private static final Random random = new Random();
@@ -255,8 +253,6 @@ public class Generator {
     public static cz.cvut.kbss.termit.model.Vocabulary generateVocabulary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary =
                 new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
         final String primaryLanguage = Environment.LANGUAGE;
         vocabulary.setPrimaryLanguage(primaryLanguage);
         vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), primaryLanguage));
@@ -403,24 +399,6 @@ public class Generator {
     }
 
     /**
-     * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
-     *
-     * @param term          Term in vocabulary
-     * @param vocabularyIri Vocabulary identifier
-     * @param em            Transactional entity manager to unwrap repository connection from
-     */
-    public static void addTermInVocabularyRelationship(Term term, URI vocabularyIri,
-                                                       EntityManager em) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(term.getUri().toString()),
-                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                     vf.createIRI(vocabularyIri.toString()));
-        }
-    }
-
-    /**
      * Generates a random {@link cz.cvut.kbss.termit.model.comment.Comment} instance, initialized with the term it is
      * connected to.
      *
@@ -458,7 +436,7 @@ public class Generator {
             occurrence = new TermDefinitionalOccurrence(term.getUri(), new DefinitionalOccurrenceTarget((Term) target));
         }
         if (suggested) {
-            occurrence.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+            occurrence.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
         }
         // Dummy selector
         occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test text")));
@@ -471,11 +449,11 @@ public class Generator {
                 asset.getUri().toString() + "/version/" + timestamp.toString().replace(":", "").replace(" ", ""));
         final String type;
         if (asset instanceof Vocabulary) {
-            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku;
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary;
         } else if (asset instanceof AbstractTerm) {
-            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu;
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term;
         } else {
-            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_objektu;
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_object;
         }
         return new Snapshot(uri, timestamp, asset.getUri(), type);
     }

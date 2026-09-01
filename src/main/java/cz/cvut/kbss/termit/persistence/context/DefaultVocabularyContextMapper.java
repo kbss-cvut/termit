@@ -20,8 +20,8 @@ package cz.cvut.kbss.termit.persistence.context;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -38,8 +38,6 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * <p>
  * This incurs a performance penalty of executing a simple query, but does not suffer from potentially stale cache
  * data.
- * <p>
- * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
 @Profile("no-cache")
@@ -59,11 +57,9 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         try {
             return em.createNativeQuery("SELECT ?g WHERE { " +
                              "GRAPH ?g { ?vocabulary a ?type . " +
-                             "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
                              "}}", URI.class)
-                     .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                     .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
                      .setParameter("vocabulary", vocabularyUri)
-                     .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
                      .getSingleResult();
         } catch (NoResultException e) {
             LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
@@ -81,7 +77,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         try {
             return Optional.of(em.createNativeQuery("SELECT ?v WHERE { GRAPH ?g { ?v a ?type . } }", URI.class)
                                  .setParameter("g", contextUri)
-                                 .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                                 .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
                                  .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();

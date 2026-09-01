@@ -37,8 +37,8 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -90,7 +90,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
     @Test
     void createUserPersistsUserWhenCalledByAdmin() throws Exception {
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         Environment.setCurrentUser(admin);
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);
@@ -116,7 +116,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
     @Test
     void createUserSendsEmailWhenPasswordIsEmpty() throws Exception {
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         Environment.setCurrentUser(admin);
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);

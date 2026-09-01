@@ -20,11 +20,11 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence_;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TermOccurrenceControllerTest extends BaseControllerTestRunner {
 
     private static final String LOCAL_NAME = "Occurrence-12345";
-    private static final String NAMESPACE = Vocabulary.s_c_vyskyt_termu + "/";
+    private static final String NAMESPACE = TermOccurrence_.entityClassIRI + "/";
     private static final URI OCCURRENCE_URI = URI.create(NAMESPACE + LOCAL_NAME);
 
     @Mock

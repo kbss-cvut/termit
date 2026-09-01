@@ -32,18 +32,18 @@ import static cz.cvut.kbss.termit.util.Utils.trim;
  *
  * @see <a href="https://www.w3.org/TR/annotation-model/#text-quote-selector">https://www.w3.org/TR/annotation-model/#text-quote-selector</a>
  */
-@OWLClass(iri = Vocabulary.s_c_selektor_text_quote)
+@OWLClass(iri = Vocabulary.s_c_selector_text_quote)
 public class TextQuoteSelector extends Selector {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_presny_text_quote, simpleLiteral = true)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_exact_text_quote, simpleLiteral = true)
     private String exactMatch;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_prefix_text_quote, simpleLiteral = true)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_text_quote_prefix, simpleLiteral = true)
     private String prefix;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_suffix_text_quote, simpleLiteral = true)
+    @OWLDataProperty(iri = Vocabulary.s_p_has_text_quote_suffix, simpleLiteral = true)
     private String suffix;
 
     public TextQuoteSelector() {

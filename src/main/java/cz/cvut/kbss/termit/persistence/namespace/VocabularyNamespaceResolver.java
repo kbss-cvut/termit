@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.springframework.cache.annotation.CacheConfig;
@@ -36,7 +37,19 @@ public class VocabularyNamespaceResolver {
     public String resolveNamespace(@Nonnull URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return vocabularyDao.getPreferredNamespace(vocabularyUri)
-                            .orElseGet(() -> vocabularyUri + namespaceConfig.getSeparator());
+                            .orElseGet(() -> generateNamespace(vocabularyUri.toString()));
+    }
+
+    /**
+     * Generates vocabulary namespace using the specified identifier and the configured term namespace separator.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Generated namespace
+     */
+    @Nonnull
+    public String generateNamespace(@Nonnull String vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        return vocabularyUri + IdentifierResolver.ensureNamespaceSeparatorTermination(namespaceConfig.getSeparator());
     }
 
     /**
@@ -54,11 +67,10 @@ public class VocabularyNamespaceResolver {
         if (vocabulary.getUri() == null) {
             throw new IllegalArgumentException("Vocabulary " + vocabulary + " is missing identifier.");
         }
-        if (!vocabulary.hasUnmappedPropertyValue(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)) {
+        if (Utils.isBlank(vocabulary.getPreferredNamespaceUri())) {
             String configuredSep = namespaceConfig.getSeparator();
-            vocabulary.addUnmappedPropertyValue(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
-                                                IdentifierResolver.ensureNamespaceSeparatorTermination(
-                                                        vocabulary.getUri() + configuredSep));
+            vocabulary.setPreferredNamespaceUri(IdentifierResolver.ensureNamespaceSeparatorTermination(
+                    vocabulary.getUri() + configuredSep));
         }
     }
 
@@ -75,10 +87,8 @@ public class VocabularyNamespaceResolver {
      */
     public void setVocabularyPreferredNamespace(@Nonnull Vocabulary vocabulary, @Nullable String namespace) {
         Objects.requireNonNull(vocabulary);
-        if (namespace != null && !vocabulary.hasUnmappedPropertyValue(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)) {
-            vocabulary.addUnmappedPropertyValue(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
-                                                namespace);
+        if (namespace != null && Utils.isBlank(vocabulary.getPreferredNamespaceUri())) {
+            vocabulary.setPreferredNamespaceUri(namespace);
         } else {
             setVocabularyPreferredNamespace(vocabulary);
         }

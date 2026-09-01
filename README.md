@@ -29,7 +29,7 @@ architectural decisions record.
 
 This section briefly lists the main technologies and principles used (or planned to be used) in the application.
 
-- Spring Boot 3, Spring Framework 6, Spring Security, Spring Data (paging, filtering)
+- Spring Boot 4, Spring Framework 7, Spring Security, Spring Data (paging, filtering)
 - Jackson Databind
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson) - Java - JSON-LD (de)serialization library
 - [JOPA](https://github.com/kbss-cvut/jopa) - persistence library for the Semantic Web
@@ -48,13 +48,24 @@ via [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator
 
 ## Ontologies
 
-The ontology on which TermIt is based can be found in the `ontology` folder. It extends the
-_popis-dat_ ontology (http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat). TermIt vocabularies and terms
-use the SKOS vocabulary (http://www.w3.org/TR/skos-reference/skos.rdf).
+TermIt data model is compatible with [SKOS](http://www.w3.org/TR/skos-reference/skos.rdf) even though the terminology is
+slightly different - a TermIt _vocabulary_ corresponds to a SKOS _concept scheme_, a _term_ to a _concept_.
 
-Relevant ontologies need to be loaded into the repository for proper inference functionality.
-See [setup.md](doc/setup.md)
-for more details.
+Additional metadata not covered by the SKOS model are represented using two ontologies created by us:
+
+- The [Data Description Ontology](http://onto.fel.cvut.cz/ontologies/data-description) is a general ontology for
+  representing metadata about data.
+    - Sources can be found in the [GitHub repository](https://github.com/kbss-cvut/data-description).
+- The [TermIt Ontology](http://onto.fel.cvut.cz/ontologies/application/termit) is a specific ontology for representing
+  metadata about terminologies.
+    - Sources can be found in `ontology/termit.ttl`
+
+and existing well-known ontologies such
+as [SIOC](https://rdfs.org/sioc/spec/), [Activity Streams](https://www.w3.org/TR/activitystreams-core/), [Dublin Core
+Terms](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) and several others.
+
+All the relevant ontologies need to be loaded into the repository for proper inference functionality.
+See [setup.md](doc/setup.md) for more details.
 
 ## Monitoring
 
@@ -82,7 +93,7 @@ The Docker image of TermIt backend alone can be built by
 Then, TermIt can be run and exposed at the port 8080 as
 `sudo docker run -e REPOSITORY_URL=<GRAPHDB_REPOSITORY_URL> -p 8080:8080 termit-server`
 
-An optional argument is `<GRAPHDB_REPOSITORY_URL>` pointing to the RDF4J/GraphDB repository.
+An optional argument is `<GRAPHDB_REPOSITORY_URL>` pointing to the GraphDB repository.
 
 TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
 

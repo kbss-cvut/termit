@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -29,6 +28,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
@@ -177,18 +177,6 @@ class UserServiceTest {
     }
 
     @Test
-    void updateThrowsValidationExceptionWhenAttemptingToUpdateUsernameOfAccount() {
-        final UserAccount ua = Generator.generateUserAccount();
-        final UserUpdateDto update = new UserUpdateDto();
-
-        update.setUri(ua.getUri());
-        update.setUsername("username");
-
-        when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
-        assertThrows(ValidationException.class, () -> sut.updateCurrent(update));
-    }
-
-    @Test
     void existsChecksForUsernameExistenceInRepositoryService() {
         final String username = "user@termit";
         sut.exists(username);
@@ -282,35 +270,35 @@ class UserServiceTest {
 
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(repositoryServiceMock).persist(captor.capture());
-        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_plny_uzivatel_termitu));
-        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_editor));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_reader)));
     }
 
     @Test
     void persistEnsuresAdminTypeIsNotPresentInUserAccount() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        user.addType(Vocabulary.s_c_administrator_termitu);
+        user.addType(Vocabulary.s_c_administrator);
         sut.persist(user);
 
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(repositoryServiceMock).persist(captor.capture());
-        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_administrator_termitu)));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_administrator)));
     }
 
     @Test
     void persistDoesNotRestrictUserTypeIfItIsBeingPersistedByAdmin() {
         final UserAccount currentUser = Generator.generateUserAccountWithPassword();
-        currentUser.addType(Vocabulary.s_c_administrator_termitu);
+        currentUser.addType(Vocabulary.s_c_administrator);
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);
         when(securityUtilsMock.getCurrentUser()).thenReturn(currentUser);
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        user.addType(Vocabulary.s_c_administrator_termitu);
+        user.addType(Vocabulary.s_c_administrator);
         sut.persist(user);
 
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(repositoryServiceMock).persist(captor.capture());
-        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
-        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_reader)));
     }
 
     @Test
@@ -320,7 +308,7 @@ class UserServiceTest {
 
         update.setUri(ua.getUri());
         update.setUsername(ua.getUsername());
-        update.addType(Vocabulary.s_c_administrator_termitu);
+        update.addType(Vocabulary.s_c_administrator);
 
         when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
         ValidationException ex = assertThrows(ValidationException.class, () -> sut.updateCurrent(update));
@@ -330,7 +318,7 @@ class UserServiceTest {
     @Test
     void updateInvokesRepositoryServiceWhenDataAreValid() {
         final UserAccount ua = Generator.generateUserAccount();
-        ua.addType(Vocabulary.s_c_plny_uzivatel_termitu);
+        ua.addType(Vocabulary.s_c_editor);
         final UserUpdateDto update = new UserUpdateDto();
 
         update.setUri(ua.getUri());
@@ -349,27 +337,27 @@ class UserServiceTest {
         when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
 
         assertThrows(UnsupportedOperationException.class,
-                     () -> sut.changeRole(ua, Vocabulary.s_c_administrator_termitu));
+                     () -> sut.changeRole(ua, Vocabulary.s_c_administrator));
     }
 
     @Test
     void changeRoleReplacesPreviouslyAssignedRoleTypeWithSpecifiedOne() {
         final UserAccount ua = Generator.generateUserAccount();
-        ua.addType(Vocabulary.s_c_omezeny_uzivatel_termitu);
+        ua.addType(Vocabulary.s_c_reader);
         final UserAccount current = Generator.generateUserAccount();
-        final UserRole rOne = new UserRole(URI.create(Vocabulary.s_c_administrator_termitu));
-        final UserRole rTwo = new UserRole(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
-        final UserRole rThree = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole rOne = new UserRole(URI.create(Vocabulary.s_c_administrator));
+        final UserRole rTwo = new UserRole(URI.create(Vocabulary.s_c_editor));
+        final UserRole rThree = new UserRole(URI.create(Vocabulary.s_c_reader));
         final List<UserRole> roles = Arrays.asList(rOne, rTwo, rThree);
 
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);
         when(securityUtilsMock.getCurrentUser()).thenReturn(current);
         when(roleServiceMock.findAll()).thenReturn(roles);
-        sut.changeRole(ua, Vocabulary.s_c_administrator_termitu);
+        sut.changeRole(ua, Vocabulary.s_c_administrator);
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(repositoryServiceMock).update(captor.capture());
-        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
-        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_reader)));
     }
 
     @Test
@@ -572,7 +560,7 @@ class UserServiceTest {
     void adminCreateUserCreatesUserWithPassword() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
 
         Environment.setCurrentUser(admin);
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);
@@ -589,7 +577,7 @@ class UserServiceTest {
     void adminCreateUserWithoutPasswordSendsEmail() {
         final UserAccount user = Generator.generateUserAccount();
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
         final PasswordChangeRequest request = new PasswordChangeRequest();
 
         Environment.setCurrentUser(admin);
@@ -606,7 +594,7 @@ class UserServiceTest {
     void adminCreateUserWithoutPasswordCreatesLockedAccount() {
         final UserAccount user = Generator.generateUserAccount();
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
 
         Environment.setCurrentUser(admin);
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);
@@ -621,7 +609,7 @@ class UserServiceTest {
     void adminCreateUserWithPasswordCreatesUnlockedAccount() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         final UserAccount admin = Generator.generateUserAccountWithPassword();
-        admin.addType(Vocabulary.s_c_administrator_termitu);
+        admin.addType(Vocabulary.s_c_administrator);
 
         Environment.setCurrentUser(admin);
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);

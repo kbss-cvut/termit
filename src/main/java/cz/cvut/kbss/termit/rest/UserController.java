@@ -21,9 +21,12 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
+import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +35,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +43,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,11 +77,16 @@ public class UserController extends BaseController {
     private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
+    private final JwtUtils jwtUtils;
+    private final SecurityUtils securityUtils;
 
     @Autowired
-    public UserController(UserService userService, IdentifierResolver idResolver, Configuration config) {
+    public UserController(UserService userService, IdentifierResolver idResolver, Configuration config,
+                          JwtUtils jwtUtils, SecurityUtils securityUtils) {
         super(idResolver, config);
         this.userService = userService;
+        this.jwtUtils = jwtUtils;
+        this.securityUtils = securityUtils;
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -105,9 +115,17 @@ public class UserController extends BaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping(value = CURRENT_USER_PATH, consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public void updateCurrent(@Parameter(description = "Updated user account metadata")
-                              @RequestBody UserUpdateDto update) {
-        userService.updateCurrent(update);
-        LOG.debug("User {} successfully updated.", update);
+                              @RequestBody UserUpdateDto update,
+                              Authentication authentication,
+                              HttpServletResponse response) {
+        final UserAccount currentUser = securityUtils.getCurrentUser();
+        final UserAccount result = userService.updateCurrent(update);
+        LOG.debug("User {} successfully updated.", result);
+        if (!currentUser.getUsername().equals(update.getUsername())) {
+            LOG.debug("Username of user <{}> changed, providing new JWT in response.", currentUser.getUri());
+            final String newToken = jwtUtils.generateToken(result, authentication.getAuthorities());
+            RestUtils.setAuthHeader(response, newToken);
+        }
     }
 
     private UserAccount getUserAccountForUpdate(Optional<String> namespace, String identifierFragment) {

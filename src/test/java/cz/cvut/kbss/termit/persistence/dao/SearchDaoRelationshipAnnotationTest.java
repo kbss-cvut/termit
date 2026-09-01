@@ -79,10 +79,10 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
             termC.setVocabulary(vocabulary.getUri());
             annotatingTerm.setVocabulary(vocabulary.getUri());
 
-            vocabulary.getGlossary().addRootTerm(termA);
-            vocabulary.getGlossary().addRootTerm(termB);
-            vocabulary.getGlossary().addRootTerm(termC);
-            vocabulary.getGlossary().addRootTerm(annotatingTerm);
+            vocabulary.addRootTerm(termA);
+            vocabulary.addRootTerm(termB);
+            vocabulary.addRootTerm(termC);
+            vocabulary.addRootTerm(annotatingTerm);
 
             customAttribute = new CustomAttribute();
             customAttribute.setUri(URI.create(
@@ -180,9 +180,9 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         );
 
         final SearchParam vocabularyParam = new SearchParam(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                Set.of(vocabulary.getUri().toString()),
-                MatchType.IRI
+            URI.create(SKOS.IN_SCHEME),
+            Set.of(vocabulary.getUri().toString()),
+            MatchType.IRI
         );
 
         final Page<SearchResult> result = sut.advancedSearch(

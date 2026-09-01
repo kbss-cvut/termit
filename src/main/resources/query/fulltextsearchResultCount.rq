@@ -10,7 +10,7 @@ PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 SELECT (COUNT(*) as ?cnt) {
-    SELECT DISTINCT ?entity ?snippetText ?snippetField {
+    SELECT DISTINCT ?entity ?vocabularyUri ?state ?type ?snippetField ?snippetText {
         {
             ?search a ?label_index .
         }
@@ -18,6 +18,19 @@ SELECT (COUNT(*) as ?cnt) {
         {
             ?search a ?defcom_index .
         }
+        ?search :query ?wildCardSearchString ;
+                :snippetSize 250 ;
+                :entities ?entity .
+        {
+            ?entity a ?term .
+            BIND(?term AS ?type)
+        }
+        UNION
+        {
+            ?entity a ?vocabulary .
+            BIND(?vocabulary AS ?type)
+        }
+        FILTER NOT EXISTS { ?entity a ?snapshot . }
         {
             ?entity skos:prefLabel ?label ;
                     ?inVocabulary ?authorized .
@@ -27,6 +40,10 @@ SELECT (COUNT(*) as ?cnt) {
             OPTIONAL {
                 ?entity skos:scopeNote ?scopeNote .
             }
+            OPTIONAL {
+                ?entity ?hasState ?state .
+            }
+            BIND (?authorized as ?vocabularyUri)
         } UNION {
             ?entity dc:title ?label .
             OPTIONAL {
@@ -34,20 +51,11 @@ SELECT (COUNT(*) as ?cnt) {
             }
             BIND(?entity AS ?authorized)
         }
-        ?search :query ?wildCardSearchString ;
-            :entities ?entity .
-        ?entity a ?type ;
-                :snippets _:s .
-            _:s :snippetText ?snippetText ;
-                :snippetField ?snippetField .
-        OPTIONAL {
-            ?entity ?inVocabulary ?vocabularyUri .
-        }
-        OPTIONAL {
-            ?entity ?hasState ?state .
-        }
-        FILTER (?type = ?term || ?type = ?vocabulary)
-        FILTER NOT EXISTS { ?entity a ?snapshot . }
+        ?entity :score ?initScore ;
+            :snippets _:s .
+        _:s :snippetText ?snippetText ;
+            :snippetField ?snippetField .
+
         FILTER (?authorized IN (?allowedVocabularies))
         BIND (?requestedLanguageVal AS ?requestedLanguage)
         FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)

@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.persistence.relationship;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,7 @@ class ImportBasedVocabularyRelationshipResolver implements VocabularyRelationshi
         return new HashSet<>(
                 em.createNativeQuery("SELECT DISTINCT ?imported WHERE { ?v ?imports ?imported . }", URI.class)
                   .setParameter("imports",
-                                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                                URI.create(Vocabulary.s_p_imports_vocabulary))
                   .setParameter("v", vocabulary).getResultList());
     }
 }

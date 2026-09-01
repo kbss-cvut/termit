@@ -27,6 +27,7 @@ import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -56,7 +57,7 @@ public class ReadOnlyTerm extends AbstractTerm {
     private Set<String> sources;
 
     @OWLObjectProperty(iri = SKOS.BROADER)
-    private Set<ReadOnlyTerm> parentTerms;
+    private Set<TermDescription> parentTerms;
 
     @OWLDataProperty(iri = SKOS.NOTATION, simpleLiteral = true)
     private Set<String> notations;
@@ -99,7 +100,7 @@ public class ReadOnlyTerm extends AbstractTerm {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
-            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, propertiesToExport))
+            this.parentTerms = term.getParentTerms().stream().map(TermInfo::new)
                                    .collect(Collectors.toSet());
         }
         if (term.getRelated() != null) {
@@ -157,11 +158,11 @@ public class ReadOnlyTerm extends AbstractTerm {
         this.sources = sources;
     }
 
-    public Set<ReadOnlyTerm> getParentTerms() {
+    public Set<TermDescription> getParentTerms() {
         return parentTerms;
     }
 
-    public void setParentTerms(Set<ReadOnlyTerm> parentTerms) {
+    public void setParentTerms(Set<TermDescription> parentTerms) {
         this.parentTerms = parentTerms;
     }
 

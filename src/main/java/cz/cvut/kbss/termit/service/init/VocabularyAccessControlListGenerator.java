@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -76,8 +77,8 @@ public class VocabularyAccessControlListGenerator {
     private List<URI> resolveVocabulariesWithoutAcl() {
         return em.createNativeQuery(
                          "SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }", URI.class)
-                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
                  .getResultList();
     }
 }

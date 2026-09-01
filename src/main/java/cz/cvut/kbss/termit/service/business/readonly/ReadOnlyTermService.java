@@ -23,15 +23,16 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -40,6 +41,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ReadOnlyTermService {
@@ -86,12 +89,16 @@ public class ReadOnlyTermService {
         return termService.findAll(searchString, vocabulary, selectionParams.withNotFull());
     }
 
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRoots(vocabulary, pageSpec, Collections.emptyList());
-    }
-
-    public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
+    /**
+     * Retrieves all root terms from the specified vocabulary.
+     *
+     * @param vocabulary      Vocabulary whose root terms will be returned. A reference is sufficient
+     * @param selectionParams Term selection parameters
+     * @param includeTerms    Identifiers of terms which should be included in the result
+     * @return List of root terms
+     */
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams, List<URI> includeTerms) {
+        return termService.findAllRoots(vocabulary, selectionParams, includeTerms);
     }
 
     public ReadOnlyTerm findRequired(URI id) {
@@ -170,5 +177,12 @@ public class ReadOnlyTermService {
         Objects.requireNonNull(asset);
         final Term arg = toTerm(asset);
         return create(termService.findVersionValidAt(arg, at));
+    }
+
+    public void resolveAllAncestors(ReadOnlyTerm roTerm) {
+        final Set<URI> directParentIdentifiers = roTerm.getParentTerms()
+                                                     .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        final Set<TermInfoWithParents> ancestors = termService.findWithAllAncestors(directParentIdentifiers);
+        roTerm.setParentTerms(Collections.unmodifiableSet(ancestors));
     }
 }

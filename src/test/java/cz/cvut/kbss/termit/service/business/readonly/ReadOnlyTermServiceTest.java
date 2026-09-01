@@ -24,10 +24,12 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -40,10 +42,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -52,7 +56,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
@@ -86,23 +92,33 @@ class ReadOnlyTermServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAllRoots(any(), any(), anyCollection())).thenReturn(terms);
 
-        final List<TermDto> result = sut.findAllRoots(vocabulary, pageSpec);
+        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, false, false, pageSpec
+        );
+        final List<TermDto> result = sut.findAllRoots(vocabulary, params, List.of());
+
         assertEquals(terms, result);
-        verify(termService).findAllRoots(vocabulary, pageSpec, Collections.emptyList());
+        verify(termService).findAllRoots(vocabulary, params, Collections.emptyList());
     }
 
     @Test
-    void findAllRootsIncludingImportedGetsRootTermsFromServiceAndTransformsThemToReadOnlyVersion() {
+    void findAllRootsWithIncludesGetsRootTermsFromServiceAndTransformsThemToReadOnlyVersion() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
-        when(termService.findAllRootsIncludingImported(any(), any(), anyCollection())).thenReturn(terms);
 
-        final List<TermDto> result = sut.findAllRootsIncludingImported(vocabulary, pageSpec);
+        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+
+        final TermSelectionParams params = new TermSelectionParams(
+                false, false, true, true, pageSpec
+        );
+        final List<TermDto> result = sut.findAllRoots(vocabulary, params, List.of());
+
         assertEquals(terms, result);
-        verify(termService).findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
+        verify(termService).findAllRoots(vocabulary, params, Collections.emptyList());
     }
 
     @Test
@@ -224,5 +240,29 @@ class ReadOnlyTermServiceTest {
         assertThat(result.getProperties(), hasEntry(DC.Terms.REFERENCES, term.getProperties()
                                                                              .get(DC.Terms.REFERENCES)));
         assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
+    }
+
+    @Test
+    void resolveAllAncestorsRetrievesAllAncestorsFromService() {
+        final Term term = Generator.generateTermWithId();
+        term.setParentTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
+        final ReadOnlyTerm roTerm = new ReadOnlyTerm(term);
+        final Set<TermInfoWithParents> resolvedAncestors = Set.of();
+
+        assertNotEquals(resolvedAncestors, roTerm.getParentTerms());
+
+        when(termService.findWithAllAncestors(any())).thenReturn(resolvedAncestors);
+
+        ArgumentCaptor<Set<URI>> requestedUris = ArgumentCaptor.captor();
+        sut.resolveAllAncestors(roTerm);
+
+        verify(termService).findWithAllAncestors(requestedUris.capture());
+
+        assertEquals(term.getParentTerms().size(), requestedUris.getValue().size());
+        for (TermInfo t : term.getParentTerms()) {
+            assertTrue(requestedUris.getValue().contains(t.getUri()));
+        }
+
+        assertEquals(resolvedAncestors, roTerm.getParentTerms());
     }
 }
