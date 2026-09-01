@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -42,8 +43,6 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * Caching implementation of the {@link VocabularyContextMapper}.
  * <p>
  * Context map is loaded on startup and reloaded every time a vocabulary is created.
- * <p>
- * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
 @Profile("!no-cache")
@@ -67,10 +66,8 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
         em.createNativeQuery("SELECT ?v ?g WHERE { " +
                                      "GRAPH ?g { " +
                                      "?v a ?type . " +
-                                     "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
                                      "}}")
-          .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
-          .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
+          .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
           .getResultStream().forEach(row -> {
               assert row instanceof Object[];
               assert ((Object[]) row).length == 2;

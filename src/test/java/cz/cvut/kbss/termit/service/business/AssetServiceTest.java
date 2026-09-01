@@ -100,20 +100,20 @@ class AssetServiceTest {
                     rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), Utils.timestamp(),
                                                     author.getUri(), null,
                                                     Vocabulary.s_c_resource,
-                                                    Vocabulary.s_c_vytvoreni_entity);
+                                                    Vocabulary.s_c_creation_of_entity);
                 }
                 case 1 -> {
                     final Term term = Generator.generateTermWithId();
                     rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Environment.LANGUAGE),
                                                     Utils.timestamp(), author.getUri(), Generator.generateUri(),
-                                                    SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
+                                                    SKOS.CONCEPT, Vocabulary.s_c_creation_of_entity);
                 }
                 case 2 -> {
                     final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
                     rma = new RecentlyModifiedAsset(vocabulary.getUri(),
                                                     vocabulary.getLabel().get(Environment.LANGUAGE), Utils.timestamp(),
                                                     author.getUri(), null,
-                                                    Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
+                                                    SKOS.CONCEPT_SCHEME, Vocabulary.s_c_creation_of_entity);
                 }
             }
             rma.setModified(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
@@ -237,7 +237,7 @@ class AssetServiceTest {
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(Constants.DEFAULT_PAGE_SPEC);
         assertEquals(allExpected.size(), result.getSize());
         result.get().filter(ra -> ra.hasType(SKOS.CONCEPT))
-              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_zakazany)));
+              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_forbidden)));
     }
 
     @Test
@@ -274,6 +274,6 @@ class AssetServiceTest {
         final Page<RecentlyCommentedAsset> result = sut.findLastCommented(Constants.DEFAULT_PAGE_SPEC);
         assertEquals(allExpected.size(), result.getSize());
         result.get().filter(ra -> forbiddenVocabulary.equals(ra.getVocabulary()))
-              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_zakazany)));
+              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_forbidden)));
     }
 }

@@ -17,16 +17,16 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import tools.jackson.databind.json.JsonMapper;
 
 @TestConfiguration
 public class TestSecurityConfig {
 
     @Bean
-    public ObjectMapper objectMapper() {
+    public JsonMapper objectMapper() {
         return Environment.getObjectMapper();
     }
 }

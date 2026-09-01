@@ -1,17 +1,16 @@
-PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
 
 SELECT ?vocabulary ?label ( COUNT(DISTINCT ?term) AS ?count ) ?language {
     GRAPH ?g {
         ?term a skos:Concept ;
+            skos:inScheme ?vocabulary .
+        ?vocabulary dc:title ?label ;
+            dc:language ?language .
     }
-    ?term pdp:je-pojmem-ze-slovníku ?vocabulary .
     FILTER NOT EXISTS {
-        ?vocabulary a pdp:verze-slovníku .
+        ?vocabulary a dd:version-of-vocabulary .
     }
-    ?vocabulary dc:title ?label .
-    ?vocabulary dc:language ?language .
 } GROUP BY ?vocabulary ?label ?language

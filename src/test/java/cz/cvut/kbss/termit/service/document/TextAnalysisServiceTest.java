@@ -17,8 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.document;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -58,6 +56,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -181,7 +180,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFilePassesRepositoryAndVocabularyContextToService() throws Exception {
+    void analyzeFilePassesRepositoryAndVocabularyContextToService() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -207,7 +206,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFilePassesContentTypeAndAcceptHeadersToService() throws Exception {
+    void analyzeFilePassesContentTypeAndAcceptHeadersToService() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -220,7 +219,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFilePassesRepositoryUsernameAndPasswordToServiceWhenProvided() throws Exception {
+    void analyzeFilePassesRepositoryUsernameAndPasswordToServiceWhenProvided() {
         final String username = "user";
         config.getRepository().setUsername(username);
         final String password = "password";
@@ -237,7 +236,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFileThrowsWebServiceIntegrationExceptionOnError() throws Exception {
+    void analyzeFileThrowsWebServiceIntegrationExceptionOnError() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -249,7 +248,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFileInvokesAnnotationGeneratorWithResultFromTextAnalysisService() throws Exception {
+    void analyzeFileInvokesAnnotationGeneratorWithResultFromTextAnalysisService() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -274,7 +273,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFileThrowsWebServiceIntegrationExceptionWhenRemoteServiceReturnsEmptyBody() throws Exception {
+    void analyzeFileThrowsWebServiceIntegrationExceptionWhenRemoteServiceReturnsEmptyBody() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -288,7 +287,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFileCreatesFileBackupBeforeInvokingAnnotationGenerator() throws Exception {
+    void analyzeFileCreatesFileBackupBeforeInvokingAnnotationGenerator() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -302,7 +301,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFilePassesRepositoryAndSpecifiedVocabularyContextsToService() throws Exception {
+    void analyzeFilePassesRepositoryAndSpecifiedVocabularyContextsToService() {
         final Set<URI> vocabs = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
                                          .collect(Collectors.toSet());
         final TextAnalysisInput expected = textAnalysisInput();
@@ -316,7 +315,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFileBacksUpFileContentBeforeSavingNewAnalyzedContent() throws Exception {
+    void analyzeFileBacksUpFileContentBeforeSavingNewAnalyzedContent() {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST))
@@ -356,8 +355,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeTermDefinitionInvokesTextAnalysisServiceWithTermDefinitionAsContentAndTermVocabularyAsVocabulary()
-            throws Exception {
+    void analyzeTermDefinitionInvokesTextAnalysisServiceWithTermDefinitionAsContentAndTermVocabularyAsVocabulary() {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(vocabulary.getUri());
         final TextAnalysisInput input = textAnalysisInput();
@@ -412,8 +410,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeTermDefinitionInvokesTextAnalysisServiceWithVocabularyRepositoryUsernameAndPassword()
-            throws Exception {
+    void analyzeTermDefinitionInvokesTextAnalysisServiceWithVocabularyRepositoryUsernameAndPassword() {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(vocabulary.getUri());
         final TextAnalysisInput input = textAnalysisInput();
@@ -449,7 +446,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeTermDefinitionPublishesAnalysisFinishedEvent() throws JsonProcessingException {
+    void analyzeTermDefinitionPublishesAnalysisFinishedEvent() {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(vocabulary.getUri());
         final TextAnalysisInput input = textAnalysisInput();
@@ -492,8 +489,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void analyzeFileThrowsUnsupportedLanguageExceptionWhenTextAnalysisInvocationReturnsConflictWithUnsupportedLanguageError()
-            throws Exception {
+    void analyzeFileThrowsUnsupportedLanguageExceptionWhenTextAnalysisInvocationReturnsConflictWithUnsupportedLanguageError() {
         file.setLanguage("de");
         final ErrorInfo respBody = ErrorInfo.createWithMessage("No taggers for language 'de' available.",
                                                                "/annotace/annotate");

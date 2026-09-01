@@ -1,0 +1,10 @@
+changelog:
+    -   include:
+            file: modelSimplification.yaml
+            relativeToChangelogFile: true
+    -   include:
+            file: translatedOntologies.yaml
+            relativeToChangelogFile: true
+    -   include:
+            file: ontologiesReadOnly.yaml
+            relativeToChangelogFile: true

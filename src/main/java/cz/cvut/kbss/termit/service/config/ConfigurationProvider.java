@@ -59,7 +59,7 @@ public class ConfigurationProvider {
      */
     public ConfigurationDto getConfiguration() {
         final ConfigurationDto result = new ConfigurationDto();
-        result.setId(URI.create(Vocabulary.s_c_konfigurace + "/default"));
+        result.setId(URI.create(Vocabulary.s_c_configuration + "/default"));
         result.setLanguage(config.getPersistence().getLanguage());
         result.setRoles(new HashSet<>(service.findAll()));
         result.setMaxFileUploadSize(maxFileUploadSize);

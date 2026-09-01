@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.model.assignment;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.Copyable;
@@ -30,12 +31,13 @@ import java.util.stream.Collectors;
  * <p>
  * The {@link #getSource()} value points to the identifier of the file.
  */
-@OWLClass(iri = Vocabulary.s_c_cil_souboroveho_vyskytu)
+@OWLClass(iri = Vocabulary.s_c_file_occurrence_target)
 public class FileOccurrenceTarget extends OccurrenceTarget {
 
     public FileOccurrenceTarget() {
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public FileOccurrenceTarget(File source) {
         super(source);
     }

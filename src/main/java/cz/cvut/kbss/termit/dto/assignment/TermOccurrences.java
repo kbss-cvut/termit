@@ -48,7 +48,7 @@ import java.util.Objects;
 ))
 public class TermOccurrences extends AbstractAssignmentsInfo {
 
-    public static final String COUNT_PROPERTY = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/počet";
+    public static final String COUNT_PROPERTY = Vocabulary.ONTOLOGY_IRI_TERMIT + "/count";
 
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String resourceLabel;
@@ -65,9 +65,9 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
         this.resourceLabel = resourceLabel;
         this.count = count.intValueExact();
         addType(type);
-        addType(Vocabulary.s_c_vyskyt_termu);
+        addType(Vocabulary.s_c_term_occurrence);
         if (suggested) {
-            addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+            addType(Vocabulary.s_c_suggested_term_occurrence);
         }
     }
 
@@ -91,7 +91,7 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
      * Returns true if the occurrences are suggested.
      */
     public boolean isSuggested() {
-        return hasType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+        return hasType(Vocabulary.s_c_suggested_term_occurrence);
     }
 
     @Override

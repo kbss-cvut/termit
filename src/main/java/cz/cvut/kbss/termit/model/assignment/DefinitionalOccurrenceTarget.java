@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.model.assignment;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.util.Copyable;
@@ -30,12 +31,13 @@ import java.util.stream.Collectors;
  * <p>
  * The {@link #getSource()} value points to the identifier of the term.
  */
-@OWLClass(iri = Vocabulary.s_c_cil_definicniho_vyskytu)
+@OWLClass(iri = Vocabulary.s_c_definition_occurrence_target)
 public class DefinitionalOccurrenceTarget extends OccurrenceTarget {
 
     public DefinitionalOccurrenceTarget() {
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public DefinitionalOccurrenceTarget(AbstractTerm source) {
         super(source);
     }

@@ -96,7 +96,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     @Override
-    public TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config) {
+    public TypeAwareResource exportVocabulary(Vocabulary vocabulary, ExportConfig config) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(config);
         if (ExportType.SKOS == config.getType()) {
@@ -185,6 +185,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             final Row row = sheet.createRow(i + 1);
             row.setRowStyle(style);
             final Term t = terms.get(i);
+            t.consolidateParents(); // includes external parents in normal parents set
             resolvePrefixes(t, prefixes);
             termExporter.export(t, row);
             for (short j = 0; j < row.getLastCellNum(); j++) {

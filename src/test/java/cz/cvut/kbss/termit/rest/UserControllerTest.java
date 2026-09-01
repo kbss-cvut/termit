@@ -17,16 +17,19 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.User_;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
+import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -37,8 +40,11 @@ import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,9 +53,11 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.service.IdentifierResolver.extractIdentifierFragment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -72,21 +80,29 @@ class UserControllerTest extends BaseControllerTestRunner {
     @Mock
     private IdentifierResolver idResolverMock;
 
+    @Mock
+    private SecurityUtils securityUtils;
+
+    @Mock
+    private JwtUtils jwtUtils;
+
     @InjectMocks
     private UserController sut;
 
     private UserAccount user;
 
+    private Authentication authentication;
+
     @BeforeEach
     void setUp() {
         super.setUp(sut);
         this.user = Generator.generateUserAccount();
-        Environment.setCurrentUser(user);
+        this.authentication = Environment.setCurrentUser(user);
     }
 
     @Test
     void getAllReturnsAllUsers() throws Exception {
-        final List<UserAccount> users = IntStream.range(0, 5).mapToObj(i -> Generator.generateUserAccount())
+        final List<UserAccount> users = IntStream.range(0, 5).mapToObj(_ -> Generator.generateUserAccount())
                                                  .collect(Collectors.toList());
         when(userService.findAll()).thenReturn(users);
 
@@ -100,11 +116,49 @@ class UserControllerTest extends BaseControllerTestRunner {
     @Test
     void updateCurrentSendsUserUpdateToService() throws Exception {
         final UserUpdateDto dto = dtoForUpdate();
+        when(securityUtils.getCurrentUser()).thenReturn(user);
 
         mockMvc.perform(
                        put(BASE_URL + "/current").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isNoContent());
         verify(userService).updateCurrent(dto);
+    }
+
+    @Test
+    void updateCurrentProvidesNewJwtInResponseWhenUsernameChanges() throws Exception {
+        final UserUpdateDto dto = dtoForUpdate();
+        dto.setUsername("new-" + user.getUsername());
+        final UserAccount result = Generator.generateUserAccount();
+        result.setUri(user.getUri());
+        result.setUsername(dto.getUsername());
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        when(userService.updateCurrent(dto)).thenReturn(result);
+        final String newToken = "newJwtToken";
+        when(jwtUtils.generateToken(eq(result), any())).thenReturn(newToken);
+
+        final MvcResult mvcResult = mockMvc.perform(
+                       put(BASE_URL + "/current").principal(authentication).content(toJson(dto))
+                                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNoContent()).andReturn();
+        verify(userService).updateCurrent(dto);
+        verify(jwtUtils).generateToken(eq(result), any());
+        assertEquals(SecurityConstants.JWT_TOKEN_PREFIX + newToken,
+                     mvcResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION));
+    }
+
+    @Test
+    void updateCurrentDoesNotProvideNewJwtInResponseWhenUsernameIsUnchanged() throws Exception {
+        final UserUpdateDto dto = dtoForUpdate();
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        when(userService.updateCurrent(dto)).thenReturn(user);
+
+        final MvcResult mvcResult = mockMvc.perform(
+                       put(BASE_URL + "/current").principal(authentication).content(toJson(dto))
+                                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNoContent()).andReturn();
+        verify(userService).updateCurrent(dto);
+        verify(jwtUtils, never()).generateToken(any(), any());
+        assertNull(mvcResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION));
     }
 
     private UserUpdateDto dtoForUpdate() {
@@ -149,20 +203,20 @@ class UserControllerTest extends BaseControllerTestRunner {
 
     @Test
     void changeRoleUsesProvidedNamespaceToResolveUserUri() throws Exception {
-        final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
+        final String namespace = User_.entityClassIRI + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(put(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/role")
                                 .queryParam(Constants.QueryParams.NAMESPACE, namespace)
-                                .content(Vocabulary.s_c_omezeny_uzivatel_termitu).contentType(MediaType.TEXT_PLAIN))
+                                .content(Vocabulary.s_c_reader).contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
-        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel_termitu);
+        verify(userService).changeRole(user, Vocabulary.s_c_reader);
     }
 
     @Test
     void getManagedAssetsRetrievesManagedAssetsForUserWithSpecifiedUri() throws Exception {
-        final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
+        final String namespace = User_.entityClassIRI + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
         when(userService.getReference(user.getUri())).thenReturn(user);
         final List<RdfsResource> resources = Collections.singletonList(

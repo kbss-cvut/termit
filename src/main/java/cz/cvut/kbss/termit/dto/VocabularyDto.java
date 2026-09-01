@@ -30,7 +30,7 @@ import cz.cvut.kbss.termit.model.acl.AccessLevel;
 @NonEntity
 public class VocabularyDto extends Vocabulary {
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_uroven_pristupovych_opravneni)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_access_level)
     private AccessLevel accessLevel;
 
     public VocabularyDto(Vocabulary source) {
@@ -38,13 +38,15 @@ public class VocabularyDto extends Vocabulary {
         setLabel(source.getLabel());
         setDescription(source.getDescription());
         setPrimaryLanguage(source.getPrimaryLanguage());
-        setGlossary(source.getGlossary());
-        setModel(source.getModel());
+        setPreferredNamespaceUri(source.getPreferredNamespaceUri());
+        setPreferredNamespacePrefix(source.getPreferredNamespacePrefix());
         setDocument(source.getDocument());
         setImportedVocabularies(source.getImportedVocabularies());
+        setRelatedVocabularies(source.getRelatedVocabularies());
         setProperties(source.getProperties());
         setTypes(source.getTypes());
         setAcl(source.getAcl());
+        // Do not include root terms in the DTO
     }
 
     public AccessLevel getAccessLevel() {

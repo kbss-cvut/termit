@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -30,6 +31,8 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
@@ -41,6 +44,7 @@ import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
@@ -78,7 +82,7 @@ public abstract class DtoMapper {
         final String type = EntityToOwlClassMapper.getOwlClassForEntity(holder.getClass());
         dto.setTypes(new HashSet<>(Set.of(type)));
         switch (type) {
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_user:
                 final User user = (User) holder;
                 Utils.emptyIfNull(user.getTypes()).forEach(dto::addType);
                 dto.setLabel(MultilingualString.create(user.getFullName(),
@@ -88,7 +92,7 @@ public abstract class DtoMapper {
                 dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
                                                        config.getPersistence().getLanguage()));
                 break;
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatelska_role:
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_user_role:
                 dto.setLabel(((UserRole) holder).getLabel());
                 break;
             default:
@@ -107,4 +111,12 @@ public abstract class DtoMapper {
     public void setConfig(Configuration config) {
         this.config = config;
     }
+
+    /**
+     * Transforms normal term to {@link FullTermDtoWithAncestors} and sets its ancestors
+     */
+    @Mapping(source = "ancestors", target = "ancestorTerms")
+    @Mapping(target = "parentTerms", ignore = true)
+    @Mapping(target = "externalParentTerms", ignore = true)
+    public abstract FullTermDtoWithAncestors withAncestors(Term term, Set<TermInfoWithParents> ancestors);
 }

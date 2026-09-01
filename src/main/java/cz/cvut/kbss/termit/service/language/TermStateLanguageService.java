@@ -74,7 +74,7 @@ public class TermStateLanguageService {
         try {
             final ValueFactory vf = SimpleValueFactory.getInstance();
             final Model model = Rio.parse(termStatesLanguageTtl.getInputStream(), RDFFormat.TURTLE);
-            return model.filter(null, RDF.TYPE, vf.createIRI(Vocabulary.s_c_stav_pojmu))
+            return model.filter(null, RDF.TYPE, vf.createIRI(Vocabulary.s_c_term_state))
                         .stream().map(s -> {
                         final org.eclipse.rdf4j.model.Resource state = s.getSubject();
                         final RdfsResource res = new RdfsResource();
@@ -101,7 +101,7 @@ public class TermStateLanguageService {
      * @return Optional initial term state
      */
     public Optional<RdfsResource> getInitialState() {
-        return getTermStates().stream().filter(s -> s.getTypes().contains(Vocabulary.s_c_uvodni_stav_pojmu))
+        return getTermStates().stream().filter(s -> s.getTypes().contains(Vocabulary.s_c_initial_term_state))
                               .findFirst();
     }
 }

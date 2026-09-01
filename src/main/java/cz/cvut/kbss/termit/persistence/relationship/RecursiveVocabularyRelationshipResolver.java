@@ -88,8 +88,7 @@ public class RecursiveVocabularyRelationshipResolver implements VocabularyRelati
                                             """, URI.class)
                  .setParameter("vocabulary", vocabulary)
                  .setParameter("termType", URI.create(SKOS.CONCEPT))
-                 .setParameter("inVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                  .getResultList();
     }
 }

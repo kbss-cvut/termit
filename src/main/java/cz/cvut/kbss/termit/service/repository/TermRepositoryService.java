@@ -29,8 +29,8 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
-import cz.cvut.kbss.termit.model.FlatTerm;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
@@ -187,11 +187,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     @Override
     protected void postUpdate(@Nonnull Term instance) {
-        final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
+        final Vocabulary vocabulary = vocabularyService.findRequired(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
-            vocabulary.getGlossary().removeRootTerm(instance);
+            vocabulary.removeRootTerm(instance);
         } else {
-            vocabulary.getGlossary().addRootTerm(instance);
+            vocabulary.addRootTerm(instance);
         }
     }
 
@@ -206,11 +206,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional
     public void addRootTermToVocabulary(Term instance, Vocabulary vocabulary) {
         prepareTermForPersist(instance, vocabulary);
-        instance.setGlossary(vocabulary.getGlossary().getUri());
+        instance.setVocabulary(vocabulary.getUri());
         instance.splitExternalAndInternalParents();
 
         assert !instance.hasParentInSameVocabulary();
-        addTermAsRootToGlossary(instance, vocabulary.getUri());
+        addTermAsRootToVocabulary(instance, vocabulary.getUri());
         termDao.persist(instance, vocabulary);
     }
 
@@ -226,16 +226,25 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         pruneAndNormalizeTranslations(instance);
     }
 
-    private URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
+    /**
+     * Generates an identifier for a term based on the vocabulary namespace and the specified term label.
+     *
+     * @param vocabulary Vocabulary to which the term would belong
+     * @param termLabel  Label of the term
+     * @return Term identifier
+     */
+    public URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(termLabel);
         return idResolver.generateIdentifier(namespaceResolver.resolveNamespace(vocabulary.getUri()),
                                              termLabel.get(vocabulary.getPrimaryLanguage()));
     }
 
-    private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
-        // Load vocabulary so that it is managed and changes to it (resp. the glossary) are persisted on commit
-        final Vocabulary toUpdate = vocabularyService.getReference(vocabularyIri);
-        instance.setGlossary(toUpdate.getGlossary().getUri());
-        toUpdate.getGlossary().addRootTerm(instance);
+    private void addTermAsRootToVocabulary(Term instance, URI vocabularyIri) {
+        // Load vocabulary so that it is managed and changes to it are persisted on commit
+        final Vocabulary toUpdate = vocabularyService.findRequired(vocabularyIri);
+        instance.setVocabulary(toUpdate.getUri());
+        toUpdate.addRootTerm(instance);
     }
 
     @Transactional
@@ -247,14 +256,14 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
 
-        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
+        final Vocabulary vocabulary = vocabularyService.findRequired(vocabularyIri);
         prepareTermForPersist(instance, vocabulary);
 
-        instance.setGlossary(vocabulary.getGlossary().getUri());
+        instance.setVocabulary(vocabulary.getUri());
         instance.addParentTerm(parentTerm);
         instance.splitExternalAndInternalParents();
         if (!instance.hasParentInSameVocabulary()) {
-            addTermAsRootToGlossary(instance, vocabularyIri);
+            addTermAsRootToVocabulary(instance, vocabularyIri);
         }
 
         termDao.persist(instance, vocabulary);
@@ -365,70 +374,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
-     * <p>
-     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary except for the
-     * ancestors - only direct parents are loaded as {@link TermInfo} instances.
-     *
-     * @param vocabulary Vocabulary whose terms should be returned
-     * @param pageSpec   Page specifying result number and position
-     * @return List of full terms ordered by label
-     * @see #findAll(Vocabulary, Pageable)
-     * @see #findAllFull(Vocabulary, Pageable)
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTerm> findAllFullAndFlat(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFullAndFlat(vocabulary, pageSpec);
-    }
-
-    /**
-     * Gets a page of terms from the specified vocabulary, whose label matches the specified search string.
-     * <p>
-     * This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, but only
-     * their direct parents are loaded as {@link TermInfo} instances, not the full ancestor chain.
-     *
-     * @param searchString Search string to filter terms by
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return List of full terms ordered by label
-     * @see #findAllFullAndFlat(Vocabulary, Pageable)
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTerm> findAllFullAndFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFullAndFlat(searchString, vocabulary, pageSpec);
-    }
-
-    /**
-     * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
-     * term hierarchy.
-     * <p>
-     * This returns all terms contained in the vocabulary glossaries.
-     *
-     * @param vocabulary Base vocabulary for the vocabulary import closure
-     * @param pageSpec   Page specifying result number and position
-     * @return List of terms ordered by label
-     */
-    @Transactional(readOnly = true)
-    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllIncludingImported(vocabulary, pageSpec);
-    }
-
-    /**
-     * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
-     * term hierarchy and returns them in a flat structure.
-     * <p>
-     * This returns all terms contained in the vocabulary glossaries.
-     *
-     * @param vocabulary Base vocabulary for the vocabulary import closure
-     * @param pageSpec   Page specifying result number and position
-     * @return List of terms ordered by label in a flat structure
-     */
-    @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFlatIncludingImported(vocabulary, pageSpec);
-    }
-
-    /**
      * Finds all root terms (terms without parent term) in the specified vocabulary.
      * <p>
      * Terms with a label in the instance language are prepended.
@@ -437,7 +382,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching root terms
-     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     @Transactional(readOnly = true)
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
@@ -453,33 +397,25 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching root terms
-     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllRoots(Pageable pageSpec,
-                                      Collection<URI> includeTerms) {
+    public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
         return termDao.findAllRoots(pageSpec, includeTerms);
     }
 
     /**
-     * Finds all root terms (terms without parent term) in the specified vocabulary or any of its imported
-     * vocabularies.
-     * <p>
-     * Basically, this does a transitive closure over the vocabulary import relationship, starting at the specified
-     * vocabulary, and returns all parent-less terms.
+     * Finds all root terms (terms without parent term) in the specified collection of vocabularies.
      * <p>
      * Terms with a label in the instance language are prepended.
      *
-     * @param vocabulary   Base vocabulary for the vocabulary import closure
+     * @param vocabularies Collection of vocabulary URIs whose terms should be returned
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching root terms
-     * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
-                                                       Collection<URI> includeTerms) {
-        return termDao.findAllRootsIncludingImports(vocabulary, pageSpec, includeTerms);
+    public List<TermDto> findAllRootsInVocabularies(Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
+        return termDao.findAllRootsInVocabularies(vocabularies, pageSpec, includeTerms);
     }
 
     /**
@@ -517,7 +453,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return List of terms ordered by label
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(String searchString, Pageable pageSpec) {
+    public List<TermDto> findAll(String searchString, Pageable pageSpec, Collection<URI> includeTerms) {
+        if (searchString.isBlank()) {
+            return termDao.findAll(pageSpec, includeTerms);
+        }
         return termDao.findAll(searchString, pageSpec);
     }
 
@@ -529,37 +468,71 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return List of terms ordered by label in a flat structure
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec, Collection<URI> includeTerms) {
+        if (searchString.isBlank()) {
+            return termDao.findAllFlat(pageSpec, includeTerms);
+        }
         return termDao.findAllFlat(searchString, pageSpec);
     }
 
     /**
-     * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
-     * (transitively) imports.
+     * Finds all terms contained in any of the specified vocabularies.
+     * <p>
+     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     * necessary, prefer {@link #findAllFlatInVocabularies(Collection, Pageable)}.
      *
-     * @param searchString Search string
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return Matching terms
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return List of matching terms
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllIncludingImported(searchString, vocabulary, pageSpec);
+    public List<TermDto> findAllInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
+        return termDao.findAllInVocabularies(vocabularies, pageSpec);
     }
 
     /**
-     * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
-     * (transitively) imports and returns them in a flat structure.
+     * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
+     * <p>
+     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
      *
-     * @param searchString Search string
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specifying result number and position
-     * @return Matching terms in a flat structure
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @return Flat list of matching terms
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary,
-                                                          Pageable pageSpec) {
-        return termDao.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
+    public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
+        return termDao.findAllFlatInVocabularies(vocabularies, pageSpec);
+    }
+
+    /**
+     * Finds terms whose label contains the specified search string in any of the specified vocabularies.
+     * <p>
+     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     * necessary, prefer {@link #findAllFlatInVocabularies(String, Collection, Pageable)}.+
+     *
+     * @param searchString String to search term labels by
+     * @param vocabularies Identifiers of vocabularies whose terms should be searched
+     * @param pageSpec     Page specification
+     * @return List of matching terms
+     */
+    @Transactional(readOnly = true)
+    public List<TermDto> findAllInVocabularies(String searchString, Collection<URI> vocabularies, Pageable pageSpec) {
+        return termDao.findAllInVocabularies(searchString, vocabularies, pageSpec);
+    }
+
+    /**
+     * Finds terms whose label contains the specified search string in any of the specified vocabularies and returns
+     * them as a flat list of DTOs.
+     *
+     * @param searchString String to search term labels by
+     * @param vocabularies Identifiers of vocabularies whose terms should be searched
+     * @param pageSpec     Page specification
+     * @return Flat list of matching terms
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlatInVocabularies(String searchString, Collection<URI> vocabularies,
+                                                      Pageable pageSpec) {
+        return termDao.findAllFlatInVocabularies(searchString, vocabularies, pageSpec);
     }
 
     /**
@@ -681,7 +654,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         super.postRemove(instance);
         if (!instance.hasParentInSameVocabulary()) {
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
-            v.getGlossary().removeRootTerm(instance);
+            v.removeRootTerm(instance);
         }
         termOccurrenceService.removeAllOf(instance);
     }
@@ -709,5 +682,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     public Optional<Term> findVersionValidAt(Term asset, Instant at) {
         return termDao.findVersionValidAt(asset, at);
+    }
+
+    @Transactional
+    public Set<TermInfoWithParents> findWithAllAncestors(Set<URI> termUris) {
+        return termDao.findWithAllAncestors(termUris);
     }
 }

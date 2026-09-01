@@ -97,7 +97,7 @@ class ResourceRepositoryServiceTest {
 
     @Test
     void persistGeneratesResourceIdentifierWhenItIsNotSet() {
-        config.getNamespace().setResource(Vocabulary.s_c_zdroj + "/");
+        config.getNamespace().setResource(Vocabulary.s_c_resource + "/");
         final Resource resource = Generator.generateResource();
         assertNull(resource.getUri());
         sut.persist(resource);

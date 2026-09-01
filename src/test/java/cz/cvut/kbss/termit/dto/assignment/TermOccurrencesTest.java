@@ -37,9 +37,9 @@ class TermOccurrencesTest {
         final String label = "Test term";
         final BigInteger count = BigInteger.valueOf(Generator.randomInt(1, 1000));
         final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
-                Vocabulary.s_c_souborovy_vyskyt_termu, false);
+                Vocabulary.s_c_file_term_occurrence, false);
         assertNotNull(result);
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));
+        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
     }
 
     @Test
@@ -49,8 +49,8 @@ class TermOccurrencesTest {
         final String label = "Test term";
         final BigInteger count = BigInteger.valueOf(Generator.randomInt(1, 1000));
         final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
-                Vocabulary.s_c_souborovy_vyskyt_termu, true);
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu));
+                Vocabulary.s_c_file_term_occurrence, true);
+        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
+        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence));
     }
 }

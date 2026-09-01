@@ -17,7 +17,9 @@
  */
 package cz.cvut.kbss.termit.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
 import cz.cvut.kbss.termit.config.JwtConfig;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -28,9 +30,6 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +52,7 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
@@ -60,8 +60,10 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
@@ -110,6 +112,8 @@ class JwtAuthorizationFilterTest {
 
     private SecretKey signingKey;
 
+    private JWSSigner signer;
+
     private JwtAuthorizationFilter sut;
 
     private final Instant tokenIssued = JwtUtils.issueTimestamp();
@@ -123,7 +127,7 @@ class JwtAuthorizationFilterTest {
 
     private MappedJwtClaimSetConverter jwtClaimSetConverter() {
         return MappedJwtClaimSetConverter.withDefaults(
-                Map.of(Claims.SUBJECT, new UsernameToUserDetailsConverter(detailsServiceMock)));
+                Map.of(JwtClaimNames.SUB, new UsernameToUserDetailsConverter(detailsServiceMock)));
     }
 
     public JwtDecoder jwtDecoder() {
@@ -142,12 +146,14 @@ class JwtAuthorizationFilterTest {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         this.user = Generator.generateUserAccount();
         this.objectMapper = Environment.getObjectMapper();
-        this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
-        this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
+        this.signingKey = new SecretKeySpec(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8),
+                                            "HmacSHA256");
+        this.jwtUtilsSpy = spy(new JwtUtils(config));
         this.sut = new JwtAuthorizationFilter(authenticationManager(jwtDecoder()), jwtUtilsSpy, objectMapper);
+        this.signer = new MACSigner(signingKey);
     }
 
     @AfterEach
@@ -170,12 +176,12 @@ class JwtAuthorizationFilterTest {
     }
 
     private String generateJwt() {
-        return Jwts.builder().subject(user.getUsername())
-                   .id(user.getUri().toString())
-                   .issuedAt(Date.from(tokenIssued))
-                   .expiration(Date.from(tokenIssued.plusMillis(10000L)))
-                   .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM)
-                   .compact();
+        final JWTClaimsSet claims = new JWTClaimsSet.Builder().subject(user.getUsername())
+                                                              .jwtID(user.getUri().toString())
+                                                              .issueTime(Date.from(tokenIssued))
+                                                              .expirationTime(Date.from(tokenIssued.plusMillis(10000L)))
+                                                              .build();
+        return JwtUtils.sign(claims, null, signer);
     }
 
     @Test
@@ -210,7 +216,8 @@ class JwtAuthorizationFilterTest {
         when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION), () -> mockResponse.getHeaderNames().toString());
+        assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION),
+                   () -> mockResponse.getHeaderNames().toString());
         assertNotEquals(mockRequest.getHeader(HttpHeaders.AUTHORIZATION),
                         mockResponse.getHeader(HttpHeaders.AUTHORIZATION));
         verify(jwtUtilsSpy).refreshToken(any());
@@ -220,11 +227,11 @@ class JwtAuthorizationFilterTest {
     void doFilterInternalReturnsUnauthorizedWhenTokenIsExpired() throws Exception {
         final Instant issued = Instant.now().minusSeconds(1000);
         final Instant expiration = issued.plusSeconds(10);
-        final String token = Jwts.builder().subject(user.getUsername())
-                                 .id(user.getUri().toString())
-                                 .issuedAt(Date.from(issued))
-                                 .expiration(Date.from(expiration))
-                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
+        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject(user.getUsername())
+                                                                     .jwtID(user.getUri().toString())
+                                                                     .issueTime(Date.from(issued))
+                                                                     .expirationTime(Date.from(expiration))
+                                                                     .build(), null, signer);
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
@@ -260,10 +267,11 @@ class JwtAuthorizationFilterTest {
     @Test
     void doFilterInternalReturnsUnauthorizedOnIncompleteJwtToken() throws Exception {
         // Missing id
-        final String token = Jwts.builder().subject(user.getUsername())
-                                 .issuedAt(new Date())
-                                 .expiration(new Date(System.currentTimeMillis() + 10000))
-                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
+        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject(user.getUsername())
+                                                                     .issueTime(new Date())
+                                                                     .expirationTime(new Date(
+                                                                             System.currentTimeMillis() + 10000))
+                                                                     .build(), null, signer);
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
@@ -275,11 +283,12 @@ class JwtAuthorizationFilterTest {
     @Test
     void doFilterInternalReturnsUnauthorizedOnUnparseableUserInfoInJwtToken() throws Exception {
         // Missing id
-        final String token = Jwts.builder().subject(user.getUsername())
-                                 .id(":1235")    // Not valid URI
-                                 .issuedAt(new Date())
-                                 .expiration(new Date(System.currentTimeMillis() + 10000))
-                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
+        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject(user.getUsername())
+                                                                     .jwtID(":1235")    // Not valid URI
+                                                                     .issueTime(new Date())
+                                                                     .expirationTime(new Date(
+                                                                             System.currentTimeMillis() + 10000))
+                                                                     .build(), null, signer);
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
@@ -289,11 +298,12 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalReturnsUnauthorizedForUnknownUserInToken() throws Exception {
-        final String token = Jwts.builder().subject("unknownUser")
-                                 .id(Generator.generateUri().toString())
-                                 .issuedAt(new Date())
-                                 .expiration(new Date(System.currentTimeMillis() + 10000))
-                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
+        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject("unknownUser")
+                                                                     .jwtID(Generator.generateUri().toString())
+                                                                     .issueTime(new Date())
+                                                                     .expirationTime(new Date(
+                                                                             System.currentTimeMillis() + 10000))
+                                                                     .build(), null, signer);
         when(detailsServiceMock.loadUserByUsername(anyString())).thenThrow(UsernameNotFoundException.class);
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
@@ -310,11 +320,12 @@ class JwtAuthorizationFilterTest {
     @Test
     void doFilterInternalAllowsRequestThroughWhenTokenIsExpiredAndTargetIsConfiguration() throws Exception {
         mockRequest.setRequestURI("/termit" + REST_MAPPING_PATH + ConfigurationController.PATH);
-        final String token = Jwts.builder().subject(user.getUsername())
-                                 .id(user.getUri().toString())
-                                 .issuedAt(new Date())
-                                 .expiration(new Date(System.currentTimeMillis() - 10000))
-                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
+        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject(user.getUsername())
+                                                                     .jwtID(user.getUri().toString())
+                                                                     .issueTime(new Date())
+                                                                     .expirationTime(new Date(
+                                                                             System.currentTimeMillis() - 10000))
+                                                                     .build(), null, signer);
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         verify(chainMock).doFilter(mockRequest, mockResponse);

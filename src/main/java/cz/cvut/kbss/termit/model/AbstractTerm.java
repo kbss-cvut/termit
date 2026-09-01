@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
@@ -30,16 +29,15 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
-import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -51,7 +49,7 @@ import java.util.stream.Collectors;
 @MappedSuperclass
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
 public abstract class AbstractTerm extends Asset<MultilingualString>
-        implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
+        implements SupportsSnapshots, HasPrimaryLanguage, TermDescription {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
@@ -74,13 +72,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     private Set<TermInfo> subTerms;
 
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)
-    private URI glossary;
-
-    @Inferred
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_state_of_term)
     private URI state;
 
     @Types
@@ -100,7 +94,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         }
         this.primaryLanguage = other.primaryLanguage;
         this.state = other.state;
-        this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
         if (other.getSubTerms() != null) {
             this.subTerms = other.getSubTerms().stream().map(TermInfo::new)
@@ -147,8 +140,8 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     }
 
     /**
-     * Setting the value has no persistent effect, the attribute is resolved
-     * from the vocabulary language when the entity is loaded.
+     * Setting the value has no persistent effect, the attribute is resolved from the vocabulary language when the
+     * entity is loaded.
      */
     public void setPrimaryLanguage(String primaryLanguage) {
         this.primaryLanguage = primaryLanguage;
@@ -170,14 +163,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.subTerms = subTerms;
     }
 
-    public URI getGlossary() {
-        return glossary;
-    }
-
-    public void setGlossary(URI glossary) {
-        this.glossary = glossary;
-    }
-
+    @Override
     public URI getVocabulary() {
         return vocabulary;
     }
@@ -186,6 +172,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.vocabulary = vocabulary;
     }
 
+    @Override
     public URI getState() {
         return state;
     }
@@ -207,7 +194,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @JsonIgnore
     @Override
     public boolean isSnapshot() {
-        return hasType(Vocabulary.s_c_verze_pojmu);
+        return hasType(Vocabulary.s_c_version_of_term);
     }
 
     @Override

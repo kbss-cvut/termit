@@ -97,7 +97,7 @@ class AccessControlListRepositoryServiceTest {
         final AccessControlRecord<UserRole> toAdd = new RoleAccessControlRecord();
         toAdd.setAccessLevel(AccessLevel.READ);
         toAdd.setHolder(new UserRole());
-        toAdd.getHolder().setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        toAdd.getHolder().setUri(URI.create(Vocabulary.s_c_reader));
 
         sut.addRecord(acl, toAdd);
         verify(dao).find(acl.getUri());

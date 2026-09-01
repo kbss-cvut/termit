@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -37,19 +38,19 @@ import java.util.Objects;
  * Represents a change to an asset.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
-@OWLClass(iri = Vocabulary.s_c_zmena)
+@OWLClass(iri = Vocabulary.s_c_change)
 public class AbstractChangeRecord extends AbstractEntity implements Comparable<AbstractChangeRecord> {
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_modifikace)
+    @OWLDataProperty(iri = DC.Terms.MODIFIED)
     private Instant timestamp;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_editora, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_editor, fetch = FetchType.EAGER)
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_zmenenou_entitu)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_changed_entity)
     private URI changedEntity;
 
     public AbstractChangeRecord() {

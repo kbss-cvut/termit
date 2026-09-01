@@ -24,15 +24,17 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.AbstractEntity;
+import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
 @NonEntity
-@OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
+@OWLClass(iri = SKOS.CONCEPT_SCHEME)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class VocabularyDto extends AbstractEntity {
 
@@ -42,10 +44,13 @@ public class VocabularyDto extends AbstractEntity {
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private MultilingualString description;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)
+    @OWLObjectProperty(iri = Vocabulary.s_p_imports_vocabulary)
     private Set<URI> importedVocabularies;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_related_vocabulary)
+    private Set<URI> relatedVocabularies;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_describes_document)
     private DocumentDto document;
 
     @Types
@@ -73,6 +78,14 @@ public class VocabularyDto extends AbstractEntity {
 
     public void setImportedVocabularies(Set<URI> importedVocabularies) {
         this.importedVocabularies = importedVocabularies;
+    }
+
+    public Set<URI> getRelatedVocabularies() {
+        return relatedVocabularies;
+    }
+
+    public void setRelatedVocabularies(Set<URI> relatedVocabularies) {
+        this.relatedVocabularies = relatedVocabularies;
     }
 
     public DocumentDto getDocument() {

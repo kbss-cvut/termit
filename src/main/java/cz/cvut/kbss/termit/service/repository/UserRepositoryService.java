@@ -25,9 +25,12 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -114,5 +117,25 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
      */
     public boolean doesAdminExist() {
         return userAccountDao.doesAdminExist();
+    }
+
+    @Transactional
+    @Override
+    public void persist(@NonNull UserAccount instance) {
+        super.persist(instance);
+    }
+
+    @CacheEvict(cacheNames = "userDetails", key = "#instance.username")
+    @Transactional
+    @Override
+    public UserAccount update(UserAccount instance) {
+        return super.update(instance);
+    }
+
+    @CacheEvict(cacheNames = "userDetails", key = "#instance.username")
+    @Transactional
+    @Override
+    public void remove(UserAccount instance) {
+        super.remove(instance);
     }
 }

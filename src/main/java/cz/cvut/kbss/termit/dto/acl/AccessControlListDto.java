@@ -25,11 +25,11 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_seznam_rizeni_pristupu)
+@OWLClass(iri = Vocabulary.s_c_access_control_list)
 @NonEntity
 public class AccessControlListDto extends AbstractEntity {
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_zaznam_rizeni_pristupu)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_access_control_record)
     private Set<AccessControlRecordDto> records;
 
     public Set<AccessControlRecordDto> getRecords() {

@@ -17,11 +17,14 @@
  */
 package cz.cvut.kbss.termit.rest.util;
 
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.Constants;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -188,5 +191,16 @@ public class RestUtils {
         final int pageSize = size != null ? size : DEFAULT_PAGE_SIZE;
         final int pageNo = page != null ? page : DEFAULT_PAGE_SPEC.getPageNumber();
         return PageRequest.of(pageNo, pageSize);
+    }
+
+    /**
+     * Sets the specified authentication token in the specified response using the HTTP {@literal Authorization}
+     * header.
+     *
+     * @param response Response to write header to
+     * @param token    Authentication token
+     */
+    public static void setAuthHeader(HttpServletResponse response, String token) {
+        response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
     }
 }

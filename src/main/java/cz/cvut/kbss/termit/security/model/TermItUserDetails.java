@@ -112,10 +112,9 @@ public class TermItUserDetails implements UserDetails {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TermItUserDetails)) {
+        if (!(o instanceof TermItUserDetails that)) {
             return false;
         }
-        TermItUserDetails that = (TermItUserDetails) o;
         return Objects.equals(user, that.user) && Objects.equals(authorities, that.authorities);
     }
 

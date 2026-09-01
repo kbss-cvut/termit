@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.service.init.lucene;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.net.URI;
 

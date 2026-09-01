@@ -279,6 +279,12 @@ class ExcelImporterTest {
     @Test
     void importCreatesTermHierarchy() {
         initVocabularyResolution();
+        doAnswer(inv -> idResolver.generateIdentifier(vocabulary.getUri() + SEPARATOR,
+                                                      inv.getArgument(1, MultilingualString.class)
+                                                         .get(Environment.LANGUAGE))).when(termService)
+                                                                                     .generateIdentifier(
+                                                                                             any(Vocabulary.class),
+                                                                                             any(MultilingualString.class));
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -514,8 +520,8 @@ class ExcelImporterTest {
                                      URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
                                      vocabulary.getUri()),
                             new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.EXACT_MATCH),
-                                      URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
-                                      vocabulary.getUri())));
+                                     URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
+                                     vocabulary.getUri())));
     }
 
     @Test
@@ -527,9 +533,9 @@ class ExcelImporterTest {
         type.getLabel().set("cs", "Typ objektu");
         when(languageService.getTermTypes()).thenReturn(List.of(type));
         final RdfsResource state = new RdfsResource(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/proposed-term"),
                 MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
-                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state);
         when(languageService.getTermStates()).thenReturn(List.of(state));
 
 
@@ -549,9 +555,9 @@ class ExcelImporterTest {
     void importSetsConfiguredInitialTermStateWhenSheetDoesNotSpecifyIt() {
         initVocabularyResolution();
         final RdfsResource state = new RdfsResource(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/proposed-term"),
                 MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
-                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(state));
 
         final Vocabulary result = sut.importVocabulary(
@@ -641,9 +647,9 @@ class ExcelImporterTest {
         type.getLabel().set("cs", "Typ objektu");
         when(languageService.getTermTypes()).thenReturn(List.of(type));
         final RdfsResource state = new RdfsResource(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/publikovaný-pojem"),
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/published-term"),
                 MultilingualString.create("Published term", Constants.DEFAULT_LANGUAGE), null,
-                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_term_state);
         state.getLabel().set("cs", "Publikovaný pojem");
         when(languageService.getTermStates()).thenReturn(List.of(state));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -833,7 +839,7 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
+        referencedParent.setLabel(MultilingualString.create("Parent", "en"));
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final Vocabulary result = sut.importVocabulary(
@@ -845,7 +851,7 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         final Term resultTerm = captor.getValue();
-        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent.toTermInfo()));
     }
 
     @Test
@@ -855,7 +861,6 @@ class ExcelImporterTest {
         final Vocabulary anotherVocabulary = new Vocabulary(URI.create("http://example.com/another-vocabulary"));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         final ReferencedTermInUnrelatedVocabularyException ex = assertThrows(
@@ -874,7 +879,6 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
         referencedParent.setLabel(MultilingualString.create("Building", "en"));
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
@@ -887,7 +891,7 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         final Term resultTerm = captor.getValue();
-        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent));
+        assertThat(resultTerm.getExternalParentTerms(), hasItem(referencedParent.toTermInfo()));
     }
 
     @Test
@@ -926,7 +930,7 @@ class ExcelImporterTest {
         vocabulary.setImportedVocabularies(Set.of(anotherVocabulary.getUri()));
         final Term referencedParent = new Term(URI.create("http://example.com/another-vocabulary/term/parent"));
         referencedParent.setVocabulary(anotherVocabulary.getUri());
-        referencedParent.setGlossary(Generator.generateUri());
+        referencedParent.setLabel(MultilingualString.create("Parent", "en"));
         when(termService.findDetached(referencedParent.getUri())).thenReturn(Optional.of(referencedParent));
 
         sut.importVocabulary(

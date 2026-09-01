@@ -30,7 +30,7 @@ import java.util.Objects;
  * DTO used for user updating so that original password can be validated.
  */
 @NonEntity
-@OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
+@OWLClass(iri = Vocabulary.s_c_user)
 public class UserUpdateDto extends UserAccount {
 
     @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/original-password")
@@ -67,13 +67,12 @@ public class UserUpdateDto extends UserAccount {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UserUpdateDto)) {
+        if (!(o instanceof UserUpdateDto that)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        UserUpdateDto that = (UserUpdateDto) o;
         return Objects.equals(originalPassword, that.originalPassword);
     }
 

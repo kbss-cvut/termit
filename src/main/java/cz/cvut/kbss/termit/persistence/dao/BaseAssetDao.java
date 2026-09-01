@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -113,9 +114,9 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                     .setParameter("hasLabel", labelProperty())
-                    .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                    .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                    .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                    .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
+                    .setParameter("hasModifiedTime", URI.create(DC.Terms.MODIFIED))
+                    .setParameter("hasCreatedTime", URI.create(DC.Terms.CREATED))
                     .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                     .setParameter("languageVal", config.getLanguage())
                     .setFirstResult((int) pageSpec.getOffset())
@@ -178,8 +179,8 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                 .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                 .setParameter("hasLabel", labelProperty())
-                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setParameter("hasModifiedTime", URI.create(DC.Terms.MODIFIED))
+                .setParameter("hasCreatedTime", URI.create(DC.Terms.CREATED))
                 .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_creator))
                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                 .setParameter("languageVal", config.getLanguage())
@@ -235,11 +236,11 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                 .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                 .setParameter("hasLabel", labelProperty())
-                .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
-                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_editor))
+                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
                 .setParameter("author", author)
-                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setParameter("hasModifiedTime", URI.create(DC.Terms.MODIFIED))
+                .setParameter("hasCreatedTime", URI.create(DC.Terms.CREATED))
                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                 .setParameter("languageVal", config.getLanguage());
         bindVocabularyRelatedParameters(query);

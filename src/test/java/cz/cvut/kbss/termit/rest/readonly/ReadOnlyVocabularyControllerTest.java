@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.rest.readonly;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyVocabulary;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -26,7 +26,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyVocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +34,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.core.type.TypeReference;
 
 import java.net.URI;
 import java.util.List;
@@ -87,7 +87,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void getByIdRetrievesVocabularyFromServiceAndReturnsIt() throws Exception {
         final String fragment = "test-vocabulary";
-        final String namespace = Vocabulary.s_c_slovnik + "/";
+        final String namespace = SKOS.CONCEPT_SCHEME + "/";
         final URI uri = URI.create(namespace + fragment);
         final ReadOnlyVocabulary vocabulary = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
         vocabulary.setUri(uri);
@@ -115,7 +115,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void getTransitiveImportsRetrievesImportsFromService() throws Exception {
         final String fragment = "test-vocabulary";
-        final String namespace = Vocabulary.s_c_slovnik + "/";
+        final String namespace = SKOS.CONCEPT_SCHEME + "/";
         final URI uri = URI.create(namespace + fragment);
         final ReadOnlyVocabulary vocabulary = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
         vocabulary.setUri(uri);

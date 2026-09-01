@@ -59,12 +59,9 @@ class SkosVocabularyRelationshipResolver implements VocabularyRelationshipResolv
                                                               FILTER (?y IN (?cascadingRelationships))
                                                           }""", URI.class)
                                .setParameter("term", URI.create(SKOS.CONCEPT))
-                               .setParameter("inVocabulary",
-                                             URI.create(
-                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                               .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
                                .setParameter("vocabulary", vocabulary)
-                               .setParameter("cascadingRelationships",
-                                             Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS)
+                               .setParameter("cascadingRelationships", Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS)
                                .getResultList());
     }
 }

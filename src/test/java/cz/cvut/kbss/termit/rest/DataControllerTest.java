@@ -17,13 +17,12 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.core.type.TypeReference;
 
 import java.net.URI;
 import java.util.Collections;
@@ -67,10 +67,10 @@ class DataControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getPropertiesLoadsPropertiesFromDao() throws Exception {
-        final RdfsResource property = create(Vocabulary.s_p_ma_krestni_jmeno, "Name", null);
+        final RdfsResource property = create(Vocabulary.s_p_has_first_name, "Name", null);
         when(dataServiceMock.findAllProperties()).thenReturn(Collections.singletonList(property));
         final MvcResult mvcResult = mockMvc.perform(get("/data/properties")).andExpect(status().isOk()).andReturn();
-        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
+        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(Collections.singletonList(property), result);
     }
@@ -82,7 +82,7 @@ class DataControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getByIdReturnsResourceWithSpecifiedIdentifier() throws Exception {
-        final RdfsResource property = create(Vocabulary.s_p_ma_krestni_jmeno, "Name", null);
+        final RdfsResource property = create(Vocabulary.s_p_has_first_name, "Name", null);
         when(dataServiceMock.find(any())).thenReturn(Optional.of(property));
         final MvcResult mvcResult = mockMvc.perform(get("/data/resource").param("iri", property.getUri().toString()))
                                            .andExpect(status().isOk()).andReturn();

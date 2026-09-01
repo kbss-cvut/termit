@@ -37,10 +37,8 @@ public class SnapshotDao {
      * Supported snapshot types.
      */
     private static final List<URI> SNAPSHOT_TYPES = List.of(
-            URI.create(Vocabulary.s_c_verze_slovniku),
-            URI.create(Vocabulary.s_c_verze_glosare),
-            URI.create(Vocabulary.s_c_verze_modelu),
-            URI.create(Vocabulary.s_c_verze_pojmu)
+            URI.create(Vocabulary.s_c_version_of_vocabulary),
+            URI.create(Vocabulary.s_c_version_of_term)
     );
 
     private final EntityManager em;
@@ -67,18 +65,18 @@ public class SnapshotDao {
                                                                        "BIND (?id as ?s)" +
                                                                        "}", "Snapshot")
                                             .setParameter("id", uri)
-                                            .setParameter("snapshotType", URI.create(Vocabulary.s_c_verze_objektu))
-                                            .setParameter("versionOf", URI.create(Vocabulary.s_p_je_verzi))
+                                            .setParameter("snapshotType", URI.create(Vocabulary.s_c_version_of_object))
+                                            .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
                                             .setParameter("hasCreated",
-                                                          URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                                                          URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
                                             .setParameter("creator",
                                                           URI.create(DC.Terms.CREATOR))
                                             .setParameter("firstName",
-                                                          URI.create(Vocabulary.s_p_ma_krestni_jmeno))
+                                                          URI.create(Vocabulary.s_p_has_first_name))
                                             .setParameter("lastName",
-                                                          URI.create(Vocabulary.s_p_ma_prijmeni))
+                                                          URI.create(Vocabulary.s_p_has_surname))
                                             .setParameter("accountName",
-                                                          URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
+                                                          URI.create(Vocabulary.s_p_has_username))
                                             .setParameter("supportedTypes", SNAPSHOT_TYPES)
                                             .getSingleResult());
         } catch (NoResultException e) {

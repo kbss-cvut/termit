@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.service.validation.ExternalServiceValidator;
 import cz.cvut.kbss.termit.service.validation.NoopRepositoryContextValidator;
@@ -40,11 +39,12 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -61,7 +61,7 @@ public class ServiceConfig {
     }
 
     @Bean
-    public RestTemplate restTemplate(@Qualifier("objectMapper") ObjectMapper objectMapper) {
+    public RestTemplate restTemplate(@Qualifier("objectMapper") JsonMapper jsonMapper) {
         final RestTemplate restTemplate = new RestTemplate();
 
         // HttpClient 5 default redirect strategy automatically follows POST redirects as well
@@ -73,8 +73,7 @@ public class ServiceConfig {
         factory.setReadTimeout(Duration.ofMinutes(10L));
         restTemplate.setRequestFactory(factory);
 
-        final MappingJackson2HttpMessageConverter jacksonConverter = new MappingJackson2HttpMessageConverter();
-        jacksonConverter.setObjectMapper(objectMapper);
+        final JacksonJsonHttpMessageConverter jacksonConverter = new JacksonJsonHttpMessageConverter(jsonMapper);
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         restTemplate.setMessageConverters(
                 Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter(),

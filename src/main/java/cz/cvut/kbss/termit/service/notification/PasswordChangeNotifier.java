@@ -46,7 +46,7 @@ public class PasswordChangeNotifier {
     }
 
     private String buildPasswordResetLink(PasswordChangeRequest request) {
-        return UriComponentsBuilder.fromHttpUrl(config.getUrl())
+        return UriComponentsBuilder.fromUriString(config.getUrl())
                                    .fragment("/reset-password/" +
                                                      request.getToken() + "/" +
                                                      URLEncoder.encode(request.getUri().toString(),
@@ -55,7 +55,7 @@ public class PasswordChangeNotifier {
     }
 
     private String buildCreatePasswordLink(PasswordChangeRequest request) {
-        return UriComponentsBuilder.fromHttpUrl(config.getUrl())
+        return UriComponentsBuilder.fromUriString(config.getUrl())
                                    .fragment("/create-password/" +
                                            request.getToken() + "/" +
                                            URLEncoder.encode(request.getUri().toString(),

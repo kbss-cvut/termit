@@ -41,7 +41,7 @@ class ReadOnlyTermTest {
     @Test
     void constructorCopiesAllMappedAttributesFromSpecifiedTerm() {
         final Term term = Generator.generateTermWithId();
-        term.setGlossary(Generator.generateUri());
+        term.setVocabulary(Generator.generateUri());
         term.addType(Generator.generateUri().toString());
         term.setSources(Collections.singleton(Generator.generateUri().toString()));
         final Term child = Generator.generateTermWithId();
@@ -60,7 +60,6 @@ class ReadOnlyTermTest {
         assertEquals(term.getVocabulary(), result.getVocabulary());
         assertEquals(term.getTypes(), result.getTypes());
         assertEquals(term.getSubTerms(), result.getSubTerms());
-        assertEquals(term.getGlossary(), result.getGlossary());
         assertEquals(term.getExactMatchTerms(), result.getExactMatchTerms());
         assertEquals(term.getRelated(), result.getRelated());
         assertEquals(term.getRelatedMatch(), result.getRelatedMatch());
@@ -94,18 +93,18 @@ class ReadOnlyTermTest {
     @Test
     void constructorCopiesParentTermsAsReadonly() {
         final Term term = Generator.generateTermWithId();
-        final Term parent = Generator.generateTermWithId();
+        final TermInfo parent = Generator.generateTermInfoWithId();
         term.setParentTerms(Collections.singleton(parent));
 
         final ReadOnlyTerm result = new ReadOnlyTerm(term);
-        assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getParentTerms());
+        assertEquals(Set.of(parent), result.getParentTerms());
     }
 
     @Test
     void isSnapshotReturnsTrueWhenInstanceHasSnapshotType() {
         final ReadOnlyTerm original = new ReadOnlyTerm(Generator.generateTermWithId());
         final ReadOnlyTerm snapshot = new ReadOnlyTerm(Generator.generateTermWithId());
-        snapshot.addType(Vocabulary.s_c_verze_pojmu);
+        snapshot.addType(Vocabulary.s_c_version_of_term);
         assertFalse(original.isSnapshot());
         assertTrue(snapshot.isSnapshot());
     }
