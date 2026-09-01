@@ -857,19 +857,19 @@ class TermServiceTest {
                                 repositoryService).findAll(vocabulary, PageRequest.of(5, 10))),
                 Arguments.of(new TermSelectionParams(true, false, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                repositoryService).findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                                repositoryService).findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC, List.of())),
                 Arguments.of(new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
                                 repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
                 Arguments.of(new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
+                                repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC), eq(List.of()))),
                 Arguments.of(new TermSelectionParams(false, false, false, true, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
                                 repositoryService).findAllInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))),
                 Arguments.of(new TermSelectionParams(true, false, false, true, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) -> verify(
-                                repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC)))
+                                repositoryService).findAllFlatInVocabularies(anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC), eq(List.of())))
         );
     }
 
