@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.AbstractTerm;
@@ -184,5 +185,17 @@ public class ReadOnlyTermService {
                                                      .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
         final Set<TermInfoWithParents> ancestors = termService.findWithAllAncestors(directParentIdentifiers);
         roTerm.setParentTerms(Collections.unmodifiableSet(ancestors));
+    }
+
+    /**
+     * Finds all terms from the given vocabulary.
+     *
+     * @param vocabulary the vocabulary from which terms should be returned
+     * @param includeTerms terms that should always be included in the result, no matter on which page
+     * @param selectionParams term search parameters
+     * @return flattened list of terms
+     */
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
+        return termService.findAllFlat(vocabulary, includeTerms, selectionParams);
     }
 }
