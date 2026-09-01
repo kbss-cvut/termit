@@ -177,18 +177,6 @@ class UserServiceTest {
     }
 
     @Test
-    void updateThrowsValidationExceptionWhenAttemptingToUpdateUsernameOfAccount() {
-        final UserAccount ua = Generator.generateUserAccount();
-        final UserUpdateDto update = new UserUpdateDto();
-
-        update.setUri(ua.getUri());
-        update.setUsername("username");
-
-        when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
-        assertThrows(ValidationException.class, () -> sut.updateCurrent(update));
-    }
-
-    @Test
     void existsChecksForUsernameExistenceInRepositoryService() {
         final String username = "user@termit";
         sut.exists(username);

@@ -210,7 +210,7 @@ public class UserService {
      * @throws AuthorizationException If the update data concern other than the current user
      */
     @Transactional
-    public void updateCurrent(UserUpdateDto update) {
+    public UserAccount updateCurrent(UserUpdateDto update) {
         LOG.trace("Updating current user account.");
         Objects.requireNonNull(update);
         UserAccount currentUser = getCurrentUser(update);
@@ -221,7 +221,7 @@ public class UserService {
         if (update.getPassword() != null) {
             securityUtils.verifyCurrentUserPassword(update.getOriginalPassword());
         }
-        repositoryService.update(update.asUserAccount());
+        return repositoryService.update(update.asUserAccount());
     }
 
     @Nonnull
@@ -231,10 +231,6 @@ public class UserService {
         if (!currentUser.getUri().equals(update.getUri())) {
             throw new AuthorizationException(
                     "User " + securityUtils.getCurrentUser() + " attempted to update a different user's account.");
-        }
-        if (!currentUser.getUsername().equals(update.getUsername())) {
-            throw new ValidationException(
-                    "User " + securityUtils.getCurrentUser() + " attempted to update their username.");
         }
         return currentUser;
     }

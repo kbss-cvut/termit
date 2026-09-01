@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.LanguageController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import jakarta.annotation.Nonnull;
@@ -115,7 +116,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private void refreshToken(String authToken, HttpServletResponse response) {
         final String newToken = jwtUtils.refreshToken(authToken);
-        response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + newToken);
+        RestUtils.setAuthHeader(response, newToken);
     }
 
     /**
