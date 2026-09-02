@@ -514,11 +514,11 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
             @Parameter(description = "Strategy to use for sub-terms handling.")
-            @RequestParam(name = "subTermsStrategy") SubTermRemovalStrategy subTermsStrategy,
+            @RequestParam(name = "subTermsStrategy", required = false) SubTermRemovalStrategy subTermsStrategy,
             @Parameter(description = "Whether occurrences should be removed. When false, the removal will fail if any occurrence exists.")
-            @RequestParam(name = "removeOccurrences") boolean removeOccurrences,
+            @RequestParam(name = "removeOccurrences", required = false) boolean removeOccurrences,
             @Parameter(description = "Whether relationships referencing the term should be removed. When false, the removal will fail if any reference to the term exists.")
-            @RequestParam(name = "removeRelationships") boolean removeRelationships) {
+            @RequestParam(name = "removeRelationships", required = false) boolean removeRelationships) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         final Term toRemove = termService.findRequired(termUri);
         termService.remove(

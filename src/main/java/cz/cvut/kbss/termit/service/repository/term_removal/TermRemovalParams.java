@@ -3,6 +3,8 @@ package cz.cvut.kbss.termit.service.repository.term_removal;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 
+import java.util.Objects;
+
 /**
  * Describes how should be a term removed
  * @param termToRemove The Term that will be removed
@@ -21,6 +23,14 @@ public record TermRemovalParams(
         boolean removeOccurrences,
         boolean removeRelationships
 ) {
+    public TermRemovalParams(Term termToRemove, SubTermRemovalStrategy subTermsStrategy, boolean removeOccurrences,
+                             boolean removeRelationships) {
+        this.termToRemove = Objects.requireNonNull(termToRemove);
+        this.subTermsStrategy = subTermsStrategy != null ? subTermsStrategy : SubTermRemovalStrategy.FAIL;
+        this.removeOccurrences = removeOccurrences;
+        this.removeRelationships = removeRelationships;
+    }
+
     /**
      * Creates a copy of this params replacing the term to remove.
      *

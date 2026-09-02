@@ -45,6 +45,7 @@ import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -844,7 +845,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(termUri)).thenReturn(toRemove);
 
         mockMvc.perform(delete(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)).andExpect(status().isNoContent());
-        verify(termServiceMock).remove(toRemove);
+        verify(termServiceMock).remove(new TermRemovalParams(toRemove, null, false, false));
     }
 
     @Test
