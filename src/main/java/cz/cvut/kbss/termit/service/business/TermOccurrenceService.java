@@ -94,4 +94,12 @@ public interface TermOccurrenceService {
      * @param term Term whose occurrences to remove
      */
     void removeAllOf(AbstractTerm term);
+
+    /**
+     * Checks whether there are any occurrences targeting the given asset.
+     *
+     * @param target asset which occurrences should be looked up
+     * @return true if any occurrence targeting the asset exist
+     */
+    boolean existsTargeting(Asset<?> target);
 }

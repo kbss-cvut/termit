@@ -175,4 +175,17 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         LOG.debug("Removing all occurrences of term {}.", term);
         termOccurrenceDao.removeAllOf(term);
     }
+
+    /**
+     * Checks whether there are any occurrences targeting the given asset.
+     *
+     * @param target asset which occurrences should be looked up
+     * @return true if any occurrence targeting the asset exist
+     */
+    @PreAuthorize("@termAuthorizationService.canRead(#target)")
+    @Transactional(readOnly = true)
+    @Override
+    public boolean existsTargeting(Asset<?> target) {
+        return termOccurrenceDao.existsTargeting(target);
+    }
 }

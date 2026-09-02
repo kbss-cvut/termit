@@ -40,6 +40,7 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -48,8 +49,15 @@ import cz.cvut.kbss.termit.persistence.snapshot.TermSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -76,6 +84,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
     private static final URI TERM_FROM_VOCABULARY = URI.create(SKOS.IN_SCHEME);
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
+
+    /**
+     * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots
+     */
+    private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
+                WHERE {
+                    GRAPH ?context {
+                        ?other ?relation ?term .
+                        ?context a ?vocabulary .
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
+                    }
+                }
+                """;
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -1274,6 +1297,84 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .getResultStream().collect(Collectors.toSet());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Checks whether there is any triple in any vocabulary where the term is an object.
+     * Excluding vocabulary snapshots.
+     *
+     * @param term term to which references should be checked
+     * @return true if there is any triple where the term is an object
+     */
+    public boolean referencesToTermExist(AbstractTerm term) {
+        Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
+        try {
+            return em.createNativeQuery("ASK " + REFERENCES_TO_TERM_WHERE_CLAUSE, Boolean.class)
+                     .setParameter("term", term.getUri())
+                     .setParameter("vocabulary", Vocabulary_.entityClassIRI)
+                     .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                     .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find references for term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Finds statements from vocabulary graphs referencing the specified term as an object.
+     *
+     * @param term term whose incoming references should be returned
+     * @param pageable paging specification applied to the constructed RDF4J query
+     * @return page of statements referencing the specified term
+     */
+    public Page<Statement> findReferences(AbstractTerm term, Pageable pageable) {
+        Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
+        final String offsetLimitClause = " OFFSET " + pageable.getOffset() + " LIMIT " + pageable.getPageSize();
+
+        try {
+            final GraphQuery query;
+            try (RepositoryConnection con = em.unwrap(org.eclipse.rdf4j.repository.Repository.class).getConnection()) {
+                query = con.prepareGraphQuery("""
+                            CONSTRUCT {
+                                ?other ?relation ?term .
+                            }
+                            """ + REFERENCES_TO_TERM_WHERE_CLAUSE + offsetLimitClause);
+                query.setBinding("term", Values.iri(term.getUri().toString()));
+                query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
+                query.setBinding("versionOfVocabulary",
+                        Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
+                try (GraphQueryResult result = query.evaluate()) {
+                    return new PageImpl<>(result.stream().toList());
+                }
+            }
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Removes all triples from vocabularies where the given term is references as object.
+     *
+     * @param toRemove term to which references should be removed
+     */
+    public void removeReferencesTo(AbstractTerm toRemove) {
+        Objects.requireNonNull(toRemove.getUri(), "Term URI cannot be null");
+
+        try {
+            em.createNativeQuery("""
+                        DELETE {
+                            GRAPH ?context {
+                                ?other ?relation ?term .
+                            }
+                        }
+                        """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
+              .setParameter("term", toRemove.getUri())
+              .setParameter("vocabulary", Vocabulary_.entityClassIRI)
+              .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+              .executeUpdate();
+            throw new RuntimeException("force rollback");
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove references to term " + Utils.uriToString(toRemove.getUri()), e);
         }
     }
 }

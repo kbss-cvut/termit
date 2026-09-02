@@ -313,4 +313,21 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
               removeAll(a, URI.create(Vocabulary.s_c_term_occurrence));
           });
     }
+
+    /**
+     * Checks whether there are any occurrences targeting the given asset.
+     *
+     * @param target asset which occurrences should be looked up
+     * @return true if any occurrence targeting the asset exist
+     */
+    public boolean existsTargeting(Asset<?> target) {
+        Objects.requireNonNull(target, "Target cannot be null");
+        Objects.requireNonNull(target.getUri(), "Target URI cannot be null");
+        return em.createNativeQuery("ASK {" +
+                         "?x a ?type ;" +
+                         "?hasTerm ?term . }", Boolean.class)
+                 .setParameter("type", typeUri)
+                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
+                 .setParameter("term", target.getUri()).getSingleResult();
+    }
 }

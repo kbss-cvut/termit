@@ -38,6 +38,8 @@ import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
+import cz.cvut.kbss.termit.service.repository.term_removal.SubTermRemovalStrategy;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -510,9 +512,18 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Strategy to use for sub-terms handling.")
+            @RequestParam(name = "subTermsStrategy") SubTermRemovalStrategy subTermsStrategy,
+            @Parameter(description = "Whether occurrences should be removed. When false, the removal will fail if any occurrence exists.")
+            @RequestParam(name = "removeOccurrences") boolean removeOccurrences,
+            @Parameter(description = "Whether relationships referencing the term should be removed. When false, the removal will fail if any reference to the term exists.")
+            @RequestParam(name = "removeRelationships") boolean removeRelationships) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        termService.remove(termService.findRequired(termUri));
+        final Term toRemove = termService.findRequired(termUri);
+        termService.remove(
+                new TermRemovalParams(toRemove, subTermsStrategy, removeOccurrences, removeRelationships)
+        );
         LOG.debug("Term {} removed.", termUri);
     }
 

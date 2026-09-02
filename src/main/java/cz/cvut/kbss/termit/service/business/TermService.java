@@ -49,6 +49,7 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
@@ -629,6 +630,21 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void remove(@Nonnull Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
+    }
+
+    /**
+     * Removes the specified term according to the removal parameters.
+     *
+     * @param termRemovalParams parameters describing how the term should be removed
+     */
+    @Transactional
+    @PreAuthorize("@termAuthorizationService.canRemove(#termRemovalParams.termToRemove())")
+    public void remove(TermRemovalParams termRemovalParams) {
+        Objects.requireNonNull(termRemovalParams);
+        Objects.requireNonNull(termRemovalParams.termToRemove());
+        Objects.requireNonNull(termRemovalParams.termToRemove().getVocabulary());
+        final Vocabulary vocabulary = findVocabularyRequired(termRemovalParams.termToRemove().getVocabulary());
+        repositoryService.remove(termRemovalParams, vocabulary);
     }
 
     /**
