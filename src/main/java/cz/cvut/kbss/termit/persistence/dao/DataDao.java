@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.persistence.dao.spec.Specification;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
@@ -84,6 +85,21 @@ import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVoca
 public class DataDao {
 
     private static final URI RDFS_LABEL = URI.create(RDFS.LABEL);
+
+    /**
+     * SPARQL where clause matching custom attribute usage in vocabulary graphs, while excluding snapshots
+     */
+    private static final String CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE = """
+                WHERE {
+                    GRAPH ?context {
+                        ?subject ?attribute ?object .
+                        ?context a ?vocabulary .
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
+                    }
+                }
+                """;
 
     private final EntityManager em;
 
@@ -330,11 +346,10 @@ public class DataDao {
         }
     }
 
-    private int countCustomAttributeUsage(RepositoryConnection con, String whereQuery, IRI predicate) {
-        final TupleQuery countQuery = con.prepareTupleQuery("SELECT (COUNT(*) AS ?count) " + whereQuery);
+    private int countCustomAttributeUsage(RepositoryConnection con, IRI predicate) {
+        final TupleQuery countQuery = con.prepareTupleQuery("SELECT (COUNT(*) AS ?count) " + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE);
 
-        countQuery.setBinding("predicate", predicate);
-        countQuery.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
+        bindCustomAttributeUsageQueryParameters(countQuery, predicate);
         countQuery.setIncludeInferred(false);
 
         try (TupleQueryResult result = countQuery.evaluate()) {
@@ -343,15 +358,13 @@ public class DataDao {
         }
     }
 
-    private List<Statement> findCustomAttributeUsage(RepositoryConnection con, String whereQuery, IRI predicate, long offset, int resultLimit) {
-        final TupleQuery pageQuery = con.prepareTupleQuery("SELECT ?subject ?predicate ?object ?context "+
-                whereQuery +
+    private List<Statement> findCustomAttributeUsage(RepositoryConnection con, IRI predicate, long offset, int resultLimit) {
+        final TupleQuery pageQuery = con.prepareTupleQuery("SELECT ?subject ?attribute ?object ?context "+
+                CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE +
                 "LIMIT  " + resultLimit +
                 " OFFSET " + offset);
 
-        pageQuery.setBinding("predicate", predicate);
-        pageQuery.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
-
+        bindCustomAttributeUsageQueryParameters(pageQuery, predicate);
         pageQuery.setIncludeInferred(false);
 
         final List<Statement> statements = new ArrayList<>(resultLimit);
@@ -361,7 +374,7 @@ public class DataDao {
                 final BindingSet bindings = result.next();
 
                 final Resource subject = (Resource) bindings.getValue("subject");
-                final IRI statementPredicate = (IRI) bindings.getValue("predicate");
+                final IRI statementPredicate = (IRI) bindings.getValue("attribute");
                 final Value object = bindings.getValue("object");
                 final Resource context = (Resource) bindings.getValue("context");
 
@@ -391,26 +404,15 @@ public class DataDao {
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         final IRI predicate = Values.iri(identifier.toString());
 
-        final String whereQuery = """
-                WHERE {
-                    GRAPH ?context {
-                        ?subject ?predicate ?object .
-                        FILTER NOT EXISTS {
-                            ?context a ?versionOfVocabulary .
-                        }
-                    }
-                }
-                """;
-
         try (RepositoryConnection con = repo.getConnection()) {
-            final int totalCount = countCustomAttributeUsage(con, whereQuery, predicate);
+            final int totalCount = countCustomAttributeUsage(con, predicate);
 
             if (totalCount == 0 || pageable.getOffset() >= totalCount) {
                 return new PageImpl<>(List.of(), pageable, totalCount);
             }
 
             int maxResults = Math.min(totalCount, pageable.getPageSize());
-            final List<Statement> statements = findCustomAttributeUsage(con, whereQuery, predicate, pageable.getOffset(), maxResults);
+            final List<Statement> statements = findCustomAttributeUsage(con, predicate, pageable.getOffset(), maxResults);
 
             return new PageImpl<>(statements, pageable, totalCount);
         } catch (RuntimeException e) {
@@ -428,17 +430,9 @@ public class DataDao {
         Objects.requireNonNull(customAttribute);
         Objects.requireNonNull(customAttribute.getUri());
         try {
-            return em.createNativeQuery("""
-                SELECT DISTINCT ?context WHERE {
-                    GRAPH ?context {
-                        ?subject ?attribute ?object .
-                        FILTER NOT EXISTS {
-                            ?context a ?versionOfVocabulary .
-                        }
-                    }
-                }
-            """, URI.class)
+            return em.createNativeQuery("SELECT DISTINCT ?context " + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE, URI.class)
                      .setParameter("attribute", customAttribute.getUri())
+                     .setParameter("vocabulary", Vocabulary_.entityClassIRI)
                      .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))
                      .getResultList();
         } catch (RuntimeException e) {
@@ -460,21 +454,21 @@ public class DataDao {
                 GRAPH ?context {
                     ?subject ?attribute ?object .
                 }
-            } WHERE {
-                GRAPH ?context {
-                    ?subject ?attribute ?object .
-                    FILTER NOT EXISTS {
-                        ?context a ?versionOfVocabulary .
-                    }
-                }
             }
-        """)
+            """ + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE)
               .setParameter("attribute", attribute.getUri())
+              .setParameter("vocabulary", Vocabulary_.entityClassIRI)
               .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))
               .executeUpdate();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to remove all custom attribute usages", e);
         }
+    }
+
+    private void bindCustomAttributeUsageQueryParameters(TupleQuery query, IRI predicate) {
+        query.setBinding("attribute", predicate);
+        query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
+        query.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
     }
 
     public void removeCustomAttribute(CustomAttribute attribute) {
