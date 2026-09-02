@@ -632,14 +632,23 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         Objects.requireNonNull(removalParams.termToRemove().getUri());
         Objects.requireNonNull(vocabulary);
 
-        // ensure we are working with managed instance
-        removalParams = removalParams.withTerm(findRequired(removalParams.termToRemove().getUri()));
-        final Term toRemove = removalParams.termToRemove();
+        // Refresh the instance from storage, then detach it before traversing term relationships.
+        // JOPA cannot manage the same individual as both Term and TermInfo,
+        // which would otherwise prevent loading a child whose parent is the term currently being removed.
+        final URI termUri = removalParams.termToRemove().getUri();
+        removalParams = removalParams.withTerm(findRequired(termUri));
+        termDao.detach(removalParams.termToRemove());
 
-        LOG.debug("Removing term <{}>", toRemove.getUri());
+        LOG.debug("Removing term <{}>", termUri);
 
-        LOG.debug("Applying sub-terms removal strategy for term <{}>: {}", toRemove.getUri(), removalParams.subTermsStrategy());
+        LOG.debug("Applying sub-terms removal strategy for term <{}>", termUri);
         removalParams.subTermsStrategy().apply(removalParams, vocabulary, this);
+
+        // Clear the persistence context to remove cached TermInfo instances
+        termDao.flushAndClear();
+
+        removalParams = removalParams.withTerm(findRequired(termUri));
+        final Term toRemove = removalParams.termToRemove();
         if (toRemove.getSubTerms() != null) {
             toRemove.getSubTerms().clear();
         }

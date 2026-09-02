@@ -472,29 +472,16 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term child = Generator.generateTermWithId(vocabulary.getUri());
         final Term grandChild = Generator.generateTermWithId(vocabulary.getUri());
 
-        transactional(() -> {
-            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(grandChild, descriptorFactory.termDescriptor(vocabulary));
-        });
+        transactional(() -> sut.addRootTermToVocabulary(parent, vocabulary));
+        transactional(() -> sut.addChildTerm(child, parent));
+        transactional(() -> sut.addChildTerm(grandChild, child));
 
-        transactional(() -> {
-            parent.setVocabulary(vocabulary.getUri());
-            vocabulary.addRootTerm(parent);
-            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            em.merge(parent, descriptorFactory.termDescriptor(vocabulary));
-            em.clear();
+        // verify setup
+        assertNotNull(em.find(Term.class, parent.getUri()));
+        assertNotNull(em.find(Term.class, child.getUri()));
+        assertNotNull(em.find(Term.class, grandChild.getUri()));
 
-            child.setVocabulary(vocabulary.getUri());
-            child.addParentTerm(parent);
-            em.merge(child, descriptorFactory.termDescriptor(vocabulary));
-            em.clear();
-
-            grandChild.setVocabulary(vocabulary.getUri());
-            grandChild.addParentTerm(child);
-            em.merge(grandChild, descriptorFactory.termDescriptor(vocabulary));
-        });
-
+        // remove parent and all children
         sut.remove(new TermRemovalParams(parent, SubTermRemovalStrategy.CASCADE, false, true), vocabulary);
 
         assertNull(em.find(Term.class, parent.getUri()));

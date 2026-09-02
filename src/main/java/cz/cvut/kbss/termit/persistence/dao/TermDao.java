@@ -177,6 +177,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
+     * Flushes pending term changes and clears the persistence context.
+     */
+    public void flushAndClear() {
+        em.flush();
+        em.clear();
+    }
+
+    /**
      * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS related.
      *
      * @param term Term to load related terms for
