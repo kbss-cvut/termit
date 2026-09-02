@@ -855,7 +855,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(
                        delete(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME))
                .andExpect(status().isNotFound());
-        verify(termServiceMock, never()).remove(any());
+        verify(termServiceMock, never()).remove(any(Term.class));
     }
 
     @Test
