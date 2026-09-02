@@ -629,17 +629,20 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional
     public void remove(TermRemovalParams removalParams, Vocabulary vocabulary) {
         Objects.requireNonNull(removalParams);
+        Objects.requireNonNull(removalParams.termToRemove().getUri());
         Objects.requireNonNull(vocabulary);
 
-        final Term toRemove = removalParams.termToRemove();
         // ensure we are working with managed instance
-        removalParams = removalParams.withTerm(toRemove);
+        removalParams = removalParams.withTerm(findRequired(removalParams.termToRemove().getUri()));
+        final Term toRemove = removalParams.termToRemove();
 
         LOG.debug("Removing term <{}>", toRemove.getUri());
 
         LOG.debug("Applying sub-terms removal strategy for term <{}>: {}", toRemove.getUri(), removalParams.subTermsStrategy());
         removalParams.subTermsStrategy().apply(removalParams, vocabulary, this);
-        toRemove.getSubTerms().clear();
+        if (toRemove.getSubTerms() != null) {
+            toRemove.getSubTerms().clear();
+        }
 
         if (termOccurrenceService.existsTargeting(toRemove) && !removalParams.removeOccurrences()) {
             throw new AssetRemovalException("Failed to remove term because of existing term occurrences");
@@ -652,9 +655,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             termDao.removeReferencesTo(toRemove);
         }
 
-        preRemove(toRemove);
-        remove(toRemove);
-        postRemove(toRemove);
+        this.remove(toRemove); // calls pre and post remove
         LOG.debug("Removed term <{}>", toRemove.getUri());
     }
 

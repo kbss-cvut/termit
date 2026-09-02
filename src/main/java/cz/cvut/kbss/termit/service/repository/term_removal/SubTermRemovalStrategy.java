@@ -53,10 +53,12 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
         public void apply(TermRemovalParams removalParams, Vocabulary vocabulary,
                           TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
-            term.getSubTerms().forEach(subTermInfo -> {
-                final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
-                repositoryService.remove(removalParams.withTerm(subTerm), vocabulary);
-            });
+            if (term.getSubTerms() != null) {
+                term.getSubTerms().forEach(subTermInfo -> {
+                    final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
+                    repositoryService.remove(removalParams.withTerm(subTerm), vocabulary);
+                });
+            }
         }
     }
 
@@ -76,7 +78,9 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
                 // term has no parents in the same vocabulary
                 makeRoots(term, vocabulary);
             }
-            if (!term.getParentTerms().isEmpty() || !term.getExternalParentTerms().isEmpty()) {
+            final boolean hasParents = term.getParentTerms() != null && !term.getParentTerms().isEmpty();
+            final boolean hasExternalParents = term.getExternalParentTerms() != null && !term.getExternalParentTerms().isEmpty();
+            if (hasParents || hasExternalParents) {
                 // term has some parents to which children should be reconnected
                 reconnectToParents(term, repositoryService);
             }

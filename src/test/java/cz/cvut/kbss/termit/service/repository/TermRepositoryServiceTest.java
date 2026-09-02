@@ -39,6 +39,8 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.repository.term_removal.SubTermRemovalStrategy;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -63,8 +65,8 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -462,6 +464,138 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(term);
         final Term result = em.find(Term.class, term.getUri());
         assertNull(result);
+    }
+
+    @Test
+    void removeWithParamsCascadesToNestedChildren() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final Term grandChild = Generator.generateTermWithId(vocabulary.getUri());
+
+        transactional(() -> {
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(grandChild, descriptorFactory.termDescriptor(vocabulary));
+        });
+
+        transactional(() -> {
+            parent.setVocabulary(vocabulary.getUri());
+            vocabulary.addRootTerm(parent);
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.merge(parent, descriptorFactory.termDescriptor(vocabulary));
+            em.clear();
+
+            child.setVocabulary(vocabulary.getUri());
+            child.addParentTerm(parent);
+            em.merge(child, descriptorFactory.termDescriptor(vocabulary));
+            em.clear();
+
+            grandChild.setVocabulary(vocabulary.getUri());
+            grandChild.addParentTerm(child);
+            em.merge(grandChild, descriptorFactory.termDescriptor(vocabulary));
+        });
+
+        sut.remove(new TermRemovalParams(parent, SubTermRemovalStrategy.CASCADE, false, true), vocabulary);
+
+        assertNull(em.find(Term.class, parent.getUri()));
+        assertNull(em.find(Term.class, child.getUri()));
+        assertNull(em.find(Term.class, grandChild.getUri()));
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertTrue(result.getRootTerms().isEmpty());
+    }
+
+    @Test
+    void removeWithParamsThrowsWhenTermHasSuggestedOccurrencesAndRemoveOccurrencesIsFalse() {
+        enableRdfsInference(em);
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
+        parent.setVocabulary(vocabulary.getUri());
+        toRemove.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(referencing);
+        transactional(() -> {
+            vocabulary.addRootTerm(parent);
+            em.persist(parent, descriptorFactory.termDescriptor(parent));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+        toRemove.addParentTerm(parent);
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                                                                  new DefinitionalOccurrenceTarget(referencing));
+        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
+        occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
+            em.persist(referencing, descriptorFactory.termDescriptor(referencing));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(occ);
+            em.persist(occ.getTarget());
+        });
+        final Term loaded = sut.findRequired(toRemove.getUri());
+
+        assertThrows(AssetRemovalException.class,
+                     () -> sut.remove(new TermRemovalParams(loaded, SubTermRemovalStrategy.FAIL, false, false),
+                                      vocabulary));
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()));
+    }
+
+    @Test
+    void removeWithParamsRemovesSuggestedOccurrencesWhenRemoveOccurrencesIsTrue() {
+        enableRdfsInference(em);
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
+        parent.setVocabulary(vocabulary.getUri());
+        toRemove.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(referencing);
+        transactional(() -> {
+            vocabulary.addRootTerm(parent);
+            em.persist(parent, descriptorFactory.termDescriptor(parent));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+        toRemove.addParentTerm(parent);
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                                                                  new DefinitionalOccurrenceTarget(referencing));
+        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
+        occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
+            em.persist(referencing, descriptorFactory.termDescriptor(referencing));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(occ);
+            em.persist(occ.getTarget());
+        });
+        final Term loaded = sut.findRequired(toRemove.getUri());
+
+        assertDoesNotThrow(
+                () -> sut.remove(new TermRemovalParams(loaded, SubTermRemovalStrategy.FAIL, true, false),
+                                 vocabulary));
+        assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()));
+    }
+
+    @Test
+    void removeWithParamsThrowsWhenTermRelationshipsExistAndRemoveRelationshipsIsFalse() {
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term related = Generator.generateTermWithId(vocabulary.getUri());
+        toRemove.setVocabulary(vocabulary.getUri());
+        related.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(toRemove);
+        vocabulary.addRootTerm(related);
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            generateRelatedInverse(toRemove, related, SKOS.RELATED);
+        });
+        final Term loaded = sut.findRequired(toRemove.getUri());
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(loaded, SubTermRemovalStrategy.FAIL, false, false),
+                                 vocabulary));
+        assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
     }
 
     private void generateRelatedInverse(Term term, Term related, String property) {

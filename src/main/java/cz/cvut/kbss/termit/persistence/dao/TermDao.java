@@ -1372,7 +1372,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
               .setParameter("vocabulary", Vocabulary_.entityClassIRI)
               .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
               .executeUpdate();
-            throw new RuntimeException("force rollback");
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to remove references to term " + Utils.uriToString(toRemove.getUri()), e);
         }
