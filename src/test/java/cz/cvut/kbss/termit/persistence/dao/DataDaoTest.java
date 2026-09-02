@@ -365,12 +365,10 @@ class DataDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllCustomAttributesReturnsCustomAttributes() {
-        final CustomAttribute pOne = new CustomAttribute(Generator.generateUri(),
-                                                         MultilingualString.create("Attribute one", "en"), null);
+        final CustomAttribute pOne = createCustomAttribute();
         pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
-        final CustomAttribute pTwo = new CustomAttribute(Generator.generateUri(),
-                                                         MultilingualString.create("Attribute two", "en"), null);
+        final CustomAttribute pTwo = createCustomAttribute();
         pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         pTwo.setRange(URI.create(XSD.BOOLEAN));
         transactional(() -> {
@@ -385,12 +383,10 @@ class DataDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllCustomAttributesByDomainReturnsCustomAttributesWithSpecifiedDomain() {
-        final CustomAttribute pOne = new CustomAttribute(Generator.generateUri(),
-                                                         MultilingualString.create("Attribute one", "en"), null);
+        final CustomAttribute pOne = createCustomAttribute();
         pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT_SCHEME));
         pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
-        final CustomAttribute pTwo = new CustomAttribute(Generator.generateUri(),
-                                                         MultilingualString.create("Attribute two", "en"), null);
+        final CustomAttribute pTwo = createCustomAttribute();
         pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         pTwo.setRange(URI.create(XSD.BOOLEAN));
         transactional(() -> {
@@ -425,8 +421,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     void findCustomAttributeUsageReturnsUsageOfRequestedAttributeWithSimpleSubject() {
         // Subject of the custom attribute annotation is IRI
 
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("AttributeName", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
         attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         transactional(() -> em.persist(attribute));
 
@@ -469,8 +464,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         // subject of custom attribute is another triple
 
         final URI relation = URI.create(SKOS.RELATED.stringValue());
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
         attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.RDF.STATEMENT));
         attribute.setAnnotatedRelationships(Set.of(relation));
         transactional(() -> em.persist(attribute));
@@ -520,12 +514,10 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void findCustomAttributeUsageReturnsTotalElementsCountMatchingNumberOfUsagesOfRequestedAttribute() {
         // Unrelated attribute has a single usage, attribute B has two usages
-        final CustomAttribute unrelated = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute A", "en"), null);
+        final CustomAttribute unrelated = createCustomAttribute();
         unrelated.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
 
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute B", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
         attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
 
         transactional(() -> {
@@ -572,8 +564,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void removeAllCustomAttributeUsagesRemovesUsagesWithSimpleSubjectAndKeepsOtherStatements() {
         // Subject of the custom attribute usage is a plain IRI
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
         attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         attribute.setRange(URI.create(XSD.STRING));
         transactional(() -> em.persist(attribute));
@@ -618,8 +609,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     void removeAllCustomAttributeUsagesRemovesUsagesWithTripleSubjectAndKeepsOriginalAnnotatedRelationship() {
         // Subject of the custom attribute usage is another triple
         final URI relation = URI.create(SKOS.RELATED.stringValue());
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
         attribute.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.RDF.STATEMENT));
         attribute.setRange(URI.create(XSD.STRING));
         attribute.setAnnotatedRelationships(Set.of(relation));
@@ -665,7 +655,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         });
     }
 
-    void setupAttributeUsageInSnapshot(IRI context, CustomAttribute attribute) {
+    private void setupAttributeUsageInSnapshot(IRI context, CustomAttribute attribute) {
         final Statement attributeUsageStatement = statement(
                 Values.iri(Generator.generateUriString()),
                 Values.iri(attribute.getUri().toString()),
@@ -688,8 +678,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void removeAllCustomAttributeUsagesDoesNotRemoveUsagesFromSnapshots() {
         final IRI context = Values.iri(Generator.generateUriString());
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
 
         setupAttributeUsageInSnapshot(context, attribute);
 
@@ -709,8 +698,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void findCustomAttributeUsageDoesNotFindUsageInSnapshots() {
         final IRI context = Values.iri(Generator.generateUriString());
-        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute", "en"), null);
+        final CustomAttribute attribute = createCustomAttribute();
 
         setupAttributeUsageInSnapshot(context, attribute);
 
@@ -719,5 +707,10 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertEquals(0, usages.getTotalElements());
             assertTrue(usages.isEmpty());
         });
+    }
+
+    private static CustomAttribute createCustomAttribute() {
+        return new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
     }
 }
