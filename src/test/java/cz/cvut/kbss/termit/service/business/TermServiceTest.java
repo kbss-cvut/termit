@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
+import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -654,6 +655,46 @@ class TermServiceTest {
         final InOrder inOrder = inOrder(languageService, termRepositoryService);
         inOrder.verify(languageService).verifyStateExists(update.getState());
         inOrder.verify(termRepositoryService).update(update);
+    }
+
+    @Test
+    void batchEditUpdatesTermsWithNewProperties() {
+        final Term term1 = Generator.generateTermWithId();
+        final Term term2 = Generator.generateTermWithId();
+        final TermBatchEditDto dto = new TermBatchEditDto();
+        dto.setTargetTerms(Set.of(term1.getUri(), term2.getUri()));
+        final String newType = "http://example.org/type";
+        dto.setTypes(Set.of(newType));
+        final TermInfo exactMatch = Generator.generateTermInfoWithId();
+        dto.setExactMatchTerms(Set.of(exactMatch.getUri()));
+        final TermInfo parent = Generator.generateTermInfoWithId();
+        parent.setVocabulary(Generator.generateUri());
+        dto.setParentTerms(Set.of(parent.getUri()));
+
+        when(termRepositoryService.findRequired(term1.getUri())).thenReturn(term1);
+        when(termRepositoryService.findRequired(term2.getUri())).thenReturn(term2);
+        when(termRepositoryService.findRequiredTermInfo(exactMatch.getUri())).thenReturn(exactMatch);
+        when(termRepositoryService.findRequiredTermInfo(parent.getUri())).thenReturn(parent);
+
+        sut.batchEdit(vocabulary, dto);
+
+        assertTrue(term1.getTypes().contains(newType));
+        assertTrue(term1.getExactMatchTerms().contains(exactMatch));
+        assertTrue(term1.hasParentInSameVocabulary() || (term1.getExternalParentTerms() != null && !term1.getExternalParentTerms().isEmpty()));
+        verify(termRepositoryService).update(term1);
+        verify(termRepositoryService).update(term2);
+    }
+
+    @Test
+    void batchEditDoesNotCallUpdateIfNoPropertiesChanged() {
+        final Term term = Generator.generateTermWithId();
+        final TermBatchEditDto dto = new TermBatchEditDto();
+        dto.setTargetTerms(Set.of(term.getUri()));
+
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        sut.batchEdit(vocabulary, dto);
+
+        verify(termRepositoryService, never()).update(term);
     }
 
     @Test

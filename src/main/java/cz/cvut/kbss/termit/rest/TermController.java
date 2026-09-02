@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -58,6 +59,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -455,6 +457,31 @@ public class TermController extends BaseController {
         verifyRequestAndEntityIdentifier(term, termUri);
         termService.update(term);
         LOG.debug("Term {} updated.", term);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Batch adds specified relationships/types to multiple terms in the vocabulary.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Terms successfully updated."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or terms not found."),
+            @ApiResponse(responseCode = "409", description = "Term data invalid.")
+    })
+    @PatchMapping(value = "/vocabularies/{localName}/terms",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void batchEdit(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Data containing target term URIs and the properties to add.")
+            @RequestBody TermBatchEditDto batchEditDto) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        Vocabulary vocabulary = termService.findVocabularyRequired(vocabularyUri);
+        termService.batchEdit(vocabulary, batchEditDto);
+        LOG.debug("Batch edit applied in vocabulary {}.", vocabularyUri);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

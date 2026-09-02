@@ -320,6 +320,29 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
     }
 
     /**
+     * Adds the specified term info to the parent terms of this instance.
+     * <p>
+     * If the specified term is from the same glossary, it is added to {@code
+     * parentTerms}, otherwise, it is added to the {@code externalParentTerms}.
+     *
+     * @param termInfo TermInfo to add as parent
+     */
+    public void addParentTerm(TermInfo termInfo) {
+        Objects.requireNonNull(termInfo);
+        if (!Objects.equals(getVocabulary(), termInfo.getVocabulary())) {
+            if (externalParentTerms == null) {
+                setExternalParentTerms(new HashSet<>());
+            }
+            externalParentTerms.add(termInfo);
+        } else {
+            if (parentTerms == null) {
+                setParentTerms(new HashSet<>());
+            }
+            parentTerms.add(termInfo);
+        }
+    }
+
+    /**
      * Checks whether this term has a parent term in the same vocabulary.
      *
      * @return Whether this term has a parent in its vocabulary. Returns {@code false} also if this term has no parent
