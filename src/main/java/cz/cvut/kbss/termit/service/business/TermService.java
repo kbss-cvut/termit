@@ -159,6 +159,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
+    @Transactional
     public List<? extends AbstractTerm> findAll(Vocabulary vocabulary, TermSelectionParams selectionParams) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(selectionParams);
@@ -821,6 +822,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param selectionParams term search parameters
      * @return flattened list of terms
      */
+    @Transactional
     public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
         if (selectionParams.full()) {
             throw new IllegalArgumentException("Full term representation is not supported");
