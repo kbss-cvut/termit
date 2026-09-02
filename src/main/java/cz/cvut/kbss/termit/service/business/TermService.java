@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -566,6 +567,60 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             analyzeTermDefinition(result, result.getVocabulary());
         }
         return result;
+    }
+
+    /**
+     * Batch adds specific properties (relatedMatch, exactMatch, parentTerms,
+     * types) to a collection of terms.
+     *
+     * @param batchEditDto Data containing the term URIs and the properties to add
+     */
+    @Transactional
+    @PreAuthorize("@termAuthorizationService.canCreateIn(#vocabulary)")
+    public void batchEdit(Vocabulary vocabulary, TermBatchEditDto batchEditDto) {
+        Objects.requireNonNull(batchEditDto);
+        Objects.requireNonNull(batchEditDto.getTargetTerms());
+
+        List<TermInfo> exactMatches = batchEditDto.getExactMatchTerms() != null ?
+                batchEditDto.getExactMatchTerms().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> related = batchEditDto.getRelated() != null ?
+                batchEditDto.getRelated().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> relatedMatches = batchEditDto.getRelatedMatch() != null ?
+                batchEditDto.getRelatedMatch().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> parents = batchEditDto.getParentTerms() != null ?
+                batchEditDto.getParentTerms().stream().map(this::findRequiredTermInfo).toList() : null;
+
+        for (URI termUri : batchEditDto.getTargetTerms()) {
+            Term term = findRequired(termUri);
+            boolean changed = false;
+
+            if (batchEditDto.getTypes() != null && !batchEditDto.getTypes().isEmpty()) {
+                if (term.getTypes() == null) {
+                    term.setTypes(new HashSet<>());
+                }
+                changed |= term.getTypes().addAll(batchEditDto.getTypes());
+            }
+            if (exactMatches != null) {
+                exactMatches.forEach(term::addExactMatch);
+                changed = true;
+            }
+            if (related != null) {
+                related.forEach(term::addRelatedTerm);
+                changed = true;
+            }
+            if (relatedMatches != null) {
+                relatedMatches.forEach(term::addRelatedMatchTerm);
+                changed = true;
+            }
+            if (parents != null) {
+                parents.forEach(term::addParentTerm);
+                changed = true;
+            }
+            if (changed) {
+                term.splitExternalAndInternalParents();
+                repositoryService.update(term);
+            }
+        }
     }
 
     /**

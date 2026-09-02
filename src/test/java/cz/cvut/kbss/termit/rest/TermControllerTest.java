@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
@@ -109,6 +110,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -217,6 +219,26 @@ public class TermControllerTest extends BaseControllerTestRunner {
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
         verify(termServiceMock, never()).update(any());
+    }
+
+    @Test
+    void batchEditPassesDtoToService() throws Exception {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(VOCABULARY_URI));
+        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(vocabulary.getUri());
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+
+        final TermBatchEditDto dto = new TermBatchEditDto();
+        dto.setTargetTerms(Collections.singleton(URI.create(STR_TERM_URI)));
+        dto.setTypes(Collections.singleton("http://example.org/type"));
+
+        mockMvc.perform(patch(PATH + VOCABULARY_NAME + "/terms")
+                        .content(toJson(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(termServiceMock).batchEdit(eq(vocabulary), any(TermBatchEditDto.class));
     }
 
     private URI initTermUriResolution() {
