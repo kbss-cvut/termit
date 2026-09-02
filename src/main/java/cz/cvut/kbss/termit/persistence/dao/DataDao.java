@@ -42,6 +42,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -333,6 +334,7 @@ public class DataDao {
         final TupleQuery countQuery = con.prepareTupleQuery("SELECT (COUNT(*) AS ?count) " + whereQuery);
 
         countQuery.setBinding("predicate", predicate);
+        countQuery.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
         countQuery.setIncludeInferred(false);
 
         try (TupleQueryResult result = countQuery.evaluate()) {
@@ -348,6 +350,8 @@ public class DataDao {
                 " OFFSET " + offset);
 
         pageQuery.setBinding("predicate", predicate);
+        pageQuery.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
+
         pageQuery.setIncludeInferred(false);
 
         final List<Statement> statements = new ArrayList<>(resultLimit);
@@ -391,6 +395,9 @@ public class DataDao {
                 WHERE {
                     GRAPH ?context {
                         ?subject ?predicate ?object .
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
                     }
                 }
                 """;
@@ -425,10 +432,14 @@ public class DataDao {
                 SELECT DISTINCT ?context WHERE {
                     GRAPH ?context {
                         ?subject ?attribute ?object .
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
                     }
                 }
             """, URI.class)
                      .setParameter("attribute", customAttribute.getUri())
+                     .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find custom attribute usage contexts", e);
@@ -452,10 +463,14 @@ public class DataDao {
             } WHERE {
                 GRAPH ?context {
                     ?subject ?attribute ?object .
+                    FILTER NOT EXISTS {
+                        ?context a ?versionOfVocabulary .
+                    }
                 }
             }
         """)
               .setParameter("attribute", attribute.getUri())
+              .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))
               .executeUpdate();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to remove all custom attribute usages", e);
