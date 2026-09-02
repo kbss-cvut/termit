@@ -185,11 +185,12 @@ public class DataController {
                                       )
                                       @RequestParam String namespace,
                                       @Parameter(
-                                              description = "Indicates whether to force the removal of the attribute and its usages."
+                                              description = "Indicates whether to remove the usages of the custom attribute as well" +
+                                                      "When false, only the attribute itself will be removed, its usages will be kept."
                                       )
-                                      @RequestParam boolean force) {
+                                      @RequestParam boolean removeUsages) {
         final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
-        dataService.removeCustomAttribute(identifier, force);
+        dataService.removeCustomAttribute(identifier, removeUsages);
         LOG.debug("Removed custom attribute: {}", identifier);
     }
 

@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -219,35 +220,32 @@ public class DataRepositoryService {
      * If usages exist, {@code force} needs to be enabled in order to remove the attribute and its usages.
      *
      * @param identifier the identifier of the {@link CustomAttribute}
-     * @param force whether to force removal of the attribute and its usages
+     * @param removeUsages whether to also remove all usages of the {@link CustomAttribute}
      * @throws ValidationException if attribute usage exists and {@code force} is {@code false}
      */
     @Transactional
-    public void removeCustomAttribute(URI identifier, boolean force) {
-        final boolean hasUsage = dataDao.isCustomAttributeUsed(identifier);
-        if (hasUsage && !force) {
-            throw new ValidationException("Unable to remove a CustomAttribute with usages: " + Utils.uriToString(identifier));
-        }
-
+    public void removeCustomAttribute(URI identifier, boolean removeUsages) {
         final CustomAttribute attribute = dataDao.findCustomAttribute(identifier)
                                                  .orElseThrow(() -> NotFoundException
                                                          .create(CustomAttribute.class, identifier));
 
-        final List<URI> affectedContexts = dataDao.findCustomAttributeUsageContexts(attribute);
-
-        LOG.debug("Removing all usage of custom attribute {}", identifier);
-        dataDao.removeAllCustomAttributeUsages(attribute);
-        LOG.debug("Removing custom attribute {}", identifier);
-        dataDao.removeCustomAttribute(attribute);
-        // ensure the attribute is no longer used
-        if (dataDao.isCustomAttributeUsed(identifier)) {
-            throw new ValidationException("Failed to remove a CustomAttribute with usages: " + Utils.uriToString(identifier));
+        List<URI> affectedContexts = Collections.emptyList();
+        if (removeUsages) {
+            affectedContexts = dataDao.findCustomAttributeUsageContexts(attribute);
+            LOG.debug("Removing all usage of custom attribute {}", identifier);
+            dataDao.removeAllCustomAttributeUsages(attribute);
         }
 
-        LOG.atDebug()
-                .addArgument(() -> affectedContexts.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
-                .log("Evicting cache for contexts affected by custom attribute removal: {}");
+        LOG.debug("Removing custom attribute {}", identifier);
+        dataDao.removeCustomAttribute(attribute);
 
-        dataDao.evictCacheForContexts(affectedContexts);
+        if (!affectedContexts.isEmpty()) {
+            final List<URI> contextsToEvict = affectedContexts;
+            LOG.atDebug()
+               .addArgument(() -> contextsToEvict.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
+               .log("Evicting cache for contexts affected by custom attribute removal: {}");
+
+            dataDao.evictCacheForContexts(contextsToEvict);
+        }
     }
 }
