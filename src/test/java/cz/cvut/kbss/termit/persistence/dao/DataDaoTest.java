@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
@@ -444,6 +445,11 @@ class DataDaoTest extends BaseDaoTestRunner {
                 statement(termIri,
                         Values.iri(attribute.getUri().toString()),
                         value,
+                        context),
+                // context is a vocabulary
+                statement(context,
+                        RDF.TYPE,
+                        Values.iri(Vocabulary_.entityClassIRI.toString()),
                         context)
         );
 
@@ -486,6 +492,11 @@ class DataDaoTest extends BaseDaoTestRunner {
                 statement(subjectTriple,
                         Values.iri(attribute.getUri().toString()),
                         value,
+                        context),
+                // context is a vocabulary
+                statement(context,
+                        RDF.TYPE,
+                        Values.iri(Vocabulary_.entityClassIRI.toString()),
                         context)
         );
 
@@ -543,6 +554,12 @@ class DataDaoTest extends BaseDaoTestRunner {
                 statement(termTwo,
                         Values.iri(attribute.getUri().toString()),
                         Values.literal("B value two"),
+                        context),
+
+                // context is a vocabulary
+                statement(context,
+                        RDF.TYPE,
+                        Values.iri(Vocabulary_.entityClassIRI.toString()),
                         context)
         );
 
@@ -648,7 +665,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         });
     }
 
-    Statement setupAttributeUsageInSnapshot(IRI context, CustomAttribute attribute) {
+    void setupAttributeUsageInSnapshot(IRI context, CustomAttribute attribute) {
         final Statement attributeUsageStatement = statement(
                 Values.iri(Generator.generateUriString()),
                 Values.iri(attribute.getUri().toString()),
@@ -666,7 +683,6 @@ class DataDaoTest extends BaseDaoTestRunner {
                 ),
                 attributeUsageStatement
         );
-        return attributeUsageStatement;
     }
 
     @Test
