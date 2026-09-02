@@ -634,7 +634,7 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
 
-        transactional(() -> {
+        readOnlyTransactional(() -> {
             final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(0, usage.getTotalElements());
 
@@ -645,6 +645,63 @@ class DataDaoTest extends BaseDaoTestRunner {
                                                      .setParameter("ctx", URI.create(context.stringValue()))
                                                      .getSingleResult();
             assertTrue(relatedStatementExists);
+        });
+    }
+
+    Statement setupAttributeUsageInSnapshot(IRI context, CustomAttribute attribute) {
+        final Statement attributeUsageStatement = statement(
+                Values.iri(Generator.generateUriString()),
+                Values.iri(attribute.getUri().toString()),
+                Values.literal("usageValue"),
+                context
+        );
+
+        transactional(() -> em.persist(attribute));
+        withStatements(
+                statement(
+                        context,
+                        RDF.TYPE,
+                        Values.iri(Vocabulary.s_c_version_of_vocabulary),
+                        context
+                ),
+                attributeUsageStatement
+        );
+        return attributeUsageStatement;
+    }
+
+    @Test
+    void removeAllCustomAttributeUsagesDoesNotRemoveUsagesFromSnapshots() {
+        final IRI context = Values.iri(Generator.generateUriString());
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute", "en"), null);
+
+        setupAttributeUsageInSnapshot(context, attribute);
+
+        transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
+
+        readOnlyTransactional(() -> {
+            final boolean usageExists = em.createNativeQuery("""
+                ASK { ?subject ?attribute ?value .}
+            """, Boolean.class)
+                    .setParameter("attribute", attribute.getUri())
+                    .getSingleResult();
+
+            assertTrue(usageExists, "Remove attribute usage must not affect snapshots");
+        });
+    }
+
+    @Test
+    void findCustomAttributeUsageDoesNotFindUsageInSnapshots() {
+        final IRI context = Values.iri(Generator.generateUriString());
+        final CustomAttribute attribute = new CustomAttribute(Generator.generateUri(),
+                MultilingualString.create("Attribute", "en"), null);
+
+        setupAttributeUsageInSnapshot(context, attribute);
+
+        readOnlyTransactional(() -> {
+            Page<Statement> usages = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            assertEquals(0, usages.getTotalElements());
+            assertTrue(usages.isEmpty());
         });
     }
 }
