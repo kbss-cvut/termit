@@ -462,23 +462,6 @@ public class DataDao {
         }
     }
 
-    /**
-     * Checks whether the {@link CustomAttribute} is used anywhere as a predicate.
-     *
-     * @param attributeUri the URI of the attribute to check
-     * @return {@code true} when the identifier of the custom attribute is used as predicate, {@code false} otherwise.
-     */
-    public boolean isCustomAttributeUsed(URI attributeUri) {
-        Objects.requireNonNull(attributeUri);
-        try {
-            return em.createNativeQuery("ASK { ?s ?p ?o }", Boolean.class)
-                    .setParameter("p", attributeUri)
-                    .getSingleResult();
-        } catch (RuntimeException e) {
-            throw new PersistenceException("Failed to check for custom attribute usage", e);
-        }
-    }
-
     public void removeCustomAttribute(CustomAttribute attribute) {
         Objects.requireNonNull(attribute);
         try {

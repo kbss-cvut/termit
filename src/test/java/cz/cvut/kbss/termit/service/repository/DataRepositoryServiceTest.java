@@ -33,6 +33,8 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -143,12 +145,18 @@ class DataRepositoryServiceTest {
     }
 
     @Test
-    void removeCustomAttributeThrowsValidationExceptionWhenUsagesExistAndForceIsFalse() {
+    void removeCustomAttributeKeepsUsagesWhenRemoveUsagesIsFalse() {
         final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
 
-        when(dataDao.isCustomAttributeUsed(uri)).thenReturn(true);
+        when(dataDao.findCustomAttribute(uri))
+                .thenReturn(Optional.of(attribute));
 
-        assertThrows(ValidationException.class, () -> sut.removeCustomAttribute(uri, false));
+        sut.removeCustomAttribute(uri, false);
+
+        verify(dataDao, never()).removeAllCustomAttributeUsages(any());
+        verify(dataDao).removeCustomAttribute(attribute);
     }
 
     @Test
@@ -157,8 +165,6 @@ class DataRepositoryServiceTest {
         final CustomAttribute attribute = new CustomAttribute();
         attribute.setUri(uri);
 
-        when(dataDao.isCustomAttributeUsed(uri)).thenReturn(true)
-                                                .thenReturn(false);
         when(dataDao.findCustomAttribute(uri))
                 .thenReturn(Optional.of(attribute));
 
@@ -175,8 +181,6 @@ class DataRepositoryServiceTest {
         final CustomAttribute attribute = new CustomAttribute();
         attribute.setUri(uri);
 
-        when(dataDao.isCustomAttributeUsed(uri)).thenReturn(true)
-                                                .thenReturn(false);
         when(dataDao.findCustomAttribute(uri))
                 .thenReturn(Optional.of(attribute));
         when(dataDao.findCustomAttributeUsageContexts(attribute))
