@@ -161,7 +161,8 @@ public class TermController extends BaseController {
             @Parameter(description = "Boolean flag to determine whether to return full versions of the terms.")
             @RequestParam(name = "full", required = false, defaultValue = "false") boolean full,
             @Parameter(
-                    description = "Identifiers of terms that should be included in the flat list response (regardless of whether they are root terms or not).")
+                    description = "Identifiers of terms that should be included in the flat list response " +
+                            "(regardless of whether they are root terms or not).")
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
