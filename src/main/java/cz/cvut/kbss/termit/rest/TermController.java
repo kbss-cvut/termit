@@ -21,7 +21,6 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
-import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
@@ -161,6 +160,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
             @Parameter(description = "Boolean flag to determine whether to return full versions of the terms.")
             @RequestParam(name = "full", required = false, defaultValue = "false") boolean full,
+            @Parameter(
+                    description = "Identifiers of terms that should be included in the flat list response (regardless of whether they are root terms or not).")
+            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
@@ -172,6 +174,13 @@ public class TermController extends BaseController {
                                                          new TermSelectionParams(flat, full, includeImported, includeRelated,
                                                                                  createPageRequest(pageSize, pageNo))));
         }
+
+        if (flat && includeTerms != null && !includeTerms.isEmpty()) {
+            final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
+                    createPageRequest(pageSize, pageNo));
+            return ResponseEntity.ok(termService.findAllFlat(vocabulary, includeTerms, params));
+        }
+
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
@@ -179,35 +188,6 @@ public class TermController extends BaseController {
                                                          new TermSelectionParams(flat, full, includeImported, includeRelated,
                                                                                  createPageRequest(pageSize, pageNo))));
         });
-    }
-
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets flattened list of terms from the vocabulary with the specified identifier.")
-    @ApiResponse(responseCode = "200", description = "Flat list of vocabulary terms.")
-    @GetMapping(value = "/vocabularies/{localName}/terms/flat",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<FlatTermDto> getAllFlat(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = "Whether to include terms from imported vocabularies.")
-            @RequestParam(name = "includeImported", required = false) boolean includeImported,
-            @Parameter(description = "Whether to include terms from related vocabularies.")
-            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
-            @Parameter(
-                    description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
-            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms,
-            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo
-    ) {
-        final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        final Vocabulary vocabulary = getVocabulary(vocabularyUri);
-        final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
-                createPageRequest(pageSize, pageNo));
-        return termService.findAllFlat(vocabulary, includeTerms, params);
     }
 
     private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, ExportType exportType,
