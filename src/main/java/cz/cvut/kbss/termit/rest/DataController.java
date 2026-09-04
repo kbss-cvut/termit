@@ -119,7 +119,7 @@ public class DataController {
             @ApiResponse(responseCode = "404", description = "Attribute not found.")
     })
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PutMapping(value = "/custom-attributes/{localName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public void updateCustomAttribute(@Parameter(
@@ -138,7 +138,7 @@ public class DataController {
             @ApiResponse(responseCode = "200", description = "The list of triples with the custom attribute as predicate"),
             @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @GetMapping(value = "/custom-attributes/{localName}/usage", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<Statement>> getCustomAttributeUsage(@Parameter(
                                                                            description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
@@ -172,7 +172,7 @@ public class DataController {
             @ApiResponse(responseCode = "400", description = "Force parameter is required for removal of attribute with usages"),
             @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(value = "/custom-attributes/{localName}")
     public void removeCustomAttribute(@Parameter(
