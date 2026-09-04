@@ -19,7 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -101,19 +103,30 @@ class SubTermRemovalStrategyTest {
     }
 
     @Test
-    void reconnectMakesChildrenRootTermsWhenRemovedTermHasNoParentsInSameVocabulary() {
+    void reconnectUpdatesChildrenToHandleVocabularyRootTermAddition() {
         final TermRemovalParams params = withStrategy(SubTermRemovalStrategy.RECONNECT);
         final TermInfo firstChild = Generator.generateTermInfoWithId();
         final TermInfo secondChild = Generator.generateTermInfoWithId();
 
-        term.setSubTerms(Set.of(firstChild, secondChild));
+        final Term firstChildTerm = firstChild.toTerm();
+        final Term secondChildTerm = secondChild.toTerm();
 
-        when(repositoryService.findRequired(firstChild.getUri())).thenReturn(firstChild.toTerm());
-        when(repositoryService.findRequired(secondChild.getUri())).thenReturn(secondChild.toTerm());
+        makeParent(firstChildTerm, term);
+        makeParent(secondChildTerm, term);
+
+        firstChild.setVocabulary(vocabulary.getUri());
+        secondChild.setVocabulary(Generator.generateUri());
+
+        when(repositoryService.findRequired(firstChild.getUri())).thenReturn(firstChildTerm);
+        when(repositoryService.findRequired(secondChild.getUri())).thenReturn(secondChildTerm);
 
         params.subTermsStrategy().apply(params, vocabulary, repositoryService);
 
-        assertEquals(Set.of(term.getUri(), firstChild.getUri(), secondChild.getUri()), vocabulary.getRootTerms());
+        verify(repositoryService, atLeastOnce()).findRequired(any());
+        // repository post-update handles root term assignment
+        verify(repositoryService).update(firstChildTerm);
+        verify(repositoryService).update(secondChildTerm);
+        verifyNoMoreInteractions(repositoryService);
     }
 
     @Test
@@ -141,7 +154,7 @@ class SubTermRemovalStrategyTest {
 
         assertEquals(Set.of(parent.getUri()), vocabulary.getRootTerms(), "Vocabulary root terms must remain unchanged");
 
-        verify(repositoryService).update(child);
+        verify(repositoryService, times(2)).update(child);
         verifyNoMoreInteractions(repositoryService);
     }
 

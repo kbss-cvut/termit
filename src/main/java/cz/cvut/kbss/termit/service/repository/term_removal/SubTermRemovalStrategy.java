@@ -74,10 +74,12 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
         public void apply(TermRemovalParams removalParams, Vocabulary vocabulary,
                           TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
-            if (!term.hasParentInSameVocabulary()) {
-                // term has no parents in the same vocabulary
-                makeRoots(term, vocabulary, repositoryService);
+            final TermInfo termInfo = new TermInfo(term);
+
+            if (term.getSubTerms() != null && !term.getSubTerms().isEmpty()) {
+                removeParent(term.getSubTerms(), termInfo, repositoryService);
             }
+
             final boolean hasParents = term.getParentTerms() != null && !term.getParentTerms().isEmpty();
             final boolean hasExternalParents = term.getExternalParentTerms() != null && !term.getExternalParentTerms().isEmpty();
             if (hasParents || hasExternalParents) {
@@ -86,10 +88,22 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
             }
         }
 
-        private void makeRoots(Term term, Vocabulary vocabulary, TermRepositoryService repositoryService) {
-            term.getSubTerms().forEach(subTermInfo -> {
+        /**
+         * Removes the given parent from every given children.
+         *
+         * @param children children from which the {@code parentToRemove} should be removed
+         * @param parentToRemove the parent that should be removed from {@code children}
+         * @param repositoryService the {@link TermRepositoryService} to retrieve and update children terms
+         */
+        private void removeParent(Collection<TermInfo> children, TermInfo parentToRemove, TermRepositoryService repositoryService) {
+            children.forEach(subTermInfo -> {
                 final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
-                repositoryService.addRootTermToVocabulary(subTerm, vocabulary);
+
+                final Collection<TermInfo> childParents = subTerm.getParentTerms();
+                if (childParents != null && !childParents.isEmpty()) {
+                    childParents.removeIf(parentToRemove::equals);
+                    repositoryService.update(subTerm);
+                }
             });
         }
 
