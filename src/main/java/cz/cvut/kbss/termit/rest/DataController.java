@@ -166,10 +166,9 @@ public class DataController {
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Removes the custom attribute, " +
-                       "if it has usages, force parameter is required and the removal will remove all the usages as well.")
+                       "if the removeUsages is not enabled, the usages of the attribute wont be removed.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Custom attribute was removed"),
-            @ApiResponse(responseCode = "400", description = "Force parameter is required for removal of attribute with usages"),
             @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
