@@ -217,11 +217,9 @@ public class DataRepositoryService {
 
     /**
      * Removes custom attribute identified by {@code identifier}.
-     * If usages exist, {@code force} needs to be enabled in order to remove the attribute and its usages.
      *
      * @param identifier the identifier of the {@link CustomAttribute}
      * @param removeUsages whether to also remove all usages of the {@link CustomAttribute}
-     * @throws ValidationException if attribute usage exists and {@code force} is {@code false}
      */
     @Transactional
     public void removeCustomAttribute(URI identifier, boolean removeUsages) {
