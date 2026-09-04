@@ -92,6 +92,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
+     * {@code skos:hasTopConcept} relations are excluded
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
                 WHERE {
