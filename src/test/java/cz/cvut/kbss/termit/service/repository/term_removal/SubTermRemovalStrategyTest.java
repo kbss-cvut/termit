@@ -121,7 +121,6 @@ class SubTermRemovalStrategyTest {
         final TermRemovalParams params = withStrategy(SubTermRemovalStrategy.RECONNECT);
 
         final Term child = Generator.generateTermWithId(vocabulary.getUri());
-        final TermInfo childInfo = new TermInfo(child);
         final Term parent = Generator.generateTermWithId(vocabulary.getUri());
         final Vocabulary externalVocabulary = Generator.generateVocabularyWithId();
         final Term externalParent = Generator.generateTermWithId(externalVocabulary.getUri());
@@ -129,21 +128,20 @@ class SubTermRemovalStrategyTest {
         makeParent(child, term);
         makeParent(term, parent);
 
+        vocabulary.getRootTerms().clear();
+        vocabulary.addRootTerm(parent);
+
         term.setExternalParentTerms(Set.of(externalParent.toTermInfo()));
 
         when(repositoryService.findRequired(child.getUri())).thenReturn(child);
-        when(repositoryService.findRequired(parent.getUri())).thenReturn(parent);
-        when(repositoryService.findRequired(externalParent.getUri())).thenReturn(externalParent);
-
         params.subTermsStrategy().apply(params, vocabulary, repositoryService);
 
-        assertEquals(Set.of(childInfo), parent.getSubTerms());
-        assertEquals(Set.of(childInfo), externalParent.getSubTerms());
+        assertEquals(Set.of(parent.toTermInfo()), child.getParentTerms(), "Child must be assigned to the parent of the removed term");
+        assertEquals(Set.of(externalParent.toTermInfo()), child.getExternalParentTerms());
 
-        assertEquals(Set.of(term.getUri()), vocabulary.getRootTerms(), "Children must not be added as root terms");
+        assertEquals(Set.of(parent.getUri()), vocabulary.getRootTerms(), "Vocabulary root terms must remain unchanged");
 
-        verify(repositoryService).findRequired(parent.getUri());
-        verify(repositoryService).findRequired(externalParent.getUri());
+        verify(repositoryService).update(child);
         verifyNoMoreInteractions(repositoryService);
     }
 
