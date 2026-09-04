@@ -176,7 +176,7 @@ public class TermController extends BaseController {
                                                                                  createPageRequest(pageSize, pageNo))));
         }
 
-        if (flat && includeTerms != null && !includeTerms.isEmpty()) {
+        if (flat && !includeTerms.isEmpty()) {
             final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
                     createPageRequest(pageSize, pageNo));
             return ResponseEntity.ok(termService.findAllFlat(vocabulary, includeTerms, params));
