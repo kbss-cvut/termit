@@ -49,10 +49,15 @@ import cz.cvut.kbss.termit.persistence.snapshot.TermSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.Operation;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -86,16 +91,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
 
     /**
-     * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots
+     * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
                 WHERE {
                     GRAPH ?context {
-                        ?other ?relation ?term .
-                        ?context a ?vocabulary .
                         FILTER NOT EXISTS {
                             ?context a ?versionOfVocabulary .
                         }
+                        ?other ?relation ?term .
+                        ?context a ?vocabulary .
+#                        FILTER (?relation NOT IN (
+#                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+#                        ))
                     }
                 }
                 """;
@@ -1336,28 +1344,77 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @return page of statements referencing the specified term
      */
     public Page<Statement> findReferences(AbstractTerm term, Pageable pageable) {
+        Objects.requireNonNull(term, "Term cannot be null");
         Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
-        final String offsetLimitClause = " OFFSET " + pageable.getOffset() + " LIMIT " + pageable.getPageSize();
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
 
         try {
-            final GraphQuery query;
             try (RepositoryConnection con = em.unwrap(org.eclipse.rdf4j.repository.Repository.class).getConnection()) {
-                query = con.prepareGraphQuery("""
-                            CONSTRUCT {
-                                ?other ?relation ?term .
-                            }
-                            """ + REFERENCES_TO_TERM_WHERE_CLAUSE + offsetLimitClause);
-                query.setBinding("term", Values.iri(term.getUri().toString()));
-                query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
-                query.setBinding("versionOfVocabulary",
-                        Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
-                try (GraphQueryResult result = query.evaluate()) {
-                    return new PageImpl<>(result.stream().toList());
+                final long totalCount = countReferences(con, term);
+                if (totalCount == 0 || pageable.getOffset() >= totalCount) {
+                    return new PageImpl<>(List.of(), pageable, totalCount);
                 }
+
+                final List<Statement> statements = findReferences(con, term, pageable);
+                return new PageImpl<>(statements, pageable, totalCount);
             }
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
         }
+    }
+
+    /**
+     * Counts the total amount of references to the specified term
+     *
+     * @param con the repository connection
+     * @param term the term to which references should be counted
+     * @return the total number of statements referencing the term as object
+     */
+    private long countReferences(RepositoryConnection con, AbstractTerm term) {
+        final TupleQuery countQuery = con.prepareTupleQuery(
+                "SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE);
+        bindReferencesQueryParameters(countQuery, term);
+        countQuery.setIncludeInferred(false);
+        try (TupleQueryResult result = countQuery.evaluate()) {
+            final BindingSet bindings = result.next();
+            return ((Literal) bindings.getValue("count")).longValue();
+        }
+    }
+
+    /**
+     * Finds a page contents of references to the specified term.
+     *
+     * @param con the repository connection
+     * @param term the term to which references should be found
+     * @param pageable page spec
+     * @return the list of statements referencing the term as object
+     */
+    private List<Statement> findReferences(RepositoryConnection con, AbstractTerm term, Pageable pageable) {
+        final GraphQuery query = con.prepareGraphQuery("""
+                    CONSTRUCT {
+                        ?other ?relation ?term .
+                    }
+                    """ + REFERENCES_TO_TERM_WHERE_CLAUSE +
+                " OFFSET " + pageable.getOffset() +
+                " LIMIT " + pageable.getPageSize());
+        bindReferencesQueryParameters(query, term);
+        query.setIncludeInferred(false);
+        try (GraphQueryResult result = query.evaluate()) {
+            return result.stream().toList();
+        }
+    }
+
+    /**
+     * Sets required query bindings for {@link #REFERENCES_TO_TERM_WHERE_CLAUSE}.
+     *
+     * @param query query operation
+     * @param term the term to which references should be found
+     */
+    private void bindReferencesQueryParameters(Operation query, AbstractTerm term) {
+        query.setBinding("term", Values.iri(term.getUri().toString()));
+        query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
+        query.setBinding("versionOfVocabulary",
+                Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
     }
 
     /**

@@ -45,8 +45,10 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,6 +149,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             values.addAll(toAdd);
         });
         return result;
+    }
+
+    /**
+     * Gets referenes to the given term.
+     *
+     * @param term the term to which references should be found
+     * @param pageable Page spec
+     * @return Page of statements where the given term is object
+     */
+    @Transactional(readOnly = true)
+    public Page<Statement> findReferences(@Nonnull Term term, @Nonnull Pageable pageable) {
+        return termDao.findReferences(term, pageable);
     }
 
     @Override

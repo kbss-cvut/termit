@@ -43,8 +43,12 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -54,6 +58,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -1520,6 +1525,112 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     }
 
     @Test
+    void findReferencesReturnsStatementsReferencingTermFromVocabularyGraphs() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        addTermsAndSave(List.of(term), vocabulary);
+
+        final Statement expectedOne = statement(
+                Values.iri(Environment.BASE_URI + "/term/source-1"),
+                Values.iri(SKOS.BROADER),
+                Values.iri(term.getUri().toString())
+        );
+        final Statement unexpected = statement(
+                Values.iri(Environment.BASE_URI + "/term/source-2"),
+                Values.iri(SKOS.RELATED),
+                Values.iri(Generator.generateUriString())
+        );
+
+        withStatements(vocabulary.getUri(), expectedOne, unexpected);
+
+        readOnlyTransactional(() -> {
+            final var result = sut.findReferences(term, PageRequest.of(0, 10));
+
+            // +1 for vocabulary hasTopConcept
+            assertEquals(2, result.getContent().size());
+            assertEquals(2, result.getTotalElements());
+            assertTrue(result.getContent().contains(expectedOne));
+            assertFalse(result.getContent().contains(unexpected));
+        });
+    }
+
+    @Test
+    void findReferencesRespectsPaging() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        addTermsAndSave(List.of(term), vocabulary);
+
+        final List<Statement> expected = List.of(
+                statement(
+                        Values.iri(Environment.BASE_URI + "/term/source-1"),
+                        Values.iri(SKOS.BROADER),
+                        Values.iri(term.getUri().toString())
+                ),
+                statement(
+                        Values.iri(Environment.BASE_URI + "/term/source-2"),
+                        Values.iri(SKOS.RELATED),
+                        Values.iri(term.getUri().toString())
+                ),
+                statement(
+                        Values.iri(Environment.BASE_URI + "/term/source-3"),
+                        Values.iri(SKOS.EXACT_MATCH),
+                        Values.iri(term.getUri().toString())
+                )
+        );
+
+        withStatements(vocabulary.getUri(), expected.toArray(Statement[]::new));
+
+        readOnlyTransactional(() -> {
+            final Page<Statement> allReferences = sut.findReferences(term, PageRequest.of(0, 10));
+            final Page<Statement> firstPage = sut.findReferences(term, PageRequest.of(0, 2));
+            final Page<Statement> secondPage = sut.findReferences(term, PageRequest.of(1, 2));
+
+            // +1 for vocabulary hasTopConcept
+            final long totalElements = 4;
+            assertEquals(totalElements, allReferences.getNumberOfElements());
+            assertEquals(totalElements, firstPage.getTotalElements());
+            assertEquals(totalElements, secondPage.getTotalElements());
+            assertEquals(2, firstPage.getSize());
+            assertEquals(2, secondPage.getSize());
+            assertEquals(List.of(allReferences.getContent().get(0), allReferences.getContent().get(1)), firstPage.getContent());
+            assertEquals(List.of(allReferences.getContent().get(2), allReferences.getContent().get(3)), secondPage.getContent());
+        });
+    }
+
+    @Test
+    void findReferencesExcludesStatementsFromVocabularySnapshotGraphs() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        addTermsAndSave(List.of(term), vocabulary);
+
+        final Statement expected = statement(
+                Values.iri(Environment.BASE_URI + "/term/source-live"),
+                Values.iri(SKOS.BROADER),
+                Values.iri(term.getUri().toString()));
+        final Statement snapshotReference = statement(
+                Values.iri(Environment.BASE_URI + "/term/source-snapshot"),
+                Values.iri(SKOS.RELATED),
+                Values.iri(term.getUri().toString()));
+        final Statement rootTermReference = statement(
+                Values.iri(vocabulary.getUri().toString()),
+                Values.iri(SKOS.HAS_TOP_CONCEPT),
+                Values.iri(term.getUri().toString()));
+
+        final URI snapshotUri = URI.create(vocabulary.getUri().toString() + "/version/test");
+
+        withStatements(vocabulary.getUri(), expected);
+        withStatements(snapshotUri, snapshotReference);
+        persistVocabularySnapshotType(snapshotUri, vocabulary.getUri());
+
+        readOnlyTransactional(() -> {
+            final var result = sut.findReferences(term, PageRequest.of(0, 10));
+
+            assertEquals(2, result.getContent().size());
+            assertEquals(2, result.getTotalElements());
+            assertTrue(result.getContent().contains(expected));
+            assertTrue(result.getContent().contains(rootTermReference));
+            assertFalse(result.getContent().contains(snapshotReference));
+        });
+    }
+
+    @Test
     void findAllFlatWithoutVocabularyBySearchStringReturnsTermsWithMatchingLabel() {
         final Term t1 = Generator.generateTermWithId(vocabulary.getUri());
         final Term t2 = Generator.generateTermWithId(vocabulary.getUri());
@@ -1619,5 +1730,52 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     static Set<URI> mapToIdentifiers(Collection<? extends HasIdentifier> withIdentifier) {
         return withIdentifier.stream().map(HasIdentifier::getUri)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Adds {@code snaphost a versionOfVocabulary} and {@code snaphost isVersionOfVocabulary vocabulary} statements
+     */
+    private void persistVocabularySnapshotType(URI snapshotUri, URI vocabulary) {
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (RepositoryConnection conn = repo.getConnection()) {
+                final IRI snapshot = Values.iri(snapshotUri.toString());
+                final IRI context = Values.iri(snapshotUri.toString());
+                conn.add(snapshot, RDF.TYPE, Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary),
+                        context);
+                conn.add(snapshot,
+                        Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
+                        Values.iri(vocabulary.toString()), context);
+            }
+        });
+    }
+
+    /**
+     * Persists the given statements in the given context
+     *
+     * @param context context to which the statements should be persisted
+     * @param statements statements to persist
+     */
+    protected void withStatements(URI context, Statement... statements) {
+        final IRI contextIri = Values.iri(context.toString());
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                for (Statement s : statements) {
+                    connection.add(s.getSubject(), s.getPredicate(), s.getObject(), contextIri);
+                }
+                connection.commit();
+            }
+        });
+    }
+
+    /**
+     * Creates RDF4J {@link Statement}
+     */
+    protected static Statement statement(Resource subject, IRI predicate, Value object) {
+        return Values.getValueFactory().createStatement(
+                subject,
+                predicate,
+                object);
     }
 }

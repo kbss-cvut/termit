@@ -55,9 +55,11 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import jakarta.annotation.Nonnull;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -485,6 +487,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<TermDto> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return repositoryService.findSubTerms(parent);
+    }
+
+    /**
+     * Gets referenes to the given term.
+     *
+     * @param term the term to which references should be found
+     * @param pageable Page spec
+     * @return Page of statements where the given term is object
+     */
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    public Page<Statement> findReferences(Term term, Pageable pageable) {
+        return repositoryService.findReferences(term, pageable);
     }
 
     /**
