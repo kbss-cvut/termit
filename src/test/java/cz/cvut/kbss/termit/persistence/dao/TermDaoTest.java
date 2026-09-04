@@ -1532,12 +1532,14 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final Statement expectedOne = statement(
                 Values.iri(Environment.BASE_URI + "/term/source-1"),
                 Values.iri(SKOS.BROADER),
-                Values.iri(term.getUri().toString())
+                Values.iri(term.getUri().toString()),
+                Values.iri(vocabulary.getUri().toString())
         );
         final Statement unexpected = statement(
                 Values.iri(Environment.BASE_URI + "/term/source-2"),
                 Values.iri(SKOS.RELATED),
-                Values.iri(Generator.generateUriString())
+                Values.iri(Generator.generateUriString()),
+                Values.iri(vocabulary.getUri().toString())
         );
 
         withStatements(vocabulary.getUri(), expectedOne, unexpected);
@@ -1561,17 +1563,20 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 statement(
                         Values.iri(Environment.BASE_URI + "/term/source-1"),
                         Values.iri(SKOS.BROADER),
-                        Values.iri(term.getUri().toString())
+                        Values.iri(term.getUri().toString()),
+                        Values.iri(vocabulary.getUri().toString())
                 ),
                 statement(
                         Values.iri(Environment.BASE_URI + "/term/source-2"),
                         Values.iri(SKOS.RELATED),
-                        Values.iri(term.getUri().toString())
+                        Values.iri(term.getUri().toString()),
+                        Values.iri(vocabulary.getUri().toString())
                 ),
                 statement(
                         Values.iri(Environment.BASE_URI + "/term/source-3"),
                         Values.iri(SKOS.EXACT_MATCH),
-                        Values.iri(term.getUri().toString())
+                        Values.iri(term.getUri().toString()),
+                        Values.iri(vocabulary.getUri().toString())
                 )
         );
 
@@ -1601,13 +1606,14 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final Statement expected = statement(
                 Values.iri(Environment.BASE_URI + "/term/source-live"),
                 Values.iri(SKOS.BROADER),
-                Values.iri(term.getUri().toString()));
+                Values.iri(term.getUri().toString()),
+                Values.iri(vocabulary.getUri().toString()));
+        final URI snapshotUri = URI.create(vocabulary.getUri().toString() + "/version/test");
         final Statement snapshotReference = statement(
                 Values.iri(Environment.BASE_URI + "/term/source-snapshot"),
                 Values.iri(SKOS.RELATED),
-                Values.iri(term.getUri().toString()));
-
-        final URI snapshotUri = URI.create(vocabulary.getUri().toString() + "/version/test");
+                Values.iri(term.getUri().toString()),
+                Values.iri(snapshotUri.toString()));
 
         withStatements(vocabulary.getUri(), expected);
         withStatements(snapshotUri, snapshotReference);
@@ -1765,10 +1771,11 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     /**
      * Creates RDF4J {@link Statement}
      */
-    protected static Statement statement(Resource subject, IRI predicate, Value object) {
+    protected static Statement statement(Resource subject, IRI predicate, Value object, Resource context) {
         return Values.getValueFactory().createStatement(
                 subject,
                 predicate,
-                object);
+                object,
+                context);
     }
 }

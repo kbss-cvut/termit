@@ -49,12 +49,12 @@ import cz.cvut.kbss.termit.persistence.snapshot.TermSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.query.Operation;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -1391,18 +1391,26 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @return the list of statements referencing the term as object
      */
     private List<Statement> findReferences(RepositoryConnection con, AbstractTerm term, Pageable pageable) {
-        final GraphQuery query = con.prepareGraphQuery("""
-                    CONSTRUCT {
-                        ?other ?relation ?term .
-                    }
-                    """ + REFERENCES_TO_TERM_WHERE_CLAUSE +
+        final TupleQuery query = con.prepareTupleQuery(
+                "SELECT ?other ?relation ?term ?context " + REFERENCES_TO_TERM_WHERE_CLAUSE +
                 " OFFSET " + pageable.getOffset() +
                 " LIMIT " + pageable.getPageSize());
         bindReferencesQueryParameters(query, term);
         query.setIncludeInferred(false);
-        try (GraphQueryResult result = query.evaluate()) {
-            return result.stream().toList();
+
+        final List<Statement> statements = new ArrayList<>(pageable.getPageSize());
+        try (TupleQueryResult result = query.evaluate()) {
+            while (result.hasNext()) {
+                final BindingSet bindings = result.next();
+                statements.add(Values.getValueFactory().createStatement(
+                        (Resource) bindings.getValue("other"),
+                        (IRI) bindings.getValue("relation"),
+                        bindings.getValue("term"),
+                        (Resource) bindings.getValue("context")
+                ));
+            }
         }
+        return statements;
     }
 
     /**
