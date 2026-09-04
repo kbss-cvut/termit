@@ -481,8 +481,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false), vocabulary);
 
         final Term updatedParent = sut.findRequired(parent.getUri());
-        assertFalse(updatedParent.getSubTerms().contains(new TermInfo(toRemove)));
-        assertTrue(updatedParent.getSubTerms().contains(new TermInfo(child)));
+        assertFalse(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(toRemove)::equals),
+                "Term to remove must be removed from its parent");
+        assertTrue(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(child)::equals),
+                "Child of removed term must be reconnected to the parent");
     }
 
     @Test

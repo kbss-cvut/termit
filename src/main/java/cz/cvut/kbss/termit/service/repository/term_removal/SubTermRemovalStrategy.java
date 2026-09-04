@@ -3,13 +3,13 @@ package cz.cvut.kbss.termit.service.repository.term_removal;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 /**
  * Describes an operation how should be sub-terms handled during term removal
@@ -76,16 +76,30 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
             final Term term = removalParams.termToRemove();
             final TermInfo termInfo = new TermInfo(term);
 
-            if (term.getSubTerms() != null && !term.getSubTerms().isEmpty()) {
-                removeParent(term.getSubTerms(), termInfo, repositoryService);
-            }
+            final Collection<Term> subTerms = Optional.ofNullable(term.getSubTerms())
+                    .map(children -> children.stream()
+                                             .map(HasIdentifier::getUri)
+                                             .map(repositoryService::findRequired)
+                                             .map(t -> {
+                                                 t.consolidateParents();
+                                                 return t;
+                                             })
+                                             .toList())
+                    .orElse(Collections.emptyList());
+
+            removeParent(subTerms, termInfo);
 
             final boolean hasParents = term.getParentTerms() != null && !term.getParentTerms().isEmpty();
             final boolean hasExternalParents = term.getExternalParentTerms() != null && !term.getExternalParentTerms().isEmpty();
             if (hasParents || hasExternalParents) {
                 // term has some parents to which children should be reconnected
-                reconnectToParents(term, repositoryService);
+                reconnectToParents(subTerms, term);
             }
+
+            subTerms.forEach(subTerm -> {
+                subTerm.splitExternalAndInternalParents();
+                repositoryService.update(subTerm);
+            });
         }
 
         /**
@@ -93,37 +107,32 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
          *
          * @param children children from which the {@code parentToRemove} should be removed
          * @param parentToRemove the parent that should be removed from {@code children}
-         * @param repositoryService the {@link TermRepositoryService} to retrieve and update children terms
          */
-        private void removeParent(Collection<TermInfo> children, TermInfo parentToRemove, TermRepositoryService repositoryService) {
-            children.forEach(subTermInfo -> {
-                final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
-
+        private void removeParent(Collection<Term> children, TermInfo parentToRemove) {
+            children.forEach(subTerm -> {
                 final Collection<TermInfo> childParents = subTerm.getParentTerms();
                 if (childParents != null && !childParents.isEmpty()) {
                     childParents.removeIf(parentToRemove::equals);
-                    repositoryService.update(subTerm);
                 }
             });
         }
 
-        private void reconnectToParents(Term term, TermRepositoryService repositoryService) {
-            // local and external parents
-            final Set<TermInfo> parents = Stream.of(term.getParentTerms(), term.getExternalParentTerms())
-                                                .flatMap(Collection::stream)
-                                                .collect(Collectors.toSet());
-
+        /**
+         * Adds every parent of {@code term} as parent of every sub-term from {@code subTerms}.
+         * Removes the {@code term} from parents of {@code subTerms}.
+         *
+         * @param subTerms sub-terms whose parents should be modified
+         * @param term the parent of {@code subTerms}
+         */
+        private void reconnectToParents(Collection<Term> subTerms, Term term) {
             final TermInfo oldParentInfo = new TermInfo(term);
             // add every sub-term
-            term.getSubTerms().forEach(subTermInfo -> {
-                final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
+            subTerms.forEach(subTerm -> {
                 subTerm.getParentTerms().removeIf(oldParentInfo::equals);
                 // as a sub-term of each parent
-                parents.forEach(parent -> {
+                term.getParentTerms().forEach(parent -> {
                     subTerm.getParentTerms().add(parent);
                 });
-                subTerm.splitExternalAndInternalParents();
-                repositoryService.update(subTerm);
             });
         }
     }

@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -140,6 +139,7 @@ class SubTermRemovalStrategyTest {
 
         makeParent(child, term);
         makeParent(term, parent);
+        makeParent(term, externalParent);
 
         vocabulary.getRootTerms().clear();
         vocabulary.addRootTerm(parent);
@@ -154,7 +154,7 @@ class SubTermRemovalStrategyTest {
 
         assertEquals(Set.of(parent.getUri()), vocabulary.getRootTerms(), "Vocabulary root terms must remain unchanged");
 
-        verify(repositoryService, times(2)).update(child);
+        verify(repositoryService).update(child);
         verifyNoMoreInteractions(repositoryService);
     }
 
