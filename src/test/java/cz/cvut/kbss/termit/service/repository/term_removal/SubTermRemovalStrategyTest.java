@@ -18,6 +18,8 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -40,6 +42,16 @@ class SubTermRemovalStrategyTest {
         term.setSubTerms(new HashSet<>());
         term.setParentTerms(new HashSet<>());
         term.setExternalParentTerms(new HashSet<>());
+
+        lenient().when(repositoryService.findRequired(term.getUri())).thenReturn(term);
+
+        lenient().doAnswer(answer -> {
+            Term t = answer.getArgument(0,Term.class);
+            Vocabulary voc = answer.getArgument(1, Vocabulary.class);
+            t.setVocabulary(voc.getUri());
+            voc.addRootTerm(t);
+            return null;
+        }).when(repositoryService).addRootTermToVocabulary(any(), any());
     }
 
     private TermRemovalParams withStrategy(SubTermRemovalStrategy strategy) {
@@ -96,40 +108,54 @@ class SubTermRemovalStrategyTest {
 
         term.setSubTerms(Set.of(firstChild, secondChild));
 
+        when(repositoryService.findRequired(firstChild.getUri())).thenReturn(firstChild.toTerm());
+        when(repositoryService.findRequired(secondChild.getUri())).thenReturn(secondChild.toTerm());
+
         params.subTermsStrategy().apply(params, vocabulary, repositoryService);
 
         assertEquals(Set.of(term.getUri(), firstChild.getUri(), secondChild.getUri()), vocabulary.getRootTerms());
-        verifyNoMoreInteractions(repositoryService);
     }
 
     @Test
     void reconnectLinksChildrenToAllParents() {
         final TermRemovalParams params = withStrategy(SubTermRemovalStrategy.RECONNECT);
 
-        final TermInfo child = Generator.generateTermInfoWithId();
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final TermInfo childInfo = new TermInfo(child);
         final Term parent = Generator.generateTermWithId(vocabulary.getUri());
         final Vocabulary externalVocabulary = Generator.generateVocabularyWithId();
         final Term externalParent = Generator.generateTermWithId(externalVocabulary.getUri());
 
-        parent.setSubTerms(new HashSet<>());
-        externalParent.setSubTerms(new HashSet<>());
+        makeParent(child, term);
+        makeParent(term, parent);
 
-        term.setSubTerms(Set.of(child));
-        term.setParentTerms(Set.of(parent.toTermInfo()));
         term.setExternalParentTerms(Set.of(externalParent.toTermInfo()));
 
+        when(repositoryService.findRequired(child.getUri())).thenReturn(child);
         when(repositoryService.findRequired(parent.getUri())).thenReturn(parent);
         when(repositoryService.findRequired(externalParent.getUri())).thenReturn(externalParent);
 
         params.subTermsStrategy().apply(params, vocabulary, repositoryService);
 
-        assertEquals(Set.of(child), parent.getSubTerms());
-        assertEquals(Set.of(child), externalParent.getSubTerms());
+        assertEquals(Set.of(childInfo), parent.getSubTerms());
+        assertEquals(Set.of(childInfo), externalParent.getSubTerms());
 
         assertEquals(Set.of(term.getUri()), vocabulary.getRootTerms(), "Children must not be added as root terms");
 
         verify(repositoryService).findRequired(parent.getUri());
         verify(repositoryService).findRequired(externalParent.getUri());
         verifyNoMoreInteractions(repositoryService);
+    }
+
+    private void makeParent(Term childTerm, Term parentTerm) {
+        if (childTerm.getParentTerms() == null) {
+            childTerm.setParentTerms(new HashSet<>());
+        }
+        if (parentTerm.getSubTerms() == null) {
+            parentTerm.setSubTerms(new HashSet<>());
+        }
+
+        childTerm.getParentTerms().add(new TermInfo(parentTerm));
+        parentTerm.getSubTerms().add(new TermInfo(childTerm));
     }
 }

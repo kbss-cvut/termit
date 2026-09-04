@@ -467,6 +467,24 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void removeWithParamsReconnectsChildrenToParents() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+
+        transactional(() -> sut.addRootTermToVocabulary(parent, vocabulary));
+        transactional(() -> sut.addChildTerm(toRemove, parent));
+        transactional(() -> sut.addChildTerm(child, toRemove));
+        transactional(() -> em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false), vocabulary);
+
+        final Term updatedParent = sut.findRequired(parent.getUri());
+        assertFalse(updatedParent.getSubTerms().contains(new TermInfo(toRemove)));
+        assertTrue(updatedParent.getSubTerms().contains(new TermInfo(child)));
+    }
+
+    @Test
     void removeWithParamsCascadesToNestedChildren() {
         final Term parent = Generator.generateTermWithId(vocabulary.getUri());
         final Term child = Generator.generateTermWithId(vocabulary.getUri());
@@ -570,12 +588,14 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         related.setVocabulary(vocabulary.getUri());
         vocabulary.addRootTerm(toRemove);
         vocabulary.addRootTerm(related);
+
         transactional(() -> {
             em.persist(toRemove, descriptorFactory.termDescriptor(vocabulary));
             em.persist(related, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            generateRelatedInverse(toRemove, related, SKOS.RELATED);
+            generateRelatedInverse(toRemove, related, Environment.BASE_URI + "/example-custom-attribute");
         });
+
         final Term loaded = sut.findRequired(toRemove.getUri());
 
         final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
@@ -866,6 +886,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(term));
+            em.flush();
+            em.clear();
             em.persist(other, descriptorFactory.termDescriptor(other));
         });
 

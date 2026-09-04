@@ -264,6 +264,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         toUpdate.addRootTerm(instance);
     }
 
+    /**
+     * Creates new term from the {@code instance} and sets its {@code parentTerm}
+     *
+     * @param instance a new Term to persist
+     * @param parentTerm the parent term to set for the {@code instance}
+     */
     @Transactional
     public void addChildTerm(Term instance, Term parentTerm) {
         Objects.requireNonNull(instance);
@@ -650,22 +656,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         // JOPA cannot manage the same individual as both Term and TermInfo,
         // which would otherwise prevent loading a child whose parent is the term currently being removed.
         final URI termUri = removalParams.termToRemove().getUri();
+        Term toRemove = findRequired(termUri);
         removalParams = removalParams.withTerm(findRequired(termUri));
-        termDao.detach(removalParams.termToRemove());
+        termDao.detach(toRemove);
 
         LOG.debug("Removing term <{}>", termUri);
 
         LOG.debug("Applying sub-terms removal strategy for term <{}>", termUri);
         removalParams.subTermsStrategy().apply(removalParams, vocabulary, this);
-
-        // Clear the persistence context to remove cached TermInfo instances
         termDao.flushAndClear();
 
-        removalParams = removalParams.withTerm(findRequired(termUri));
-        final Term toRemove = removalParams.termToRemove();
-        if (toRemove.getSubTerms() != null) {
-            toRemove.getSubTerms().clear();
-        }
+        toRemove.consolidateParents();
+        toRemove.getParentTerms().clear();
 
         if (termOccurrenceService.existsTargeting(toRemove) && !removalParams.removeOccurrences()) {
             throw new AssetRemovalException("Failed to remove term because of existing term occurrences");
@@ -678,6 +680,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             termDao.removeReferencesTo(toRemove);
         }
 
+        toRemove = update(toRemove);
+        termDao.flushAndClear();
         this.remove(toRemove); // calls pre and post remove
         LOG.debug("Removed term <{}>", toRemove.getUri());
     }

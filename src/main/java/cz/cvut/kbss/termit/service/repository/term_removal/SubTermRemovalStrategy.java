@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.service.repository.term_removal;
 
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
 import java.util.Collection;
@@ -76,7 +76,7 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
             final Term term = removalParams.termToRemove();
             if (!term.hasParentInSameVocabulary()) {
                 // term has no parents in the same vocabulary
-                makeRoots(term, vocabulary);
+                makeRoots(term, vocabulary, repositoryService);
             }
             final boolean hasParents = term.getParentTerms() != null && !term.getParentTerms().isEmpty();
             final boolean hasExternalParents = term.getExternalParentTerms() != null && !term.getExternalParentTerms().isEmpty();
@@ -86,24 +86,30 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
             }
         }
 
-        private void makeRoots(Term term, Vocabulary vocabulary) {
+        private void makeRoots(Term term, Vocabulary vocabulary, TermRepositoryService repositoryService) {
             term.getSubTerms().forEach(subTermInfo -> {
-                vocabulary.getRootTerms().add(subTermInfo.getUri());
+                final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
+                repositoryService.addRootTermToVocabulary(subTerm, vocabulary);
             });
         }
 
         private void reconnectToParents(Term term, TermRepositoryService repositoryService) {
             // local and external parents
-            final Set<Term> parents = Stream.of(term.getParentTerms(), term.getExternalParentTerms())
-                                      .flatMap(Collection::stream)
-                                      .map(HasIdentifier::getUri)
-                                      .distinct() // in case of consolidated parents
-                                      .map(repositoryService::findRequired)
-                                      .collect(Collectors.toSet());
+            final Set<TermInfo> parents = Stream.of(term.getParentTerms(), term.getExternalParentTerms())
+                                                .flatMap(Collection::stream)
+                                                .collect(Collectors.toSet());
+
+            final TermInfo oldParentInfo = new TermInfo(term);
             // add every sub-term
             term.getSubTerms().forEach(subTermInfo -> {
+                final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
+                subTerm.getParentTerms().removeIf(oldParentInfo::equals);
                 // as a sub-term of each parent
-                parents.forEach(parent -> parent.getSubTerms().add(subTermInfo));
+                parents.forEach(parent -> {
+                    subTerm.getParentTerms().add(parent);
+                });
+                subTerm.splitExternalAndInternalParents();
+                repositoryService.update(subTerm);
             });
         }
     }
