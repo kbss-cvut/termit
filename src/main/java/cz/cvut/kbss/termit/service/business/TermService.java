@@ -158,7 +158,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<? extends AbstractTerm> findAll(Vocabulary vocabulary, TermSelectionParams selectionParams) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(selectionParams);
