@@ -110,7 +110,7 @@ public class ReadOnlyTermController extends BaseController {
                                                                                                            pageNo)));
         }
 
-        if (flat && includeTerms != null && !includeTerms.isEmpty()) {
+        if (flat && !includeTerms.isEmpty()) {
             final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
                     createPageRequest(pageSize, pageNo));
             return termService.findAllFlat(vocabulary, includeTerms, params);

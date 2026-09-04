@@ -767,7 +767,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param selectionParams term search parameters
      * @return flattened list of terms
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
         if (selectionParams.full()) {
             throw new IllegalArgumentException("Full term representation is not supported");
