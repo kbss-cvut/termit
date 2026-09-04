@@ -101,9 +101,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                         }
                         ?other ?relation ?term .
                         ?context a ?vocabulary .
-#                        FILTER (?relation NOT IN (
-#                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
-#                        ))
+                        FILTER (?relation NOT IN (
+                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+                        ))
                     }
                 }
                 """;

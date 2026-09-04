@@ -1545,9 +1545,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         readOnlyTransactional(() -> {
             final var result = sut.findReferences(term, PageRequest.of(0, 10));
 
-            // +1 for vocabulary hasTopConcept
-            assertEquals(2, result.getContent().size());
-            assertEquals(2, result.getTotalElements());
+            assertEquals(1, result.getContent().size());
+            assertEquals(1, result.getTotalElements());
             assertTrue(result.getContent().contains(expectedOne));
             assertFalse(result.getContent().contains(unexpected));
         });
@@ -1583,15 +1582,14 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             final Page<Statement> firstPage = sut.findReferences(term, PageRequest.of(0, 2));
             final Page<Statement> secondPage = sut.findReferences(term, PageRequest.of(1, 2));
 
-            // +1 for vocabulary hasTopConcept
-            final long totalElements = 4;
+            final long totalElements = expected.size();
             assertEquals(totalElements, allReferences.getNumberOfElements());
             assertEquals(totalElements, firstPage.getTotalElements());
             assertEquals(totalElements, secondPage.getTotalElements());
             assertEquals(2, firstPage.getSize());
             assertEquals(2, secondPage.getSize());
             assertEquals(List.of(allReferences.getContent().get(0), allReferences.getContent().get(1)), firstPage.getContent());
-            assertEquals(List.of(allReferences.getContent().get(2), allReferences.getContent().get(3)), secondPage.getContent());
+            assertEquals(List.of(allReferences.getContent().get(2)), secondPage.getContent());
         });
     }
 
@@ -1608,10 +1606,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 Values.iri(Environment.BASE_URI + "/term/source-snapshot"),
                 Values.iri(SKOS.RELATED),
                 Values.iri(term.getUri().toString()));
-        final Statement rootTermReference = statement(
-                Values.iri(vocabulary.getUri().toString()),
-                Values.iri(SKOS.HAS_TOP_CONCEPT),
-                Values.iri(term.getUri().toString()));
 
         final URI snapshotUri = URI.create(vocabulary.getUri().toString() + "/version/test");
 
@@ -1622,10 +1616,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         readOnlyTransactional(() -> {
             final var result = sut.findReferences(term, PageRequest.of(0, 10));
 
-            assertEquals(2, result.getContent().size());
-            assertEquals(2, result.getTotalElements());
+            assertEquals(1, result.getContent().size());
+            assertEquals(1, result.getTotalElements());
             assertTrue(result.getContent().contains(expected));
-            assertTrue(result.getContent().contains(rootTermReference));
             assertFalse(result.getContent().contains(snapshotReference));
         });
     }

@@ -858,6 +858,22 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void removeThrowsWhenTermIsReferencedByOtherTerm() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term other = Generator.generateTermWithId(vocabulary.getUri());
+        other.addRelatedTerm(new TermInfo(term));
+
+        transactional(() -> {
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(other, descriptorFactory.termDescriptor(other));
+        });
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class, () -> sut.remove(term));
+        assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
+    }
+
+    @Test
     void removeThrowsAssetRemovalExceptionWhenTermIsReferencedByConfirmedOccurrences() {
         enableRdfsInference(em);
         final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
