@@ -65,14 +65,14 @@ class SubTermRemovalStrategyTest {
         final TermInfo child = Generator.generateTermInfoWithId();
         term.setSubTerms(Set.of(child));
 
-        final TermItException exception = assertThrows(TermItException.class, () -> params.subTermsStrategy().apply(params, vocabulary, repositoryService));
+        final TermItException exception = assertThrows(TermItException.class, () -> params.subTermsStrategy().apply(params, repositoryService));
         assertEquals("error.term.remove.hasSubTerms", exception.getMessageId());
     }
 
     @Test
     void failDoesNotThrowWhenTermHasNoChildren() {
         final TermRemovalParams params = withStrategy(SubTermRemovalStrategy.FAIL);
-        assertDoesNotThrow(() -> params.subTermsStrategy().apply(params, vocabulary, repositoryService));
+        assertDoesNotThrow(() -> params.subTermsStrategy().apply(params, repositoryService));
     }
 
     @Test
@@ -92,12 +92,12 @@ class SubTermRemovalStrategyTest {
         when(repositoryService.findRequired(firstChildInfo.getUri())).thenReturn(firstChild);
         when(repositoryService.findRequired(secondChildInfo.getUri())).thenReturn(secondChild);
 
-        params.subTermsStrategy().apply(params, vocabulary, repositoryService);
+        params.subTermsStrategy().apply(params, repositoryService);
 
         verify(repositoryService).findRequired(firstChildInfo.getUri());
         verify(repositoryService).findRequired(secondChildInfo.getUri());
-        verify(repositoryService).remove(params.withTerm(firstChild), vocabulary);
-        verify(repositoryService).remove(params.withTerm(secondChild), vocabulary);
+        verify(repositoryService).remove(params.withTerm(firstChild));
+        verify(repositoryService).remove(params.withTerm(secondChild));
         verifyNoMoreInteractions(repositoryService);
     }
 
@@ -119,7 +119,7 @@ class SubTermRemovalStrategyTest {
         when(repositoryService.findRequired(firstChild.getUri())).thenReturn(firstChildTerm);
         when(repositoryService.findRequired(secondChild.getUri())).thenReturn(secondChildTerm);
 
-        params.subTermsStrategy().apply(params, vocabulary, repositoryService);
+        params.subTermsStrategy().apply(params, repositoryService);
 
         verify(repositoryService, atLeastOnce()).findRequired(any());
         // repository post-update handles root term assignment
@@ -147,7 +147,7 @@ class SubTermRemovalStrategyTest {
         term.setExternalParentTerms(Set.of(externalParent.toTermInfo()));
 
         when(repositoryService.findRequired(child.getUri())).thenReturn(child);
-        params.subTermsStrategy().apply(params, vocabulary, repositoryService);
+        params.subTermsStrategy().apply(params, repositoryService);
 
         assertEquals(Set.of(parent.toTermInfo()), child.getParentTerms(), "Child must be assigned to the parent of the removed term");
         assertEquals(Set.of(externalParent.toTermInfo()), child.getExternalParentTerms());

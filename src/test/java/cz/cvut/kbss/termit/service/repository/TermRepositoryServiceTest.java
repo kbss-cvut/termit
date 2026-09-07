@@ -478,7 +478,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> sut.addChildTerm(child, toRemove));
         transactional(() -> em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
 
-        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false), vocabulary);
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false));
 
         final Term updatedParent = sut.findRequired(parent.getUri());
         assertFalse(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(toRemove)::equals),
@@ -503,7 +503,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(em.find(Term.class, grandChild.getUri()));
 
         // remove parent and all children
-        sut.remove(new TermRemovalParams(parent, SubTermRemovalStrategy.CASCADE, false, true), vocabulary);
+        sut.remove(new TermRemovalParams(parent, SubTermRemovalStrategy.CASCADE, false, true));
 
         assertNull(em.find(Term.class, parent.getUri()));
         assertNull(em.find(Term.class, child.getUri()));
@@ -553,7 +553,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         assertThrows(AssetRemovalException.class, () ->
                 sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
-                        false, false), vocabulary));
+                        false, false)));
         assertNotNull(em.find(Term.class, toRemove.getUri()));
         assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
     }
@@ -563,7 +563,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final URI occurrenceUri = Generator.generateUri();
         final Term toRemove = prepareTermWithSuggestedOccurrence(occurrenceUri);
 
-        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false), vocabulary);
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
         assertNull(em.find(Term.class, toRemove.getUri()));
         assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
     }
@@ -602,7 +602,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
                 () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
-                                false, false), vocabulary));
+                                false, false)));
         assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
         // none of the terms must be removed because of the exception
         assertNotNull(em.find(Term.class, toRemove.getUri()));
@@ -617,7 +617,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotEquals(toRemove, related);
 
         sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
-                        false, true), vocabulary);
+                        false, true));
 
         assertNull(em.find(Term.class, toRemove.getUri()), "The term must be removed");
         assertNotNull(em.find(Term.class, related.getUri()), "The other term must not be removed");
