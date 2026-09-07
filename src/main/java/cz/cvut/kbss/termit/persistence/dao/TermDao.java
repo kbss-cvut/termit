@@ -1393,6 +1393,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private List<Statement> findReferences(RepositoryConnection con, AbstractTerm term, Pageable pageable) {
         final TupleQuery query = con.prepareTupleQuery(
                 "SELECT ?other ?relation ?term ?context " + REFERENCES_TO_TERM_WHERE_CLAUSE +
+                " ORDER BY ?other ?relation ?context" +
                 " OFFSET " + pageable.getOffset() +
                 " LIMIT " + pageable.getPageSize());
         bindReferencesQueryParameters(query, term);
