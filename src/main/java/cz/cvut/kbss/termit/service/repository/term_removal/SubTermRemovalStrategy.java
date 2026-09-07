@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.service.repository.term_removal;
 
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
@@ -39,8 +38,8 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
     }
 
     @Override
-    public void apply(TermRemovalParams removalParams, Vocabulary vocabulary, TermRepositoryService repositoryService) {
-        applier.apply(removalParams, vocabulary, repositoryService);
+    public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {
+        applier.apply(removalParams, repositoryService);
     }
 
     /**
@@ -50,13 +49,12 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
         static final CascadeRemoveApplier INSTANCE = new CascadeRemoveApplier();
 
         @Override
-        public void apply(TermRemovalParams removalParams, Vocabulary vocabulary,
-                          TermRepositoryService repositoryService) {
+        public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
             if (term.getSubTerms() != null) {
                 term.getSubTerms().forEach(subTermInfo -> {
                     final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
-                    repositoryService.remove(removalParams.withTerm(subTerm), vocabulary);
+                    repositoryService.remove(removalParams.withTerm(subTerm));
                 });
             }
         }
@@ -71,8 +69,7 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
         static final ReconnectApplier INSTANCE = new ReconnectApplier();
 
         @Override
-        public void apply(TermRemovalParams removalParams, Vocabulary vocabulary,
-                          TermRepositoryService repositoryService) {
+        public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
             final TermInfo termInfo = new TermInfo(term);
 
@@ -143,8 +140,7 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
     private static class FailApplier implements TermParamsApplier {
         static final FailApplier INSTANCE = new FailApplier();
         @Override
-        public void apply(TermRemovalParams removalParams, Vocabulary vocabulary,
-                          TermRepositoryService repositoryService) {
+        public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
             if (!term.getSubTerms().isEmpty()) {
                 throw TermRepositoryService.hasSubTermsException(term.getSubTerms());

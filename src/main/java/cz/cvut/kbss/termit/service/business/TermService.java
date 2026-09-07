@@ -657,8 +657,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(termRemovalParams);
         Objects.requireNonNull(termRemovalParams.termToRemove());
         Objects.requireNonNull(termRemovalParams.termToRemove().getVocabulary());
-        final Vocabulary vocabulary = findVocabularyRequired(termRemovalParams.termToRemove().getVocabulary());
-        repositoryService.remove(termRemovalParams, vocabulary);
+
+        repositoryService.remove(termRemovalParams);
     }
 
     /**

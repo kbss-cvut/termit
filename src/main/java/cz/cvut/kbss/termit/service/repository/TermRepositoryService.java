@@ -205,6 +205,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     protected void postUpdate(@Nonnull Term instance) {
         final Vocabulary vocabulary = vocabularyService.findRequired(instance.getVocabulary());
+        // Jopa should always set at least empty collection
+        Objects.requireNonNull(vocabulary.getRootTerms(), "Vocabulary must have root terms collection");
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.removeRootTerm(instance);
         } else {
@@ -647,10 +649,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param removalParams Params describing how the term should be removed
      */
     @Transactional
-    public void remove(TermRemovalParams removalParams, Vocabulary vocabulary) {
+    public void remove(TermRemovalParams removalParams) {
         Objects.requireNonNull(removalParams);
         Objects.requireNonNull(removalParams.termToRemove().getUri());
-        Objects.requireNonNull(vocabulary);
 
         // Refresh the instance from storage, then detach it before traversing term relationships.
         // JOPA cannot manage the same individual as both Term and TermInfo,
@@ -663,7 +664,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         LOG.debug("Removing term <{}>", termUri);
 
         LOG.debug("Applying sub-terms removal strategy for term <{}>", termUri);
-        removalParams.subTermsStrategy().apply(removalParams, vocabulary, this);
+        removalParams.subTermsStrategy().apply(removalParams, this);
         termDao.flushAndClear();
 
         toRemove.consolidateParents();
