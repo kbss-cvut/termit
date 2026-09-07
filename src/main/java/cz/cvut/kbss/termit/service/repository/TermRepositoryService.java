@@ -657,7 +657,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         // which would otherwise prevent loading a child whose parent is the term currently being removed.
         final URI termUri = removalParams.termToRemove().getUri();
         Term toRemove = findRequired(termUri);
-        removalParams = removalParams.withTerm(findRequired(termUri));
+        removalParams = removalParams.withTerm(toRemove);
         termDao.detach(toRemove);
 
         LOG.debug("Removing term <{}>", termUri);
