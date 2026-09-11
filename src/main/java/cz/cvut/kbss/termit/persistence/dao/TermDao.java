@@ -437,7 +437,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         try {
             final List<FlatTermDto> result =  findAllFlatQuery(vocabulary, pageSpec).getResultList();
-            loadIncludedTerms(includeTerms).forEach(dto -> result.add(new FlatTermDto(dto)));
+            loadIncludedTerms(getMissingTerms(result, includeTerms)).forEach(dto -> result.add(new FlatTermDto(dto)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -636,7 +636,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
-                                                                 "FILTER (?term NOT IN (?included))" +
                                                                  "}} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
                                                          TermDto.class);
@@ -646,14 +645,27 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                     query.setParameter("context", context(vocabulary))
                          .setParameter("vocabulary", vocabulary.getUri())
                          .setParameter("labelLang", vocabulary.getPrimaryLanguage())
-                         .setParameter("included", includeTerms)
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    /**
+     * Resolves term identifiers from {@code includeTerms} that are not present in {@code loadedTerms}
+     *
+     * @param loadedTerms already loaded terms
+     * @param includeTerms terms that should be loaded next
+     * @return set of term identifiers from {@code includeTerms} that are not present in {@code loadedTerms}
+     */
+    private Set<URI> getMissingTerms(Collection<? extends AbstractTerm> loadedTerms, Collection<URI> includeTerms) {
+        final Set<URI> loadedSet = loadedTerms.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        return includeTerms.stream()
+                .filter(uri -> !loadedSet.contains(uri))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -674,7 +686,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?vocabulary ?hasTerm ?term . " +
                                                                  "?vocabulary ?hasLanguage ?primaryLanguage ." +
                                                                  "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
-                                                                 "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
                                                                  "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
@@ -683,11 +694,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                         .setParameter("included", includeTerms)
                          .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term))
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -756,7 +766,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?vocabulary ?hasTerm ?term ." +
                                                                  "?vocabulary ?hasLanguage ?primaryLanguage ." +
                                                                  "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
-                                                                 "FILTER (?term NOT IN (?included)) " +
                                                                  "FILTER (?vocabulary IN (?vocabularies)) ." +
                                                                  "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
@@ -766,10 +775,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabularies", vocabularies)
                          .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                         .setParameter("included", includeTerms)
                          .setFirstResult((int) pageSpec.getOffset())
                          .setMaxResults(pageSpec.getPageSize()));
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -925,7 +933,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(query);
             result.forEach(this::loadParentSubTerms);
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -1079,7 +1087,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                        Pageable pageSpec, Collection<URI> includeTerms) {
         List<FlatTermDto> result = findAllFlatInVocabularies(vocabularies, pageSpec);
         if (includeTerms != null && !includeTerms.isEmpty()) {
-            loadIncludedTerms(includeTerms).forEach(dto -> result.add(new FlatTermDto(dto)));
+            loadIncludedTerms(getMissingTerms(result, includeTerms))
+                    .forEach(dto -> result.add(new FlatTermDto(dto)));
         }
         return result;
     }
