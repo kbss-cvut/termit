@@ -26,6 +26,9 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import jakarta.annotation.Nonnull;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
@@ -40,6 +43,7 @@ import java.util.Optional;
  */
 public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>, ApplicationEventPublisherAware {
 
+    private static final Logger LOG = LoggerFactory.getLogger(BaseDao.class);
     protected final Class<T> type;
     protected final URI typeUri;
 
@@ -161,5 +165,25 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>,
     @Override
     public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Unwraps the supplied entity manager to {@link RepositoryConnection} within the current active transaction.
+     *
+     * @param entityManager the entity manager to unwrap
+     * @return open repository connection with active current transaction
+     * @implSpec The connection is managed by the {@link EntityManager} and must not be used with try-auto-close statement.
+     */
+    public static RepositoryConnection unwrapToConnection(EntityManager entityManager) {
+        if (!entityManager.isOpen() || !entityManager.getTransaction().isActive()) {
+            throw new IllegalStateException("Entity manager is not open(" + entityManager.isOpen() +
+                    ") or there is no active transaction (" + entityManager.getTransaction().isActive() + ")!");
+        }
+        final RepositoryConnection connection = entityManager.unwrap(RepositoryConnection.class);
+        if (connection != null && connection.isActive()) {
+            return connection;
+        }
+        entityManager.createNativeQuery("ASK {}", Boolean.class).getSingleResult(); // force em to open a connection
+        return Objects.requireNonNull(entityManager.unwrap(RepositoryConnection.class), "Failed to acquire repository connection");
     }
 }
