@@ -1350,15 +1350,16 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(pageable, "Pageable cannot be null");
 
         try {
-            try (RepositoryConnection con = em.unwrap(org.eclipse.rdf4j.repository.Repository.class).getConnection()) {
-                final long totalCount = countReferences(con, term);
-                if (totalCount == 0 || pageable.getOffset() >= totalCount) {
-                    return new PageImpl<>(List.of(), pageable, totalCount);
-                }
-
-                final List<Statement> statements = findReferences(con, term, pageable);
-                return new PageImpl<>(statements, pageable, totalCount);
+            RepositoryConnection con = unwrapToConnection(em);
+            // On purpose not using auto-closable with try statement to prevent closing the connection here
+            // the connection is managed by Entity Manager
+            final long totalCount = countReferences(con, term);
+            if (totalCount == 0 || pageable.getOffset() >= totalCount) {
+                return new PageImpl<>(List.of(), pageable, totalCount);
             }
+
+            final List<Statement> statements = findReferences(con, term, pageable);
+            return new PageImpl<>(statements, pageable, totalCount);
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
         }
