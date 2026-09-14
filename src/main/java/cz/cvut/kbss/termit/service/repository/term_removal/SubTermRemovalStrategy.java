@@ -13,7 +13,7 @@ import java.util.Optional;
 /**
  * Describes an operation how should be sub-terms handled during term removal
  */
-public enum SubTermRemovalStrategy implements TermParamsApplier {
+public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
     /**
      * All sub-terms will be removed using the same {@link TermRemovalParams}
      */
@@ -31,9 +31,9 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
      */
     FAIL(FailApplier.INSTANCE);
 
-    private final TermParamsApplier applier;
+    private final TermRemovalParamsApplier applier;
 
-    SubTermRemovalStrategy(TermParamsApplier applier) {
+    SubTermRemovalStrategy(TermRemovalParamsApplier applier) {
         this.applier = Objects.requireNonNull(applier);
     }
 
@@ -45,7 +45,7 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
     /**
      * Removes every child of the given term
      */
-    private static class CascadeRemoveApplier implements TermParamsApplier {
+    private static class CascadeRemoveApplier implements TermRemovalParamsApplier {
         static final CascadeRemoveApplier INSTANCE = new CascadeRemoveApplier();
 
         @Override
@@ -65,7 +65,7 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
      * Every child becomes child of its grandparent.
      * If the term being removed has no parents in the current vocabulary, children become root terms.
      */
-    private static class ReconnectApplier implements TermParamsApplier {
+    private static class ReconnectApplier implements TermRemovalParamsApplier {
         static final ReconnectApplier INSTANCE = new ReconnectApplier();
 
         @Override
@@ -137,7 +137,7 @@ public enum SubTermRemovalStrategy implements TermParamsApplier {
     /**
      * Throws an exception when the term to be removed has sub-terms.
      */
-    private static class FailApplier implements TermParamsApplier {
+    private static class FailApplier implements TermRemovalParamsApplier {
         static final FailApplier INSTANCE = new FailApplier();
         @Override
         public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {

@@ -5,7 +5,7 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 /**
  * Applier performing the given operation described by the parameters.
  */
-public interface TermParamsApplier {
+public interface TermRemovalParamsApplier {
     /**
      * Applies the operation described by the parameters.
      *
