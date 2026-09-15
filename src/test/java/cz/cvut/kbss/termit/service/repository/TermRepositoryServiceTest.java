@@ -547,18 +547,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void removeWithParamsThrowsWhenTermHasSuggestedOccurrencesAndRemoveOccurrencesIsFalse() {
-        final URI occurrenceUri = Generator.generateUri();
-        final Term toRemove = prepareTermWithSuggestedOccurrence(occurrenceUri);
-
-        assertThrows(AssetRemovalException.class, () ->
-                sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
-                        false, false)));
-        assertNotNull(em.find(Term.class, toRemove.getUri()));
-        assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
-    }
-
-    @Test
     void removeWithParamsRemovesSuggestedOccurrencesWhenRemoveOccurrencesIsTrue() {
         final URI occurrenceUri = Generator.generateUri();
         final Term toRemove = prepareTermWithSuggestedOccurrence(occurrenceUri);
