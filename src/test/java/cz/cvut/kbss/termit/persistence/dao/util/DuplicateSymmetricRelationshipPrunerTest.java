@@ -38,7 +38,9 @@ class DuplicateSymmetricRelationshipPrunerTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (RepositoryConnection conn = repo.getConnection()) {
+                conn.begin();
                 new DuplicateSymmetricRelationshipPruner(conn).prune();
+                conn.commit();
             }
         });
         assertEquals(2, em.createNativeQuery(
@@ -65,7 +67,9 @@ class DuplicateSymmetricRelationshipPrunerTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (RepositoryConnection conn = repo.getConnection()) {
+                conn.begin();
                 new DuplicateSymmetricRelationshipPruner(conn).prune();
+                conn.commit();
             }
         });
         assertEquals(2, em.createNativeQuery(
