@@ -56,6 +56,7 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
                     final Term subTerm = repositoryService.findRequired(subTermInfo.getUri());
                     repositoryService.remove(removalParams.withTerm(subTerm));
                 });
+                term.getSubTerms().clear();
             }
         }
     }
@@ -97,6 +98,10 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
                 subTerm.splitExternalAndInternalParents();
                 repositoryService.update(subTerm);
             });
+
+            if (term.getSubTerms() != null) {
+                term.getSubTerms().clear(); // they were reconnected
+            }
         }
 
         /**
