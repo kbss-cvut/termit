@@ -681,8 +681,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             termDao.removeReferencesTo(toRemove);
         }
 
-        toRemove = update(toRemove);
-        termDao.flushAndClear();
         this.remove(toRemove); // calls pre and post remove
         LOG.debug("Removed term <{}>", toRemove.getUri());
     }

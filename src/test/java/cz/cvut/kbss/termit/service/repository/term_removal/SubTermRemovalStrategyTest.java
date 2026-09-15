@@ -87,7 +87,9 @@ class SubTermRemovalStrategyTest {
         final Term secondChild = Generator.generateTermWithId(vocabulary.getUri());
         secondChild.setUri(secondChildInfo.getUri());
 
-        term.setSubTerms(Set.of(firstChildInfo, secondChildInfo));
+        term.setSubTerms(new HashSet<>());
+        term.getSubTerms().add(firstChildInfo);
+        term.getSubTerms().add(secondChildInfo);
 
         when(repositoryService.findRequired(firstChildInfo.getUri())).thenReturn(firstChild);
         when(repositoryService.findRequired(secondChildInfo.getUri())).thenReturn(secondChild);
