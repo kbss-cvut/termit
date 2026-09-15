@@ -750,6 +750,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             v.removeRootTerm(instance);
         }
         termOccurrenceService.removeAllOf(instance);
+        instance.consolidateParents();
+        termDao.evictFromCache(instance.getParentTerms());
     }
 
     /**
