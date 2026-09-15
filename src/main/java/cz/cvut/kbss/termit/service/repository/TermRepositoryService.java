@@ -667,14 +667,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         removalParams.subTermsStrategy().apply(removalParams, this);
         termDao.flushAndClear();
 
-        toRemove.consolidateParents();
-        toRemove.getParentTerms().clear();
-
-        if (termOccurrenceService.existsTargeting(toRemove) && !removalParams.removeOccurrences()) {
-            throw new AssetRemovalException("Failed to remove term because of existing term occurrences");
+        if (removalParams.removeOccurrences()) {
+            LOG.debug("Removing occurrences of term <{}>", toRemove.getUri());
+            termOccurrenceService.removeAllOf(toRemove);
         }
-        LOG.debug("Removing occurrences of term <{}>", toRemove.getUri());
-        termOccurrenceService.removeAllOf(toRemove);
 
         if (removalParams.removeRelationships()) {
             LOG.debug("Removing references to term <{}>", toRemove.getUri());
