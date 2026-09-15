@@ -27,6 +27,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -1442,5 +1443,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to remove references to term " + Utils.uriToString(toRemove.getUri()), e);
         }
+    }
+
+    /**
+     * Evict specified instances from the Jopa's Entity Manager Factory cache.
+     *
+     * @param terms terms to evict from the cache
+     */
+    public void evictFromCache(Collection<? extends TermDescription> terms) {
+        if (terms == null || terms.isEmpty()) {
+            return;
+        }
+        terms.forEach(term -> {
+            em.getEntityManagerFactory().getCache().evict(TermDescription.class, term.getUri(), term.getVocabulary());
+        });
     }
 }
