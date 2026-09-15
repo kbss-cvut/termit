@@ -1,0 +1,16 @@
+package cz.cvut.kbss.termit.service.repository.term_removal;
+
+import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+
+/**
+ * Applier performing the given operation described by the parameters.
+ */
+public interface TermRemovalParamsApplier {
+    /**
+     * Applies the operation described by the parameters.
+     *
+     * @param removalParams      Params describing how the term should be removed.
+     * @param repositoryService  Service for interacting with the term repository
+     */
+    void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService);
+}

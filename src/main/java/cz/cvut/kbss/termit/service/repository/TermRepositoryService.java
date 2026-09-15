@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -38,6 +37,7 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
@@ -45,6 +45,10 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
+import org.eclipse.rdf4j.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +69,7 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class TermRepositoryService extends BaseAssetRepositoryService<Term, TermDto> implements SnapshotProvider<Term> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TermRepositoryService.class);
     private final IdentifierResolver idResolver;
 
     private final TermDao termDao;
@@ -146,6 +151,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         return result;
     }
 
+    /**
+     * Gets referenes to the given term.
+     *
+     * @param term the term to which references should be found
+     * @param pageable Page spec
+     * @return Page of statements where the given term is object
+     */
+    @Transactional(readOnly = true)
+    public Page<Statement> findReferences(@Nonnull Term term, @Nonnull Pageable pageable) {
+        return termDao.findReferences(term, pageable);
+    }
+
     @Override
     protected void preUpdate(@Nonnull Term instance) {
         if (instance.getPrimaryLanguage() == null) {
@@ -188,6 +205,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     protected void postUpdate(@Nonnull Term instance) {
         final Vocabulary vocabulary = vocabularyService.findRequired(instance.getVocabulary());
+        // Jopa should always set at least empty collection
+        Objects.requireNonNull(vocabulary.getRootTerms(), "Vocabulary must have root terms collection");
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.removeRootTerm(instance);
         } else {
@@ -247,6 +266,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         toUpdate.addRootTerm(instance);
     }
 
+    /**
+     * Creates new term from the {@code instance} and sets its {@code parentTerm}
+     *
+     * @param instance a new Term to persist
+     * @param parentTerm the parent term to set for the {@code instance}
+     */
     @Transactional
     public void addChildTerm(Term instance, Term parentTerm) {
         Objects.requireNonNull(instance);
@@ -619,6 +644,58 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Removes a term according to the specified removal parameters.
+     *
+     * @param removalParams Params describing how the term should be removed
+     */
+    @Transactional
+    public void remove(TermRemovalParams removalParams) {
+        Objects.requireNonNull(removalParams);
+        Objects.requireNonNull(removalParams.termToRemove().getUri());
+
+        // Refresh the instance from storage, then detach it before traversing term relationships.
+        // JOPA cannot manage the same individual as both Term and TermInfo,
+        // which would otherwise prevent loading a child whose parent is the term currently being removed.
+        final URI termUri = removalParams.termToRemove().getUri();
+        Term toRemove = findRequired(termUri);
+        removalParams = removalParams.withTerm(toRemove);
+        termDao.detach(toRemove);
+
+        LOG.debug("Removing term <{}>", termUri);
+
+        LOG.debug("Applying sub-terms removal strategy for term <{}>", termUri);
+        removalParams.subTermsStrategy().apply(removalParams, this);
+        termDao.flushAndClear();
+
+        if (removalParams.removeOccurrences()) {
+            LOG.debug("Removing occurrences of term <{}>", toRemove.getUri());
+            termOccurrenceService.removeAllOf(toRemove);
+        }
+
+        if (removalParams.removeRelationships()) {
+            LOG.debug("Removing references to term <{}>", toRemove.getUri());
+            termDao.removeReferencesTo(toRemove);
+        }
+
+        this.remove(toRemove); // calls pre and post remove
+        LOG.debug("Removed term <{}>", toRemove.getUri());
+    }
+
+    /**
+     * Removes the specified term from the repository.
+     * The term must not have any children, no occurrence must exist
+     * and there must be no references to the term.
+     *
+     * @param instance The instance to remove
+     * @see #remove(TermRemovalParams, Vocabulary) 
+     * @see #forceRemove(Term) 
+     */
+    @Override
+    public void remove(Term instance) {
+        super.remove(instance);
+    }
+
+    /**
      * Checks that a term can be removed.
      * <p>
      * A term can be removed if:
@@ -643,16 +720,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         if ((subTerms != null) && !subTerms.isEmpty()) {
             throw hasSubTermsException(subTerms);
         }
-        if (instance.getProperties() != null) {
-            Set<String> props = instance.getProperties().keySet();
-            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.NAMESPACE)) && !(
-                    s.equalsIgnoreCase(SKOS.CHANGE_NOTE)
-                            || s.equalsIgnoreCase(SKOS.EDITORIAL_NOTE)
-                            || s.equalsIgnoreCase(SKOS.HISTORY_NOTE)
-                            || s.equalsIgnoreCase(SKOS.NOTE))).collect(toList());
-            if (!properties.isEmpty()) {
-                throw hasSkosRelationships(properties);
-            }
+        if (termDao.referencesToTermExist(instance)) {
+            throw new AssetRemovalException(
+                    "Cannot delete the term. References to this term exist!", "error.term.remove.relationshipsExist");
         }
     }
 
@@ -664,20 +734,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                 "error.term.remove.annotationsExist").addParameter("resources", resources);
     }
 
-    private static TermItException hasSubTermsException(Set<TermInfo> subTerms) {
+    public static TermItException hasSubTermsException(Set<TermInfo> subTerms) {
         final String children = subTerms.stream().map(t -> t.getUri().toString()).collect(joining(","));
         return new AssetRemovalException(
                 "Cannot delete the term. It is a parent of other terms: " + children,
                 "error.term.remove.hasSubTerms")
                 .addParameter("subTerms", children);
-    }
-
-    private static TermItException hasSkosRelationships(List<String> properties) {
-        final String propertiesStr = String.join(", ", properties);
-        return new AssetRemovalException(
-                "Cannot delete the term. It is linked to another term through properties "
-                        + String.join(",", properties), "error.term.remove.skosRelationshipsExist")
-                .addParameter("properties", propertiesStr);
     }
 
     @Override
@@ -688,6 +750,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             v.removeRootTerm(instance);
         }
         termOccurrenceService.removeAllOf(instance);
+        instance.consolidateParents();
+        termDao.evictFromCache(instance.getParentTerms());
     }
 
     /**
@@ -697,6 +761,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * specified instance.
      *
      * @param instance Term to remove
+     * @see #remove(TermRemovalParams, Vocabulary) 
+     * @see #remove(Term) 
      */
     @Transactional
     public void forceRemove(@Nonnull Term instance) {

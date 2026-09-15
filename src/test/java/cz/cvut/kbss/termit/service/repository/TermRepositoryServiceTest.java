@@ -39,6 +39,8 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.repository.term_removal.SubTermRemovalStrategy;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -63,14 +65,15 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -464,6 +467,150 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNull(result);
     }
 
+    @Test
+    void removeWithParamsReconnectsChildrenToParents() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+
+        transactional(() -> sut.addRootTermToVocabulary(parent, vocabulary));
+        transactional(() -> sut.addChildTerm(toRemove, parent));
+        transactional(() -> sut.addChildTerm(child, toRemove));
+        transactional(() -> em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false));
+
+        final Term updatedParent = sut.findRequired(parent.getUri());
+        assertFalse(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(toRemove)::equals),
+                "Term to remove must be removed from its parent");
+        assertTrue(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(child)::equals),
+                "Child of removed term must be reconnected to the parent");
+    }
+
+    @Test
+    void removeWithParamsCascadesToNestedChildren() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final Term grandChild = Generator.generateTermWithId(vocabulary.getUri());
+
+        transactional(() -> sut.addRootTermToVocabulary(parent, vocabulary));
+        transactional(() -> sut.addChildTerm(child, parent));
+        transactional(() -> sut.addChildTerm(grandChild, child));
+
+        // verify setup
+        assertNotNull(em.find(Term.class, parent.getUri()));
+        assertNotNull(em.find(Term.class, child.getUri()));
+        assertNotNull(em.find(Term.class, grandChild.getUri()));
+
+        // remove parent and all children
+        sut.remove(new TermRemovalParams(parent, SubTermRemovalStrategy.CASCADE, false, true));
+
+        assertNull(em.find(Term.class, parent.getUri()));
+        assertNull(em.find(Term.class, child.getUri()));
+        assertNull(em.find(Term.class, grandChild.getUri()));
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertTrue(result.getRootTerms().isEmpty());
+    }
+
+    /**
+     * Prepares and persists term with definition containing an occurrence of other therm.
+     *
+     * @param occurrenceUri the URI to use for the created occurrence
+     * @return the occurring term
+     */
+    private Term prepareTermWithSuggestedOccurrence(URI occurrenceUri) {
+        enableRdfsInference(em);
+
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
+
+        toRemove.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(referencing);
+        vocabulary.addRootTerm(toRemove);
+
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                new DefinitionalOccurrenceTarget(referencing));
+        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
+        occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
+        occ.setUri(occurrenceUri);
+
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
+            em.persist(referencing, descriptorFactory.termDescriptor(referencing));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(occ);
+            em.persist(occ.getTarget());
+        });
+
+        return sut.findRequired(toRemove.getUri());
+    }
+
+    @Test
+    void removeWithParamsRemovesSuggestedOccurrencesWhenRemoveOccurrencesIsTrue() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithSuggestedOccurrence(occurrenceUri);
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+        assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    /**
+     * Prepares and persists two terms referencing each other
+     *
+     * @return the created terms
+     */
+    private List<Term> prepareTermsWithRelationship() {
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term related = Generator.generateTermWithId(vocabulary.getUri());
+        toRemove.setVocabulary(vocabulary.getUri());
+        related.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(toRemove);
+        vocabulary.addRootTerm(related);
+
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            generateRelatedInverse(toRemove, related, Environment.BASE_URI + "/example-custom-attribute");
+            generateRelatedInverse(related, toRemove, Environment.BASE_URI + "/different-example-custom-attribute");
+        });
+
+        return List.of(sut.findRequired(toRemove.getUri()),
+                sut.findRequired(related.getUri()));
+    }
+
+    @Test
+    void removeWithParamsThrowsWhenTermRelationshipsExistAndRemoveRelationshipsIsFalse() {
+        final List<Term> terms = prepareTermsWithRelationship();
+        final Term toRemove = terms.getFirst();
+        final Term related = terms.getLast();
+        assertNotEquals(toRemove, related);
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
+                                false, false)));
+        assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
+        // none of the terms must be removed because of the exception
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(Term.class, related.getUri()));
+    }
+
+    @Test
+    void removeWithParamsRemovesTermRelationshipsWhenRemoveRelationshipsIsTrue() {
+        final List<Term> terms = prepareTermsWithRelationship();
+        final Term toRemove = terms.getFirst();
+        final Term related = terms.getLast();
+        assertNotEquals(toRemove, related);
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
+                        false, true));
+
+        assertNull(em.find(Term.class, toRemove.getUri()), "The term must be removed");
+        assertNotNull(em.find(Term.class, related.getUri()), "The other term must not be removed");
+    }
+
     private void generateRelatedInverse(Term term, Term related, String property) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
@@ -734,6 +881,24 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                       .setParameter("glossary", vocabulary)
                       .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
                       .setParameter("term", term).getSingleResult());
+    }
+
+    @Test
+    void removeThrowsWhenTermIsReferencedByOtherTerm() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term other = Generator.generateTermWithId(vocabulary.getUri());
+        other.addRelatedTerm(new TermInfo(term));
+
+        transactional(() -> {
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.flush();
+            em.clear();
+            em.persist(other, descriptorFactory.termDescriptor(other));
+        });
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class, () -> sut.remove(term));
+        assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
     }
 
     @Test

@@ -45,6 +45,7 @@ import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -53,6 +54,8 @@ import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.util.Values;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +64,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -268,6 +272,43 @@ public class TermControllerTest extends BaseControllerTestRunner {
         assertTrue(children.containsAll(result));
         verify(termServiceMock).findRequired(term.getUri());
         verify(termServiceMock).findSubTerms(term);
+    }
+
+    @Test
+    void getReferencesToTermLoadsReferencingStatements() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+
+        when(termServiceMock.findRequired(termUri)).thenReturn(term);
+        final Pageable pageRequest = PageRequest.of(0, 5);
+
+        final List<Statement> references = List.of(
+                Values.getValueFactory().createStatement(Values.iri(Environment.BASE_URI + "/term/source-1"),
+                        Values.iri(SKOS.BROADER),
+                        Values.iri(termUri.toString())),
+                Values.getValueFactory().createStatement(Values.iri(Environment.BASE_URI + "/term/source-2"),
+                        Values.iri(SKOS.RELATED),
+                        Values.iri(termUri.toString()))
+        );
+        when(termServiceMock.findReferences(term, pageRequest)).thenReturn(
+                new PageImpl<>(references, pageRequest, references.size())
+        );
+
+        final MvcResult mvcResult = mockMvc.perform(
+                        get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/references")
+                                .param(PAGE, "0")
+                                .param(PAGE_SIZE, "5"))
+                                       .andExpect(status().isOk())
+                                       .andReturn();
+
+        final String expected = objectMapper.writeValueAsString(references);
+
+        assertEquals(expected, mvcResult.getResponse().getContentAsString());
+        assertEquals(Integer.toString(references.size()),
+                     mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER));
+        verify(termServiceMock).findRequired(termUri);
+        verify(termServiceMock).findReferences(term, pageRequest);
     }
 
     @Test
@@ -844,7 +885,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(termUri)).thenReturn(toRemove);
 
         mockMvc.perform(delete(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)).andExpect(status().isNoContent());
-        verify(termServiceMock).remove(toRemove);
+        verify(termServiceMock).remove(new TermRemovalParams(toRemove, null, false, false));
     }
 
     @Test
@@ -855,7 +896,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(
                        delete(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME))
                .andExpect(status().isNotFound());
-        verify(termServiceMock, never()).remove(any());
+        verify(termServiceMock, never()).remove(any(Term.class));
     }
 
     @Test

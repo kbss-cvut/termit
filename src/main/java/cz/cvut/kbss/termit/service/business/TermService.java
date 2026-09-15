@@ -49,14 +49,17 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import jakarta.annotation.Nonnull;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -487,6 +490,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Gets referenes to the given term.
+     *
+     * @param term the term to which references should be found
+     * @param pageable Page spec
+     * @return Page of statements where the given term is object
+     */
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    public Page<Statement> findReferences(Term term, Pageable pageable) {
+        return repositoryService.findReferences(term, pageable);
+    }
+
+    /**
      * Gets aggregated info about occurrences of the specified Term.
      *
      * @param term Term whose occurrences to retrieve
@@ -629,6 +644,21 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void remove(@Nonnull Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
+    }
+
+    /**
+     * Removes the specified term according to the removal parameters.
+     *
+     * @param termRemovalParams parameters describing how the term should be removed
+     */
+    @Transactional
+    @PreAuthorize("@termAuthorizationService.canRemove(#termRemovalParams.termToRemove())")
+    public void remove(TermRemovalParams termRemovalParams) {
+        Objects.requireNonNull(termRemovalParams);
+        Objects.requireNonNull(termRemovalParams.termToRemove());
+        Objects.requireNonNull(termRemovalParams.termToRemove().getVocabulary());
+
+        repositoryService.remove(termRemovalParams);
     }
 
     /**

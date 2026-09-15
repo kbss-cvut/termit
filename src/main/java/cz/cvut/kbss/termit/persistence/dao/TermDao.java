@@ -27,6 +27,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -40,6 +41,7 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -48,8 +50,20 @@ import cz.cvut.kbss.termit.persistence.snapshot.TermSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.Operation;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -76,6 +90,25 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
     private static final URI TERM_FROM_VOCABULARY = URI.create(SKOS.IN_SCHEME);
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
+
+    /**
+     * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
+     * {@code skos:hasTopConcept} relations are excluded
+     */
+    private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
+                WHERE {
+                    GRAPH ?context {
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
+                        ?other ?relation ?term .
+                        ?context a ?vocabulary .
+                        FILTER (?relation NOT IN (
+                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+                        ))
+                    }
+                }
+                """;
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -151,6 +184,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseRelated(loadInverseRelatedTerms(r));
         r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
+    }
+
+    /**
+     * Flushes pending term changes and clears the persistence context.
+     */
+    public void flushAndClear() {
+        em.flush();
+        em.clear();
     }
 
     /**
@@ -1275,5 +1316,155 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    /**
+     * Checks whether there is any triple in any vocabulary where the term is an object.
+     * Excluding vocabulary snapshots.
+     *
+     * @param term term to which references should be checked
+     * @return true if there is any triple where the term is an object
+     */
+    public boolean referencesToTermExist(AbstractTerm term) {
+        Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
+        try {
+            return em.createNativeQuery("ASK " + REFERENCES_TO_TERM_WHERE_CLAUSE, Boolean.class)
+                     .setParameter("term", term.getUri())
+                     .setParameter("vocabulary", Vocabulary_.entityClassIRI)
+                     .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                     .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find references for term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Finds statements from vocabulary graphs referencing the specified term as an object.
+     *
+     * @param term term whose incoming references should be returned
+     * @param pageable paging specification applied to the constructed RDF4J query
+     * @return page of statements referencing the specified term
+     */
+    public Page<Statement> findReferences(AbstractTerm term, Pageable pageable) {
+        Objects.requireNonNull(term, "Term cannot be null");
+        Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
+
+        try {
+            RepositoryConnection con = unwrapToConnection(em);
+            // On purpose not using auto-closable with try statement to prevent closing the connection here
+            // the connection is managed by Entity Manager
+            final long totalCount = countReferences(con, term);
+            if (totalCount == 0 || pageable.getOffset() >= totalCount) {
+                return new PageImpl<>(List.of(), pageable, totalCount);
+            }
+
+            final List<Statement> statements = findReferences(con, term, pageable);
+            return new PageImpl<>(statements, pageable, totalCount);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Counts the total amount of references to the specified term
+     *
+     * @param con the repository connection
+     * @param term the term to which references should be counted
+     * @return the total number of statements referencing the term as object
+     */
+    private long countReferences(RepositoryConnection con, AbstractTerm term) {
+        final TupleQuery countQuery = con.prepareTupleQuery(
+                "SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE);
+        bindReferencesQueryParameters(countQuery, term);
+        countQuery.setIncludeInferred(false);
+        try (TupleQueryResult result = countQuery.evaluate()) {
+            final BindingSet bindings = result.next();
+            return ((Literal) bindings.getValue("count")).longValue();
+        }
+    }
+
+    /**
+     * Finds a page contents of references to the specified term.
+     *
+     * @param con the repository connection
+     * @param term the term to which references should be found
+     * @param pageable page spec
+     * @return the list of statements referencing the term as object
+     */
+    private List<Statement> findReferences(RepositoryConnection con, AbstractTerm term, Pageable pageable) {
+        final TupleQuery query = con.prepareTupleQuery(
+                "SELECT ?other ?relation ?term ?context " + REFERENCES_TO_TERM_WHERE_CLAUSE +
+                " ORDER BY ?other ?relation ?context" +
+                " OFFSET " + pageable.getOffset() +
+                " LIMIT " + pageable.getPageSize());
+        bindReferencesQueryParameters(query, term);
+        query.setIncludeInferred(false);
+
+        final List<Statement> statements = new ArrayList<>(pageable.getPageSize());
+        try (TupleQueryResult result = query.evaluate()) {
+            while (result.hasNext()) {
+                final BindingSet bindings = result.next();
+                statements.add(Values.getValueFactory().createStatement(
+                        (Resource) bindings.getValue("other"),
+                        (IRI) bindings.getValue("relation"),
+                        bindings.getValue("term"),
+                        (Resource) bindings.getValue("context")
+                ));
+            }
+        }
+        return statements;
+    }
+
+    /**
+     * Sets required query bindings for {@link #REFERENCES_TO_TERM_WHERE_CLAUSE}.
+     *
+     * @param query query operation
+     * @param term the term to which references should be found
+     */
+    private void bindReferencesQueryParameters(Operation query, AbstractTerm term) {
+        query.setBinding("term", Values.iri(term.getUri().toString()));
+        query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
+        query.setBinding("versionOfVocabulary",
+                Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
+    }
+
+    /**
+     * Removes all triples from vocabularies where the given term is references as object.
+     *
+     * @param toRemove term to which references should be removed
+     */
+    public void removeReferencesTo(AbstractTerm toRemove) {
+        Objects.requireNonNull(toRemove.getUri(), "Term URI cannot be null");
+
+        try {
+            em.createNativeQuery("""
+                        DELETE {
+                            GRAPH ?context {
+                                ?other ?relation ?term .
+                            }
+                        }
+                        """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
+              .setParameter("term", toRemove.getUri())
+              .setParameter("vocabulary", Vocabulary_.entityClassIRI)
+              .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+              .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove references to term " + Utils.uriToString(toRemove.getUri()), e);
+        }
+    }
+
+    /**
+     * Evict specified instances from the Jopa's Entity Manager Factory cache.
+     *
+     * @param terms terms to evict from the cache
+     */
+    public void evictFromCache(Collection<? extends TermDescription> terms) {
+        if (terms == null || terms.isEmpty()) {
+            return;
+        }
+        terms.forEach(term -> {
+            em.getEntityManagerFactory().getCache().evict(TermDescription.class, term.getUri(), term.getVocabulary());
+        });
     }
 }

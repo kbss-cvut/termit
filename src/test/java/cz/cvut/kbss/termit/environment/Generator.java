@@ -258,6 +258,7 @@ public class Generator {
         vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), primaryLanguage));
         vocabulary.setDescription(MultilingualString.create(
                 "Description of vocabulary " + vocabulary.getPrimaryLabel(), primaryLanguage));
+        vocabulary.setRootTerms(new HashSet<>());
         return vocabulary;
     }
 

@@ -38,6 +38,8 @@ import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
+import cz.cvut.kbss.termit.service.repository.term_removal.SubTermRemovalStrategy;
+import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -49,9 +51,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -510,10 +514,45 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Strategy to use for sub-terms handling.")
+            @RequestParam(name = "subTermsStrategy", required = false) SubTermRemovalStrategy subTermsStrategy,
+            @Parameter(description = "Whether occurrences should be removed. When false, the removal will fail if any occurrence exists.")
+            @RequestParam(name = "removeOccurrences", required = false) boolean removeOccurrences,
+            @Parameter(description = "Whether relationships referencing the term should be removed. When false, the removal will fail if any reference to the term exists.")
+            @RequestParam(name = "removeRelationships", required = false) boolean removeRelationships) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        termService.remove(termService.findRequired(termUri));
+        final Term toRemove = termService.findRequired(termUri);
+        termService.remove(
+                new TermRemovalParams(toRemove, subTermsStrategy, removeOccurrences, removeRelationships)
+        );
         LOG.debug("Term {} removed.", termUri);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets statements referencing the term with the specified local name from the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Statements referencing the term."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/references",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<List<Statement>> getReferencesToTerm(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo) {
+        final Term term = getById(localName, termLocalName, namespace, false, false);
+        final Page<Statement> result = termService.findReferences(term, createPageRequest(pageSize, pageNo));
+        return ResponseEntity.ok()
+                             .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
+                             .body(result.getContent());
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
