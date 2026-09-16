@@ -611,6 +611,25 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(em.find(Term.class, related.getUri()), "The other term must not be removed");
     }
 
+    @Test
+    void removeWithParamsPromotesChildToRootTermWhenItsParentRootTermIsRemoved() {
+        final Term root = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final Term childB = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> sut.addRootTermToVocabulary(root, vocabulary));
+        transactional(() -> sut.addChildTerm(child, root));
+        transactional(() -> sut.addChildTerm(childB, root));
+
+        sut.remove(new TermRemovalParams(root, SubTermRemovalStrategy.RECONNECT, false, false));
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertTrue(result.getRootTerms().contains(child.getUri()),
+                "Child of removed root term must become a root term");
+        assertTrue(result.getRootTerms().contains(childB.getUri()),
+                "Second child of removed root term must become a root term");
+    }
+
     private void generateRelatedInverse(Term term, Term related, String property) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
