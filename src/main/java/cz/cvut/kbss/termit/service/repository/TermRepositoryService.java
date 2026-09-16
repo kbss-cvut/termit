@@ -687,7 +687,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * and there must be no references to the term.
      *
      * @param instance The instance to remove
-     * @see #remove(TermRemovalParams, Vocabulary) 
+     * @see #remove(TermRemovalParams)  
      * @see #forceRemove(Term) 
      */
     @Override
@@ -761,7 +761,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * specified instance.
      *
      * @param instance Term to remove
-     * @see #remove(TermRemovalParams, Vocabulary) 
+     * @see #remove(TermRemovalParams) 
      * @see #remove(Term) 
      */
     @Transactional
