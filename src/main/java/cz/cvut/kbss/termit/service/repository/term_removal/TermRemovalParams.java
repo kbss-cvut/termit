@@ -6,7 +6,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import java.util.Objects;
 
 /**
- * Describes how should be a term removed
+ * Describes how a term should be removed
  * @param termToRemove The Term that will be removed
  * @param subTermsStrategy Strategy to use for sub-terms handling
  * @param removeOccurrences Whether {@link cz.cvut.kbss.termit.model.assignment.TermOccurrence term occurrences} should be removed.
