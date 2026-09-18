@@ -745,6 +745,23 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
+    /**
+     * Hydrates a collection of URIs into full Term instances.
+     */
+    public List<Term> findAllFullByUris(Collection<URI> uris) {
+        if (uris == null || uris.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return uris.stream().map(uri -> {
+            final Term t = em.find(Term.class, uri);
+            if (t != null) {
+                postLoad(t);
+                em.clear(); // Mandatory JOPA workaround
+            }
+            return t;
+        }).filter(Objects::nonNull).toList();
+    }
+
     private <T> TypedQuery<T> setCommonFindAllRootsQueryParams(TypedQuery<T> query, boolean includeImports) {
         final TypedQuery<T> tq = query.setParameter("type", typeUri)
                                       .setParameter("hasLabel", LABEL_PROP)
