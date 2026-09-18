@@ -33,6 +33,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
+import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.validation.Disjoint;
@@ -49,7 +50,7 @@ import java.util.Set;
 @Disjoint({"parentTerms", "related"})
 @Disjoint({"parentTerms", "relatedMatch"})
 @Disjoint({"parentTerms", "exactMatchTerms"})
-public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
+public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, HasProperties {
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
@@ -252,10 +253,12 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes {
         this.definitionSource = definitionSource;
     }
 
+    @Override
     public Map<String, Set<Object>> getProperties() {
         return properties;
     }
 
+    @Override
     public void setProperties(Map<String, Set<Object>> properties) {
         this.properties = properties;
     }

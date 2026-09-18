@@ -33,6 +33,7 @@ import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
+import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
@@ -53,7 +54,7 @@ import java.util.stream.Collectors;
 @OWLClass(iri = SKOS.CONCEPT_SCHEME)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class Vocabulary extends Asset<MultilingualString>
-        implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
+        implements HasTypes, HasProperties, SupportsSnapshots, HasPrimaryLanguage, Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
@@ -233,10 +234,12 @@ public class Vocabulary extends Asset<MultilingualString>
         }
     }
 
+    @Override
     public Map<String, Set<Object>> getProperties() {
         return properties;
     }
 
+    @Override
     public void setProperties(Map<String, Set<Object>> properties) {
         this.properties = properties;
     }
