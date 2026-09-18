@@ -863,4 +863,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         }
         return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec(), includeTerms);
     }
+
+    @Transactional(readOnly = true)
+    public List<Term> findAllFullByUris(Collection<URI> uris) {
+        return repositoryService.findAllFullByUris(uris);
+    }
 }

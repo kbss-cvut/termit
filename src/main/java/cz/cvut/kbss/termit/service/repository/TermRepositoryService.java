@@ -685,12 +685,23 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * and there must be no references to the term.
      *
      * @param instance The instance to remove
-     * @see #remove(TermRemovalParams)  
-     * @see #forceRemove(Term) 
+     * @see #remove(TermRemovalParams)
+     * @see #forceRemove(Term)
      */
     @Override
     public void remove(Term instance) {
         super.remove(instance);
+    }
+
+    /**
+     * Finds all terms with the specified identifiers and returns them with all their ancestors loaded.
+     *
+     * @param uris Identifiers of terms to find
+     * @return List of matching terms
+     */
+    @Transactional(readOnly = true)
+    public List<Term> findAllFullByUris(Collection<URI> uris) {
+        return termDao.findAllFullByUris(uris);
     }
 
     /**
@@ -759,8 +770,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * specified instance.
      *
      * @param instance Term to remove
-     * @see #remove(TermRemovalParams) 
-     * @see #remove(Term) 
+     * @see #remove(TermRemovalParams)
+     * @see #remove(Term)
      */
     @Transactional
     public void forceRemove(@Nonnull Term instance) {
