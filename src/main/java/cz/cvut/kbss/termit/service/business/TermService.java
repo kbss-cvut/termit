@@ -49,7 +49,7 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
+import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
