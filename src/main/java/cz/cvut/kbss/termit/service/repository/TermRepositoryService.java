@@ -205,8 +205,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     protected void postUpdate(@Nonnull Term instance) {
         final Vocabulary vocabulary = vocabularyService.findRequired(instance.getVocabulary());
-        // Jopa should always set at least empty collection
-        Objects.requireNonNull(vocabulary.getRootTerms(), "Vocabulary must have root terms collection");
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.removeRootTerm(instance);
         } else {
