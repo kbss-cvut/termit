@@ -26,8 +26,6 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import jakarta.annotation.Nonnull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
@@ -42,7 +40,6 @@ import java.util.Optional;
  */
 public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>, ApplicationEventPublisherAware {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BaseDao.class);
     protected final Class<T> type;
     protected final URI typeUri;
 
