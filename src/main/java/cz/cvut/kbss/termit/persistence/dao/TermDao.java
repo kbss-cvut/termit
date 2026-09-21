@@ -41,7 +41,6 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -51,12 +50,10 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.Operation;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -94,6 +91,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
      * {@code skos:hasTopConcept} relations are excluded
+     * @implNote Bindings are required in {@link #countReferences(AbstractTerm)},
+     *           {@link #findReferencesInternal(AbstractTerm, Pageable)}, {@link #removeReferencesTo(AbstractTerm)}
+     *           and {@link #referencesToTermExist(AbstractTerm)}
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
                 WHERE {
@@ -102,7 +102,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                             ?context a ?versionOfVocabulary .
                         }
                         ?other ?relation ?term .
-                        ?context a ?vocabulary .
+                        ?context a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
                         FILTER (?relation NOT IN (
                             <http://www.w3.org/2004/02/skos/core#hasTopConcept>
                         ))
@@ -1330,7 +1330,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             return em.createNativeQuery("ASK " + REFERENCES_TO_TERM_WHERE_CLAUSE, Boolean.class)
                      .setParameter("term", term.getUri())
-                     .setParameter("vocabulary", Vocabulary_.entityClassIRI)
                      .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
                      .getSingleResult();
         } catch (RuntimeException e) {
@@ -1351,15 +1350,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(pageable, "Pageable cannot be null");
 
         try {
-            RepositoryConnection con = unwrapToConnection(em);
-            // On purpose not using auto-closable with try statement to prevent closing the connection here
-            // the connection is managed by Entity Manager
-            final long totalCount = countReferences(con, term);
+            final long totalCount = countReferences(term);
             if (totalCount == 0 || pageable.getOffset() >= totalCount) {
                 return new PageImpl<>(List.of(), pageable, totalCount);
             }
 
-            final List<Statement> statements = findReferences(con, term, pageable);
+            final List<Statement> statements = findReferencesInternal(term, pageable);
             return new PageImpl<>(statements, pageable, totalCount);
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
@@ -1369,36 +1365,42 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Counts the total amount of references to the specified term
      *
-     * @param con the repository connection
      * @param term the term to which references should be counted
      * @return the total number of statements referencing the term as object
      */
-    private long countReferences(RepositoryConnection con, AbstractTerm term) {
-        final TupleQuery countQuery = con.prepareTupleQuery(
-                "SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE);
-        bindReferencesQueryParameters(countQuery, term);
-        countQuery.setIncludeInferred(false);
-        try (TupleQueryResult result = countQuery.evaluate()) {
-            final BindingSet bindings = result.next();
-            return ((Literal) bindings.getValue("count")).longValue();
+    private long countReferences(AbstractTerm term) {
+        try {
+            return em.createNativeQuery("SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE, Long.class)
+                    .setParameter("term", term.getUri())
+                    .setParameter("versionOfVocabulary", cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)
+                    .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to count references to term " + Utils.uriToString(term.getUri()), e);
         }
     }
 
     /**
      * Finds a page contents of references to the specified term.
      *
-     * @param con the repository connection
      * @param term the term to which references should be found
      * @param pageable page spec
      * @return the list of statements referencing the term as object
      */
-    private List<Statement> findReferences(RepositoryConnection con, AbstractTerm term, Pageable pageable) {
+    private List<Statement> findReferencesInternal(AbstractTerm term, Pageable pageable) {
+        // On purpose not using auto-closable with try statement to prevent closing the connection here
+        // the connection is managed by Entity Manager
+        final RepositoryConnection con = em.unwrap(RepositoryConnection.class);
+        // The connection is guaranteed to be open by first counting the total references count
         final TupleQuery query = con.prepareTupleQuery(
                 "SELECT ?other ?relation ?term ?context " + REFERENCES_TO_TERM_WHERE_CLAUSE +
                 " ORDER BY ?other ?relation ?context" +
                 " OFFSET " + pageable.getOffset() +
                 " LIMIT " + pageable.getPageSize());
-        bindReferencesQueryParameters(query, term);
+
+        query.setBinding("term", Values.iri(term.getUri().toString()));
+        query.setBinding("versionOfVocabulary",
+                Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
+
         query.setIncludeInferred(false);
 
         final List<Statement> statements = new ArrayList<>(pageable.getPageSize());
@@ -1414,19 +1416,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             }
         }
         return statements;
-    }
-
-    /**
-     * Sets required query bindings for {@link #REFERENCES_TO_TERM_WHERE_CLAUSE}.
-     *
-     * @param query query operation
-     * @param term the term to which references should be found
-     */
-    private void bindReferencesQueryParameters(Operation query, AbstractTerm term) {
-        query.setBinding("term", Values.iri(term.getUri().toString()));
-        query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
-        query.setBinding("versionOfVocabulary",
-                Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
     }
 
     /**
@@ -1446,7 +1435,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                         }
                         """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
               .setParameter("term", toRemove.getUri())
-              .setParameter("vocabulary", Vocabulary_.entityClassIRI)
               .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
               .executeUpdate();
         } catch (RuntimeException e) {
