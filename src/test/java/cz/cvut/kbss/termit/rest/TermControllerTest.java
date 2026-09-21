@@ -45,7 +45,7 @@ import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
-import cz.cvut.kbss.termit.service.repository.term_removal.TermRemovalParams;
+import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;

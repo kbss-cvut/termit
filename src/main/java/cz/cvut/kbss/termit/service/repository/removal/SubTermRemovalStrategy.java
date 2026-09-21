@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.service.repository.term_removal;
+package cz.cvut.kbss.termit.service.repository.removal;
 
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Term;
