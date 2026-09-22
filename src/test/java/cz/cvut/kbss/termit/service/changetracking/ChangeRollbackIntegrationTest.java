@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.changetracking;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -17,6 +18,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.business.RudService;
@@ -49,6 +51,9 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private TermService termService;
@@ -146,6 +151,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     void rollbackVocabularyLabelPersistsOriginalValue() {
         final MultilingualString originalValue = makeCopy(vocabulary.getLabel());
 
+        // apply change and create change record
         vocabulary.setLabel(Environment.LANGUAGE, "new vocabulary label");
         vocabulary = update(vocabulary, vocabularyService);
 
@@ -170,6 +176,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     void rollbackRelatedTermRollsbackToOriginalValue() {
         final Set<TermInfo> originalValue = Set.copyOf(term.getRelated());
 
+        // apply change and create change record
         term.getRelated().remove(termB.toTermInfo());
         // termC remains
         term.getRelated().add(termD.toTermInfo());
@@ -189,6 +196,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     void rollbackRelatedTermThrowsWhenOriginalRelatedTermDoesNotExist() {
         final Set<TermInfo> originalValue = Set.copyOf(term.getRelated());
 
+        // apply change and create change record
         term.getRelated().remove(termB.toTermInfo());
         // termC remains
         term = update(term, termService);
@@ -213,6 +221,8 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     void rollbackNativePrimitivePropertyPersistsOriginalValue() {
         final String newValue = "new value";
         final int originalTermPropertiesSize = term.getProperties().size();
+
+        // apply change and create change record
         term.getProperties().get(property.toString()).add(newValue);
         term = update(term, termService);
 
@@ -237,6 +247,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
      */
     @Test
     void rollbackThrowsForRollbackOfNativeURIProperty() {
+        // apply change and create change record
         term.getProperties().remove(uriProperty.toString());
         term = update(term, termService);
 
@@ -260,6 +271,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     void rollbackOfNativeURICustomAttributePersistsOriginalValue() {
         persistUriCustomAttribute();
 
+        // apply change and create change record
         term.getProperties().remove(uriProperty.toString());
         term = update(term, termService);
 
@@ -279,6 +291,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         attribute.setRange(propertyB);
         dataRepositoryService.updateCustomAttribute(attribute);
 
+        // apply change and create change record
         term.getProperties().remove(uriProperty.toString());
         term = update(term, termService);
 
@@ -286,5 +299,76 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
         final UpdateChangeRecord record = getRecord(term);
         assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
+    }
+
+    @Test
+    void rollbackOfCustomAttributeWithExistingTermReferencePersistsOriginalValue() {
+        final CustomAttribute customAttribute = persistTermReferenceCustomAttribute();
+        setNativePropertyWithoutChangeRecord(customAttribute.getUri(), termB.getUri());
+        final Set<URI> originalValue = Set.of(termB.getUri());
+
+        // apply change and create change record
+        term.getProperties().put(customAttribute.getUri().toString(), Set.of(termC.getUri()));
+        term = update(term, termService);
+
+        final UpdateChangeRecord record = getRecord(term);
+        sut.rollback(record);
+
+        term = termService.findRequired(term.getUri());
+        assertEquals(originalValue, term.getProperties().get(customAttribute.getUri().toString()));
+    }
+
+    @Test
+    void rollbackOfCustomAttributeWithNonExistingTermReferenceThrows() {
+        final CustomAttribute customAttribute = persistTermReferenceCustomAttribute();
+        final URI nonExistingTerm = Generator.generateUri();
+        setNativePropertyWithoutChangeRecord(customAttribute.getUri(), nonExistingTerm);
+
+        final Set<Object> newValue = Set.of(termC.getUri());
+
+        // apply change and create change record
+        term.getProperties().put(customAttribute.getUri().toString(), newValue);
+        term = update(term, termService);
+
+        final UpdateChangeRecord record = getRecord(term);
+        assertEquals(Set.of(nonExistingTerm), record.getOriginalValue());
+
+        assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
+
+        term = termService.findRequired(term.getUri());
+        assertEquals(newValue, term.getProperties().get(customAttribute.getUri().toString()),
+                "The term reference must not change when rollback fails");
+    }
+
+    @Test
+    void rollbackOfCustomAttributeWithUnknownRangeAndUriOriginalValueThrows() {
+        final CustomAttribute customAttribute = persistUriCustomAttribute();
+        customAttribute.setRange(Generator.generateUri());
+        dataRepositoryService.updateCustomAttribute(customAttribute);
+
+        // apply change and create change record
+        term.getProperties().remove(customAttribute.getUri().toString());
+        term = update(term, termService);
+
+        final UpdateChangeRecord record = getRecord(term);
+        assertEquals(Set.of(property), record.getOriginalValue());
+
+        assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
+    }
+
+    private CustomAttribute persistTermReferenceCustomAttribute() {
+        final CustomAttribute customAttribute = new CustomAttribute();
+        customAttribute.setUri(Generator.generateUri());
+        customAttribute.setLabel(MultilingualString.create("Term reference", null));
+        customAttribute.setDomain(Term_.entityClassIRI.toURI());
+        customAttribute.setRange(URI.create(SKOS.CONCEPT));
+        dataRepositoryService.persistCustomAttribute(customAttribute);
+        return customAttribute;
+    }
+
+    private void setNativePropertyWithoutChangeRecord(URI property, URI value) {
+        term.getProperties().put(property.toString(), new HashSet<>(Set.of(value)));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+        term = termService.findRequired(term.getUri());
     }
 }
