@@ -2,10 +2,14 @@ package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.metamodel.Attribute;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
+import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +26,7 @@ import java.util.stream.Stream;
  * Validator supporting the rollback validation of change records of {@link Term} and {@link Vocabulary}.
  */
 @Component
-public class MetamodelRollbackValidator {
+public class RollbackValidator {
     private static final Class<?>[] PRIMITIVE_CLASSES = {
             // not including URI - can represent a reference to another entity
             Number.class,
@@ -38,9 +42,11 @@ public class MetamodelRollbackValidator {
     };
 
     private final ChangeRollbackDao changeRollbackDao;
+    private final DataRepositoryService dataRepositoryService;
 
-    public MetamodelRollbackValidator(ChangeRollbackDao changeRollbackDao) {
+    public RollbackValidator(ChangeRollbackDao changeRollbackDao, DataRepositoryService dataRepositoryService) {
         this.changeRollbackDao = changeRollbackDao;
+        this.dataRepositoryService = dataRepositoryService;
     }
 
     /**
@@ -56,7 +62,17 @@ public class MetamodelRollbackValidator {
             return true;
         }
 
-        return canRollbackEntityClass(entityClass, record);
+        final Class<?> javaFieldValueClass = changeRollbackDao.resolveClassAttribute(entityClass, record)
+                                                              .map(Attribute::getValueJavaType)
+                                                              .orElse(null);
+
+        // Java Entity class has field matching the changed attribute
+        if (javaFieldValueClass != null) {
+            return canRollbackAttributeWithType(javaFieldValueClass, record);
+        }
+
+        // The value change does not match any Java entity class field
+        return canRollbackNativeProperty(record);
     }
 
     private boolean allValuesArePrimitives(UpdateChangeRecord record) {
@@ -64,7 +80,7 @@ public class MetamodelRollbackValidator {
                 .filter(Objects::nonNull)
                 .flatMap(Collection::stream)
                 .map(Object::getClass)
-                .allMatch(MetamodelRollbackValidator::isPrimitive);
+                .allMatch(RollbackValidator::isPrimitive);
     }
 
     private static boolean isPrimitive(Class<?> clazz) {
@@ -77,13 +93,6 @@ public class MetamodelRollbackValidator {
             }
         }
         return false;
-    }
-
-    private boolean canRollbackEntityClass(Class<?> entityClass, UpdateChangeRecord record) {
-        return changeRollbackDao.resolveClassAttribute(entityClass, record)
-                .map(Attribute::getValueJavaType)
-                .map(clazz -> canRollbackAttributeWithType(clazz, record))
-                .orElse(false);
     }
 
     private boolean canRollbackAttributeWithType(Class<?> attributeValueClass, UpdateChangeRecord record) {
@@ -103,6 +112,7 @@ public class MetamodelRollbackValidator {
     }
 
     /**
+     * Checks that the given entity has asserted type in the repository (the entity exists).
      *
      * @param referencedEntity the identifier of entity
      * @return {@code true} when the change record can safely be rolled back, {@code false} otherwise
@@ -112,5 +122,34 @@ public class MetamodelRollbackValidator {
             return true;
         }
         return changeRollbackDao.entityExists(referencedEntity);
+    }
+
+    /**
+     * Checks whether a matching custom attribute exists for the changed attribute and permits rollback based on its range.
+     *
+     * @param record the change record to check
+     * @return {@code true} if the custom attribute exists and its range permits rollback, {@code false} otherwise
+     */
+    private boolean canRollbackNativeProperty(UpdateChangeRecord record) {
+        return dataRepositoryService.findCustomAttribute(record.getChangedAttribute())
+                .map(attr -> canRollbackCustomAttributeWithReferenceRange(attr, record))
+                .orElse(false); // custom attribute does not exist
+    }
+
+    /**
+     * Checks whether the record can be rolled back based on the custom attribute range.
+     *
+     * @param attribute the custom attribute changed by the record
+     * @param record    the change record to check
+     * @return {@code true} if the range permits rollback, including the validity of references where required,
+     *                      {@code false} otherwise
+     */
+    private boolean canRollbackCustomAttributeWithReferenceRange(CustomAttribute attribute, UpdateChangeRecord record) {
+        return switch (attribute.getRange().toString()) {
+            case RDFS.RESOURCE -> true;
+            case SKOS.CONCEPT -> canRollbackAttributeWithType(Term.class, record);
+            case SKOS.CONCEPT_SCHEME -> canRollbackAttributeWithType(Vocabulary.class, record);
+            default -> false;
+        };
     }
 }

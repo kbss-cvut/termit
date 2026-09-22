@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class MetamodelRollbackValidatorTest {
+class RollbackValidatorTest {
 
     @Mock
     private ChangeRollbackDao changeRollbackDao;
@@ -42,7 +42,7 @@ class MetamodelRollbackValidatorTest {
     private Attribute<?, ?> attribute;
 
     @InjectMocks
-    private MetamodelRollbackValidator sut;
+    private RollbackValidator sut;
 
     private static Stream<Set<Object>> primitiveOriginalValues() {
         return Stream.of(
