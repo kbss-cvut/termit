@@ -46,9 +46,6 @@ import static org.mockito.Mockito.verify;
 
 
 class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
-    private static final URI PROPERTY = URI.create("http://example.com/property");
-    private static final URI URI_PROPERTY = URI.create("http://example.com/property/uri");
-    private static final URI PROPERTY_B = URI.create("http://example.com/property/b");
 
     @Autowired
     private EntityManager em;
@@ -83,6 +80,10 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
     final Set<Object> originalPropertyValue = Set.of("first value", "second value");
 
+    private URI property;
+    private URI uriProperty;
+    private URI propertyB;
+
     @BeforeEach
     void setUp() {
         enableRdfsInference(em);
@@ -93,6 +94,10 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
         transactional(() -> em.persist(author));
 
+        property = URI.create(Generator.generateUriString() + "/property");
+        uriProperty = URI.create(Generator.generateUriString() + "/property/uri");
+        propertyB = URI.create(Generator.generateUriString() + "/property/B");
+
         vocabulary = Generator.generateVocabularyWithId();
         term = Generator.generateTermWithId(vocabulary.getUri());
         termB = Generator.generateTermWithId(vocabulary.getUri());
@@ -101,8 +106,8 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
         term.setProperties(new HashMap<>());
 
-        term.getProperties().put(PROPERTY.toString(), new HashSet<>(originalPropertyValue));
-        term.getProperties().put(URI_PROPERTY.toString(), new HashSet<>(Set.of(PROPERTY)));
+        term.getProperties().put(property.toString(), new HashSet<>(originalPropertyValue));
+        term.getProperties().put(uriProperty.toString(), new HashSet<>(Set.of(property)));
 
         term.setRelated(new HashSet<>());
         term.getRelated().add(termB.toTermInfo());
@@ -207,10 +212,11 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     @Test
     void rollbackNativePrimitivePropertyPersistsOriginalValue() {
         final String newValue = "new value";
-        term.getProperties().get(PROPERTY.toString()).add(newValue);
+        final int originalTermPropertiesSize = term.getProperties().size();
+        term.getProperties().get(property.toString()).add(newValue);
         term = update(term, termService);
 
-        assertNotEquals(originalPropertyValue, term.getProperties().get(PROPERTY.toString()));
+        assertNotEquals(originalPropertyValue, term.getProperties().get(property.toString()));
 
         final UpdateChangeRecord record = getRecord(term);
 
@@ -221,9 +227,9 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         sut.rollback(record);
 
         term = termService.findRequired(term.getUri());
-        assertEquals(originalPropertyValue, term.getProperties().get(PROPERTY.toString()));
-        assertFalse(term.getProperties().containsKey(PROPERTY_B.toString()));
-        assertEquals(1, term.getProperties().size());
+        assertEquals(originalPropertyValue, term.getProperties().get(property.toString()));
+        assertFalse(term.getProperties().containsKey(propertyB.toString()));
+        assertEquals(originalTermPropertiesSize, term.getProperties().size());
     }
 
     /**
@@ -231,10 +237,10 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
      */
     @Test
     void rollbackThrowsForRollbackOfNativeURIProperty() {
-        term.getProperties().remove(URI_PROPERTY.toString());
+        term.getProperties().remove(uriProperty.toString());
         term = update(term, termService);
 
-        assertFalse(term.getProperties().containsKey(URI_PROPERTY.toString()));
+        assertFalse(term.getProperties().containsKey(uriProperty.toString()));
 
         final UpdateChangeRecord record = getRecord(term);
         assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
@@ -242,7 +248,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
     private CustomAttribute persistUriCustomAttribute() {
         final CustomAttribute customAttribute = new CustomAttribute();
-        customAttribute.setUri(URI_PROPERTY);
+        customAttribute.setUri(uriProperty);
         customAttribute.setLabel(MultilingualString.create("General URI resource", null));
         customAttribute.setDomain(Term_.entityClassIRI.toURI());
         customAttribute.setRange(URI.create(RDFS.RESOURCE));
@@ -254,29 +260,29 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     void rollbackOfNativeURICustomAttributePersistsOriginalValue() {
         persistUriCustomAttribute();
 
-        term.getProperties().remove(URI_PROPERTY.toString());
+        term.getProperties().remove(uriProperty.toString());
         term = update(term, termService);
 
-        assertFalse(term.getProperties().containsKey(URI_PROPERTY.toString()));
+        assertFalse(term.getProperties().containsKey(uriProperty.toString()));
 
         final UpdateChangeRecord record = getRecord(term);
         sut.rollback(record);
 
         term = termService.findRequired(term.getUri());
-        assertTrue(term.getProperties().containsKey(URI_PROPERTY.toString()));
-        assertTrue(term.getProperties().get(URI_PROPERTY.toString()).contains(PROPERTY));
+        assertTrue(term.getProperties().containsKey(uriProperty.toString()));
+        assertTrue(term.getProperties().get(uriProperty.toString()).contains(property));
     }
 
     @Test
     void rollbackOfCustomAttributeWithUnknownRangeThrows() {
         CustomAttribute attribute = persistUriCustomAttribute();
-        attribute.setRange(PROPERTY_B);
+        attribute.setRange(propertyB);
         dataRepositoryService.updateCustomAttribute(attribute);
 
-        term.getProperties().remove(URI_PROPERTY.toString());
+        term.getProperties().remove(uriProperty.toString());
         term = update(term, termService);
 
-        assertFalse(term.getProperties().containsKey(URI_PROPERTY.toString()));
+        assertFalse(term.getProperties().containsKey(uriProperty.toString()));
 
         final UpdateChangeRecord record = getRecord(term);
         assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
