@@ -18,16 +18,20 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -57,5 +61,40 @@ public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
      */
     public Set<User> getAuthors(HasIdentifier asset) {
         return changeRecordDao.getAuthors(asset);
+    }
+
+    /**
+     * Finds an update change record with the specified identifier.
+     *
+     * @param recordUri Change record identifier
+     * @return Matching update change record
+     * @throws NotFoundException If no matching record is found
+     */
+    public UpdateChangeRecord findUpdateRequired(URI recordUri) {
+        return findRequired(UpdateChangeRecord.class, recordUri);
+    }
+
+    /**
+     * Finds a change record of the specified type and identifier.
+     *
+     * @param recordClass Change record type
+     * @param recordUri   Change record identifier
+     * @return Matching change record
+     * @throws NotFoundException If no matching record is found
+     */
+    private <T extends AbstractChangeRecord> T findRequired(Class<T> recordClass, URI recordUri) {
+        return find(recordClass, recordUri)
+                .orElseThrow(()-> new NotFoundException(recordClass.getSimpleName() + " not found"));
+    }
+
+    /**
+     * Finds a change record of the specified type and identifier.
+     *
+     * @param recordClass Change record type
+     * @param recordUri   Change record identifier
+     * @return Matching record, or an empty optional if none is found
+     */
+    private <T extends AbstractChangeRecord> Optional<T> find(Class<T> recordClass, URI recordUri) {
+        return changeRecordDao.find(recordClass, recordUri);
     }
 }
