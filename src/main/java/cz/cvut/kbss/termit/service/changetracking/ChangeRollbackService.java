@@ -24,14 +24,14 @@ import java.util.Optional;
  */
 @Service
 public class ChangeRollbackService {
-    private final MetamodelRollbackValidator rollbackValidator;
+    private final RollbackValidator rollbackValidator;
     private final ChangeRollbackDao rollbackDao;
     private final TermRepositoryService termService;
     private final VocabularyRepositoryService vocabularyService;
     private final TermAuthorizationService termAuthorizationService;
     private final VocabularyAuthorizationService vocabularyAuthorizationService;
 
-    public ChangeRollbackService(MetamodelRollbackValidator rollbackValidator,
+    public ChangeRollbackService(RollbackValidator rollbackValidator,
                                  ChangeRollbackDao rollbackDao,
                                  TermRepositoryService termService,
                                  VocabularyRepositoryService vocabularyService,
