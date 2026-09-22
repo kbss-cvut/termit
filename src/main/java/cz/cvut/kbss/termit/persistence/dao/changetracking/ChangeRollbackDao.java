@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao.changetracking;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.IRI;
 import cz.cvut.kbss.jopa.model.metamodel.Attribute;
+import cz.cvut.kbss.jopa.query.QueryHints;
 import cz.cvut.kbss.jopa.utils.EntityPropertiesUtils;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.UpdateChangeRecordRollbackException;
@@ -42,6 +43,7 @@ public class ChangeRollbackDao {
         try {
             return em.createNativeQuery("ASK { ?x a ?type }", Boolean.class)
                      .setParameter("x", entityIdentifier)
+                     .setHint(QueryHints.DISABLE_INFERENCE, "true")
                      .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed check existence of entity " +
