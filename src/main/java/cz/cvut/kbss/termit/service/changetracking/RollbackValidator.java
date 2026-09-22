@@ -27,7 +27,7 @@ import java.util.stream.Stream;
  */
 @Component
 public class RollbackValidator {
-    private static final Class<?>[] PRIMITIVE_CLASSES = {
+    private static final Class<?>[] LITERAL_CLASSES = {
             // not including URI - can represent a reference to another entity
             Number.class,
             String.class, // TermIt is not using Strings as identifiers
@@ -58,7 +58,7 @@ public class RollbackValidator {
      */
     @Transactional(readOnly = true)
     public boolean canRollback(UpdateChangeRecord record, Class<?> entityClass) {
-        if (allValuesArePrimitives(record)) {
+        if (allValuesAreLiteral(record)) {
             return true;
         }
 
@@ -75,20 +75,20 @@ public class RollbackValidator {
         return canRollbackNativeProperty(record);
     }
 
-    private boolean allValuesArePrimitives(UpdateChangeRecord record) {
+    private boolean allValuesAreLiteral(UpdateChangeRecord record) {
         return Stream.of(record.getOriginalValue(), record.getNewValue())
                 .filter(Objects::nonNull)
                 .flatMap(Collection::stream)
                 .map(Object::getClass)
-                .allMatch(RollbackValidator::isPrimitive);
+                .allMatch(RollbackValidator::isLiteral);
     }
 
-    private static boolean isPrimitive(Class<?> clazz) {
+    private static boolean isLiteral(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return true;
         }
-        for (Class<?> primitiveClass : PRIMITIVE_CLASSES) {
-            if (primitiveClass.isAssignableFrom(clazz)) {
+        for (Class<?> literalClass : LITERAL_CLASSES) {
+            if (literalClass.isAssignableFrom(clazz)) {
                 return true;
             }
         }
@@ -96,7 +96,7 @@ public class RollbackValidator {
     }
 
     private boolean canRollbackAttributeWithType(Class<?> attributeValueClass, UpdateChangeRecord record) {
-        if (isPrimitive(attributeValueClass)) {
+        if (isLiteral(attributeValueClass)) {
             return true;
         }
         if (record.getOriginalValue() == null) {
@@ -118,9 +118,7 @@ public class RollbackValidator {
      * @return {@code true} when the change record can safely be rolled back, {@code false} otherwise
      */
     private boolean canRollbackToEntityReference(URI referencedEntity) {
-        if (referencedEntity == null) {
-            return true;
-        }
+        Objects.requireNonNull(referencedEntity);
         return changeRollbackDao.entityExists(referencedEntity);
     }
 
