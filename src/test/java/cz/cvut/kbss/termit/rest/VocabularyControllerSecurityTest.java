@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SparqlExternalVocabularyService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,9 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
 
     @MockitoBean
     private SparqlExternalVocabularyService externalVocabularyService;
+
+    @MockitoBean
+    private ChangeRollbackService changeRollbackService; // no-op bean
 
     @Autowired
     private Configuration configuration;
