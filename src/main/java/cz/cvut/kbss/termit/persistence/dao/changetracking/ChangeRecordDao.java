@@ -257,4 +257,20 @@ public class ChangeRecordDao {
             throw new PersistenceException(e);
         }
     }
+
+    /**
+     * Finds a change record of the specified type and identifier.
+     *
+     * @param recordClass Change record type
+     * @param recordUri   Change record identifier
+     * @return Matching record, or an empty optional if none is found
+     */
+    public <T extends AbstractChangeRecord> Optional<T> find(Class<T> recordClass, URI recordUri) {
+        Objects.requireNonNull(recordUri);
+        try {
+            return Optional.ofNullable(em.find(recordClass, recordUri));
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find UpdateChangeRecord: " + Utils.uriToString(recordUri), e);
+        }
+    }
 }
