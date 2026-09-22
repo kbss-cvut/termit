@@ -5,9 +5,13 @@ import cz.cvut.kbss.termit.exception.UpdateChangeRecordRollbackException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
@@ -17,6 +21,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -26,23 +32,29 @@ import java.util.Optional;
 public class ChangeRollbackService {
     private final RollbackValidator rollbackValidator;
     private final ChangeRollbackDao rollbackDao;
+    private final ChangeRecordService changeRecordService;
     private final TermRepositoryService termService;
     private final VocabularyRepositoryService vocabularyService;
     private final TermAuthorizationService termAuthorizationService;
     private final VocabularyAuthorizationService vocabularyAuthorizationService;
+    private final IdentifierResolver identifierResolver;
 
     public ChangeRollbackService(RollbackValidator rollbackValidator,
                                  ChangeRollbackDao rollbackDao,
+                                 ChangeRecordService changeRecordService,
                                  TermRepositoryService termService,
                                  VocabularyRepositoryService vocabularyService,
                                  TermAuthorizationService termAuthorizationService,
-                                 VocabularyAuthorizationService vocabularyAuthorizationService) {
+                                 VocabularyAuthorizationService vocabularyAuthorizationService,
+                                 IdentifierResolver identifierResolver) {
         this.rollbackValidator = rollbackValidator;
         this.rollbackDao = rollbackDao;
+        this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.vocabularyService = vocabularyService;
         this.termAuthorizationService = termAuthorizationService;
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
+        this.identifierResolver = identifierResolver;
     }
 
     /**
@@ -52,13 +64,39 @@ public class ChangeRollbackService {
      * @return {@code true} when the change record can be rolled back and the current user is authorized to do so,
      *         {@code false} otherwise.
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean canRollback(UpdateChangeRecord record) {
         final Asset<?> changedObject = resolveChangedAsset(record);
         if (changedObject == null) {
             return false; // unknown entity class
         }
         return canRollback(record, changedObject) && isModificationAuthorized(changedObject);
+    }
+
+    /**
+     * Sets the {@link UpdateChangeRecord#REVERSIBLE_CHANGE_CLASS reversible class}
+     * on each {@link UpdateChangeRecord} in the specified collection based on whether it
+     * can be rolled back by the current user.
+     *
+     * @param records Change records to enrich with rollback possibility
+     */
+    @Transactional(readOnly = true)
+    public void withReversibleType(Collection<AbstractChangeRecord> records) {
+        Asset<?> changedAsset = null;
+        boolean authorized = false;
+        for(AbstractChangeRecord record : records) {
+            if (changedAsset == null || !changedAsset.getUri().equals(record.getChangedEntity())) {
+                changedAsset = resolveChangedAsset(record);
+                authorized = isModificationAuthorized(changedAsset);
+            }
+            if (authorized &&
+                    record instanceof UpdateChangeRecord updateRecord &&
+                    canRollback(updateRecord, changedAsset)) {
+                record.getTypes().add(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+            } else {
+                record.getTypes().remove(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+            }
+        }
     }
 
     /**
@@ -91,6 +129,20 @@ public class ChangeRollbackService {
 
         ensureModificationAuthorized(changedAsset);
         doRollback(record, changedAsset);
+    }
+
+    /**
+     * Finds an update change record with the specified local name.
+     * <p>
+     * The local name is resolved against the {@link UpdateChangeRecord} identifier namespace.
+     *
+     * @param recordLocalName Change record local name
+     * @return Matching update change record
+     * @throws cz.cvut.kbss.termit.exception.NotFoundException If no matching record is found
+     */
+    public UpdateChangeRecord findRecordByLocalName(String recordLocalName) {
+        final URI recordUri = identifierResolver.resolveIdentifier(UpdateChangeRecord_.entityClassIRI.toString(), recordLocalName);
+        return changeRecordService.findUpdateRequired(recordUri);
     }
 
     /**
@@ -138,7 +190,7 @@ public class ChangeRollbackService {
         return changedAsset;
     }
 
-    private Asset<?> resolveChangedAsset(UpdateChangeRecord record) {
+    private Asset<?> resolveChangedAsset(AbstractChangeRecord record) {
         Optional<Vocabulary> vocabulary = vocabularyService.find(record.getChangedEntity());
         if (vocabulary.isPresent()) {
             return vocabulary.get();

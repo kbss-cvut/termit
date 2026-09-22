@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
@@ -33,6 +34,7 @@ import jakarta.annotation.Nonnull;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a change to an asset.
@@ -52,6 +54,9 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_has_changed_entity)
     private URI changedEntity;
+
+    @Types(readOnly = true)
+    private Set<URI> types;
 
     public AbstractChangeRecord() {
     }
@@ -82,6 +87,14 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
 
     public void setChangedEntity(URI changedEntity) {
         this.changedEntity = changedEntity;
+    }
+
+    public Set<URI> getTypes() {
+        return types;
+    }
+
+    public void setTypes(Set<URI> types) {
+        this.types = types;
     }
 
     @Override
