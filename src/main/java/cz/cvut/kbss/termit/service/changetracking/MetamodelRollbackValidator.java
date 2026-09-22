@@ -32,7 +32,9 @@ public class MetamodelRollbackValidator {
             Date.class,
             TemporalAmount.class,
             UUID.class,
-            MultilingualString.class
+            MultilingualString.class,
+            Void.TYPE,
+            Void.class
     };
 
     private final ChangeRollbackDao changeRollbackDao;
