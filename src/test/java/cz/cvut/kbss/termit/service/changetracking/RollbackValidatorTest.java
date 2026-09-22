@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
+import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,6 +38,9 @@ class RollbackValidatorTest {
 
     @Mock
     private ChangeRollbackDao changeRollbackDao;
+
+    @Mock
+    private DataRepositoryService dataRepositoryService; // injected into sut
 
     @Mock
     private Attribute<?, ?> attribute;
