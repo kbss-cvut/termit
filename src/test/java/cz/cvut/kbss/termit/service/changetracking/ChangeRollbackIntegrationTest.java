@@ -424,6 +424,37 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
     }
 
+    @Test
+    void rollbackOfMultilingualStringPreservesOtherTranslations() {
+        final String originalEn = "Original English description";
+        final String originalCs = "Původní český popis";
+        final String updatedEn = "Updated English description";
+        term.getDescription().set("en", originalEn);
+        term.getDescription().set("cs", originalCs);
+
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+        term = termService.findRequired(term.getUri());
+        final MultilingualString originalDescription = makeCopy(term.getDescription());
+
+        // apply change and create change record
+        term.getDescription().set("en", updatedEn);
+        term = update(term, termService);
+        assertEquals(updatedEn, term.getDescription().get("en"));
+        assertEquals(originalCs, term.getDescription().get("cs"));
+
+        final UpdateChangeRecord record = getRecord(term);
+        assertEquals(Term_.descriptionPropertyIRI.toURI(), record.getChangedAttribute());
+        assertEquals(originalDescription, record.getOriginalValue());
+        assertEquals(term.getDescription(), record.getNewValue());
+
+        sut.rollback(record);
+
+        final Term rolledBackTerm = termService.findRequired(term.getUri());
+        assertEquals(originalDescription, rolledBackTerm.getDescription());
+        assertEquals(originalEn, rolledBackTerm.getDescription().get("en"));
+        assertEquals(originalCs, rolledBackTerm.getDescription().get("cs"));
+    }
+
     private CustomAttribute persistTermReferenceCustomAttribute() {
         final CustomAttribute customAttribute = new CustomAttribute();
         customAttribute.setUri(Generator.generateUri());
