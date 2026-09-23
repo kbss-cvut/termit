@@ -99,6 +99,7 @@ import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -238,9 +239,9 @@ public class TermControllerTest extends BaseControllerTestRunner {
         dto.setTypes(Collections.singleton("http://example.org/type"));
 
         mockMvc.perform(patch(PATH + VOCABULARY_NAME + "/terms")
-                        .content(toJson(dto))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                                .content(toJson(dto))
+                                .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isNoContent());
 
         verify(termServiceMock).batchEdit(eq(vocabulary), any(TermBatchEditDto.class));
     }
@@ -285,22 +286,22 @@ public class TermControllerTest extends BaseControllerTestRunner {
 
         final List<Statement> references = List.of(
                 Values.getValueFactory().createStatement(Values.iri(Environment.BASE_URI + "/term/source-1"),
-                        Values.iri(SKOS.BROADER),
-                        Values.iri(termUri.toString())),
+                                                         Values.iri(SKOS.BROADER),
+                                                         Values.iri(termUri.toString())),
                 Values.getValueFactory().createStatement(Values.iri(Environment.BASE_URI + "/term/source-2"),
-                        Values.iri(SKOS.RELATED),
-                        Values.iri(termUri.toString()))
+                                                         Values.iri(SKOS.RELATED),
+                                                         Values.iri(termUri.toString()))
         );
         when(termServiceMock.findReferences(term, pageRequest)).thenReturn(
                 new PageImpl<>(references, pageRequest, references.size())
         );
 
         final MvcResult mvcResult = mockMvc.perform(
-                        get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/references")
-                                .param(PAGE, "0")
-                                .param(PAGE_SIZE, "5"))
-                                       .andExpect(status().isOk())
-                                       .andReturn();
+                                                   get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/references")
+                                                           .param(PAGE, "0")
+                                                           .param(PAGE_SIZE, "5"))
+                                           .andExpect(status().isOk())
+                                           .andReturn();
 
         final String expected = objectMapper.writeValueAsString(references);
 
@@ -389,10 +390,10 @@ public class TermControllerTest extends BaseControllerTestRunner {
         doReturn(terms).when(termServiceMock).findAll(eq(vocabulary), any(TermSelectionParams.class));
 
         final MvcResult mvcResult = mockMvc.perform(
-                        get(PATH + VOCABULARY_NAME + "/terms")
-                                .param(QueryParams.NAMESPACE, Environment.BASE_URI)
-                                .param("includeRelated", Boolean.TRUE.toString()))
-                .andExpect(status().isOk()).andReturn();
+                                                   get(PATH + VOCABULARY_NAME + "/terms")
+                                                           .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+                                                           .param("includeRelated", Boolean.TRUE.toString()))
+                                           .andExpect(status().isOk()).andReturn();
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
@@ -563,10 +564,11 @@ public class TermControllerTest extends BaseControllerTestRunner {
         initNamespaceAndIdentifierResolution();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(
+                terms);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
-                .andExpect(status().isOk());
+               .andExpect(status().isOk());
 
         final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
         verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
@@ -578,7 +580,8 @@ public class TermControllerTest extends BaseControllerTestRunner {
         initNamespaceAndIdentifierResolution();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(
+                terms);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
 
@@ -849,12 +852,13 @@ public class TermControllerTest extends BaseControllerTestRunner {
         initNamespaceAndIdentifierResolution();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(
+                terms);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")
-                        .param("includeImported", "true")
-                        .param("includeRelated", "true"))
-                .andExpect(status().isOk());
+                                .param("includeImported", "true")
+                                .param("includeRelated", "true"))
+               .andExpect(status().isOk());
 
         final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
         verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
@@ -990,13 +994,14 @@ public class TermControllerTest extends BaseControllerTestRunner {
         initNamespaceAndIdentifierResolution();
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+        when(termServiceMock.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), anyCollection())).thenReturn(
+                terms);
 
         final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
-                        toInclude.stream().map(URI::toString)
-                                .toArray(String[]::new)))
-                .andExpect(status().isOk());
+                                                                           toInclude.stream().map(URI::toString)
+                                                                                    .toArray(String[]::new)))
+               .andExpect(status().isOk());
 
         verify(termServiceMock).findAllRoots(eq(vocabulary), any(TermSelectionParams.class), eq(toInclude));
     }
@@ -1391,13 +1396,14 @@ public class TermControllerTest extends BaseControllerTestRunner {
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
         when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
-        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
+                URI.create(VOCABULARY_URI));
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termServiceMock.findRequired(any())).thenReturn(term);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
-                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
-                       .param("withAncestors", "true")
+                                .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                                .param("withAncestors", "true")
                )
                .andExpect(status().isOk());
 
@@ -1410,16 +1416,66 @@ public class TermControllerTest extends BaseControllerTestRunner {
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
         when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
-        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
+                URI.create(VOCABULARY_URI));
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termServiceMock.findRequired(any())).thenReturn(term);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
-                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                                .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
                )
                .andExpect(status().isOk());
 
         verify(termServiceMock, never()).resolveAllAncestors(term);
+    }
+
+    @Test
+    void deserializationSupportsMultilingualUnmappedPropertiesValue() throws Exception {
+        final String content = """
+                {
+                   "@context": {
+                     "types": "@type",
+                     "label": {
+                       "@id": "http://www.w3.org/2004/02/skos/core#prefLabel",
+                       "@container": "@language"
+                     },
+                     "http://example.com/properties/multilingual-property": {
+                       "@container": "@language"
+                     },
+                     "uri": "@id",
+                     "vocabulary": "http://www.w3.org/2004/02/skos/core#inScheme"
+                   },
+                   "uri": "http://onto.fel.cvut.cz/ontologies/application/termit/test-term",
+                   "types": [
+                     "http://www.w3.org/2004/02/skos/core#Concept"
+                   ],
+                   "label": {
+                     "cs": "Test term"
+                   },
+                   "vocabulary": {
+                     "uri": "http://onto.fel.cvut.cz/ontologies/application/termit"
+                   },
+                   "http://example.com/properties/multilingual-property": {
+                     "cs": "Hodnota",
+                     "en": "Value"
+                   }
+                 }
+                """;
+        final String namespace = Vocabulary.ONTOLOGY_IRI_TERMIT + "/";
+        final String localName = "test-term";
+        final String property = "http://example.com/properties/multilingual-property";
+        when(idResolverMock.resolveIdentifier(namespace, localName)).thenReturn(URI.create(namespace + localName));
+        mockMvc.perform(
+                put("/terms/" + localName).param(QueryParams.NAMESPACE, namespace).content(content).contentType(
+                        JsonLd.MEDIA_TYPE)).andExpect(status().isNoContent());
+        verify(idResolverMock).resolveIdentifier(namespace, localName);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termServiceMock).update(captor.capture());
+        final Map<String, Set<Object>> unmappedProperties = captor.getValue().getProperties();
+        assertThat(unmappedProperties.keySet(), hasItem(property));
+        assertEquals(1, unmappedProperties.get(property).size());
+        assertEquals(new MultilingualString(Map.of("cs", "Hodnota", "en", "Value")),
+                     unmappedProperties.get(property).iterator().next());
     }
 
     public static class TermSelectionParamsBuilder {
