@@ -67,6 +67,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -548,4 +549,26 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         assertTrue(contentChanges.stream().allMatch(typeClass::isInstance));
     }
 
+    @Test
+    void findRetrievesChangeRecordOfSpecifiedTypeAndIdentifier() {
+        final UpdateChangeRecord record = generateUpdateRecord(Utils.timestamp(), vocabulary.getUri());
+        transactional(() -> sut.persist(record, vocabulary));
+
+        final Optional<UpdateChangeRecord> result = sut.find(UpdateChangeRecord.class, record.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(record.getUri(), result.get().getUri());
+        assertEquals(record.getChangedAttribute(), result.get().getChangedAttribute());
+    }
+
+    @Test
+    void findReturnsEmptyOptionalForUnknownIdentifier() {
+        final Optional<UpdateChangeRecord> result = sut.find(UpdateChangeRecord.class, Generator.generateUri());
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findRejectsNullIdentifier() {
+        assertThrows(NullPointerException.class, () -> sut.find(UpdateChangeRecord.class, null));
+    }
 }
