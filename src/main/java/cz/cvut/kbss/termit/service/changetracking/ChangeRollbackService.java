@@ -181,6 +181,13 @@ public class ChangeRollbackService {
         throw unsupportedAssetType(asset);
     }
 
+    /**
+     * Resolves the changed asset entity.
+     *
+     * @param record the change record
+     * @return the changed asset
+     * @throws UpdateChangeRecordRollbackException when the asset was not found or is unsupported type
+     */
     private Asset<?> resolveChangedAssetRequired(UpdateChangeRecord record) {
         final Asset<?> changedAsset = resolveChangedAsset(record);
         if (changedAsset == null) {
@@ -190,6 +197,12 @@ public class ChangeRollbackService {
         return changedAsset;
     }
 
+    /**
+     * Tries to find {@link Vocabulary} or {@link Term} by the changed asset identifier.
+     *
+     * @param record the change record
+     * @return the resolved changed asset or {@code null}
+     */
     private Asset<?> resolveChangedAsset(AbstractChangeRecord record) {
         Optional<Vocabulary> vocabulary = vocabularyService.find(record.getChangedEntity());
         if (vocabulary.isPresent()) {
@@ -202,12 +215,26 @@ public class ChangeRollbackService {
         return null;
     }
 
+    /**
+     * Ensures the current user is authorized to modify the specified asset.
+     *
+     * @param asset the asset to be modified
+     * @throws AccessDeniedException when the modification of the given asset is not authorized.
+     * @see #isModificationAuthorized(Asset)
+     */
     private void ensureModificationAuthorized(Asset<?> asset) {
         if (!isModificationAuthorized(asset)) {
             throw new AccessDeniedException("Not authorized to roll back changes to the asset.");
         }
     }
 
+    /**
+     * Checks whether the current user is authorized to modify the specified {@link Vocabulary} or {@link Term}.
+     *
+     * @param asset the asset to be modified
+     * @return {@code true} when the specified asset is {@link Vocabulary} or {@link Term}
+     *         and the current user is authorized for its modification, {@code false} otherwise.
+     */
     private boolean isModificationAuthorized(Asset<?> asset) {
         if (asset instanceof Term term) {
             return termAuthorizationService.canModify(term);
@@ -218,6 +245,12 @@ public class ChangeRollbackService {
         return false;
     }
 
+    /**
+     * Updates the given asset using respective repository service.
+     *
+     * @param asset the asset to update
+     * @throws UpdateChangeRecordRollbackException when the asset is not {@link Term} or {@link Vocabulary}
+     */
     private void updateChangedAsset(Asset<?> asset) {
         if (asset instanceof Term term) {
             termService.update(term);
