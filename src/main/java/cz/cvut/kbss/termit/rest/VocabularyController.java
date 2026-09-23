@@ -320,7 +320,9 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
-        return vocabularyService.getChanges(vocabulary, filterDto);
+        List<AbstractChangeRecord> records = vocabularyService.getChanges(vocabulary, filterDto);
+        changeRollbackService.withReversibleType(records);
+        return records;
     }
 
     /**
