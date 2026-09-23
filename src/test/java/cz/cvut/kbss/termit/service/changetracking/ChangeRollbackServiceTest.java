@@ -6,7 +6,10 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
@@ -15,11 +18,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +59,12 @@ class ChangeRollbackServiceTest {
 
     @Mock
     private VocabularyAuthorizationService vocabularyAuthorizationService;
+
+    @Mock(answer = Answers.CALLS_REAL_METHODS)
+    private IdentifierResolver identifierResolver;
+
+    @Mock
+    private ChangeRecordService changeRecordService;
 
     @InjectMocks
     private ChangeRollbackService sut;
@@ -203,6 +214,16 @@ class ChangeRollbackServiceTest {
         verify(termAuthorizationService).canModify(term);
         verifyNoMoreInteractions(rollbackValidator);
         verifyNoMoreInteractions(termAuthorizationService);
+    }
+
+    @Test
+    void findRecordByLocalNameResolvesIdentifierUsingUpdateChangeRecordNamespace() {
+        final String recordLocalName = "updateRecord" + Generator.randomInt();
+        final URI expectedRecordUri = URI.create(UpdateChangeRecord_.entityClassIRI + "/" + recordLocalName);
+
+        sut.findRecordByLocalName(recordLocalName);
+
+        verify(changeRecordService).findUpdateRequired(expectedRecordUri);
     }
 
     private static UpdateChangeRecord recordFor(Asset<?> asset) {
