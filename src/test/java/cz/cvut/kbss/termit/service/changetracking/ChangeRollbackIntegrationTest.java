@@ -16,6 +16,8 @@ import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Vocabulary_;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
@@ -30,6 +32,7 @@ import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -37,6 +40,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -145,6 +149,70 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     private <T extends Asset<?>> T update(T entity, RudService<T> service) {
         service.update(entity);
         return service.findRequired(entity.getUri());
+    }
+
+    private User createUser(UserRole role) {
+        final User user = Generator.generateUserWithId();
+        user.setTypes(new HashSet<>(Set.of(role.getType())));
+        transactional(() -> em.persist(user));
+        return user;
+    }
+
+    private void grantAccess(User user, AccessLevel accessLevel) {
+        vocabularyService.addAccessControlRecords(vocabulary, new UserAccessControlRecord(accessLevel, user));
+    }
+
+    /**
+     * Asserts that user with read access cannot execute rollback, while user with write access can.
+     *
+     * @param record the change record
+     * @param originalValue the original attribute value
+     * @param updatedValue the new attribute value after change
+     * @param readValue supplier of the current attribute value
+     * @param <T> The type of the attribute value
+     */
+    private <T> void assertRollbackRequiresWriteAccess(UpdateChangeRecord record, T originalValue, T updatedValue,
+                                                       Supplier<T> readValue) {
+        final User reader = createUser(UserRole.RESTRICTED_USER);
+        final User writer = createUser(UserRole.FULL_USER);
+        grantAccess(reader, AccessLevel.READ);
+        grantAccess(writer, AccessLevel.WRITE);
+
+        // assert reader cannot rollback
+        Environment.setCurrentUser(reader);
+        assertThrows(AccessDeniedException.class, () -> sut.rollback(record));
+        // assert nothing changed
+        assertEquals(updatedValue, readValue.get());
+
+        // assert writer can do rollback
+        Environment.setCurrentUser(writer);
+        sut.rollback(record);
+        // value rolled back to original
+        assertEquals(originalValue, readValue.get());
+    }
+
+    @Test
+    void vocabularyRollbackRequiresWriteAccess() {
+        final MultilingualString originalLabel = makeCopy(vocabulary.getLabel());
+        vocabulary.setLabel(Environment.LANGUAGE, "updated vocabulary label");
+        vocabulary = update(vocabulary, vocabularyService);
+        final MultilingualString updatedLabel = makeCopy(vocabulary.getLabel());
+        final UpdateChangeRecord record = getRecord(vocabulary);
+
+        assertRollbackRequiresWriteAccess(record, originalLabel, updatedLabel,
+                                          () -> vocabularyService.findRequired(vocabulary.getUri()).getLabel());
+    }
+
+    @Test
+    void termRollbackUsesContainingVocabularyWriteAccess() {
+        term.getProperties().get(property.toString()).add("updated value");
+        term = update(term, termService);
+        final Set<Object> updatedValues = Set.copyOf(term.getProperties().get(property.toString()));
+        final UpdateChangeRecord record = getRecord(term);
+
+        assertRollbackRequiresWriteAccess(record, originalPropertyValue, updatedValues,
+                                          () -> termService.findRequired(term.getUri()).getProperties()
+                                                           .get(property.toString()));
     }
 
     @Test
