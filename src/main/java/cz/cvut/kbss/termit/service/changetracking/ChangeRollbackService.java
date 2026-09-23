@@ -17,6 +17,8 @@ import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ import java.util.Optional;
  */
 @Service
 public class ChangeRollbackService {
+    private static final Logger LOG = LoggerFactory.getLogger(ChangeRollbackService.class);
     private final RollbackValidator rollbackValidator;
     private final ChangeRollbackDao rollbackDao;
     private final ChangeRecordService changeRecordService;
@@ -156,12 +159,14 @@ public class ChangeRollbackService {
     private void doRollback(UpdateChangeRecord record, Asset<?> changedAsset) {
         final Class<? extends Asset<?>> entityClass = resolveEntityClass(changedAsset);
         final Attribute<?, ?> classAttribute = rollbackDao.resolveClassAttribute(entityClass, record).orElse(null);
+        LOG.info("Rolling back change record {} of entity {}", record, entityClass);
         if (classAttribute != null) {
             rollbackDao.rollbackClassAttribute(record.getOriginalValue(), changedAsset, classAttribute);
         } else {
             rollbackDao.rollbackNativeProperty(record.getOriginalValue(), changedAsset, record.getChangedAttribute());
         }
         updateChangedAsset(changedAsset);
+        LOG.info("Rolled back change record {} of entity {}", record, entityClass);
     }
 
     /**
