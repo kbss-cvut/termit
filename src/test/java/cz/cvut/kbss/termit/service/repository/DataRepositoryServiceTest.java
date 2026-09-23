@@ -122,6 +122,16 @@ class DataRepositoryServiceTest {
     }
 
     @Test
+    void findCustomAttributeReturnsMatchingAttribute() {
+        final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
+        when(dataDao.findCustomAttribute(uri)).thenReturn(Optional.of(attribute));
+
+        assertEquals(Optional.of(attribute), sut.findCustomAttribute(uri));
+    }
+
+    @Test
     void updateCustomAttributeUpdatesLabelAndDescriptionOfExistingCustomAttribute() {
         final CustomAttribute existing = new CustomAttribute(Generator.generateUri(),
                                                              MultilingualString.create("Attribute one", "en"),
