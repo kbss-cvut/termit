@@ -20,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -27,6 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -143,11 +148,69 @@ class ChangeRollbackServiceTest {
         assertThrows(AccessDeniedException.class, () -> sut.rollback(record));
     }
 
+    private static final String WITH_REVERSIBLE_CSV_SOURCE = """
+            # can be rolled back and user is authorized -> is reversible
+            true, true, true
+            # can not be rolled back, user is authorized -> is not reversible
+            false, true, false
+            # can be rolled back, user is not authorized -> is not reversible
+            true, false, false
+            # can not be rolled back, user is not authorized -> is not reversible
+            false, false, false
+            """;
+
+    @ParameterizedTest
+    @CsvSource(textBlock = WITH_REVERSIBLE_CSV_SOURCE)
+    void withReversibleTypeAddsReversibleTypeToReversibleVocabularyChange(boolean canRollback, boolean canModify, boolean expectedIsReversible) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final UpdateChangeRecord record = recordFor(vocabulary);
+
+        when (vocabularyService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        lenient().when(rollbackValidator.canRollback(record, Vocabulary.class)).thenReturn(canRollback);
+        when(vocabularyAuthorizationService.canModify(vocabulary)).thenReturn(canModify);
+
+        assertFalse(record.getTypes().contains(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS));
+        sut.withReversibleType(List.of(record));
+        final boolean isReversibleResult = record.getTypes().contains(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+        assertEquals(expectedIsReversible, isReversibleResult);
+
+        if (canModify) {
+            verify(rollbackValidator).canRollback(record, Vocabulary.class);
+        }
+        verify(vocabularyAuthorizationService).canModify(vocabulary);
+        verifyNoMoreInteractions(rollbackValidator);
+        verifyNoMoreInteractions(vocabularyAuthorizationService);
+    }
+
+    @ParameterizedTest
+    @CsvSource(textBlock = WITH_REVERSIBLE_CSV_SOURCE)
+    void withReversibleTypeAddsReversibleTypeToReversibleTermChange(boolean canRollback, boolean canModify, boolean expectedIsReversible) {
+        final Term term = Generator.generateTermWithId();
+        final UpdateChangeRecord record = recordFor(term);
+
+        when (termService.find(term.getUri())).thenReturn(Optional.of(term));
+        lenient().when(rollbackValidator.canRollback(record, Term.class)).thenReturn(canRollback);
+        when(termAuthorizationService.canModify(term)).thenReturn(canModify);
+
+        assertFalse(record.getTypes().contains(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS));
+        sut.withReversibleType(List.of(record));
+        final boolean isReversibleResult = record.getTypes().contains(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+        assertEquals(expectedIsReversible, isReversibleResult);
+
+        if (canModify) {
+            verify(rollbackValidator).canRollback(record, Term.class);
+        }
+        verify(termAuthorizationService).canModify(term);
+        verifyNoMoreInteractions(rollbackValidator);
+        verifyNoMoreInteractions(termAuthorizationService);
+    }
+
     private static UpdateChangeRecord recordFor(Asset<?> asset) {
         final UpdateChangeRecord record = new UpdateChangeRecord(asset);
         record.setChangedAttribute(Generator.generateUri());
         record.setOriginalValue(Set.of("original"));
         record.setNewValue(Set.of("updated"));
+        record.setTypes(new HashSet<>());
         return record;
     }
 }
