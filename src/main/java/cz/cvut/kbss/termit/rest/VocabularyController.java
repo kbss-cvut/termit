@@ -299,7 +299,8 @@ public class VocabularyController extends BaseController {
                description = "Gets a list of changes made to metadata of vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of change records."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+            @ApiResponse(responseCode = "422", description = "When the change record is associated with a different asset")
 
     })
     @GetMapping(value = "/{localName}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})

@@ -869,7 +869,8 @@ public class TermController extends BaseController {
                description = "Rolls back the specified update change record of the term.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
-            @ApiResponse(responseCode = "404", description = "Term or update change record not found.")
+            @ApiResponse(responseCode = "404", description = "Term or update change record not found."),
+            @ApiResponse(responseCode = "422", description = "When the change record is associated with a different asset")
     })
     @PostMapping("/terms/{localName}/history/{changeRecord}/rollback")
     @ResponseStatus(HttpStatus.NO_CONTENT)
