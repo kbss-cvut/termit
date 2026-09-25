@@ -22,12 +22,14 @@ import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
@@ -36,6 +38,7 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
+import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.repository.removal.SubTermRemovalStrategy;
@@ -95,14 +98,17 @@ public class TermController extends BaseController {
 
     private final TermService termService;
 
+    private final ChangeRollbackService changeRollbackService;
+
     private final VocabularyNamespaceResolver namespaceResolver;
 
     @Autowired
     public TermController(IdentifierResolver idResolver, Configuration config, TermService termService,
-                          VocabularyNamespaceResolver namespaceResolver) {
+                          VocabularyNamespaceResolver namespaceResolver, ChangeRollbackService changeRollbackService) {
         super(idResolver, config);
         this.termService = termService;
         this.namespaceResolver = namespaceResolver;
+        this.changeRollbackService = changeRollbackService;
     }
 
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
@@ -846,7 +852,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
-        return termService.getChanges(termService.findRequired(termUri), filterDto);
+        final List<AbstractChangeRecord> records = termService.getChanges(termService.findRequired(termUri), filterDto);
+        changeRollbackService.withReversibleType(records);
+        return records;
     }
 
     /**
@@ -883,7 +891,45 @@ public class TermController extends BaseController {
                                                                defaultValue = "") String changedAttributeName) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
-        return termService.getChanges(termService.findRequired(termUri), filter);
+        final List<AbstractChangeRecord> records = termService.getChanges(termService.findRequired(termUri), filter);
+        changeRollbackService.withReversibleType(records);
+        return records;
+    }
+
+    /**
+     * Rolls back the specified update change record of a term.
+     *
+     * @param localName    Term local name
+     * @param namespace    Term identifier namespace
+     * @param changeRecord Local name of the update change record
+     * @throws InvalidParameterException If the change record is not associated with the specified term
+     */
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Rolls back the specified update change record of the term.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
+            @ApiResponse(responseCode = "404", description = "Term or update change record not found."),
+            @ApiResponse(responseCode = "422", description = "When the change record is associated with a different asset")
+    })
+    @PostMapping("/terms/{localName}/history/{changeRecord}/rollback")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void rollbackChange(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "Local name of the update change record to roll back.")
+            @PathVariable String changeRecord) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        final UpdateChangeRecord recordToRollback = changeRollbackService.findRecordByLocalName(changeRecord);
+        if (termUri.equals(recordToRollback.getChangedEntity())) {
+            changeRollbackService.rollback(recordToRollback);
+            LOG.debug("Change record {} of term {} rolled back.", changeRecord, Utils.uriToString(termUri));
+        } else {
+            throw new InvalidParameterException("Record not associated with specified Term");
+        }
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

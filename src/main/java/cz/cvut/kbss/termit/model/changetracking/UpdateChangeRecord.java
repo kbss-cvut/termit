@@ -31,6 +31,10 @@ import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_update_of_entity)
 public class UpdateChangeRecord extends AbstractChangeRecord {
+    /**
+     * Class indicating that the change record can be rolled back by the current user.
+     */
+    public static final URI REVERSIBLE_CHANGE_CLASS = URI.create(Vocabulary.s_c_reversible_change);
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_has_changed_attribute)

@@ -99,6 +99,18 @@ public class DataRepositoryService {
     }
 
     /**
+     * Finds a custom attribute with the specified identifier.
+     *
+     * @param attributeUri Attribute identifier
+     * @return Matching custom attribute or empty if no such attribute exists
+     */
+    @Transactional(readOnly = true)
+    public Optional<CustomAttribute> findCustomAttribute(URI attributeUri) {
+        Objects.requireNonNull(attributeUri);
+        return dataDao.findCustomAttribute(attributeUri);
+    }
+
+    /**
      * Gets basic metadata about a resource with the specified identifier.
      *
      * @param id Resource identifier

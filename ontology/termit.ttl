@@ -4,6 +4,7 @@
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix dd:    <http://onto.fel.cvut.cz/ontologies/data-description/> .
 
 <http://onto.fel.cvut.cz/ontologies/application/termit>
         a       skos:ConceptScheme , owl:Ontology ;
@@ -719,3 +720,10 @@ termit:has-related-vocabulary
                 <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has related vocabulary"@en , "Má související slovník"@cs .
+
+termit:reversible-change
+        a       skos:Concept , owl:Class ;
+        rdfs:subClassOf  dd:update-of-entity ;
+        skos:broader     dd:update-of-entity ;
+        skos:inScheme    <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        skos:prefLabel   "Reversible Change"@en , "Vratná změna"@cs .
