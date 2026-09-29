@@ -31,7 +31,6 @@ import cz.cvut.kbss.termit.service.document.TermOccurrenceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -233,7 +232,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             return Optional.empty();
         }
         final URI termUri = URI.create(termId);
-        verifyTermExists(rdfaElem, termUri, termId);
+        if (!termExists(termUri, termId)) {
+            LOG.trace("Term <{}> found in RDFa element {} does not exists. Skipping it.", termId, rdfaElem);
+            return Optional.empty();
+        };
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
         occurrence.setUri(resolveOccurrenceId(rdfaElem));
@@ -253,15 +255,15 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return Optional.of(occurrence);
     }
 
-    private void verifyTermExists(Element rdfaElem, URI termUri, String termId) {
+    private boolean termExists(URI termUri, String termId) {
         if (existingTermIds.contains(termId)) {
-            return;
+            return true;
         }
         if (!termService.exists(termUri)) {
-            throw new AnnotationGenerationException("Term with id " + Utils.uriToString(
-                    termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
+            return false;
         }
         existingTermIds.add(termId);
+        return true;
     }
 
     private URI resolveOccurrenceId(Element rdfaElem) {
