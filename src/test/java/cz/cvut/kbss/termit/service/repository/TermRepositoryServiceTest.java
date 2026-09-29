@@ -517,9 +517,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
      * Prepares and persists term with definition containing an occurrence of other therm.
      *
      * @param occurrenceUri the URI to use for the created occurrence
+     * @param suggested whether the occurrence should be marked as suggested
      * @return the occurring term
      */
-    private Term prepareTermWithSuggestedOccurrence(URI occurrenceUri) {
+    private Term prepareTermWithOccurrence(URI occurrenceUri, boolean suggested) {
         enableRdfsInference(em);
 
         final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
@@ -531,7 +532,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
                 new DefinitionalOccurrenceTarget(referencing));
-        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
+        if (suggested) {
+            occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
+        }
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         occ.setUri(occurrenceUri);
 
@@ -549,7 +552,17 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void removeWithParamsRemovesSuggestedOccurrencesWhenRemoveOccurrencesIsTrue() {
         final URI occurrenceUri = Generator.generateUri();
-        final Term toRemove = prepareTermWithSuggestedOccurrence(occurrenceUri);
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, true);
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+        assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    @Test
+    void removeWithParamsRemovesConfirmedOccurrencesWhenRemoveOccurrencesIsTrue() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
 
         sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
         assertNull(em.find(Term.class, toRemove.getUri()));

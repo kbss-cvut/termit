@@ -21,6 +21,10 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.model.query.criteria.CriteriaBuilder;
+import cz.cvut.kbss.jopa.model.query.criteria.CriteriaQuery;
+import cz.cvut.kbss.jopa.model.query.criteria.Predicate;
+import cz.cvut.kbss.jopa.model.query.criteria.Root;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -30,6 +34,7 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence_;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermOccurrenceMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -39,8 +44,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
@@ -312,5 +319,32 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
               LOG.trace("Removing orphaned term occurrences targeting <{}>.", a);
               removeAll(a, URI.create(Vocabulary.s_c_term_occurrence));
           });
+    }
+
+    /**
+     * Checks whether the specified term has any occurrences, optionally excluding suggested ones.
+     *
+     * @param term Term whose occurrences to check
+     * @param excludeSuggested Whether to ignore suggested occurrences
+     * @return {@code true} if a matching occurrence exists, {@code false} otherwise
+     */
+    public boolean existsOf(AbstractTerm term, boolean excludeSuggested) {
+        Objects.requireNonNull(term);
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Boolean> query = cb.createQuery(Boolean.class);
+        Root<TermOccurrence> root = query.from(TermOccurrence.class);
+
+        List<Predicate> wherePredicates = new ArrayList<>(2);
+        wherePredicates.add(cb.equal(root.getAttr(TermOccurrence_.term), term.getUri()));
+
+        if (excludeSuggested) {
+            final URI suggestedType = URI.create(Vocabulary.s_c_suggested_term_occurrence);
+            Predicate notSuggestedType = cb.isNotMember(suggestedType,
+                                               root.<Set<URI>>getAttr("types"));
+            wherePredicates.add(notSuggestedType);
+        }
+
+        return em.createQuery(query.ask().where(wherePredicates))
+                .getSingleResult();
     }
 }
