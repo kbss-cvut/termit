@@ -444,8 +444,8 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
         final UpdateChangeRecord record = getRecord(term);
         assertEquals(Term_.descriptionPropertyIRI.toURI(), record.getChangedAttribute());
-        assertEquals(originalDescription, record.getOriginalValue());
-        assertEquals(term.getDescription(), record.getNewValue());
+        assertEquals(Set.of(originalDescription), record.getOriginalValue());
+        assertEquals(Set.of(term.getDescription()), record.getNewValue());
 
         sut.rollback(record);
 
