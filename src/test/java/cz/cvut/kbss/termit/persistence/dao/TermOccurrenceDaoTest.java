@@ -43,6 +43,8 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -330,15 +332,57 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     }
 
     private void generateFileOccurrence(Term of) {
+        generateFileOccurrence(of, false);
+    }
+
+    private void generateFileOccurrence(Term of, boolean isSuggested) {
         final File file = Generator.generateFileWithId(FILE_LABEL);
         final FileOccurrenceTarget target = new FileOccurrenceTarget(file);
         target.setSelectors(Collections.singleton(new TextQuoteSelector("test")));
         final TermFileOccurrence occurrence = new TermFileOccurrence(of.getUri(), target);
+        if (isSuggested) {
+            occurrence.addType(Vocabulary.s_c_suggested_term_occurrence);
+        }
         transactional(() -> {
             em.persist(file);
             em.persist(occurrence);
             em.persist(target);
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void existsOfReturnsFalseWhenNoOccurrenceExistsForTheGivenTerm(boolean excludeSuggested) {
+        final Term term = Generator.generateTermWithId();
+        generateFileOccurrence(Generator.generateTermWithId());
+
+        assertFalse(sut.existsOf(term, excludeSuggested));
+    }
+
+    @Test
+    void existsOfIncludesSuggestedOccurrencesWhenNotExcluded() {
+        final Term term = Generator.generateTermWithId();
+        generateFileOccurrence(term, true);
+
+        assertTrue(sut.existsOf(term, false));
+    }
+
+    @Test
+    void existsOfExcludesSuggestedOccurrencesWhenExcluded() {
+        final Term term = Generator.generateTermWithId();
+        generateFileOccurrence(term, true);
+
+        assertFalse(sut.existsOf(term, true));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void existsOfFindsConfirmedOccurrences(boolean excludeSuggested) {
+        final Term term = Generator.generateTermWithId();
+        generateFileOccurrence(term, true);
+        generateFileOccurrence(term);
+
+        assertTrue(sut.existsOf(term, excludeSuggested));
     }
 
     @Test
