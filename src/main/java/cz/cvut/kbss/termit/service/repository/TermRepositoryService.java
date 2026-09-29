@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
+import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
@@ -83,12 +84,14 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     private final TermOccurrenceService termOccurrenceService;
 
     private final DataRepositoryService dataService;
+    private final TermOccurrenceDao termOccurrenceDao;
 
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
                                  TermOccurrenceService termOccurrenceService,
                                  VocabularyRepositoryService vocabularyService,
-                                 VocabularyNamespaceResolver namespaceResolver, DataRepositoryService dataService) {
+                                 VocabularyNamespaceResolver namespaceResolver, DataRepositoryService dataService,
+                                 TermOccurrenceDao termOccurrenceDao) {
         super(validator);
         this.idResolver = idResolver;
         this.termDao = termDao;
@@ -97,6 +100,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.termOccurrenceService = termOccurrenceService;
         this.namespaceResolver = namespaceResolver;
         this.dataService = dataService;
+        this.termOccurrenceDao = termOccurrenceDao;
     }
 
     @Override
@@ -675,6 +679,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             termDao.removeReferencesTo(toRemove);
         }
 
+        termDao.flushAndClear();
         this.remove(toRemove); // calls pre and post remove
         LOG.debug("Removed term <{}>", toRemove.getUri());
     }
@@ -720,10 +725,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     protected void preRemove(@Nonnull Term instance) {
         super.preRemove(instance);
-        final List<TermOccurrences> occurrences = termOccurrenceService.getOccurrenceInfo(instance).stream()
-                                                                       .filter(to -> !to.isSuggested()).toList();
-        if (!occurrences.isEmpty()) {
-            throw annotationsExistException(occurrences);
+
+        if (termOccurrenceService.existsOf(instance, true)) {
+            assert termOccurrenceDao.existsOf(instance, true);
+            throw annotationsExistException(termOccurrenceService.getOccurrenceInfo(instance));
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {

@@ -71,6 +71,15 @@ public interface TermOccurrenceService {
     List<TermOccurrences> getOccurrenceInfo(AbstractTerm term);
 
     /**
+     * Checks whether the specified term has any occurrences.
+     *
+     * @param term Term whose occurrences to check
+     * @param excludeSuggested Whether to ignore suggested occurrences
+     * @return {@code true} if a matching occurrence exists, {@code false} otherwise
+     */
+    boolean existsOf(AbstractTerm term, boolean excludeSuggested);
+
+    /**
      * Finds all definitional occurrences of the specified term.
      *
      * @param term Term whose occurrences should be returned

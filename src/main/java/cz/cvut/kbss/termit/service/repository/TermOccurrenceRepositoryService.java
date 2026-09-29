@@ -155,6 +155,20 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         return termOccurrenceDao.getOccurrenceInfo(term);
     }
 
+    /**
+     * Checks whether the specified term has any occurrences, optionally excluding suggested ones.
+     *
+     * @param term Term whose occurrences to check
+     * @param excludeSuggested Whether to ignore suggested occurrences
+     * @return {@code true} if a matching occurrence exists, {@code false} otherwise
+     */
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    @Transactional(readOnly = true)
+    @Override
+    public boolean existsOf(AbstractTerm term, boolean excludeSuggested) {
+        return termOccurrenceDao.existsOf(term, excludeSuggested);
+    }
+
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
     @Transactional(readOnly = true)
     @Override
@@ -168,7 +182,6 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         return termOccurrenceDao.findAllTargeting(target);
     }
 
-    @Async
     @Transactional
     @Override
     public void removeAllOf(AbstractTerm term) {
