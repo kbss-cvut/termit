@@ -235,7 +235,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         if (!termExists(termUri, termId)) {
             LOG.trace("Term <{}> found in RDFa element {} does not exists. Skipping it.", termId, rdfaElem);
             return Optional.empty();
-        };
+        }
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
         occurrence.setUri(resolveOccurrenceId(rdfaElem));

@@ -727,7 +727,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         super.preRemove(instance);
 
         if (termOccurrenceService.existsOf(instance, true)) {
-            assert termOccurrenceDao.existsOf(instance, true);
             throw annotationsExistException(termOccurrenceService.getOccurrenceInfo(instance));
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
