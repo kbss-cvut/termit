@@ -41,6 +41,7 @@ import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.repository.removal.SubTermRemovalStrategy;
 import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
+import cz.cvut.kbss.termit.service.term.TermOccurrenceCleanupListener;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -49,6 +50,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -78,6 +81,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermRepositoryServiceTest extends BaseServiceTestRunner {
@@ -90,6 +96,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private TermRepositoryService sut;
+
+    @MockitoSpyBean
+    private TermOccurrenceCleanupListener termOccurrenceCleanupListener;
 
     private UserAccount user;
     private Vocabulary vocabulary;
@@ -554,7 +563,13 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final URI occurrenceUri = Generator.generateUri();
         final Term toRemove = prepareTermWithOccurrence(occurrenceUri, true);
 
-        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+        transactional(() -> {
+            sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+            assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri),
+                    "Occurrences must remain until the outer transaction commits");
+            verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
+        });
+        verify(termOccurrenceCleanupListener).onTermRemoved(any());
         assertNull(em.find(Term.class, toRemove.getUri()));
         assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
     }
@@ -564,9 +579,43 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final URI occurrenceUri = Generator.generateUri();
         final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
 
-        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+        transactional(() -> {
+            sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+            assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri),
+                    "Occurrences must remain until the outer transaction commits");
+            verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
+        });
+        verify(termOccurrenceCleanupListener).onTermRemoved(any());
         assertNull(em.find(Term.class, toRemove.getUri()));
         assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    @Test
+    void removeWithParamsThrowsWhenConfirmedOccurrencesExistAndRemoveOccurrencesIsFalse() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, false, false)));
+
+        verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
+        assertEquals("error.term.remove.annotationsExist", exception.getMessageId());
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    @Test
+    void removeWithParamsDoesNotRemoveOccurrencesWhenOuterTransactionRollsBack() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
+
+        new TransactionTemplate(txManager).executeWithoutResult(status -> {
+            sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+            status.setRollbackOnly();
+        });
+
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
     }
 
     /**
@@ -974,8 +1023,13 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(occ.getTarget());
         });
 
-        assertDoesNotThrow(() -> sut.remove(toRemove));
+        transactional(() -> {
+            assertDoesNotThrow(() -> sut.remove(toRemove));
+            assertNotNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()),
+                    "Occurrences must remain until the outer transaction commits");
+        });
         assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()));
     }
 
     @Test

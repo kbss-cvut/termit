@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.service.repository.removal;
 
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.Vocabulary;
 
 import java.util.Objects;
 
@@ -15,7 +14,7 @@ import java.util.Objects;
  * @param removeRelationships Whether relationships referencing the term should be removed.
  *                            When {@code false} and the term is referenced in some relationship, the removal will fail
  *                            and the term will not be removed.
- * @see cz.cvut.kbss.termit.service.repository.TermRepositoryService#remove(TermRemovalParams, Vocabulary)
+ * @see cz.cvut.kbss.termit.service.repository.TermRepositoryService#remove(TermRemovalParams)
  */
 public record TermRemovalParams(
         Term termToRemove,
