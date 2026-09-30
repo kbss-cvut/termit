@@ -35,7 +35,7 @@ public class TermOccurrenceCleanupListener {
      * with a one-second delay and an independent transaction for each attempt. Exhausted failures propagate
      * to the application's asynchronous exception handler.
      *
-     * @param event Event containing the removed term's identifier
+     * @param event Event containing the removed term
      */
     @Async
     @Retryable(maxRetries = 3)
