@@ -182,10 +182,12 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         return termOccurrenceDao.findAllTargeting(target);
     }
 
+    @PreAuthorize("@termAuthorizationService.canRemove(#term)")
     @Transactional
     @Override
     public void removeAllOf(AbstractTerm term) {
         LOG.debug("Removing all occurrences of term {}.", term);
         termOccurrenceDao.removeAllOf(term);
+        LOG.debug("Removed all occurrences of term {}.", term);
     }
 }

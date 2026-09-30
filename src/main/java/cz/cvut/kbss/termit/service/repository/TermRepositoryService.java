@@ -34,7 +34,6 @@ import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
-import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
@@ -84,14 +83,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     private final TermOccurrenceService termOccurrenceService;
 
     private final DataRepositoryService dataService;
-    private final TermOccurrenceDao termOccurrenceDao;
 
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
                                  TermOccurrenceService termOccurrenceService,
                                  VocabularyRepositoryService vocabularyService,
-                                 VocabularyNamespaceResolver namespaceResolver, DataRepositoryService dataService,
-                                 TermOccurrenceDao termOccurrenceDao) {
+                                 VocabularyNamespaceResolver namespaceResolver, DataRepositoryService dataService) {
         super(validator);
         this.idResolver = idResolver;
         this.termDao = termDao;
@@ -100,7 +97,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.termOccurrenceService = termOccurrenceService;
         this.namespaceResolver = namespaceResolver;
         this.dataService = dataService;
-        this.termOccurrenceDao = termOccurrenceDao;
     }
 
     @Override
@@ -669,25 +665,24 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         removalParams.subTermsStrategy().apply(removalParams, this);
         termDao.flushAndClear();
 
-        if (removalParams.removeOccurrences()) {
-            LOG.debug("Removing occurrences of term <{}>", toRemove.getUri());
-            termOccurrenceService.removeAllOf(toRemove);
-        }
-
         if (removalParams.removeRelationships()) {
             LOG.debug("Removing references to term <{}>", toRemove.getUri());
             termDao.removeReferencesTo(toRemove);
         }
 
         termDao.flushAndClear();
-        this.remove(toRemove); // calls pre and post remove
+        validateRemoval(toRemove, removalParams.removeOccurrences());
+        // occurrences will be cleared by #postRemove asynchronously
+
+        forceRemove(toRemove);
         LOG.debug("Removed term <{}>", toRemove.getUri());
     }
 
     /**
      * Removes the specified term from the repository.
-     * The term must not have any children, no occurrence must exist
+     * The term must not have any children, no confirmed occurrence must exist
      * and there must be no references to the term.
+     * Occurrences are cleaned up asynchronously after the removal transaction commits.
      *
      * @param instance The instance to remove
      * @see #remove(TermRemovalParams)
@@ -711,23 +706,37 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     /**
      * Checks that a term can be removed.
-     * <p>
-     * A term can be removed if:
-     * <ul>
-     *     <li>It does not have any children</li>
-     *     <li>It does not occur in any resource and is not assigned to any resource</li>
-     *     <li>Is not related to any other term via SKOS mapping properties</li>
-     * </ul>
      *
      * @param instance The instance to be removed, not {@code null}
+     * @see #validateRemoval(Term, boolean)
      * @throws AssetRemovalException If the specified term cannot be removed
      */
     @Override
     protected void preRemove(@Nonnull Term instance) {
         super.preRemove(instance);
+        validateRemoval(instance, false);
+    }
 
-        if (termOccurrenceService.existsOf(instance, true)) {
-            throw annotationsExistException(termOccurrenceService.getOccurrenceInfo(instance));
+    /**
+     * Ensures that the term can be removed.
+     * <p>
+     * A term can be removed if:
+     * <ul>
+     *     <li>It does not occur in any resource and is not assigned to any resource</li>
+     *     <li>It does not have any children</li>
+     *     <li>Is not related to any other term via SKOS mapping properties</li>
+     * </ul>
+     *
+     * @param instance Term whose removal is being validated
+     * @param skipOccurrences Whether confirmed occurrences will be cleaned up and check for their existence should be skipped
+     * @throws AssetRemovalException If a confirmed occurrence blocks removal, children remain, or incoming
+     *                               vocabulary references remain
+     */
+    private void validateRemoval(Term instance, boolean skipOccurrences) {
+        // do not check for occurrence existence if they will be removed
+        if (!skipOccurrences && termOccurrenceService.existsOf(instance, true)) {
+            throw annotationsExistException(termOccurrenceService.getOccurrenceInfo(instance).stream()
+                                                                 .filter(o -> !o.isSuggested()).toList());
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
@@ -762,7 +771,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
             v.removeRootTerm(instance);
         }
-        termOccurrenceService.removeAllOf(instance);
         instance.consolidateParents();
         termDao.evictFromCache(instance.getParentTerms());
     }
