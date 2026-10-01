@@ -214,10 +214,7 @@ public class ChangeRollbackService {
             return vocabulary.get();
         }
         Optional<Term> term = termService.find(record.getChangedEntity());
-        if (term.isPresent()) {
-            return term.get();
-        }
-        return null;
+        return term.orElse(null);
     }
 
     /**
