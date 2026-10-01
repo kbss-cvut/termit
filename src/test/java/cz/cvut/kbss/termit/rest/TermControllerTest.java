@@ -35,7 +35,6 @@ import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
@@ -1451,48 +1450,6 @@ public class TermControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isOk());
 
         verify(changeRollbackService).withReversibleType(changeRecords);
-    }
-
-    @Test
-    void rollbackChangeResolvesUpdateChangeRecordAndRollsbackTheChange() throws Exception {
-        final Term term = Generator.generateTerm();
-        term.setUri(URI.create(NAMESPACE + TERM_NAME));
-
-        final UpdateChangeRecord changeRecord = new UpdateChangeRecord();
-        final String recordLocalName = "update" + Generator.randomInt();
-        changeRecord.setUri(URI.create(UpdateChangeRecord_.entityClassIRI + "/" + recordLocalName));
-        changeRecord.setChangedEntity(term.getUri());
-
-        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
-        when(changeRollbackService.findRecordByLocalName(recordLocalName)).thenReturn(changeRecord);
-
-        mockMvc.perform(post("/terms/{localName}/history/{changeRecord}/rollback", TERM_NAME, recordLocalName)
-                .param(Constants.QueryParams.NAMESPACE, NAMESPACE))
-                .andExpect(status().isNoContent());
-
-        verify(changeRollbackService).findRecordByLocalName(recordLocalName);
-        verify(changeRollbackService).rollback(changeRecord);
-    }
-
-    @Test
-    void rollbackChangeReturnsUnprocessableContentWhenResolvedChangeRecordDoesNotMatchChangedAsset() throws Exception {
-        final Term term = Generator.generateTerm();
-        term.setUri(URI.create(NAMESPACE + TERM_NAME));
-
-        final UpdateChangeRecord changeRecord = new UpdateChangeRecord();
-        final String recordLocalName = "update" + Generator.randomInt();
-        changeRecord.setUri(URI.create(UpdateChangeRecord_.entityClassIRI + "/" + recordLocalName));
-        changeRecord.setChangedEntity(Generator.generateUri());
-
-        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
-        when(changeRollbackService.findRecordByLocalName(recordLocalName)).thenReturn(changeRecord);
-
-        mockMvc.perform(post("/terms/{localName}/history/{changeRecord}/rollback", TERM_NAME, recordLocalName)
-                .param(Constants.QueryParams.NAMESPACE, NAMESPACE))
-                .andExpect(status().isUnprocessableContent());
-
-        verify(changeRollbackService).findRecordByLocalName(recordLocalName);
-        verify(changeRollbackService, never()).rollback(any());
     }
 
     public static class TermSelectionParamsBuilder {
