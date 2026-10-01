@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.metamodel.Attribute;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UpdateChangeRecordRollbackException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
@@ -9,9 +10,9 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.model.util.HasProperties;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
@@ -35,29 +36,29 @@ public class ChangeRollbackService {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeRollbackService.class);
     private final RollbackValidator rollbackValidator;
     private final ChangeRollbackDao rollbackDao;
-    private final ChangeRecordService changeRecordService;
     private final TermRepositoryService termService;
     private final VocabularyRepositoryService vocabularyService;
     private final TermAuthorizationService termAuthorizationService;
     private final VocabularyAuthorizationService vocabularyAuthorizationService;
     private final IdentifierResolver identifierResolver;
+    private final ChangeRecordDao changeRecordDao;
 
     public ChangeRollbackService(RollbackValidator rollbackValidator,
                                  ChangeRollbackDao rollbackDao,
-                                 ChangeRecordService changeRecordService,
                                  TermRepositoryService termService,
                                  VocabularyRepositoryService vocabularyService,
                                  TermAuthorizationService termAuthorizationService,
                                  VocabularyAuthorizationService vocabularyAuthorizationService,
-                                 IdentifierResolver identifierResolver) {
+                                 IdentifierResolver identifierResolver,
+                                 ChangeRecordDao changeRecordDao) {
         this.rollbackValidator = rollbackValidator;
         this.rollbackDao = rollbackDao;
-        this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.vocabularyService = vocabularyService;
         this.termAuthorizationService = termAuthorizationService;
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
         this.identifierResolver = identifierResolver;
+        this.changeRecordDao = changeRecordDao;
     }
 
     /**
@@ -145,7 +146,8 @@ public class ChangeRollbackService {
      */
     public UpdateChangeRecord findRecordByLocalName(String recordLocalName) {
         final URI recordUri = identifierResolver.resolveIdentifier(UpdateChangeRecord_.entityClassIRI.toString(), recordLocalName);
-        return changeRecordService.findUpdateRequired(recordUri);
+        return changeRecordDao.find(UpdateChangeRecord.class, recordUri)
+                              .orElseThrow(()-> new NotFoundException("UpdateChangeRecord not found"));
     }
 
     /**
