@@ -34,7 +34,6 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -95,14 +94,11 @@ public class VocabularyController extends BaseController {
 
     private final VocabularyService vocabularyService;
 
-    private final ChangeRollbackService changeRollbackService;
-
     @Autowired
     public VocabularyController(VocabularyService vocabularyService, IdentifierResolver idResolver,
-                                Configuration config, ChangeRollbackService changeRollbackService) {
+                                Configuration config) {
         super(idResolver, config);
         this.vocabularyService = vocabularyService;
-        this.changeRollbackService = changeRollbackService;
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -319,9 +315,7 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
-        List<AbstractChangeRecord> records = vocabularyService.getChanges(vocabulary, filterDto);
-        changeRollbackService.withReversibleType(records);
-        return records;
+        return vocabularyService.getChanges(vocabulary, filterDto);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

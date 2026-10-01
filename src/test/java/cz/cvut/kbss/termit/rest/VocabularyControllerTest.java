@@ -27,7 +27,6 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
-import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -36,11 +35,9 @@ import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -107,9 +104,6 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Mock
     private VocabularyService serviceMock;
-
-    @Mock
-    private ChangeRollbackService changeRollbackService;
 
     @Mock
     private IdentifierResolver idResolverMock;
@@ -722,31 +716,5 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION),
                    containsString(QueryParams.NAMESPACE + "=" + NAMESPACE));
         verify(serviceMock).importTermTranslations(vocabulary.getUri(), upload);
-    }
-
-    private UpdateChangeRecord generateChangeRecord(Asset<?> changedAsset) {
-        final UpdateChangeRecord changeRecord = new UpdateChangeRecord();
-        changeRecord.setUri(Generator.generateUri());
-        changeRecord.setChangedEntity(changedAsset.getUri());
-        return changeRecord;
-    }
-
-    @Test
-    void getHistoryReturnsRecordsWithReversibleTypes() throws Exception {
-        final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
-
-        final List<AbstractChangeRecord> changeRecords = List.of(generateChangeRecord(vocabulary), generateChangeRecord(vocabulary));
-
-        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
-        when(serviceMock.getReference(vocabulary.getUri())).thenReturn(vocabulary);
-        when(serviceMock.getChanges(eq(vocabulary), any())).thenReturn(changeRecords);
-
-        mockMvc.perform(get(PATH + "/{localName}/history", FRAGMENT)
-                       .param(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isOk());
-
-        verify(serviceMock).getChanges(eq(vocabulary), any());
-        verify(changeRollbackService).withReversibleType(changeRecords);
     }
 }

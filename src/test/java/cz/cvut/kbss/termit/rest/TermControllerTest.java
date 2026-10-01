@@ -42,7 +42,6 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
-import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
@@ -60,8 +59,6 @@ import org.eclipse.rdf4j.model.util.Values;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -111,7 +108,6 @@ import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -145,9 +141,6 @@ public class TermControllerTest extends BaseControllerTestRunner {
 
     @Mock
     private TermService termServiceMock;
-
-    @Mock
-    private ChangeRollbackService changeRollbackService;
 
     @InjectMocks
     private TermController sut;
@@ -1427,29 +1420,6 @@ public class TermControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isOk());
 
         verify(termServiceMock, never()).resolveAllAncestors(term);
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "/terms/" + TERM_NAME + "/history",
-            PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/history"
-    })
-    void getHistoryReturnsRecordsWithReversibleTypes(String endpoint) throws Exception {
-        final Term term = Generator.generateTerm();
-        term.setUri(URI.create(NAMESPACE + TERM_NAME));
-        final List<AbstractChangeRecord> changeRecords = generateChangeRecords(term);
-
-        lenient().when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
-        lenient().when(idResolverMock.resolveIdentifier(NAMESPACE, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
-        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
-        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
-        when(termServiceMock.getChanges(eq(term), any())).thenReturn(changeRecords);
-
-        mockMvc.perform(get(endpoint)
-                .param(Constants.QueryParams.NAMESPACE, NAMESPACE))
-                .andExpect(status().isOk());
-
-        verify(changeRollbackService).withReversibleType(changeRecords);
     }
 
     public static class TermSelectionParamsBuilder {
