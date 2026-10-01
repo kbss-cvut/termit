@@ -24,13 +24,11 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
-import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -324,41 +322,6 @@ public class VocabularyController extends BaseController {
         List<AbstractChangeRecord> records = vocabularyService.getChanges(vocabulary, filterDto);
         changeRollbackService.withReversibleType(records);
         return records;
-    }
-
-    /**
-     * Rolls back the specified update change record of a vocabulary.
-     *
-     * @param localName    Vocabulary local name
-     * @param namespace    Optional vocabulary namespace
-     * @param changeRecord Local name of the update change record
-     * @throws InvalidParameterException If the change record is not associated with the specified vocabulary
-     */
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Rolls back the specified update change record of the vocabulary.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or update change record not found.")
-    })
-    @PostMapping("/{localName}/history/{changeRecord}/rollback")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void rollbackChange(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = "Local name of the update change record to roll back.")
-            @PathVariable String changeRecord) {
-        final URI vocabularyUri = resolveVocabularyUri(localName, namespace);
-        final UpdateChangeRecord recordToRollback = changeRollbackService.findRecordByLocalName(changeRecord);
-        if (vocabularyUri.equals(recordToRollback.getChangedEntity())) {
-            changeRollbackService.rollback(recordToRollback);
-            LOG.debug("Change record {} of vocabulary {} rolled back.", changeRecord, Utils.uriToString(vocabularyUri));
-        } else {
-            throw new InvalidParameterException("Record not associated with specified Vocabulary.");
-        }
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

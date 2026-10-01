@@ -7,9 +7,9 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
@@ -64,7 +64,7 @@ class ChangeRollbackServiceTest {
     private IdentifierResolver identifierResolver;
 
     @Mock
-    private ChangeRecordService changeRecordService;
+    private ChangeRecordDao changeRecordDao;
 
     @InjectMocks
     private ChangeRollbackService sut;
@@ -221,9 +221,11 @@ class ChangeRollbackServiceTest {
         final String recordLocalName = "updateRecord" + Generator.randomInt();
         final URI expectedRecordUri = URI.create(UpdateChangeRecord_.entityClassIRI + "/" + recordLocalName);
 
+        when(changeRecordDao.find(UpdateChangeRecord.class, expectedRecordUri)).thenReturn(Optional.of(new UpdateChangeRecord()));
+
         sut.findRecordByLocalName(recordLocalName);
 
-        verify(changeRecordService).findUpdateRequired(expectedRecordUri);
+        verify(changeRecordDao).find(UpdateChangeRecord.class, expectedRecordUri);
     }
 
     private static UpdateChangeRecord recordFor(Asset<?> asset) {

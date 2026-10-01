@@ -749,44 +749,4 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         verify(serviceMock).getChanges(eq(vocabulary), any());
         verify(changeRollbackService).withReversibleType(changeRecords);
     }
-
-    @Test
-    void rollbackChangeResolvesUpdateChangeRecordAndRollsbackTheChange() throws Exception {
-        final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
-
-        final UpdateChangeRecord changeRecord = generateChangeRecord(vocabulary);
-        final String recordLocalName = IdentifierResolver.extractIdentifierFragment(changeRecord.getUri());
-
-        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
-        when(changeRollbackService.findRecordByLocalName(recordLocalName)).thenReturn(changeRecord);
-
-        mockMvc.perform(post(PATH + "/{localName}/history/{changeRecord}/rollback", FRAGMENT, recordLocalName)
-                       .param(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNoContent());
-
-        verify(changeRollbackService).findRecordByLocalName(recordLocalName);
-        verify(changeRollbackService).rollback(changeRecord);
-    }
-
-    @Test
-    void rollbackChangeReturnsUnprocessableContentWhenResolvedChangeRecordDoesNotMatchChangedAsset() throws Exception {
-        final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
-
-        final UpdateChangeRecord changeRecord = new UpdateChangeRecord();
-        changeRecord.setUri(Generator.generateUri());
-        changeRecord.setChangedEntity(Generator.generateUri());
-        final String recordLocalName = IdentifierResolver.extractIdentifierFragment(changeRecord.getUri());
-
-        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
-        when(changeRollbackService.findRecordByLocalName(recordLocalName)).thenReturn(changeRecord);
-
-        mockMvc.perform(post(PATH + "/{localName}/history/{changeRecord}/rollback", FRAGMENT, recordLocalName)
-                       .param(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isUnprocessableContent());
-
-        verify(changeRollbackService).findRecordByLocalName(recordLocalName);
-        verify(changeRollbackService, never()).rollback(any());
-    }
 }
