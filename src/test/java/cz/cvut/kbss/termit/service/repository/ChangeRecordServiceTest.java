@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChangeRecordServiceTest extends BaseServiceTestRunner {
 
@@ -78,6 +79,17 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = sut.getChanges(asset);
         assertEquals(records, result);
+    }
+
+    @Test
+    void getChangesAddsReversibleTypesForReturnedReversibleChanges() {
+        enableRdfsInference(em);
+
+        final List<AbstractChangeRecord> result = sut.getChanges(asset);
+
+        // all change records generated are updates of title, which are reversible
+        assertTrue(result.stream().map(UpdateChangeRecord.class::cast)
+                .allMatch(r -> r.hasType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS)));
     }
 
     private List<AbstractChangeRecord> generateChanges() {

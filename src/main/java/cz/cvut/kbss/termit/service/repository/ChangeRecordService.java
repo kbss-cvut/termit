@@ -24,7 +24,9 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,15 +36,19 @@ import java.util.Set;
 public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
 
     private final ChangeRecordDao changeRecordDao;
+    private final ChangeRollbackService changeRollbackService;
 
     @Autowired
-    public ChangeRecordService(ChangeRecordDao changeRecordDao) {
+    public ChangeRecordService(ChangeRecordDao changeRecordDao, @Lazy ChangeRollbackService changeRollbackService) {
         this.changeRecordDao = changeRecordDao;
+        this.changeRollbackService = changeRollbackService;
     }
 
     @Override
     public List<AbstractChangeRecord> getChanges(Asset<?> asset, ChangeRecordFilterDto filterDto) {
-        return changeRecordDao.findAll(asset, filterDto);
+        final List<AbstractChangeRecord> records = changeRecordDao.findAll(asset, filterDto);
+        changeRollbackService.withReversibleType(records);
+        return records;
     }
 
     /**

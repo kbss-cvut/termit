@@ -36,7 +36,6 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
-import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.repository.removal.SubTermRemovalStrategy;
@@ -96,17 +95,14 @@ public class TermController extends BaseController {
 
     private final TermService termService;
 
-    private final ChangeRollbackService changeRollbackService;
-
     private final VocabularyNamespaceResolver namespaceResolver;
 
     @Autowired
     public TermController(IdentifierResolver idResolver, Configuration config, TermService termService,
-                          VocabularyNamespaceResolver namespaceResolver, ChangeRollbackService changeRollbackService) {
+                          VocabularyNamespaceResolver namespaceResolver) {
         super(idResolver, config);
         this.termService = termService;
         this.namespaceResolver = namespaceResolver;
-        this.changeRollbackService = changeRollbackService;
     }
 
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
@@ -850,9 +846,7 @@ public class TermController extends BaseController {
             @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
-        final List<AbstractChangeRecord> records = termService.getChanges(termService.findRequired(termUri), filterDto);
-        changeRollbackService.withReversibleType(records);
-        return records;
+        return termService.getChanges(termService.findRequired(termUri), filterDto);
     }
 
     /**
@@ -889,9 +883,7 @@ public class TermController extends BaseController {
                                                                defaultValue = "") String changedAttributeName) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
-        final List<AbstractChangeRecord> records = termService.getChanges(termService.findRequired(termUri), filter);
-        changeRollbackService.withReversibleType(records);
-        return records;
+        return termService.getChanges(termService.findRequired(termUri), filter);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
