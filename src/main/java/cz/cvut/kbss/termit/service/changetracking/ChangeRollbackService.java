@@ -96,9 +96,9 @@ public class ChangeRollbackService {
             if (authorized &&
                     record instanceof UpdateChangeRecord updateRecord &&
                     canRollback(updateRecord, changedAsset)) {
-                record.getTypes().add(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+                record.addType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
             } else {
-                record.getTypes().remove(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+                record.removeType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
             }
         }
     }

@@ -28,6 +28,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 
@@ -41,7 +42,7 @@ import java.util.Set;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @OWLClass(iri = Vocabulary.s_c_change)
-public class AbstractChangeRecord extends AbstractEntity implements Comparable<AbstractChangeRecord> {
+public class AbstractChangeRecord extends AbstractEntity implements Comparable<AbstractChangeRecord>, HasTypes {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLDataProperty(iri = DC.Terms.MODIFIED)
@@ -56,7 +57,7 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
     private URI changedEntity;
 
     @Types(readOnly = true)
-    private Set<URI> types;
+    private Set<String> types;
 
     public AbstractChangeRecord() {
     }
@@ -89,11 +90,13 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
         this.changedEntity = changedEntity;
     }
 
-    public Set<URI> getTypes() {
+    @Override
+    public Set<String> getTypes() {
         return types;
     }
 
-    public void setTypes(Set<URI> types) {
+    @Override
+    public void setTypes(Set<String> types) {
         this.types = types;
     }
 
