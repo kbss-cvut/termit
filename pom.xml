@@ -522,9 +522,11 @@
                 <configuration>
                     <ratchetFrom>origin/master</ratchetFrom>
                     <java>
-                        <palantirJavaFormat/>
+                        <palantirJavaFormat>
+                            <formatJavadoc>true</formatJavadoc>
+                        </palantirJavaFormat>
                         <importOrder>
-                            <order>,java,\#</order>
+                            <order>,javax,jakarta,java,\#</order>
                         </importOrder>
                     </java>
                 </configuration>
