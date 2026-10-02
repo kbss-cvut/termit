@@ -8,7 +8,6 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
@@ -136,16 +135,13 @@ public class ChangeRollbackService {
     }
 
     /**
-     * Finds an update change record with the specified local name.
-     * <p>
-     * The local name is resolved against the {@link UpdateChangeRecord} identifier namespace.
+     * Finds an update change record by its identifier.
      *
-     * @param recordLocalName Change record local name
+     * @param recordUri Change record identifier
      * @return Matching update change record
      * @throws cz.cvut.kbss.termit.exception.NotFoundException If no matching record is found
      */
-    public UpdateChangeRecord findRecordByLocalName(String recordLocalName) {
-        final URI recordUri = identifierResolver.resolveIdentifier(UpdateChangeRecord_.entityClassIRI.toString(), recordLocalName);
+    public UpdateChangeRecord findUpdateRecord(URI recordUri) {
         return changeRecordDao.find(UpdateChangeRecord.class, recordUri)
                               .orElseThrow(()-> new NotFoundException("UpdateChangeRecord not found"));
     }

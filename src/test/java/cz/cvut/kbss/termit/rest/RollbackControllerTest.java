@@ -2,6 +2,8 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -9,19 +11,14 @@ import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.util.stream.Stream;
 
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,16 +31,11 @@ public class RollbackControllerTest extends BaseControllerTestRunner {
     private Configuration config;
 
     @Mock
-    private IdentifierResolver idResolverMock;
-
-    @Mock
     private ChangeRollbackService changeRollbackService;
-
-    @InjectMocks
-    private RollbackController sut;
 
     @BeforeEach
     void setUp() {
+        RollbackController sut = new RollbackController(new IdentifierResolver(config), config, changeRollbackService);
         this.setUp(sut);
     }
 
@@ -55,49 +47,39 @@ public class RollbackControllerTest extends BaseControllerTestRunner {
         return changeRecord;
     }
 
-    private static Stream<Arguments> argumentsStream() {
-        final String suffix = "/{localName}/history/{changeRecord}/rollback";
-
-        return Stream.of(
-                Arguments.of("/vocabularies" + suffix, Generator.generateVocabularyWithId()),
-                Arguments.of("/terms" + suffix, Generator.generateTermWithId())
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("argumentsStream")
-    void rollbackChangeResolvesUpdateChangeRecordAndRollsbackTheChange(String endpointPath, Asset<?> asset) throws Exception {
-        final String localName = IdentifierResolver.extractIdentifierFragment(asset.getUri());
-        final String namespace = IdentifierResolver.extractIdentifierNamespace(asset.getUri());
+    @Test
+    void rollbackResolvesUpdateChangeRecordAndRollsbackTheChange() throws Exception {
+        final Vocabulary asset = Generator.generateVocabularyWithId();
         final UpdateChangeRecord record = createUpdateRecord(asset);
         final String recordLocalName = IdentifierResolver.extractIdentifierFragment(record.getUri());
+        final String recordNamespace = IdentifierResolver.extractIdentifierNamespace(record.getUri());
 
-        when(idResolverMock.resolveIdentifier(namespace, localName)).thenReturn(asset.getUri());
-        when(changeRollbackService.findRecordByLocalName(recordLocalName)).thenReturn(record);
+        when(changeRollbackService.findUpdateRecord(record.getUri())).thenReturn(record);
 
-        mockMvc.perform(post(endpointPath, localName, recordLocalName).param(Constants.QueryParams.NAMESPACE, namespace))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/history/{localName}/rollback", recordLocalName)
+                       .param(Constants.QueryParams.NAMESPACE, recordNamespace)
+               ).andExpect(status().isNoContent());
 
-        verify(changeRollbackService).findRecordByLocalName(recordLocalName);
+        verify(changeRollbackService).findUpdateRecord(record.getUri());
         verify(changeRollbackService).rollback(record);
     }
 
-    @ParameterizedTest
-    @MethodSource("argumentsStream")
-    void rollbackChangeReturnsUnprocessableContentWhenResolvedChangeRecordDoesNotMatchChangedAsset(String endpointPath, Asset<?> asset) throws Exception {
-        final String localName = IdentifierResolver.extractIdentifierFragment(asset.getUri());
-        final String namespace = IdentifierResolver.extractIdentifierNamespace(asset.getUri());
+    @Test
+    void rollbackResolvesPreVersion5ChangeRecordUri() throws Exception {
+        final Term asset = Generator.generateTermWithId();
         final UpdateChangeRecord record = createUpdateRecord(asset);
-        record.setChangedEntity(Generator.generateUri());
-        final String recordLocalName = IdentifierResolver.extractIdentifierFragment(record.getUri());
 
-        when(idResolverMock.resolveIdentifier(namespace, localName)).thenReturn(asset.getUri());
-        when(changeRollbackService.findRecordByLocalName(recordLocalName)).thenReturn(record);
+        final String recordLocalName = "instance-1085384276";
+        final String recordNamespace = "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/úprava-entity/";
+        record.setUri(URI.create(recordNamespace + recordLocalName));
 
-        mockMvc.perform(post(endpointPath, localName, recordLocalName).param(Constants.QueryParams.NAMESPACE, namespace))
-               .andExpect(status().isUnprocessableContent());
+        when(changeRollbackService.findUpdateRecord(record.getUri())).thenReturn(record);
 
-        verify(changeRollbackService).findRecordByLocalName(recordLocalName);
-        verify(changeRollbackService, never()).rollback(record);
+        mockMvc.perform(post("/history/{localName}/rollback", recordLocalName)
+                .param(Constants.QueryParams.NAMESPACE, recordNamespace)
+        ).andExpect(status().isNoContent());
+
+        verify(changeRollbackService).findUpdateRecord(record.getUri());
+        verify(changeRollbackService).rollback(record);
     }
 }
