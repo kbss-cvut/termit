@@ -77,8 +77,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AnnotationGeneratorTest extends BaseServiceTestRunner {
 
     private static final URI TERM_ID = URI.create("http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan");
-    private static final URI TERM_TWO_ID = URI
-            .create("http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan-praha");
+    private static final URI TERM_TWO_ID =
+            URI.create("http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan-praha");
 
     @Autowired
     private EntityManager em;
@@ -117,9 +117,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         term.setLabel(MultilingualString.create("Územní plán", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         this.termTwo = new Term();
         termTwo.setUri(TERM_TWO_ID);
-        termTwo.setLabel(MultilingualString
-                                 .create("Územní plán hlavního města Prahy",
-                                         cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+        termTwo.setLabel(MultilingualString.create(
+                "Územní plán hlavního města Prahy", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         final User author = Generator.generateUserWithId();
         this.vocabulary = Generator.generateVocabularyWithId();
         this.document = new cz.cvut.kbss.termit.model.resource.Document();
@@ -154,9 +153,11 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final java.io.File docDir = new java.io.File(folder.getAbsolutePath() + java.io.File.separator + docFolderName);
         Files.createDirectories(docDir.toPath());
         docDir.deleteOnExit();
-        final java.io.File f = new java.io.File(
-                folder.getAbsolutePath() + java.io.File.separator + docFolderName + java.io.File.separator +
-                        file.getLabel());
+        final java.io.File f = new java.io.File(folder.getAbsolutePath()
+                + java.io.File.separator
+                + docFolderName
+                + java.io.File.separator
+                + file.getLabel());
         Files.createFile(f.toPath());
         f.deleteOnExit();
         this.fileLocation = f.getAbsolutePath();
@@ -174,7 +175,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
 
     private List<TermOccurrence> findAllOccurrencesOf(Term term) {
         return em.createQuery("SELECT DISTINCT to FROM TermOccurrence to WHERE to.term = :term", TermOccurrence.class)
-                 .setParameter("term", term).getResultList();
+                .setParameter("term", term)
+                .getResultList();
     }
 
     @Test
@@ -198,8 +200,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsThrowsAnnotationGenerationExceptionForUnsupportedFileType() throws Exception {
         try (final InputStream content = loadFile("application.yml")) {
             file.setLabel(generateIncompatibleFile());
-            final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
-                    () -> sut.generateAnnotations(content, file));
+            final AnnotationGenerationException ex =
+                    assertThrows(AnnotationGenerationException.class, () -> sut.generateAnnotations(content, file));
             assertThat(ex.getMessage(), containsString("Unsupported type of file"));
         }
     }
@@ -207,11 +209,11 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     private String generateIncompatibleFile() throws Exception {
         final String tempDir = System.getProperty("java.io.tmpdir");
         config.getFile().setStorage(tempDir);
-        final java.io.File docDir = new java.io.File(tempDir + java.io.File.separator +
-                                                             document.getDirectoryName());
+        final java.io.File docDir = new java.io.File(tempDir + java.io.File.separator + document.getDirectoryName());
         Files.createDirectory(docDir.toPath());
         docDir.deleteOnExit();
-        final java.io.File content = Files.createTempFile(docDir.toPath(), "test", ".txt").toFile();
+        final java.io.File content =
+                Files.createTempFile(docDir.toPath(), "test", ".txt").toFile();
         content.deleteOnExit();
         return content.getName();
     }
@@ -246,12 +248,12 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     @Test
     void generateAnnotationsHandlesLargerDocumentAnalysis() throws Exception {
         final Term mp = new Term();
-        mp.setLabel(MultilingualString
-                            .create("Metropolitní plán", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+        mp.setLabel(
+                MultilingualString.create("Metropolitní plán", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         mp.setUri(URI.create("http://test.org/pojem/metropolitni-plan"));
         final Term ma = new Term();
-        ma.setLabel(MultilingualString
-                            .create("Správní území Prahy", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+        ma.setLabel(
+                MultilingualString.create("Správní území Prahy", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         ma.setUri(URI.create("http://test.org/pojem/spravni-uzemi-prahy"));
         final Term area = new Term();
         area.setLabel(MultilingualString.create("Území", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
@@ -282,8 +284,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         generateFile();
         sut.generateAnnotations(content, file);
         final List<TermOccurrence> result = termOccurrenceDao.findAll();
-        result.forEach(to -> assertTrue(
-                to.getTypes().contains(Vocabulary.s_c_suggested_term_occurrence)));
+        result.forEach(to -> assertTrue(to.getTypes().contains(Vocabulary.s_c_suggested_term_occurrence)));
         assertEquals(1, findAllOccurrencesOf(term).size());
         assertEquals(1, findAllOccurrencesOf(termTwo).size());
     }
@@ -306,13 +307,13 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         generateFile();
         sut.generateAnnotations(content, file);
         final Document originalDoc;
-        try (final BufferedReader oldIn = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fileLocation)))) {
+        try (final BufferedReader oldIn =
+                new BufferedReader(new InputStreamReader(new FileInputStream(fileLocation)))) {
             final String originalContent = oldIn.lines().collect(Collectors.joining("\n"));
             originalDoc = Jsoup.parse(originalContent);
         }
-        try (final BufferedReader newIn = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fileLocation)))) {
+        try (final BufferedReader newIn =
+                new BufferedReader(new InputStreamReader(new FileInputStream(fileLocation)))) {
             final String currentContent = newIn.lines().collect(Collectors.joining("\n"));
             final Document currentDoc = Jsoup.parse(currentContent);
             assertTrue(originalDoc.hasSameValue(currentDoc));
@@ -381,8 +382,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
             throws Exception {
         final Term otherTerm = new Term();
         otherTerm.setUri(Generator.generateUri());
-        otherTerm.setLabel(MultilingualString
-                                   .create("Other term", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+        otherTerm.setLabel(
+                MultilingualString.create("Other term", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         final TextQuoteSelector selector = new TextQuoteSelector("Územní plán");
         selector.setPrefix("RDFa simple");
         selector.setSuffix(" hlavního města Prahy.");
@@ -410,12 +411,12 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), file);
         final List<TermOccurrence> occurrencesTwo = termOccurrenceDao.findAllTargeting(file);
         assertEquals(occurrencesOne.size(), occurrencesTwo.size());
-        final int instanceCount = em.createNativeQuery("SELECT (count(*) as ?count) WHERE {" +
-                                                               "GRAPH ?g { ?x a ?termOccurrence . }" +
-                                                               "}", Integer.class)
-                                    .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
-                                    .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
-                                    .getSingleResult();
+        final int instanceCount = em.createNativeQuery(
+                        "SELECT (count(*) as ?count) WHERE {" + "GRAPH ?g { ?x a ?termOccurrence . }" + "}",
+                        Integer.class)
+                .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
+                .getSingleResult();
         assertEquals(occurrencesTwo.size(), instanceCount);
     }
 
@@ -424,7 +425,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         generateFile();
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), file);
         final List<TermOccurrence> occurrencesOne = termOccurrenceDao.findAllTargeting(file);
-        final List<TermOccurrence> confirmed = occurrencesOne.stream().filter(to -> Generator.randomBoolean()).toList();
+        final List<TermOccurrence> confirmed =
+                occurrencesOne.stream().filter(to -> Generator.randomBoolean()).toList();
         transactional(() -> confirmed.forEach(to -> {
             to.removeType(Vocabulary.s_c_suggested_term_occurrence);
             em.merge(to);
@@ -432,7 +434,8 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), file);
         final List<TermOccurrence> occurrencesTwo = termOccurrenceDao.findAllTargeting(file);
         assertEquals(occurrencesOne.size(), occurrencesTwo.size());
-        confirmed.forEach(to -> assertTrue(occurrencesTwo.stream().anyMatch(toA -> toA.getUri().equals(to.getUri()))));
+        confirmed.forEach(to ->
+                assertTrue(occurrencesTwo.stream().anyMatch(toA -> toA.getUri().equals(to.getUri()))));
     }
 
     @Test

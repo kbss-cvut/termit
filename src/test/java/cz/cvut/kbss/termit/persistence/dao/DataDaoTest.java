@@ -121,13 +121,15 @@ class DataDaoTest extends BaseDaoTestRunner {
                 connection.add(vf.createIRI(OWL.DATATYPE_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(OWL.OBJECT_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(OWL.ANNOTATION_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
-                connection.add(vf.createIRI(Vocabulary.s_p_has_first_name), RDF.TYPE,
-                               vf.createIRI(OWL.DATATYPE_PROPERTY));
-                connection.add(vf.createIRI(Vocabulary.s_p_has_first_name), RDFS.LABEL,
-                               vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE));
+                connection.add(
+                        vf.createIRI(Vocabulary.s_p_has_first_name), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY));
+                connection.add(
+                        vf.createIRI(Vocabulary.s_p_has_first_name),
+                        RDFS.LABEL,
+                        vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE));
                 connection.add(vf.createIRI(Vocabulary.s_p_has_surname), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY));
-                connection.add(vf.createIRI(Vocabulary.s_p_has_username), RDF.TYPE,
-                               vf.createIRI(OWL.DATATYPE_PROPERTY));
+                connection.add(
+                        vf.createIRI(Vocabulary.s_p_has_username), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY));
                 connection.commit();
             }
         });
@@ -139,7 +141,9 @@ class DataDaoTest extends BaseDaoTestRunner {
         final Optional<RdfsResource> result = sut.find(URI.create(Vocabulary.s_p_has_first_name));
         assertTrue(result.isPresent());
         assertEquals(Vocabulary.s_p_has_first_name, result.get().getUri().toString());
-        assertEquals(MultilingualString.create(FIRST_NAME_LABEL, Environment.LANGUAGE), result.get().getLabel());
+        assertEquals(
+                MultilingualString.create(FIRST_NAME_LABEL, Environment.LANGUAGE),
+                result.get().getLabel());
     }
 
     @Test
@@ -151,7 +155,7 @@ class DataDaoTest extends BaseDaoTestRunner {
 
     @Test
     void getLabelReturnsLabelWithMatchingLanguageOfSpecifiedIdentifier() {
-        enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
+        enableRdfsInference(em); // skos:prefLabel is a subPropertyOf rdfs:label
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term));
 
@@ -162,15 +166,17 @@ class DataDaoTest extends BaseDaoTestRunner {
 
     @Test
     void getLabelReturnsLabelWithoutLanguageTagWhenMatchingLanguageTagDoesNotExist() {
-        enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
+        enableRdfsInference(em); // skos:prefLabel is a subPropertyOf rdfs:label
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
-                connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral(getPrimaryLabel(term)));
+                connection.add(
+                        vf.createIRI(term.getUri().toString()),
+                        SKOS.PREF_LABEL,
+                        vf.createLiteral(getPrimaryLabel(term)));
                 connection.commit();
             }
         });
@@ -193,17 +199,19 @@ class DataDaoTest extends BaseDaoTestRunner {
 
     @Test
     void getLabelReturnsEmptyOptionalForIdentifierWithMultipleLabels() {
-        enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
+        enableRdfsInference(em); // skos:prefLabel is a subPropertyOf rdfs:label
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
-                connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral(getPrimaryLabel(term)));
-                connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral("Another label"));
+                connection.add(
+                        vf.createIRI(term.getUri().toString()),
+                        SKOS.PREF_LABEL,
+                        vf.createLiteral(getPrimaryLabel(term)));
+                connection.add(
+                        vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL, vf.createLiteral("Another label"));
                 connection.commit();
             }
         });
@@ -244,10 +252,11 @@ class DataDaoTest extends BaseDaoTestRunner {
 
     @Test
     void persistSavesSpecifiedResource() {
-        final RdfsResource resource =
-                new RdfsResource(URI.create(RDFS.LABEL.toString()),
-                                 new LangString("Label", Environment.LANGUAGE),
-                                 new LangString("Label specification", Environment.LANGUAGE), RDF.PROPERTY.toString());
+        final RdfsResource resource = new RdfsResource(
+                URI.create(RDFS.LABEL.toString()),
+                new LangString("Label", Environment.LANGUAGE),
+                new LangString("Label specification", Environment.LANGUAGE),
+                RDF.PROPERTY.toString());
         transactional(() -> sut.persist(resource));
 
         final RdfsResource result = em.find(RdfsResource.class, resource.getUri());
@@ -263,9 +272,12 @@ class DataDaoTest extends BaseDaoTestRunner {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             assertNotNull(result);
             assertTrue(result.getMediaType().isPresent());
-            assertEquals(ExportFormat.TURTLE.getMediaType(), result.getMediaType().get());
+            assertEquals(
+                    ExportFormat.TURTLE.getMediaType(), result.getMediaType().get());
             assertTrue(result.getFileExtension().isPresent());
-            assertEquals(ExportFormat.TURTLE.getFileExtension(), result.getFileExtension().get());
+            assertEquals(
+                    ExportFormat.TURTLE.getFileExtension(),
+                    result.getFileExtension().get());
         });
     }
 
@@ -276,12 +288,15 @@ class DataDaoTest extends BaseDaoTestRunner {
         readOnlyTransactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             final Model model = parseExportToModel(result);
-            assertAll(() -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_has_first_name), RDFS.LABEL,
-                                                      vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE))),
-                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_has_surname), RDF.TYPE,
-                                                      vf.createIRI(OWL.DATATYPE_PROPERTY))),
-                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_has_username), RDF.TYPE,
-                                                      vf.createIRI(OWL.DATATYPE_PROPERTY))));
+            assertAll(
+                    () -> assertTrue(model.contains(
+                            vf.createIRI(Vocabulary.s_p_has_first_name),
+                            RDFS.LABEL,
+                            vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE))),
+                    () -> assertTrue(model.contains(
+                            vf.createIRI(Vocabulary.s_p_has_surname), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY))),
+                    () -> assertTrue(model.contains(
+                            vf.createIRI(Vocabulary.s_p_has_username), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY))));
         });
     }
 
@@ -293,8 +308,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(SKOS.CONCEPT, RDFS.LABEL, vf.createLiteral("Term"),
-                               vf.createIRI(context.toString()));
+                connection.add(SKOS.CONCEPT, RDFS.LABEL, vf.createLiteral("Term"), vf.createIRI(context.toString()));
                 connection.commit();
             }
         });
@@ -324,8 +338,9 @@ class DataDaoTest extends BaseDaoTestRunner {
         generateLabelTranslations();
         final List<RdfsResource> result = sut.findAllProperties();
         assertFalse(result.isEmpty());
-        final Optional<RdfsResource> firstName = result.stream().filter(r -> r.getUri().equals(URI.create(
-                Vocabulary.s_p_has_first_name))).findAny();
+        final Optional<RdfsResource> firstName = result.stream()
+                .filter(r -> r.getUri().equals(URI.create(Vocabulary.s_p_has_first_name)))
+                .findAny();
         assertTrue(firstName.isPresent());
         assertEquals(2, firstName.get().getLabel().getLanguages().size());
     }
@@ -335,8 +350,10 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(Vocabulary.s_p_has_first_name), RDFS.LABEL,
-                               vf.createLiteral("Má křestní jméno", "cs"));
+                connection.add(
+                        vf.createIRI(Vocabulary.s_p_has_first_name),
+                        RDFS.LABEL,
+                        vf.createLiteral("Má křestní jméno", "cs"));
             }
         });
     }
@@ -349,18 +366,17 @@ class DataDaoTest extends BaseDaoTestRunner {
         final List<Quad> quads = List.of(
                 new Quad(termOne, URI.create(RDF.TYPE.stringValue()), URI.create(SKOS.CONCEPT.stringValue()), context),
                 new Quad(termTwo, URI.create(RDF.TYPE.stringValue()), URI.create(SKOS.CONCEPT.stringValue()), context),
-                new Quad(termOne, URI.create(SKOS.RELATED.stringValue()), termTwo, context)
-        );
+                new Quad(termOne, URI.create(SKOS.RELATED.stringValue()), termTwo, context));
 
         transactional(() -> sut.insertRawData(quads));
-        readOnlyTransactional(() -> assertTrue(
-                em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x a ?type . ?y a ?type . ?x ?related ?y . } }",
-                                     Boolean.class)
-                  .setParameter("x", termOne)
-                  .setParameter("y", termTwo)
-                  .setParameter("ctx", context)
-                  .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
-                  .setParameter("type", URI.create(SKOS.CONCEPT.stringValue())).getSingleResult()));
+        readOnlyTransactional(() -> assertTrue(em.createNativeQuery(
+                        "ASK WHERE { GRAPH ?ctx { ?x a ?type . ?y a ?type . ?x ?related ?y . } }", Boolean.class)
+                .setParameter("x", termOne)
+                .setParameter("y", termTwo)
+                .setParameter("ctx", context)
+                .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
+                .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
+                .getSingleResult()));
     }
 
     @Test
@@ -410,11 +426,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     private static Statement statement(Resource subject, IRI predicate, Value object, Resource context) {
-        return Values.getValueFactory().createStatement(
-                subject,
-                predicate,
-                object,
-                context);
+        return Values.getValueFactory().createStatement(subject, predicate, object, context);
     }
 
     @Test
@@ -431,22 +443,12 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         withStatements(
                 // term a skos:Concept
-                statement(termIri,
-                        RDF.TYPE,
-                        SKOS.CONCEPT,
-                        context),
+                statement(termIri, RDF.TYPE, SKOS.CONCEPT, context),
 
                 // term attribute value
-                statement(termIri,
-                        Values.iri(attribute.getUri().toString()),
-                        value,
-                        context),
+                statement(termIri, Values.iri(attribute.getUri().toString()), value, context),
                 // context is a vocabulary
-                statement(context,
-                        RDF.TYPE,
-                        Values.iri(Vocabulary_.entityClassIRI.toString()),
-                        context)
-        );
+                statement(context, RDF.TYPE, Values.iri(Vocabulary_.entityClassIRI.toString()), context));
 
         transactional(() -> {
             final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
@@ -475,24 +477,13 @@ class DataDaoTest extends BaseDaoTestRunner {
         final Value value = Values.literal("Custom attribute value");
 
         // termOne skos:related termTwo
-        final Triple subjectTriple = Values.triple(
-                termOne,
-                SKOS.RELATED,
-                termTwo
-        );
+        final Triple subjectTriple = Values.triple(termOne, SKOS.RELATED, termTwo);
 
         withStatements(
                 // triple attribute value
-                statement(subjectTriple,
-                        Values.iri(attribute.getUri().toString()),
-                        value,
-                        context),
+                statement(subjectTriple, Values.iri(attribute.getUri().toString()), value, context),
                 // context is a vocabulary
-                statement(context,
-                        RDF.TYPE,
-                        Values.iri(Vocabulary_.entityClassIRI.toString()),
-                        context)
-        );
+                statement(context, RDF.TYPE, Values.iri(Vocabulary_.entityClassIRI.toString()), context));
 
         transactional(() -> {
             final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
@@ -529,31 +520,17 @@ class DataDaoTest extends BaseDaoTestRunner {
         final IRI termTwo = Values.iri(Generator.generateUri().toString());
         final IRI context = Values.iri(Generator.generateUri().toString());
 
-
         withStatements(
                 // one usage of unrelated attribute
-                statement(termOne,
-                        Values.iri(unrelated.getUri().toString()),
-                        Values.literal("unrelated value"),
-                        context),
+                statement(
+                        termOne, Values.iri(unrelated.getUri().toString()), Values.literal("unrelated value"), context),
 
                 // two usages of attribute
-                statement(termOne,
-                        Values.iri(attribute.getUri().toString()),
-                        Values.literal("B value one"),
-                        context),
-
-                statement(termTwo,
-                        Values.iri(attribute.getUri().toString()),
-                        Values.literal("B value two"),
-                        context),
+                statement(termOne, Values.iri(attribute.getUri().toString()), Values.literal("B value one"), context),
+                statement(termTwo, Values.iri(attribute.getUri().toString()), Values.literal("B value two"), context),
 
                 // context is a vocabulary
-                statement(context,
-                        RDF.TYPE,
-                        Values.iri(Vocabulary_.entityClassIRI.toString()),
-                        context)
-        );
+                statement(context, RDF.TYPE, Values.iri(Vocabulary_.entityClassIRI.toString()), context));
 
         transactional(() -> {
             final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
@@ -575,20 +552,9 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         withStatements(
                 // term a skos:Concept
-                statement(
-                        termIri,
-                        RDF.TYPE,
-                        SKOS.CONCEPT,
-                        context
-                ),
+                statement(termIri, RDF.TYPE, SKOS.CONCEPT, context),
                 // term attribute value
-                statement(
-                        termIri,
-                        Values.iri(attribute.getUri().toString()),
-                        value,
-                        context
-                )
-        );
+                statement(termIri, Values.iri(attribute.getUri().toString()), value, context));
 
         transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
 
@@ -596,11 +562,12 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(0, usage.getTotalElements());
 
-            boolean typeAssertionExists = em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x a ?type . } }", Boolean.class)
-              .setParameter("x", URI.create(termIri.stringValue()))
-              .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
-              .setParameter("ctx", URI.create(context.stringValue()))
-              .getSingleResult();
+            boolean typeAssertionExists = em.createNativeQuery(
+                            "ASK WHERE { GRAPH ?ctx { ?x a ?type . } }", Boolean.class)
+                    .setParameter("x", URI.create(termIri.stringValue()))
+                    .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
+                    .setParameter("ctx", URI.create(context.stringValue()))
+                    .getSingleResult();
             assertTrue(typeAssertionExists);
         });
     }
@@ -621,12 +588,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         final Value value = Values.literal("Custom attribute value");
 
         // termOne skos:related termTwo
-        final Statement subjectStatement = statement(
-                termOne,
-                Values.iri(relation.toString()),
-                termTwo,
-                context
-        );
+        final Statement subjectStatement = statement(termOne, Values.iri(relation.toString()), termTwo, context);
 
         withStatements(
                 subjectStatement,
@@ -635,9 +597,7 @@ class DataDaoTest extends BaseDaoTestRunner {
                         Values.triple(subjectStatement),
                         Values.iri(attribute.getUri().toString()),
                         value,
-                        context
-                )
-        );
+                        context));
 
         transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
 
@@ -645,12 +605,13 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(0, usage.getTotalElements());
 
-            final boolean relatedStatementExists = em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x ?related ?y . } }", Boolean.class)
-                                                     .setParameter("x", URI.create(termOne.stringValue()))
-                                                     .setParameter("y", URI.create(termTwo.stringValue()))
-                                                     .setParameter("related", relation)
-                                                     .setParameter("ctx", URI.create(context.stringValue()))
-                                                     .getSingleResult();
+            final boolean relatedStatementExists = em.createNativeQuery(
+                            "ASK WHERE { GRAPH ?ctx { ?x ?related ?y . } }", Boolean.class)
+                    .setParameter("x", URI.create(termOne.stringValue()))
+                    .setParameter("y", URI.create(termTwo.stringValue()))
+                    .setParameter("related", relation)
+                    .setParameter("ctx", URI.create(context.stringValue()))
+                    .getSingleResult();
             assertTrue(relatedStatementExists);
         });
     }
@@ -660,19 +621,12 @@ class DataDaoTest extends BaseDaoTestRunner {
                 Values.iri(Generator.generateUriString()),
                 Values.iri(attribute.getUri().toString()),
                 Values.literal("usageValue"),
-                context
-        );
+                context);
 
         transactional(() -> em.persist(attribute));
         withStatements(
-                statement(
-                        context,
-                        RDF.TYPE,
-                        Values.iri(Vocabulary.s_c_version_of_vocabulary),
-                        context
-                ),
-                attributeUsageStatement
-        );
+                statement(context, RDF.TYPE, Values.iri(Vocabulary.s_c_version_of_vocabulary), context),
+                attributeUsageStatement);
     }
 
     @Test
@@ -710,7 +664,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     private static CustomAttribute createCustomAttribute() {
-        return new CustomAttribute(Generator.generateUri(),
-                MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
+        return new CustomAttribute(
+                Generator.generateUri(), MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
     }
 }

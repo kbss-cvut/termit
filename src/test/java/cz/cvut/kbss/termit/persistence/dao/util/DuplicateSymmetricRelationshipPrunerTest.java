@@ -43,12 +43,16 @@ class DuplicateSymmetricRelationshipPrunerTest extends BaseDaoTestRunner {
                 conn.commit();
             }
         });
-        assertEquals(2, em.createNativeQuery(
-                "SELECT (COUNT(*) as ?cnt) WHERE { ?x <http://www.w3.org/2004/02/skos/core#exactMatch> ?y }",
-                Integer.class).getSingleResult());
+        assertEquals(
+                2,
+                em.createNativeQuery(
+                                "SELECT (COUNT(*) as ?cnt) WHERE { ?x <http://www.w3.org/2004/02/skos/core#exactMatch> ?y }",
+                                Integer.class)
+                        .getSingleResult());
         assertTrue(em.createNativeQuery(
-                "ASK WHERE { <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/1> <http://www.w3.org/2004/02/skos/core#exactMatch> <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/3> }",
-                Boolean.class).getSingleResult());
+                        "ASK WHERE { <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/1> <http://www.w3.org/2004/02/skos/core#exactMatch> <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/3> }",
+                        Boolean.class)
+                .getSingleResult());
     }
 
     @Test
@@ -72,11 +76,15 @@ class DuplicateSymmetricRelationshipPrunerTest extends BaseDaoTestRunner {
                 conn.commit();
             }
         });
-        assertEquals(2, em.createNativeQuery(
-                "SELECT (COUNT(*) as ?cnt) WHERE { ?x <http://www.w3.org/2004/02/skos/core#exactMatch> ?y }",
-                Integer.class).getSingleResult());
+        assertEquals(
+                2,
+                em.createNativeQuery(
+                                "SELECT (COUNT(*) as ?cnt) WHERE { ?x <http://www.w3.org/2004/02/skos/core#exactMatch> ?y }",
+                                Integer.class)
+                        .getSingleResult());
         assertTrue(em.createNativeQuery(
-                "ASK WHERE { <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/1> <http://www.w3.org/2004/02/skos/core#exactMatch> <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/3> }",
-                Boolean.class).getSingleResult());
+                        "ASK WHERE { <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/1> <http://www.w3.org/2004/02/skos/core#exactMatch> <http://onto.fel.cvut.cz/ontologies/slovnik/pojem/3> }",
+                        Boolean.class)
+                .getSingleResult());
     }
 }

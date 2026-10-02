@@ -28,17 +28,17 @@ import java.util.stream.Stream;
 @Component
 public class RollbackValidator {
     private static final Class<?>[] LITERAL_CLASSES = {
-            // not including URI - can represent a reference to another entity
-            Number.class,
-            String.class, // TermIt is not using Strings as identifiers
-            Boolean.class,
-            Temporal.class,
-            Date.class,
-            TemporalAmount.class,
-            UUID.class,
-            MultilingualString.class,
-            Void.TYPE,
-            Void.class
+        // not including URI - can represent a reference to another entity
+        Number.class,
+        String.class, // TermIt is not using Strings as identifiers
+        Boolean.class,
+        Temporal.class,
+        Date.class,
+        TemporalAmount.class,
+        UUID.class,
+        MultilingualString.class,
+        Void.TYPE,
+        Void.class
     };
 
     private final ChangeRollbackDao changeRollbackDao;
@@ -62,9 +62,10 @@ public class RollbackValidator {
             return true;
         }
 
-        final Class<?> javaFieldValueClass = changeRollbackDao.resolveClassAttribute(entityClass, record)
-                                                              .map(Attribute::getValueJavaType)
-                                                              .orElse(null);
+        final Class<?> javaFieldValueClass = changeRollbackDao
+                .resolveClassAttribute(entityClass, record)
+                .map(Attribute::getValueJavaType)
+                .orElse(null);
 
         // Java Entity class has field matching the changed attribute
         if (javaFieldValueClass != null) {
@@ -129,7 +130,8 @@ public class RollbackValidator {
      * @return {@code true} if the custom attribute exists and its range permits rollback, {@code false} otherwise
      */
     private boolean canRollbackNativeProperty(UpdateChangeRecord record) {
-        return dataRepositoryService.findCustomAttribute(record.getChangedAttribute())
+        return dataRepositoryService
+                .findCustomAttribute(record.getChangedAttribute())
                 .map(attr -> canRollbackCustomAttributeWithReferenceRange(attr, record))
                 .orElse(false); // custom attribute does not exist
     }

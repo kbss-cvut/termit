@@ -90,20 +90,26 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
     @OWLObjectProperty(iri = SKOS.RELATED_MATCH, fetch = FetchType.EAGER)
     private Set<TermInfo> relatedMatch;
 
-    // Terms from a different vocabulary related by the virtue of relatedMatch being symmetric, i.e. those that assert relation with this term
+    // Terms from a different vocabulary related by the virtue of relatedMatch being symmetric, i.e. those that assert
+    // relation with this term
     // Loaded outside of JOPA entity loading mechanism
     @Transient
     @JsonIgnore
     private Set<TermInfo> inverseRelatedMatch;
 
     @Inferred
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_definition_source, fetch = FetchType.EAGER)
+    @OWLObjectProperty(
+            iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_has_term_definition_source,
+            fetch = FetchType.EAGER)
     private TermDefinitionSource definitionSource;
 
     /**
      * Parent terms from the same vocabulary.
      */
-    @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
+    @OWLObjectProperty(
+            iri = SKOS.BROADER,
+            fetch = FetchType.EAGER,
+            cascade = {CascadeType.DETACH})
     private Set<TermInfo> parentTerms;
 
     /**
@@ -112,14 +118,16 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
      * Represents the {@code skos:broadMatch} property.
      */
     @JsonIgnore
-    @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
+    @OWLObjectProperty(
+            iri = SKOS.BROAD_MATCH,
+            fetch = FetchType.EAGER,
+            cascade = {CascadeType.DETACH})
     private Set<TermInfo> externalParentTerms;
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<Object>> properties;
 
-    public Term() {
-    }
+    public Term() {}
 
     public Term(URI uri) {
         setUri(uri);
@@ -352,7 +360,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
      * term at all.
      */
     public boolean hasParentInSameVocabulary() {
-        return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
+        return parentTerms != null
+                && parentTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
     }
 
     /**

@@ -131,7 +131,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> sut.addRootTermToVocabulary(term, vocabulary));
 
         readOnlyTransactional(() -> {
-            // Need to put in transaction, otherwise EM delegate is closed after find and lazy loading of glossary terms does not work
+            // Need to put in transaction, otherwise EM delegate is closed after find and lazy loading of glossary terms
+            // does not work
             final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
             assertNotNull(result);
             assertTrue(result.getRootTerms().contains(term.getUri()));
@@ -165,10 +166,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         term.getLabel().remove(Environment.LANGUAGE);
 
         final ValidationException exception =
-                assertThrows(
-                        ValidationException.class, () -> sut.addRootTermToVocabulary(term, vocabulary));
-        assertThat(exception.getMessage(),
-                   containsString("label in the primary vocabulary language must not be blank"));
+                assertThrows(ValidationException.class, () -> sut.addRootTermToVocabulary(term, vocabulary));
+        assertThat(
+                exception.getMessage(), containsString("label in the primary vocabulary language must not be blank"));
     }
 
     @Test
@@ -180,8 +180,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Term term2 = Generator.generateTerm();
         term2.setUri(uri);
-        assertThrows(
-                ResourceExistsException.class, () -> sut.addRootTermToVocabulary(term2, vocabulary));
+        assertThrows(ResourceExistsException.class, () -> sut.addRootTermToVocabulary(term2, vocabulary));
     }
 
     @Test
@@ -360,8 +359,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         child.setVocabulary(vocabulary.getUri());
         sut.update(child);
 
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                                          descriptorFactory.vocabularyDescriptor(vocabulary));
+        final Vocabulary result =
+                em.find(Vocabulary.class, vocabulary.getUri(), descriptorFactory.vocabularyDescriptor(vocabulary));
         assertThat(result.getRootTerms(), hasItem(parent.getUri()));
         assertThat(result.getRootTerms(), not(hasItem(child.getUri())));
     }
@@ -382,8 +381,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         child.setParentTerms(null);
         sut.update(child);
 
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                                          descriptorFactory.vocabularyDescriptor(vocabulary));
+        final Vocabulary result =
+                em.find(Vocabulary.class, vocabulary.getUri(), descriptorFactory.vocabularyDescriptor(vocabulary));
         assertThat(result.getRootTerms(), hasItems(parent.getUri(), child.getUri()));
     }
 
@@ -397,8 +396,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term result = em.find(Term.class, childTerm.getUri(), descriptorFactory.termDescriptor(childVocabulary));
         assertEquals(childTerm, result);
         assertEquals(childVocabulary.getUri(), childTerm.getVocabulary());
-        final Vocabulary childVocabulary = em.find(Vocabulary.class, this.childVocabulary.getUri(),
-                                                   descriptorFactory.vocabularyDescriptor(this.childVocabulary));
+        final Vocabulary childVocabulary = em.find(
+                Vocabulary.class,
+                this.childVocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(this.childVocabulary));
         assertThat(childVocabulary.getRootTerms(), hasItem(childTerm.getUri()));
     }
 
@@ -423,7 +424,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertThat(childTerm.getUri().toString(), startsWith(childVocabulary.getUri().toString()));
+        assertThat(
+                childTerm.getUri().toString(),
+                startsWith(childVocabulary.getUri().toString()));
     }
 
     @Test
@@ -433,8 +436,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertThat(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections
-                .emptyList()), hasItem(new TermDto(childTerm)));
+        assertThat(
+                sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()),
+                hasItem(new TermDto(childTerm)));
         final Vocabulary result = em.find(Vocabulary.class, childVocabulary.getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -458,7 +462,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setExternalParentTerms(Collections.singleton(new TermInfo(newParentTerm)));
         sut.update(childTerm);
         assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
-                      .contains(new TermDto(childTerm)));
+                .contains(new TermDto(childTerm)));
         final Vocabulary result = em.find(Vocabulary.class, childVocabulary.getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -490,9 +494,11 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false));
 
         final Term updatedParent = sut.findRequired(parent.getUri());
-        assertFalse(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(toRemove)::equals),
+        assertFalse(
+                updatedParent.getSubTerms().stream().anyMatch(new TermInfo(toRemove)::equals),
                 "Term to remove must be removed from its parent");
-        assertTrue(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(child)::equals),
+        assertTrue(
+                updatedParent.getSubTerms().stream().anyMatch(new TermInfo(child)::equals),
                 "Child of removed term must be reconnected to the parent");
     }
 
@@ -517,8 +523,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNull(em.find(Term.class, parent.getUri()));
         assertNull(em.find(Term.class, child.getUri()));
         assertNull(em.find(Term.class, grandChild.getUri()));
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                descriptorFactory.vocabularyDescriptor(vocabulary));
+        final Vocabulary result =
+                em.find(Vocabulary.class, vocabulary.getUri(), descriptorFactory.vocabularyDescriptor(vocabulary));
         assertTrue(result.getRootTerms().isEmpty());
     }
 
@@ -539,8 +545,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addRootTerm(referencing);
         vocabulary.addRootTerm(toRemove);
 
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
-                new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ =
+                new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
         if (suggested) {
             occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
         }
@@ -565,7 +571,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> {
             sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
-            assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri),
+            assertNotNull(
+                    em.find(TermDefinitionalOccurrence.class, occurrenceUri),
                     "Occurrences must remain until the outer transaction commits");
             verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
         });
@@ -581,7 +588,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> {
             sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
-            assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri),
+            assertNotNull(
+                    em.find(TermDefinitionalOccurrence.class, occurrenceUri),
                     "Occurrences must remain until the outer transaction commits");
             verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
         });
@@ -595,7 +603,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final URI occurrenceUri = Generator.generateUri();
         final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
 
-        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
+        final AssetRemovalException exception = assertThrows(
+                AssetRemovalException.class,
                 () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, false, false)));
 
         verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
@@ -639,8 +648,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             generateRelatedInverse(related, toRemove, Environment.BASE_URI + "/different-example-custom-attribute");
         });
 
-        return List.of(sut.findRequired(toRemove.getUri()),
-                sut.findRequired(related.getUri()));
+        return List.of(sut.findRequired(toRemove.getUri()), sut.findRequired(related.getUri()));
     }
 
     @Test
@@ -650,9 +658,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term related = terms.getLast();
         assertNotEquals(toRemove, related);
 
-        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
-                () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
-                                false, false)));
+        final AssetRemovalException exception = assertThrows(
+                AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, false, false)));
         assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
         // none of the terms must be removed because of the exception
         assertNotNull(em.find(Term.class, toRemove.getUri()));
@@ -666,8 +674,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term related = terms.getLast();
         assertNotEquals(toRemove, related);
 
-        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
-                        false, true));
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, false, true));
 
         assertNull(em.find(Term.class, toRemove.getUri()), "The term must be removed");
         assertNotNull(em.find(Term.class, related.getUri()), "The other term must not be removed");
@@ -684,11 +691,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         sut.remove(new TermRemovalParams(root, SubTermRemovalStrategy.RECONNECT, false, false));
 
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                descriptorFactory.vocabularyDescriptor(vocabulary));
-        assertTrue(result.getRootTerms().contains(child.getUri()),
-                "Child of removed root term must become a root term");
-        assertTrue(result.getRootTerms().contains(childB.getUri()),
+        final Vocabulary result =
+                em.find(Vocabulary.class, vocabulary.getUri(), descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertTrue(
+                result.getRootTerms().contains(child.getUri()), "Child of removed root term must become a root term");
+        assertTrue(
+                result.getRootTerms().contains(childB.getUri()),
                 "Second child of removed root term must become a root term");
     }
 
@@ -696,8 +704,11 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(property), vf
-                    .createIRI(term.getUri().toString()), vf.createIRI(related.getVocabulary().toString()));
+            conn.add(
+                    vf.createIRI(related.getUri().toString()),
+                    vf.createIRI(property),
+                    vf.createIRI(term.getUri().toString()),
+                    vf.createIRI(related.getVocabulary().toString()));
         }
     }
 
@@ -872,13 +883,21 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
-                assertTrue(conn.hasStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term), null, false,
-                                             vf.createIRI(vocabulary.getUri().toString())));
-                assertEquals(1,
-                             conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term), null).stream()
-                                 .count());
+                assertTrue(conn.hasStatement(
+                        vf.createIRI(term.getUri().toString()),
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term),
+                        null,
+                        false,
+                        vf.createIRI(vocabulary.getUri().toString())));
+                assertEquals(
+                        1,
+                        conn
+                                .getStatements(
+                                        vf.createIRI(term.getUri().toString()),
+                                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term),
+                                        null)
+                                .stream()
+                                .count());
             }
         });
     }
@@ -925,7 +944,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
         term.getLabel().set(Environment.LANGUAGE, "update");
         term.getLabel().set("cs", "");
-        final MultilingualString expected = new MultilingualString(term.getLabel().getValue());
+        final MultilingualString expected =
+                new MultilingualString(term.getLabel().getValue());
         expected.remove("cs");
         transactional(() -> sut.update(term));
 
@@ -938,7 +958,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.getDefinition().set(Environment.LANGUAGE, "   ");
         term.getDefinition().set("cs", "Test");
-        final MultilingualString expected = new MultilingualString(term.getDefinition().getValue());
+        final MultilingualString expected =
+                new MultilingualString(term.getDefinition().getValue());
         expected.remove(Environment.LANGUAGE);
 
         sut.addRootTermToVocabulary(term, vocabulary);
@@ -959,9 +980,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(term);
         assertNull(em.find(Term.class, term.getUri()));
         assertFalse(em.createNativeQuery("ASK { ?glossary ?hasTopConcept ?term . }", Boolean.class)
-                      .setParameter("glossary", vocabulary)
-                      .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
-                      .setParameter("term", term).getSingleResult());
+                .setParameter("glossary", vocabulary)
+                .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
+                .setParameter("term", term)
+                .getSingleResult());
     }
 
     @Test
@@ -989,8 +1011,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addRootTerm(toRemove);
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.addRootTerm(referencing);
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
-                                                                  new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ =
+                new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {
             em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
@@ -1011,8 +1033,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addRootTerm(toRemove);
         final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.addRootTerm(referencing);
-        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
-                                                                  new DefinitionalOccurrenceTarget(referencing));
+        final TermOccurrence occ =
+                new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
         occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
         occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         transactional(() -> {
@@ -1025,7 +1047,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> {
             assertDoesNotThrow(() -> sut.remove(toRemove));
-            assertNotNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()),
+            assertNotNull(
+                    em.find(TermDefinitionalOccurrence.class, occ.getUri()),
                     "Occurrences must remain until the outer transaction commits");
         });
         assertNull(em.find(Term.class, toRemove.getUri()));
@@ -1045,11 +1068,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findRequiredWithPopulatedCustomAttributesLoadsTermAndReplacesTermReferencesWithTermInfoInstanceInUnmappedProperties() {
+    void
+            findRequiredWithPopulatedCustomAttributesLoadsTermAndReplacesTermReferencesWithTermInfoInstanceInUnmappedProperties() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         final Term referenced = Generator.generateTermWithId(vocabulary.getUri());
-        final CustomAttribute customAtt = new CustomAttribute(Generator.generateUri(),
-                                                              MultilingualString.create("Test att", "en"), null);
+        final CustomAttribute customAtt =
+                new CustomAttribute(Generator.generateUri(), MultilingualString.create("Test att", "en"), null);
         customAtt.setDomain(URI.create(SKOS.CONCEPT));
         customAtt.setRange(URI.create(SKOS.CONCEPT));
         term.setProperties(Map.of(customAtt.getUri().toString(), Set.of(referenced.getUri())));
@@ -1062,7 +1086,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term result = sut.findRequiredWithPopulatedCustomAttributes(term.getUri());
         assertNotNull(result);
         assertThat(result.getProperties(), hasKey(customAtt.getUri().toString()));
-        assertEquals(Set.of(new TermInfo(referenced)), result.getProperties().get(customAtt.getUri().toString()));
+        assertEquals(
+                Set.of(new TermInfo(referenced)),
+                result.getProperties().get(customAtt.getUri().toString()));
     }
 
     @Test

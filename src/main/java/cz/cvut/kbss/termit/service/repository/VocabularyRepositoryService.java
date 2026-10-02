@@ -82,9 +82,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     private final DtoMapper dtoMapper;
 
     @Autowired
-    public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
-                                       Validator validator, Configuration config, VocabularyImporters importers,
-                                       VocabularyNamespaceResolver namespaceResolver, DtoMapper dtoMapper) {
+    public VocabularyRepositoryService(
+            VocabularyDao vocabularyDao,
+            IdentifierResolver idResolver,
+            Validator validator,
+            Configuration config,
+            VocabularyImporters importers,
+            VocabularyNamespaceResolver namespaceResolver,
+            DtoMapper dtoMapper) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
@@ -138,11 +143,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             return;
         }
         final Document doc = new Document();
-        doc.setUri(idResolver.generateIdentifier(vocabulary.getUri().toString(),
-                                                 Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
-        doc.setLabel(
-                new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
-                                                                                          vocabulary.getPrimaryLabel()));
+        doc.setUri(idResolver.generateIdentifier(
+                vocabulary.getUri().toString(), Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
+        doc.setLabel(new MessageFormatter(config.getPersistence().getLanguage())
+                .formatMessage("vocabulary.document.label", vocabulary.getPrimaryLabel()));
         vocabulary.setDocument(doc);
     }
 
@@ -168,21 +172,23 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     private void verifyVocabularyImports(Vocabulary update, Vocabulary original) {
         final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
         removedImports.removeAll(Utils.emptyIfNull(update.getImportedVocabularies()));
-        final Set<URI> invalid = removedImports.stream().filter(ri -> vocabularyDao
-                .hasHierarchyBetweenTerms(update.getUri(), ri)).collect(
-                Collectors.toSet());
+        final Set<URI> invalid = removedImports.stream()
+                .filter(ri -> vocabularyDao.hasHierarchyBetweenTerms(update.getUri(), ri))
+                .collect(Collectors.toSet());
         if (!invalid.isEmpty()) {
-            throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
-                                                        ", there are still relationships between terms.",
-                                                "error.vocabulary.update.imports.danglingTermReferences");
+            throw new VocabularyImportException(
+                    "Cannot remove imports of vocabularies " + invalid
+                            + ", there are still relationships between terms.",
+                    "error.vocabulary.update.imports.danglingTermReferences");
         }
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#instance)")
-    @Caching(evict = {
-            @CacheEvict(allEntries = true, cacheNames = "vocabularies"),
-            @CacheEvict(key = "#instance.getUri()", cacheNames = "vocabularyNamespace")
-    })
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true, cacheNames = "vocabularies"),
+                @CacheEvict(key = "#instance.getUri()", cacheNames = "vocabularyNamespace")
+            })
     @Override
     @Transactional
     public Vocabulary update(Vocabulary instance) {
@@ -212,8 +218,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @return List of change records, ordered by date in descending order
      */
     @Transactional(readOnly = true)
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
-                                                                  Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(
+            Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         return vocabularyDao.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
@@ -222,8 +228,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
         Objects.requireNonNull(file);
         return importVocabularyFromFile(
-                new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument),
-                file);
+                new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument), file);
     }
 
     @CacheEvict(allEntries = true, cacheNames = "vocabularies")
@@ -232,8 +237,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(file);
         return importVocabularyFromFile(
-                new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
-                file);
+                new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument), file);
     }
 
     @CacheEvict(allEntries = true, cacheNames = "vocabularies")
@@ -246,12 +250,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                 new VocabularyImporter.ImportInput(contentType, inputStream));
     }
 
-    private Vocabulary importVocabularyFromFile(VocabularyImporter.ImportConfiguration configuration, MultipartFile file) {
+    private Vocabulary importVocabularyFromFile(
+            VocabularyImporter.ImportConfiguration configuration, MultipartFile file) {
         try {
             String contentType = Utils.resolveContentType(file);
             return importVocabulary(
-                    configuration,
-                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
+                    configuration, new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
         }
@@ -265,7 +269,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @see #importers#importVocabulary(VocabularyImporter.ImportConfiguration, VocabularyImporter.ImportInput)
      * @return The imported vocabualry
      */
-    private Vocabulary importVocabulary(VocabularyImporter.ImportConfiguration configuration, VocabularyImporter.ImportInput input) {
+    private Vocabulary importVocabulary(
+            VocabularyImporter.ImportConfiguration configuration, VocabularyImporter.ImportInput input) {
         try {
             final Vocabulary imported = importers.importVocabulary(configuration, input);
             vocabularyDao.evictCache(imported);
@@ -284,8 +289,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(file);
         try {
             String contentType = Utils.resolveContentType(file);
-            return importers.importTermTranslations(vocabularyIri, new VocabularyImporter.ImportInput(contentType,
-                                                                                                      file.getInputStream()));
+            return importers.importTermTranslations(
+                    vocabularyIri, new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
@@ -305,10 +310,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * </ul>
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
-    @Caching(evict = {
-            @CacheEvict(allEntries = true, cacheNames = "vocabularies"),
-            @CacheEvict(key = "#instance.getUri()", cacheNames = "vocabularyNamespace")
-    })
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true, cacheNames = "vocabularies"),
+                @CacheEvict(key = "#instance.getUri()", cacheNames = "vocabularyNamespace")
+            })
     @Transactional
     @Override
     public void remove(Vocabulary instance) {
@@ -340,9 +346,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     private void ensureNotImported(Vocabulary vocabulary) throws AssetRemovalException {
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(vocabulary);
         if (!vocabularies.isEmpty()) {
-            throw new AssetRemovalException(
-                    "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                            + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
+            throw new AssetRemovalException("Vocabulary cannot be removed. It is referenced from other vocabularies: "
+                    + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
         }
     }
 
@@ -373,7 +378,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getVocabularyRelations(vocabulary, excludedRelations);
     }
 
-
     @Transactional(readOnly = true)
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
         return vocabularyDao.findSnapshots(vocabulary);
@@ -381,8 +385,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Transactional(readOnly = true)
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
-        return vocabularyDao.findVersionValidAt(vocabulary, at)
-                            .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
+        return vocabularyDao
+                .findVersionValidAt(vocabulary, at)
+                .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
     }
 
     /**

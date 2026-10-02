@@ -60,8 +60,11 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     private final TermOccurrenceSelectorCreator selectorCreator;
 
     @Autowired
-    public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao, TermDao termDao,
-                                           ResourceDao resourceDao, TermOccurrenceSelectorCreator selectorCreator) {
+    public TermOccurrenceRepositoryService(
+            TermOccurrenceDao termOccurrenceDao,
+            TermDao termDao,
+            ResourceDao resourceDao,
+            TermOccurrenceSelectorCreator selectorCreator) {
         this.termOccurrenceDao = termOccurrenceDao;
         this.termDao = termDao;
         this.resourceDao = resourceDao;
@@ -74,16 +77,17 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     public void persist(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         checkTermExists(occurrence);
-        if (!termDao.exists(occurrence.getTarget().getSource()) && !resourceDao.exists(
-                occurrence.getTarget().getSource())) {
-            throw new ValidationException(
-                    "Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
+        if (!termDao.exists(occurrence.getTarget().getSource())
+                && !resourceDao.exists(occurrence.getTarget().getSource())) {
+            throw new ValidationException("Occurrence references an unknown asset "
+                    + Utils.uriToString(occurrence.getTarget().getSource()));
         }
         if (occurrence.getElementAbout() != null) {
             LOG.trace("Generating selectors for new term occurrence with ID '{}'.", occurrence.getUri());
-            occurrence.getTarget()
-                      .setSelectors(
-                              selectorCreator.createSelectors(occurrence.getTarget(), occurrence.getElementAbout()));
+            occurrence
+                    .getTarget()
+                    .setSelectors(
+                            selectorCreator.createSelectors(occurrence.getTarget(), occurrence.getElementAbout()));
         }
         termOccurrenceDao.persist(occurrence);
     }
@@ -121,8 +125,9 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     @Override
     public void approve(URI occurrenceId) {
         Objects.requireNonNull(occurrenceId);
-        final TermOccurrence toApprove = termOccurrenceDao.find(occurrenceId).orElseThrow(
-                () -> NotFoundException.create(TermOccurrence.class, occurrenceId));
+        final TermOccurrence toApprove = termOccurrenceDao
+                .find(occurrenceId)
+                .orElseThrow(() -> NotFoundException.create(TermOccurrence.class, occurrenceId));
         LOG.trace("Approving term occurrence {}", toApprove);
         toApprove.markApproved();
     }

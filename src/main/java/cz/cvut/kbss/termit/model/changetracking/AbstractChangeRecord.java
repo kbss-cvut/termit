@@ -59,8 +59,7 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
     @Types(readOnly = true)
     private Set<String> types;
 
-    public AbstractChangeRecord() {
-    }
+    public AbstractChangeRecord() {}
 
     protected AbstractChangeRecord(Asset<?> changedEntity) {
         this.changedEntity = Objects.requireNonNull(changedEntity).getUri();
@@ -108,8 +107,7 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
         if (!(o instanceof AbstractChangeRecord that)) {
             return false;
         }
-        return Objects.equals(timestamp, that.timestamp) &&
-                Objects.equals(changedEntity, that.changedEntity);
+        return Objects.equals(timestamp, that.timestamp) && Objects.equals(changedEntity, that.changedEntity);
     }
 
     @Override
@@ -119,10 +117,10 @@ public class AbstractChangeRecord extends AbstractEntity implements Comparable<A
 
     @Override
     public String toString() {
-        return "<" + getUri() + ">" +
-                ", timestamp=" + timestamp +
-                ", author=" + author +
-                ", changedEntity=" + changedEntity;
+        return "<" + getUri() + ">" + ", timestamp="
+                + timestamp + ", author="
+                + author + ", changedEntity="
+                + changedEntity;
     }
 
     @Override

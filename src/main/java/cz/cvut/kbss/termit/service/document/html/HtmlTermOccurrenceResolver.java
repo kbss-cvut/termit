@@ -93,8 +93,11 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     private final Set<String> existingTermIds = new HashSet<>();
 
     @Autowired
-    HtmlTermOccurrenceResolver(TermRepositoryService termService, HtmlSelectorGenerators selectorGenerators,
-                               DocumentManager documentManager, Configuration config) {
+    HtmlTermOccurrenceResolver(
+            TermRepositoryService termService,
+            HtmlSelectorGenerators selectorGenerators,
+            DocumentManager documentManager,
+            Configuration config) {
         super(termService);
         this.selectorGenerators = selectorGenerators;
         this.documentManager = documentManager;
@@ -135,8 +138,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     private static Map<String, String> defaultPrefixes() {
-        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/",
-                      "termit-old", Legacy.NAMESPACE);
+        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/", "termit-old", Legacy.NAMESPACE);
     }
 
     private boolean isNotTermOccurrence(Node rdfaElem) {
@@ -175,7 +177,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         final Set<String> visited = new HashSet<>();
         final Elements elements = document.getElementsByAttribute(Constants.RDFa.ABOUT);
         LOG.trace("Found {} annotation elements in content.", elements.size());
-        final Double scoreThreshold = Double.parseDouble(config.getTextAnalysis().getTermOccurrenceMinScore());
+        final Double scoreThreshold =
+                Double.parseDouble(config.getTextAnalysis().getTermOccurrenceMinScore());
         for (Element element : elements) {
             if (isNotTermOccurrence(element)) {
                 continue;
@@ -206,7 +209,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                         } else {
                             LOG.trace(
                                     "The confidence score of occurrence {} is lower than the configured threshold {}.",
-                                    to, scoreThreshold);
+                                    to,
+                                    scoreThreshold);
                         }
                     }
                 } catch (InterruptedException e) {
@@ -315,20 +319,22 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         LOG.debug("Adding existing approved occurrences to content.");
         final Random random = new Random();
         for (TermOccurrence to : existingApprovedOccurrences) {
-            final Optional<Selector> tqSelector = to.getTarget().getSelectors().stream().filter(
-                    TextQuoteSelector.class::isInstance).findFirst();
+            final Optional<Selector> tqSelector = to.getTarget().getSelectors().stream()
+                    .filter(TextQuoteSelector.class::isInstance)
+                    .findFirst();
             if (tqSelector.isEmpty()) {
-                LOG.trace("Existing approved occurrence does not have a {}. Skipping it.",
-                          TextQuoteSelector.class.getSimpleName());
+                LOG.trace(
+                        "Existing approved occurrence does not have a {}. Skipping it.",
+                        TextQuoteSelector.class.getSimpleName());
                 continue;
             }
             final TextQuoteSelector tqs = (TextQuoteSelector) tqSelector.get();
-            final Elements containing = document.select(
-                    ":containsWholeText(" + escapeTextForSelector(
-                            tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix()) + ")");
+            final Elements containing = document.select(":containsWholeText("
+                    + escapeTextForSelector(tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix()) + ")");
             if (containing.isEmpty()) {
-                LOG.trace("{} did not find any matching elements. Skipping term occurrence.",
-                          TextQuoteSelector.class.getSimpleName());
+                LOG.trace(
+                        "{} did not find any matching elements. Skipping term occurrence.",
+                        TextQuoteSelector.class.getSimpleName());
                 continue;
             }
             // Copy the existing occurrence, so that the old one can be removed, and we do not interfere with it
@@ -339,11 +345,12 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             // Last should be the most specific one
             final Element elem = containing.last();
             assert elem != null;
-            final Elements containingExactMatch = elem.select(
-                    ":containsWholeText(" + escapeTextForSelector(tqs.getExactMatch()) + ")");
+            final Elements containingExactMatch =
+                    elem.select(":containsWholeText(" + escapeTextForSelector(tqs.getExactMatch()) + ")");
             if (containingExactMatch.isEmpty()) {
-                LOG.trace("There is no element containing the exact match string '{}'. Skipping term occurrence.",
-                          tqs.getExactMatch());
+                LOG.trace(
+                        "There is no element containing the exact match string '{}'. Skipping term occurrence.",
+                        tqs.getExactMatch());
                 continue;
             }
             final Element exactMatchElement = findFirstMostSpecificElement(containingExactMatch);
@@ -358,8 +365,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     private static String escapeTextForSelector(String content) {
-        return content.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)")
-                      .replaceAll("'", "\\\\'");
+        return content.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)").replaceAll("'", "\\\\'");
     }
 
     private Element findFirstMostSpecificElement(Elements elements) {
@@ -385,8 +391,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return annotationNode;
     }
 
-    private void replaceContentWithAnnotation(Element containingExactMatch, TextQuoteSelector tqs,
-                                              Element annotationNode) {
+    private void replaceContentWithAnnotation(
+            Element containingExactMatch, TextQuoteSelector tqs, Element annotationNode) {
         removeSuggestedOccurrences(containingExactMatch, tqs);
         joinAdjacentTextNodes(containingExactMatch);
         for (Node n : containingExactMatch.childNodes()) {
@@ -423,15 +429,16 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                     adjacentTextNodes.add(tn);
                 }
             } else {
-                final String text = adjacentTextNodes.stream().map(TextNode::getWholeText)
-                                                     .collect(Collectors.joining());
+                final String text =
+                        adjacentTextNodes.stream().map(TextNode::getWholeText).collect(Collectors.joining());
                 adjacentTextNodes.forEach(Node::remove);
                 containingExactMatch.before(new TextNode(text));
                 adjacentTextNodes.clear();
             }
         }
         if (!adjacentTextNodes.isEmpty()) {
-            final String text = adjacentTextNodes.stream().map(TextNode::getWholeText).collect(Collectors.joining());
+            final String text =
+                    adjacentTextNodes.stream().map(TextNode::getWholeText).collect(Collectors.joining());
             adjacentTextNodes.forEach(Node::remove);
             containingExactMatch.appendChild(new TextNode(text));
         }
@@ -449,9 +456,9 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             return true;
         }
         final Optional<String> probedContentType = documentManager.getContentType(sourceFile);
-        return probedContentType.isPresent() && (probedContentType.get()
-                                                                  .equals(MediaType.TEXT_HTML_VALUE) || probedContentType.get()
-                                                                                                                         .equals(MediaType.APPLICATION_XHTML_XML_VALUE));
+        return probedContentType.isPresent()
+                && (probedContentType.get().equals(MediaType.TEXT_HTML_VALUE)
+                        || probedContentType.get().equals(MediaType.APPLICATION_XHTML_XML_VALUE));
     }
 
     private static class Legacy {
