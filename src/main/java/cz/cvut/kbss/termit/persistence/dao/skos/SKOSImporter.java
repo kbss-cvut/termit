@@ -33,8 +33,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
-import jakarta.validation.constraints.NotNull;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -61,6 +59,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -76,9 +77,9 @@ import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
  * The tool to import plain SKOS thesauri.
- * <p>
- * It takes the thesauri as a TermIt glossary and 1) creates the necessary metadata (vocabulary, model) 2) generates the
- * necessary hasTopConcept relationships based on the broader/narrower hierarchy.
+ *
+ * <p>It takes the thesauri as a TermIt glossary and 1) creates the necessary metadata (vocabulary, model) 2) generates
+ * the necessary hasTopConcept relationships based on the broader/narrower hierarchy.
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -91,8 +92,7 @@ public class SKOSImporter implements VocabularyImporter {
             SKOS.ALT_LABEL.toString(),
             SKOS.HIDDEN_LABEL.toString(),
             SKOS.SCOPE_NOTE.toString(),
-            SKOS.DEFINITION.toString()
-    );
+            SKOS.DEFINITION.toString());
 
     private static final Set<IRI> INFERABLE_MAPPING_PROPERTIES = Set.of(SKOS.EXACT_MATCH, SKOS.RELATED_MATCH);
 
@@ -111,9 +111,12 @@ public class SKOSImporter implements VocabularyImporter {
     private IRI vocabularyIri;
 
     @Autowired
-    public SKOSImporter(Configuration config, VocabularyDao vocabularyDao,
-                        VocabularyNamespaceResolver namespaceResolver, ApplicationEventPublisher eventPublisher,
-                        EntityManager em) {
+    public SKOSImporter(
+            Configuration config,
+            VocabularyDao vocabularyDao,
+            VocabularyNamespaceResolver namespaceResolver,
+            ApplicationEventPublisher eventPublisher,
+            EntityManager em) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
         this.namespaceResolver = namespaceResolver;
@@ -125,15 +128,16 @@ public class SKOSImporter implements VocabularyImporter {
     public Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data) {
         Objects.requireNonNull(config);
         Objects.requireNonNull(data);
-        return importVocabulary(config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(),
-                                data.data());
+        return importVocabulary(
+                config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(), data.data());
     }
 
-    private Vocabulary importVocabulary(final boolean rename,
-                                        final URI providedVocabularyIri,
-                                        final String mediaType,
-                                        final Consumer<Vocabulary> prePersist,
-                                        final InputStream... inputStreams) {
+    private Vocabulary importVocabulary(
+            final boolean rename,
+            final URI providedVocabularyIri,
+            final String mediaType,
+            final Consumer<Vocabulary> prePersist,
+            final InputStream... inputStreams) {
         if (inputStreams.length == 0) {
             throw new IllegalArgumentException("No input provided for importing vocabulary.");
         }
@@ -174,18 +178,18 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void validateTermLabels() {
         LOG.debug("Checking terms have labels.");
-        model.stream().filter(s -> RDF.TYPE.equals(s.getPredicate()) && SKOS.CONCEPT.equals(s.getObject()))
-             .forEach(s -> {
-                 final Resource term = s.getSubject();
-                 final Set<Statement> labels = model.filter(term, SKOS.PREF_LABEL, null);
-                 if (labels.isEmpty()) {
-                     final VocabularyImportException ex = new VocabularyImportException(
-                             "Term " + term + " has no label.",
-                             "error.vocabulary.import.skos.missingLabel");
-                     ex.addParameter("term", term.stringValue());
-                     throw ex;
-                 }
-             });
+        model.stream()
+                .filter(s -> RDF.TYPE.equals(s.getPredicate()) && SKOS.CONCEPT.equals(s.getObject()))
+                .forEach(s -> {
+                    final Resource term = s.getSubject();
+                    final Set<Statement> labels = model.filter(term, SKOS.PREF_LABEL, null);
+                    if (labels.isEmpty()) {
+                        final VocabularyImportException ex = new VocabularyImportException(
+                                "Term " + term + " has no label.", "error.vocabulary.import.skos.missingLabel");
+                        ex.addParameter("term", term.stringValue());
+                        throw ex;
+                    }
+                });
     }
 
     /**
@@ -196,23 +200,24 @@ public class SKOSImporter implements VocabularyImporter {
     private void validateRequiredLanguageTags() {
         LOG.debug("Checking that only language-tagged literals are provided.");
         model.stream()
-             .filter(statement -> MULTILINGUAL_PROPERTIES.contains(statement.getPredicate().stringValue()))
-             .filter(statement -> statement.getObject().isLiteral())
-             .forEach(statement -> {
-                 if (((Literal) statement.getObject()).getLanguage().isEmpty()) {
-                     final MissingLanguageTagException ex = new MissingLanguageTagException(
-                             "Missing required language tag in " + statement,
-                             "error.vocabulary.import.skos.missingLanguageTag");
-                     ex.addParameter("term", statement.getSubject().stringValue());
-                     ex.addParameter("property", statement.getPredicate().stringValue());
-                     throw ex;
-                 }
-             });
+                .filter(statement -> MULTILINGUAL_PROPERTIES.contains(
+                        statement.getPredicate().stringValue()))
+                .filter(statement -> statement.getObject().isLiteral())
+                .forEach(statement -> {
+                    if (((Literal) statement.getObject()).getLanguage().isEmpty()) {
+                        final MissingLanguageTagException ex = new MissingLanguageTagException(
+                                "Missing required language tag in " + statement,
+                                "error.vocabulary.import.skos.missingLanguageTag");
+                        ex.addParameter("term", statement.getSubject().stringValue());
+                        ex.addParameter("property", statement.getPredicate().stringValue());
+                        throw ex;
+                    }
+                });
     }
 
     private void validateVocabularyIriCompatibility(URI providedVocabularyUri) {
-        if (providedVocabularyUri != null && !Objects.equals(vocabularyIri.stringValue(),
-                                                             providedVocabularyUri.toString())) {
+        if (providedVocabularyUri != null
+                && !Objects.equals(vocabularyIri.stringValue(), providedVocabularyUri.toString())) {
             throw new IllegalArgumentException(
                     "Cannot import a vocabulary into an existing one with different identifier.");
         }
@@ -236,7 +241,8 @@ public class SKOSImporter implements VocabularyImporter {
     private void ensureConceptIrisAreCompatibleWithTermIt(Vocabulary vocabulary) {
         final String ns = vocabulary.getPreferredNamespaceUri();
         final char separator = ns.charAt(ns.length() - 1);
-        final Statement[] statements = model.filter(null, RDF.TYPE, SKOS.CONCEPT).toArray(new Statement[]{});
+        final Statement[] statements =
+                model.filter(null, RDF.TYPE, SKOS.CONCEPT).toArray(new Statement[] {});
         for (final Statement c : statements) {
             if (c.getSubject().stringValue().contains(ns)) {
                 continue;
@@ -249,8 +255,9 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void parseDataFromStreams(String mediaType, InputStream... inputStreams) {
-        final RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mediaType).orElseThrow(
-                () -> new UnsupportedImportMediaTypeException("Media type '" + mediaType + "' not supported."));
+        final RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mediaType)
+                .orElseThrow(
+                        () -> new UnsupportedImportMediaTypeException("Media type '" + mediaType + "' not supported."));
         final RDFParser p = Rio.createParser(rdfFormat);
         final StatementCollector collector = new StatementCollector(model);
         p.setRDFHandler(collector);
@@ -264,7 +271,8 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private IRI resolveVocabularyIriFromImportedData() {
-        final Set<Resource> glossaryRes = model.filter(null, RDF.TYPE, SKOS.CONCEPT_SCHEME).subjects();
+        final Set<Resource> glossaryRes =
+                model.filter(null, RDF.TYPE, SKOS.CONCEPT_SCHEME).subjects();
         if (glossaryRes.size() == 1) {
             final Resource glossary = glossaryRes.iterator().next();
             if (glossary.isIRI()) {
@@ -278,17 +286,17 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private String resolveVocabularyNamespaceFromData() {
-        final Optional<String> ns = model.filter(null,
-                                                 vf.createIRI(
-                                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri),
-                                                 null).stream().map(s -> s.getObject().stringValue())
-                                         .findFirst();
+        final Optional<String> ns = model
+                .filter(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri), null)
+                .stream()
+                .map(s -> s.getObject().stringValue())
+                .findFirst();
         ns.ifPresent(s -> LOG.trace("Found explicit preferred namespace URI: {}", s));
         return IdentifierResolver.ensureNamespaceSeparatorTermination(ns.orElseGet(() -> {
-            final String result = Utils.extractVocabularyNamespaceFromTermIris(
-                    model.filter(null, RDF.TYPE, SKOS.CONCEPT)
-                         .stream()
-                         .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()));
+            final String result =
+                    Utils.extractVocabularyNamespaceFromTermIris(model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream()
+                            .map(s -> s.getSubject().stringValue())
+                            .collect(Collectors.toSet()));
             LOG.trace("Extracted namespace {} from term identifiers.", result);
             return result;
         }));
@@ -308,17 +316,20 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void insertHasTopConceptAssertions() {
         LOG.trace("Generating skos:hasTopConcept assertions.");
-        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT)
-                                          .stream().map(Statement::getSubject).toList();
+        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream()
+                .map(Statement::getSubject)
+                .toList();
         terms.forEach(t -> {
-            final List<Value> broader = model.filter(t, SKOS.BROADER, null)
-                                             .stream().map(Statement::getObject).toList();
-            final boolean hasBroader = broader.stream()
-                                              .anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
-            final List<Value> narrower = model.filter(null, SKOS.NARROWER, t)
-                                              .stream().map(Statement::getObject).toList();
-            final boolean isNarrower = narrower.stream()
-                                               .anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
+            final List<Value> broader = model.filter(t, SKOS.BROADER, null).stream()
+                    .map(Statement::getObject)
+                    .toList();
+            final boolean hasBroader =
+                    broader.stream().anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
+            final List<Value> narrower = model.filter(null, SKOS.NARROWER, t).stream()
+                    .map(Statement::getObject)
+                    .toList();
+            final boolean isNarrower =
+                    narrower.stream().anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
             if (!hasBroader && !isNarrower) {
                 model.add(vocabularyIri, SKOS.HAS_TOP_CONCEPT, t);
             }
@@ -327,8 +338,9 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void removeSelfReferences() {
         LOG.trace("Removing self-referencing SKOS relationship statements.");
-        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT)
-                                          .stream().map(Statement::getSubject).toList();
+        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream()
+                .map(Statement::getSubject)
+                .toList();
         terms.forEach(t -> {
             model.remove(t, SKOS.RELATED, t);
             model.remove(t, SKOS.EXACT_MATCH, t);
@@ -337,13 +349,11 @@ public class SKOSImporter implements VocabularyImporter {
         });
     }
 
-    /**
-     * Extracts SKOS mapping property statements from the imported model into a separate one for later processing.
-     */
+    /** Extracts SKOS mapping property statements from the imported model into a separate one for later processing. */
     private void extractSkosMappingStatements() {
         INFERABLE_MAPPING_PROPERTIES.stream()
-                                    .flatMap(prop -> model.filter(null, prop, null).stream())
-                                    .forEach(mappingStatements::add);
+                .flatMap(prop -> model.filter(null, prop, null).stream())
+                .forEach(mappingStatements::add);
     }
 
     private void addDataIntoRepository(URI vocabularyIri) {
@@ -376,10 +386,15 @@ public class SKOSImporter implements VocabularyImporter {
         boolean languageSet = handleVocabularyLiteralStringProperty(vocabulary::setPrimaryLanguage);
         if (!languageSet) {
             AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
-            handleStringStringProperty(vocabularyIri, DCTERMS.TITLE, labelRef::set, config.getPersistence()
-                                                                                          .getLanguage());
+            handleStringStringProperty(
+                    vocabularyIri,
+                    DCTERMS.TITLE,
+                    labelRef::set,
+                    config.getPersistence().getLanguage());
             MultilingualString label = labelRef.get();
-            if (label == null || label.isEmpty() || label.contains(config.getPersistence().getLanguage())) {
+            if (label == null
+                    || label.isEmpty()
+                    || label.contains(config.getPersistence().getLanguage())) {
                 vocabulary.setPrimaryLanguage(config.getPersistence().getLanguage());
             } else {
                 vocabulary.setPrimaryLanguage(label.getLanguages().iterator().next());
@@ -395,18 +410,18 @@ public class SKOSImporter implements VocabularyImporter {
      * @param consumer Consumer to accept the literal string value if found
      * @return true if the property was found and the consumer was called, false otherwise
      */
-
     private boolean handleVocabularyLiteralStringProperty(Consumer<String> consumer) {
         final Set<Statement> values = model.filter(vocabularyIri, DCTERMS.LANGUAGE, null);
         return values.stream()
-                     .filter(s -> s.getObject().isLiteral()).findFirst()
-                     .map(s -> (Literal) s.getObject())
-                     .map(Literal::getLabel)
-                     .map(value -> {
-                         consumer.accept(value);
-                         return true;
-                     })
-                     .orElse(false);
+                .filter(s -> s.getObject().isLiteral())
+                .findFirst()
+                .map(s -> (Literal) s.getObject())
+                .map(Literal::getLabel)
+                .map(value -> {
+                    consumer.accept(value);
+                    return true;
+                })
+                .orElse(false);
     }
 
     private String getFreshVocabularyIri(boolean rename, String newVocabularyIriBase) {
@@ -429,13 +444,13 @@ public class SKOSImporter implements VocabularyImporter {
      * Looks up the specified subject's property value in the model and loads values as a multilingual string. If no
      * property is found, an empty multilingual string is passed to the consumer.
      *
-     * @param subject         Subject to look up
-     * @param property        Property to look up
-     * @param consumer        Consumer to accept the multilingual string
+     * @param subject Subject to look up
+     * @param property Property to look up
+     * @param consumer Consumer to accept the multilingual string
      * @param defaultLanguage The language to use when no language is specified in the string property
      */
-    private boolean handleStringStringProperty(IRI subject, IRI property, Consumer<MultilingualString> consumer,
-                                               String defaultLanguage) {
+    private boolean handleStringStringProperty(
+            IRI subject, IRI property, Consumer<MultilingualString> consumer, String defaultLanguage) {
         final Set<Statement> values = model.filter(subject, property, null);
         final MultilingualString mls = new MultilingualString();
         values.stream().filter(s -> s.getObject().isLiteral()).forEach(s -> {
@@ -447,22 +462,24 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyDescription(Vocabulary vocabulary) {
-        final boolean found = handleStringStringProperty(vf.createIRI(vocabulary.getUri()
-                                                                                .toString()), DCTERMS.DESCRIPTION,
-                                                         vocabulary::setDescription, vocabulary.getPrimaryLanguage());
+        final boolean found = handleStringStringProperty(
+                vf.createIRI(vocabulary.getUri().toString()),
+                DCTERMS.DESCRIPTION,
+                vocabulary::setDescription,
+                vocabulary.getPrimaryLanguage());
         if (!found) {
-            handleStringStringProperty(vocabularyIri, DCTERMS.DESCRIPTION, vocabulary::setDescription,
-                                       vocabulary.getPrimaryLanguage());
+            handleStringStringProperty(
+                    vocabularyIri, DCTERMS.DESCRIPTION, vocabulary::setDescription, vocabulary.getPrimaryLanguage());
         }
     }
 
     private void setVocabularyNamespaceInfoFromData(Vocabulary vocabulary) {
         namespaceResolver.setVocabularyPreferredNamespace(vocabulary, resolveVocabularyNamespaceFromData());
         // Remove namespace URI declaration from model, it will be added with Vocabulary
-        model.removeAll(model.filter(null, vf.createIRI(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri), null));
-        final Model prefixModel = model.filter(null, vf.createIRI(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix), null);
+        model.removeAll(
+                model.filter(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri), null));
+        final Model prefixModel = model.filter(
+                null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix), null);
         if (!prefixModel.isEmpty()) {
             final String prefix = prefixModel.iterator().next().getObject().stringValue();
             LOG.trace("Found preferred namespace prefix: {}", prefix);

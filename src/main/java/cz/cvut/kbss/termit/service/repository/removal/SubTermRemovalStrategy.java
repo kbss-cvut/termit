@@ -10,25 +10,18 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Describes an operation how should be sub-terms handled during term removal
- */
+/** Describes an operation how should be sub-terms handled during term removal */
 public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
-    /**
-     * All sub-terms will be removed using the same {@link TermRemovalParams}
-     */
+    /** All sub-terms will be removed using the same {@link TermRemovalParams} */
     CASCADE(CascadeRemoveApplier.INSTANCE),
 
     /**
-     * Sub-terms will be moved one level up, becoming children of the parent(s) of the term being removed.
-     * When the term being removed has no parents in the current vocabulary,
-     * the sub-terms will become root terms of the vocabulary.
+     * Sub-terms will be moved one level up, becoming children of the parent(s) of the term being removed. When the term
+     * being removed has no parents in the current vocabulary, the sub-terms will become root terms of the vocabulary.
      */
     RECONNECT(ReconnectApplier.INSTANCE),
 
-    /**
-     * If the term has sub-terms, the removal will fail
-     */
+    /** If the term has sub-terms, the removal will fail */
     FAIL(FailApplier.INSTANCE);
 
     private final TermRemovalParamsApplier applier;
@@ -42,9 +35,7 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
         applier.apply(removalParams, repositoryService);
     }
 
-    /**
-     * Removes every child of the given term
-     */
+    /** Removes every child of the given term */
     private static class CascadeRemoveApplier implements TermRemovalParamsApplier {
         static final CascadeRemoveApplier INSTANCE = new CascadeRemoveApplier();
 
@@ -62,9 +53,8 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
     }
 
     /**
-     * Moves every subterm one level up.
-     * Every child becomes child of its grandparent.
-     * If the term being removed has no parents in the current vocabulary, children become root terms.
+     * Moves every subterm one level up. Every child becomes child of its grandparent. If the term being removed has no
+     * parents in the current vocabulary, children become root terms.
      */
     private static class ReconnectApplier implements TermRemovalParamsApplier {
         static final ReconnectApplier INSTANCE = new ReconnectApplier();
@@ -76,19 +66,21 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
 
             final Collection<Term> subTerms = Optional.ofNullable(term.getSubTerms())
                     .map(children -> children.stream()
-                                             .map(HasIdentifier::getUri)
-                                             .map(repositoryService::findRequired)
-                                             .map(t -> {
-                                                 t.consolidateParents();
-                                                 return t;
-                                             })
-                                             .toList())
+                            .map(HasIdentifier::getUri)
+                            .map(repositoryService::findRequired)
+                            .map(t -> {
+                                t.consolidateParents();
+                                return t;
+                            })
+                            .toList())
                     .orElse(Collections.emptyList());
 
             removeParent(subTerms, termInfo);
 
-            final boolean hasParents = term.getParentTerms() != null && !term.getParentTerms().isEmpty();
-            final boolean hasExternalParents = term.getExternalParentTerms() != null && !term.getExternalParentTerms().isEmpty();
+            final boolean hasParents =
+                    term.getParentTerms() != null && !term.getParentTerms().isEmpty();
+            final boolean hasExternalParents = term.getExternalParentTerms() != null
+                    && !term.getExternalParentTerms().isEmpty();
             if (hasParents || hasExternalParents) {
                 // term has some parents to which children should be reconnected
                 reconnectToParents(subTerms, term);
@@ -120,8 +112,8 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
         }
 
         /**
-         * Adds every parent of {@code term} as parent of every sub-term from {@code subTerms}.
-         * Removes the {@code term} from parents of {@code subTerms}.
+         * Adds every parent of {@code term} as parent of every sub-term from {@code subTerms}. Removes the {@code term}
+         * from parents of {@code subTerms}.
          *
          * @param subTerms sub-terms whose parents should be modified
          * @param term the parent of {@code subTerms}
@@ -139,11 +131,10 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
         }
     }
 
-    /**
-     * Throws an exception when the term to be removed has sub-terms.
-     */
+    /** Throws an exception when the term to be removed has sub-terms. */
     private static class FailApplier implements TermRemovalParamsApplier {
         static final FailApplier INSTANCE = new FailApplier();
+
         @Override
         public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
@@ -152,5 +143,4 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
             }
         }
     }
-
 }

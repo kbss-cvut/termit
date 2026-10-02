@@ -29,8 +29,6 @@ import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +37,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Collections;
@@ -94,8 +95,8 @@ public class DataRepositoryService {
     public List<CustomAttribute> findCustomAttributesByDomainAndRange(@Nonnull URI domain, @Nonnull URI range) {
         Objects.requireNonNull(domain);
         Objects.requireNonNull(range);
-        return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.hasDomain(domain),
-                                               CustomAttributeSpecifications.hasRange(range)));
+        return dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(domain), CustomAttributeSpecifications.hasRange(range)));
     }
 
     /**
@@ -122,8 +123,8 @@ public class DataRepositoryService {
 
     /**
      * Persists the specified RDFS resource.
-     * <p>
-     * This method should be used scarcely or more suitable subclasses of {@link RdfsResource} should be provided as
+     *
+     * <p>This method should be used scarcely or more suitable subclasses of {@link RdfsResource} should be provided as
      * arguments.
      *
      * @param property The resource to persist
@@ -138,8 +139,8 @@ public class DataRepositoryService {
 
     /**
      * Persists the specified custom attribute.
-     * <p>
-     * Note that this method automatically sets {@link cz.cvut.kbss.jopa.vocabulary.SKOS#CONCEPT} as the attribute
+     *
+     * <p>Note that this method automatically sets {@link cz.cvut.kbss.jopa.vocabulary.SKOS#CONCEPT} as the attribute
      * domain.
      *
      * @param attribute Attribute to persist
@@ -152,9 +153,8 @@ public class DataRepositoryService {
         }
         validate(attribute);
         if (attribute.getUri() == null) {
-            attribute.setUri(
-                    idResolver.generateIdentifier(config.getNamespace().getCustomAttribute(),
-                                                  getLabelForIdentifier(attribute)));
+            attribute.setUri(idResolver.generateIdentifier(
+                    config.getNamespace().getCustomAttribute(), getLabelForIdentifier(attribute)));
         }
         LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
@@ -171,13 +171,15 @@ public class DataRepositoryService {
     private static void validate(CustomAttribute attribute) {
         assert attribute.getDomain() != null;
         final String strDomain = attribute.getDomain().toString();
-        if (!SKOS.CONCEPT.equals(strDomain) && !SKOS.CONCEPT_SCHEME.equals(strDomain) && !RDF.STATEMENT.equals(
-                strDomain)) {
+        if (!SKOS.CONCEPT.equals(strDomain)
+                && !SKOS.CONCEPT_SCHEME.equals(strDomain)
+                && !RDF.STATEMENT.equals(strDomain)) {
             throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
         }
 
         if (RDF.STATEMENT.equals(strDomain)) {
-            if (attribute.getAnnotatedRelationships() == null || attribute.getAnnotatedRelationships().isEmpty()) {
+            if (attribute.getAnnotatedRelationships() == null
+                    || attribute.getAnnotatedRelationships().isEmpty()) {
                 throw new ValidationException(
                         "Custom attribute with rdf:Statement domain must specify applicable properties.");
             }
@@ -191,8 +193,7 @@ public class DataRepositoryService {
     public void updateCustomAttribute(@Nonnull CustomAttribute attribute) {
         Objects.requireNonNull(attribute);
         final CustomAttribute existing = dataDao.findCustomAttribute(attribute.getUri())
-                                                .orElseThrow(() -> NotFoundException.create(
-                                                        CustomAttribute.class, attribute.getUri()));
+                .orElseThrow(() -> NotFoundException.create(CustomAttribute.class, attribute.getUri()));
         validate(attribute);
         existing.setLabel(attribute.getLabel());
         existing.setComment(attribute.getComment());
@@ -205,9 +206,9 @@ public class DataRepositoryService {
     /**
      * Gets the label of a resource with the specified identifier.
      *
-     * @param id       Resource identifier
+     * @param id Resource identifier
      * @param language Label language, if null, the vocabulary language is used when available, otherwise the configured
-     *                 persistence unit language is used instead.
+     *     persistence unit language is used instead.
      * @return Matching resource identifier (if found)
      */
     @Transactional(readOnly = true)
@@ -236,8 +237,7 @@ public class DataRepositoryService {
     @Transactional
     public void removeCustomAttribute(URI identifier, boolean removeUsages) {
         final CustomAttribute attribute = dataDao.findCustomAttribute(identifier)
-                                                 .orElseThrow(() -> NotFoundException
-                                                         .create(CustomAttribute.class, identifier));
+                .orElseThrow(() -> NotFoundException.create(CustomAttribute.class, identifier));
 
         List<URI> affectedContexts = Collections.emptyList();
         if (removeUsages) {
@@ -252,8 +252,9 @@ public class DataRepositoryService {
         if (!affectedContexts.isEmpty()) {
             final List<URI> contextsToEvict = affectedContexts;
             LOG.atDebug()
-               .addArgument(() -> contextsToEvict.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
-               .log("Evicting cache for contexts affected by custom attribute removal: {}");
+                    .addArgument(() ->
+                            contextsToEvict.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
+                    .log("Evicting cache for contexts affected by custom attribute removal: {}");
 
             dataDao.evictCacheForContexts(contextsToEvict);
         }

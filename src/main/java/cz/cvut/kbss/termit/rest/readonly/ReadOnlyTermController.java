@@ -70,8 +70,11 @@ public class ReadOnlyTermController extends BaseController {
 
     private final VocabularyNamespaceResolver namespaceResolver;
 
-    public ReadOnlyTermController(IdentifierResolver idResolver, Configuration config,
-                                  ReadOnlyTermService termService, VocabularyNamespaceResolver namespaceResolver) {
+    public ReadOnlyTermController(
+            IdentifierResolver idResolver,
+            Configuration config,
+            ReadOnlyTermService termService,
+            VocabularyNamespaceResolver namespaceResolver) {
         super(idResolver, config);
         this.termService = termService;
         this.namespaceResolver = namespaceResolver;
@@ -79,46 +82,62 @@ public class ReadOnlyTermController extends BaseController {
 
     @Operation(description = "Gets terms from the vocabulary with the specified identifier.")
     @ApiResponse(responseCode = "200", description = "List of vocabulary terms.")
-    @GetMapping(value = "/vocabularies/{localName}/terms",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<?> getTerms(@Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                            @PathVariable String localName,
-                            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-                            @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                          required = false) Optional<String> namespace,
-                            @Parameter(description = "String by which filter the terms (label).")
-                            @RequestParam(name = "searchString", required = false) String searchString,
-                            @Parameter(description = "Whether to include terms from imported vocabularies.")
-                            @RequestParam(name = "includeImported", required = false) boolean includeImported,
-                            @Parameter(description = "Wheter to include terms from related vocabularies.")
-                            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
-                            @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
-                            @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
-                            @Parameter(description = "Identifiers of terms that should be included in the flat list response " +
-                                    "(regardless of whether they are root terms or not).")
-                            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms,
-                            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-                            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-                            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-                            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<?> getTerms(
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "String by which filter the terms (label).")
+                    @RequestParam(name = "searchString", required = false)
+                    String searchString,
+            @Parameter(description = "Whether to include terms from imported vocabularies.")
+                    @RequestParam(name = "includeImported", required = false)
+                    boolean includeImported,
+            @Parameter(description = "Wheter to include terms from related vocabularies.")
+                    @RequestParam(name = "includeRelated", required = false)
+                    boolean includeRelated,
+            @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
+                    @RequestParam(name = "flat", required = false, defaultValue = "false")
+                    boolean flat,
+            @Parameter(
+                            description = "Identifiers of terms that should be included in the flat list response "
+                                    + "(regardless of whether they are root terms or not).")
+                    @RequestParam(name = "includeTerms", required = false, defaultValue = "")
+                    List<URI> includeTerms,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false)
+                    Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false)
+                    Integer pageNo) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         if (searchString != null) {
-            return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
-                                                                                         createPageRequest(pageSize,
-                                                                                                           pageNo)));
+            return termService.findAll(
+                    searchString,
+                    vocabulary,
+                    new TermSelectionParams(
+                            flat, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)));
         }
 
         if (flat && !includeTerms.isEmpty()) {
-            final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
-                    createPageRequest(pageSize, pageNo));
+            final TermSelectionParams params = new TermSelectionParams(
+                    true, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo));
             return termService.findAllFlat(vocabulary, includeTerms, params);
         }
 
-        return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
-                                                                       createPageRequest(pageSize, pageNo)));
-
+        return termService.findAll(
+                vocabulary,
+                new TermSelectionParams(
+                        flat, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)));
     }
 
     private Vocabulary getVocabulary(String fragment, Optional<String> namespace) {
@@ -129,95 +148,121 @@ public class ReadOnlyTermController extends BaseController {
     @Operation(
             description = "Gets root terms (terms without parent) from the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of root vocabulary terms."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
+        @ApiResponse(responseCode = "200", description = "List of root vocabulary terms."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/roots",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/roots",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
-            @Parameter(description = "Whether to include terms from imported vocabularies.")
-            @RequestParam(name = "includeImported", required = false) boolean includeImported,
-            @Parameter(description = "Whether to include terms from related vocabularies.")
-            @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
             @Parameter(
-                    description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
-            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms
-    ) {
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false)
+                    Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false)
+                    Integer pageNo,
+            @Parameter(description = "Whether to include terms from imported vocabularies.")
+                    @RequestParam(name = "includeImported", required = false)
+                    boolean includeImported,
+            @Parameter(description = "Whether to include terms from related vocabularies.")
+                    @RequestParam(name = "includeRelated", required = false)
+                    boolean includeRelated,
+            @Parameter(
+                            description =
+                                    "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
+                    @RequestParam(name = "includeTerms", required = false, defaultValue = "")
+                    List<URI> includeTerms) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         final TermSelectionParams params = new TermSelectionParams(
-                false, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo)
-        );
+                false, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo));
         return termService.findAllRoots(vocabulary, params, includeTerms);
     }
 
     @Operation(
-            description = "Gets the term with the specified local name from the vocabulary with the specified identifier.")
+            description =
+                    "Gets the term with the specified local name from the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Term detail."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
+        @ApiResponse(responseCode = "200", description = "Term detail."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/{termLocalName}",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyTerm getById(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String termLocalName,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String termLocalName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
             @Parameter(description = TermController.ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
-            @RequestParam(name = "populateCustomAttributeTermReferences",
-                          required = false) boolean populateCustomAttributes,
+                    @RequestParam(name = "populateCustomAttributeTermReferences", required = false)
+                    boolean populateCustomAttributes,
             @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
-            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
+                    @RequestParam(name = "withAncestors", required = false)
+                    boolean withAncestors) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
-        final URI vocabularyUri = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()),
-                                                    vocabIdFragment);
+        final URI vocabularyUri =
+                resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), vocabIdFragment);
         return resolveIdentifier(namespaceResolver.resolveNamespace(vocabularyUri), termIdFragment);
     }
 
     @Operation(description = "Gets the term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Term detail."),
-            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Term detail."),
+        @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/terms/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/terms/{localName}",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyTerm getById(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace,
             @Parameter(description = TermController.ApiDoc.ID_POPULATE_CUSTOM_ATTS_DESCRIPTION)
-            @RequestParam(name = "populateCustomAttributeTermReferences",
-                          required = false) boolean populateCustomAttributes,
+                    @RequestParam(name = "populateCustomAttributeTermReferences", required = false)
+                    boolean populateCustomAttributes,
             @Parameter(description = TermController.ApiDoc.ID_WITH_ANCESTORS_DESCRIPTION)
-            @RequestParam(name = "withAncestors", required = false) boolean withAncestors) {
+                    @RequestParam(name = "withAncestors", required = false)
+                    boolean withAncestors) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return getById(termUri, populateCustomAttributes, withAncestors);
     }
 
     private ReadOnlyTerm getById(URI termUri, boolean populateCustomAttributes, boolean withAncestors) {
-        final ReadOnlyTerm term = populateCustomAttributes ? termService.findRequiredWithPopulatedCustomAttributes(termUri) :
-                termService.findRequired(termUri);
+        final ReadOnlyTerm term = populateCustomAttributes
+                ? termService.findRequiredWithPopulatedCustomAttributes(termUri)
+                : termService.findRequired(termUri);
 
         if (withAncestors) {
             termService.resolveAllAncestors(term);
@@ -225,187 +270,253 @@ public class ReadOnlyTermController extends BaseController {
         return term;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets basic information about a term with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets basic information about a term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Basic term information."),
-            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Basic term information."),
+        @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/terms/{localName}/info", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public TermInfo getTermInfoById(@Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                                               example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-                                    @PathVariable String localName,
-                                    @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                                               example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-                                    @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+    @GetMapping(
+            value = "/terms/{localName}/info",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public TermInfo getTermInfoById(
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.findRequiredTermInfo(termUri);
     }
 
     @Operation(
-            description = "Gets sub-terms of the term with the specified local name in the vocabulary with the specified identifier")
+            description =
+                    "Gets sub-terms of the term with the specified local name in the vocabulary with the specified identifier")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Sub-terms."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or term not found.")
+        @ApiResponse(responseCode = "200", description = "Sub-terms."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary or term not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getSubTerms(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String termLocalName,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String termLocalName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final ReadOnlyTerm parent = getById(localName, termLocalName, namespace, false, false);
         return termService.findSubTerms(parent);
     }
 
     @Operation(description = "Gets subterms of the term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Term successfully updated."),
-            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Term successfully updated."),
+        @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/terms/{localName}/subterms",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/terms/{localName}/subterms",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getSubTerms(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final ReadOnlyTerm parent = getById(localName, namespace, false, false);
         return termService.findSubTerms(parent);
     }
 
     @Operation(
-            description = "Gets a list of comments on the term with the specified local name in the vocabulary with the specified identifier.")
+            description =
+                    "Gets a list of comments on the term with the specified local name in the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of comments."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+        @ApiResponse(responseCode = "200", description = "List of comments."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/comments",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/{termLocalName}/comments",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String termLocalName,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String termLocalName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
             @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.")
-            @RequestParam(name = "from", required = false) Optional<String> from,
+                    @RequestParam(name = "from", required = false)
+                    Optional<String> from,
             @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.")
-            @RequestParam(name = "to", required = false) Optional<String> to) {
+                    @RequestParam(name = "to", required = false)
+                    Optional<String> to) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getComments(termService.getReference(termUri),
-                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
-                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+        return termService.getComments(
+                termService.getReference(termUri),
+                from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     @Operation(
-            description = "Gets a list of all other terms whose definition contains the term with the specified local name in the vocabulary with the specified identifier.")
+            description =
+                    "Gets a list of all other terms whose definition contains the term with the specified local name in the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+        @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/def-related-of", produces = {
-            MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/{termLocalName}/def-related-of",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermOccurrence> getDefinitionallyRelatedTermsOf(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String termLocalName,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String termLocalName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getDefinitionallyRelatedOf(termService.getReference(termUri));
     }
 
     @Operation(
-            description = "Gets a list of all other terms that are related via definition to the term with the specified local name in the vocabulary with the specified identifier.")
+            description =
+                    "Gets a list of all other terms that are related via definition to the term with the specified local name in the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+        @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/def-related-target", produces = {
-            MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/{termLocalName}/def-related-target",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String termLocalName,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String termLocalName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getDefinitionallyRelatedTargeting(termService.getReference(termUri));
     }
 
     @Operation(description = "Gets a list of comments on the term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of comments."),
-            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "List of comments."),
+        @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/terms/{localName}/comments",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/terms/{localName}/comments",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
-            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.",
-                       example = ApiDocConstants.DATETIME_EXAMPLE)
-            @RequestParam(name = "from", required = false) Optional<String> from,
-            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.",
-                       example = ApiDocConstants.DATETIME_EXAMPLE)
-            @RequestParam(name = "to", required = false) Optional<String> to) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace,
+            @Parameter(
+                            description = "Datetime (ISO-formatted) of the oldest comment to retrieve.",
+                            example = ApiDocConstants.DATETIME_EXAMPLE)
+                    @RequestParam(name = "from", required = false)
+                    Optional<String> from,
+            @Parameter(
+                            description =
+                                    "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.",
+                            example = ApiDocConstants.DATETIME_EXAMPLE)
+                    @RequestParam(name = "to", required = false)
+                    Optional<String> to) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return termService.getComments(termService.getReference(termUri),
-                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
-                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+        return termService.getComments(
+                termService.getReference(termUri),
+                from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     @Operation(
-            description = "Gets a list of snapshots of the term with the specified local name in the vocabulary with the specified identifier.")
+            description =
+                    "Gets a list of snapshots of the term with the specified local name in the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200",
-                         description = "A list of snapshots or a snapshot valid at the requested datetime."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
-
+        @ApiResponse(
+                responseCode = "200",
+                description = "A list of snapshots or a snapshot valid at the requested datetime."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/versions",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<?> getSnapshots(@Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                          @PathVariable String localName,
-                                          @Parameter(description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
-                                                     example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-                                          @PathVariable String termLocalName,
-                                          @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                          @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                                        required = false) Optional<String> namespace,
-                                          @Parameter(
-                                                  description = "Timestamp (ISO-formatted) at which the returned version was valid.",
-                                                  example = ApiDocConstants.DATETIME_EXAMPLE)
-                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+    @GetMapping(
+            value = "/vocabularies/{localName}/terms/{termLocalName}/versions",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<?> getSnapshots(
+            @Parameter(
+                            description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String termLocalName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description = "Timestamp (ISO-formatted) at which the returned version was valid.",
+                            example = ApiDocConstants.DATETIME_EXAMPLE)
+                    @RequestParam(name = "at", required = false)
+                    Optional<String> at) {
         final ReadOnlyTerm term = getById(localName, termLocalName, namespace, false, false);
         return getTermSnapshots(at, term);
     }
@@ -420,23 +531,30 @@ public class ReadOnlyTermController extends BaseController {
 
     @Operation(description = "Gets a list of snapshots of the term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200",
-                         description = "A list of snapshots or a snapshot valid at the requested datetime."),
-            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
-
+        @ApiResponse(
+                responseCode = "200",
+                description = "A list of snapshots or a snapshot valid at the requested datetime."),
+        @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/terms/{localName}/versions",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/terms/{localName}/versions",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
-            @Parameter(description = "Timestamp (ISO-formatted) at which the returned version was valid.",
-                       example = ApiDocConstants.DATETIME_EXAMPLE)
-            @RequestParam(name = "at", required = false) Optional<String> at) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace,
+            @Parameter(
+                            description = "Timestamp (ISO-formatted) at which the returned version was valid.",
+                            example = ApiDocConstants.DATETIME_EXAMPLE)
+                    @RequestParam(name = "at", required = false)
+                    Optional<String> at) {
         final ReadOnlyTerm term = getById(localName, namespace, false, false);
         return getTermSnapshots(at, term);
     }

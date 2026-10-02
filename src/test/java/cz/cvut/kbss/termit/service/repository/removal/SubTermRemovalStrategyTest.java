@@ -46,13 +46,16 @@ class SubTermRemovalStrategyTest {
 
         lenient().when(repositoryService.findRequired(term.getUri())).thenReturn(term);
 
-        lenient().doAnswer(answer -> {
-            Term t = answer.getArgument(0,Term.class);
-            Vocabulary voc = answer.getArgument(1, Vocabulary.class);
-            t.setVocabulary(voc.getUri());
-            voc.addRootTerm(t);
-            return null;
-        }).when(repositoryService).addRootTermToVocabulary(any(), any());
+        lenient()
+                .doAnswer(answer -> {
+                    Term t = answer.getArgument(0, Term.class);
+                    Vocabulary voc = answer.getArgument(1, Vocabulary.class);
+                    t.setVocabulary(voc.getUri());
+                    voc.addRootTerm(t);
+                    return null;
+                })
+                .when(repositoryService)
+                .addRootTermToVocabulary(any(), any());
     }
 
     private TermRemovalParams withStrategy(SubTermRemovalStrategy strategy) {
@@ -65,7 +68,8 @@ class SubTermRemovalStrategyTest {
         final TermInfo child = Generator.generateTermInfoWithId();
         term.setSubTerms(Set.of(child));
 
-        final TermItException exception = assertThrows(TermItException.class, () -> params.subTermsStrategy().apply(params, repositoryService));
+        final TermItException exception = assertThrows(
+                TermItException.class, () -> params.subTermsStrategy().apply(params, repositoryService));
         assertEquals("error.term.remove.hasSubTerms", exception.getMessageId());
     }
 
@@ -151,7 +155,10 @@ class SubTermRemovalStrategyTest {
         when(repositoryService.findRequired(child.getUri())).thenReturn(child);
         params.subTermsStrategy().apply(params, repositoryService);
 
-        assertEquals(Set.of(parent.toTermInfo()), child.getParentTerms(), "Child must be assigned to the parent of the removed term");
+        assertEquals(
+                Set.of(parent.toTermInfo()),
+                child.getParentTerms(),
+                "Child must be assigned to the parent of the removed term");
         assertEquals(Set.of(externalParent.toTermInfo()), child.getExternalParentTerms());
 
         assertEquals(Set.of(parent.getUri()), vocabulary.getRootTerms(), "Vocabulary root terms must remain unchanged");

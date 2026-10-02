@@ -515,6 +515,22 @@
                 <artifactId>go-offline-maven-plugin</artifactId>
                 <version>1.2.8</version>
             </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.10.3</version>
+                <configuration>
+                    <ratchetFrom>origin/master</ratchetFrom>
+                    <java>
+                        <palantirJavaFormat>
+                            <formatJavadoc>true</formatJavadoc>
+                        </palantirJavaFormat>
+                        <importOrder>
+                            <order>,javax,jakarta,java,\#</order>
+                        </importOrder>
+                    </java>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
