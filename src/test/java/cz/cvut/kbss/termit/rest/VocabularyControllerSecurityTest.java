@@ -85,9 +85,8 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
 
-        mockMvc.perform(
-                       post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isForbidden());
+        mockMvc.perform(post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isForbidden());
         verify(serviceMock, never()).update(any());
     }
 }

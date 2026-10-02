@@ -76,19 +76,21 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
 
             final Collection<Term> subTerms = Optional.ofNullable(term.getSubTerms())
                     .map(children -> children.stream()
-                                             .map(HasIdentifier::getUri)
-                                             .map(repositoryService::findRequired)
-                                             .map(t -> {
-                                                 t.consolidateParents();
-                                                 return t;
-                                             })
-                                             .toList())
+                            .map(HasIdentifier::getUri)
+                            .map(repositoryService::findRequired)
+                            .map(t -> {
+                                t.consolidateParents();
+                                return t;
+                            })
+                            .toList())
                     .orElse(Collections.emptyList());
 
             removeParent(subTerms, termInfo);
 
-            final boolean hasParents = term.getParentTerms() != null && !term.getParentTerms().isEmpty();
-            final boolean hasExternalParents = term.getExternalParentTerms() != null && !term.getExternalParentTerms().isEmpty();
+            final boolean hasParents =
+                    term.getParentTerms() != null && !term.getParentTerms().isEmpty();
+            final boolean hasExternalParents = term.getExternalParentTerms() != null
+                    && !term.getExternalParentTerms().isEmpty();
             if (hasParents || hasExternalParents) {
                 // term has some parents to which children should be reconnected
                 reconnectToParents(subTerms, term);
@@ -144,6 +146,7 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
      */
     private static class FailApplier implements TermRemovalParamsApplier {
         static final FailApplier INSTANCE = new FailApplier();
+
         @Override
         public void apply(TermRemovalParams removalParams, TermRepositoryService repositoryService) {
             final Term term = removalParams.termToRemove();
@@ -152,5 +155,4 @@ public enum SubTermRemovalStrategy implements TermRemovalParamsApplier {
             }
         }
     }
-
 }

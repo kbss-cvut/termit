@@ -85,8 +85,8 @@ public class ReadOnlyTermService {
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
-    public List<? extends AbstractTerm> findAll(String searchString, Vocabulary vocabulary,
-                                                TermSelectionParams selectionParams) {
+    public List<? extends AbstractTerm> findAll(
+            String searchString, Vocabulary vocabulary, TermSelectionParams selectionParams) {
         return termService.findAll(searchString, vocabulary, selectionParams.withNotFull());
     }
 
@@ -98,7 +98,8 @@ public class ReadOnlyTermService {
      * @param includeTerms    Identifiers of terms which should be included in the result
      * @return List of root terms
      */
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams, List<URI> includeTerms) {
+    public List<TermDto> findAllRoots(
+            Vocabulary vocabulary, TermSelectionParams selectionParams, List<URI> includeTerms) {
         return termService.findAllRoots(vocabulary, selectionParams, includeTerms);
     }
 
@@ -115,7 +116,8 @@ public class ReadOnlyTermService {
     }
 
     private ReadOnlyTerm create(final Term term) {
-        final Collection<String> properties = Utils.emptyIfNull(configuration.getPublicView().getWhiteListProperties());
+        final Collection<String> properties =
+                Utils.emptyIfNull(configuration.getPublicView().getWhiteListProperties());
         return new ReadOnlyTerm(term, properties);
     }
 
@@ -181,8 +183,8 @@ public class ReadOnlyTermService {
     }
 
     public void resolveAllAncestors(ReadOnlyTerm roTerm) {
-        final Set<URI> directParentIdentifiers = roTerm.getParentTerms()
-                                                     .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        final Set<URI> directParentIdentifiers =
+                roTerm.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
         final Set<TermInfoWithParents> ancestors = termService.findWithAllAncestors(directParentIdentifiers);
         roTerm.setParentTerms(Collections.unmodifiableSet(ancestors));
     }
@@ -195,7 +197,8 @@ public class ReadOnlyTermService {
      * @param selectionParams term search parameters
      * @return flattened list of terms
      */
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
+    public List<FlatTermDto> findAllFlat(
+            Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
         return termService.findAllFlat(vocabulary, includeTerms, selectionParams);
     }
 }

@@ -94,8 +94,8 @@ public class DataRepositoryService {
     public List<CustomAttribute> findCustomAttributesByDomainAndRange(@Nonnull URI domain, @Nonnull URI range) {
         Objects.requireNonNull(domain);
         Objects.requireNonNull(range);
-        return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.hasDomain(domain),
-                                               CustomAttributeSpecifications.hasRange(range)));
+        return dataDao.findAllCustomAttributes(List.of(
+                CustomAttributeSpecifications.hasDomain(domain), CustomAttributeSpecifications.hasRange(range)));
     }
 
     /**
@@ -152,9 +152,8 @@ public class DataRepositoryService {
         }
         validate(attribute);
         if (attribute.getUri() == null) {
-            attribute.setUri(
-                    idResolver.generateIdentifier(config.getNamespace().getCustomAttribute(),
-                                                  getLabelForIdentifier(attribute)));
+            attribute.setUri(idResolver.generateIdentifier(
+                    config.getNamespace().getCustomAttribute(), getLabelForIdentifier(attribute)));
         }
         LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
@@ -171,13 +170,15 @@ public class DataRepositoryService {
     private static void validate(CustomAttribute attribute) {
         assert attribute.getDomain() != null;
         final String strDomain = attribute.getDomain().toString();
-        if (!SKOS.CONCEPT.equals(strDomain) && !SKOS.CONCEPT_SCHEME.equals(strDomain) && !RDF.STATEMENT.equals(
-                strDomain)) {
+        if (!SKOS.CONCEPT.equals(strDomain)
+                && !SKOS.CONCEPT_SCHEME.equals(strDomain)
+                && !RDF.STATEMENT.equals(strDomain)) {
             throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
         }
 
         if (RDF.STATEMENT.equals(strDomain)) {
-            if (attribute.getAnnotatedRelationships() == null || attribute.getAnnotatedRelationships().isEmpty()) {
+            if (attribute.getAnnotatedRelationships() == null
+                    || attribute.getAnnotatedRelationships().isEmpty()) {
                 throw new ValidationException(
                         "Custom attribute with rdf:Statement domain must specify applicable properties.");
             }
@@ -191,8 +192,7 @@ public class DataRepositoryService {
     public void updateCustomAttribute(@Nonnull CustomAttribute attribute) {
         Objects.requireNonNull(attribute);
         final CustomAttribute existing = dataDao.findCustomAttribute(attribute.getUri())
-                                                .orElseThrow(() -> NotFoundException.create(
-                                                        CustomAttribute.class, attribute.getUri()));
+                .orElseThrow(() -> NotFoundException.create(CustomAttribute.class, attribute.getUri()));
         validate(attribute);
         existing.setLabel(attribute.getLabel());
         existing.setComment(attribute.getComment());
@@ -236,8 +236,7 @@ public class DataRepositoryService {
     @Transactional
     public void removeCustomAttribute(URI identifier, boolean removeUsages) {
         final CustomAttribute attribute = dataDao.findCustomAttribute(identifier)
-                                                 .orElseThrow(() -> NotFoundException
-                                                         .create(CustomAttribute.class, identifier));
+                .orElseThrow(() -> NotFoundException.create(CustomAttribute.class, identifier));
 
         List<URI> affectedContexts = Collections.emptyList();
         if (removeUsages) {
@@ -252,8 +251,9 @@ public class DataRepositoryService {
         if (!affectedContexts.isEmpty()) {
             final List<URI> contextsToEvict = affectedContexts;
             LOG.atDebug()
-               .addArgument(() -> contextsToEvict.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
-               .log("Evicting cache for contexts affected by custom attribute removal: {}");
+                    .addArgument(() ->
+                            contextsToEvict.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
+                    .log("Evicting cache for contexts affected by custom attribute removal: {}");
 
             dataDao.evictCacheForContexts(contextsToEvict);
         }

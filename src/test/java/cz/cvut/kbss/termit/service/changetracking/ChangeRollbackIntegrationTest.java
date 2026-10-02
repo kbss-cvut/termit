@@ -50,7 +50,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
-
 class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
 
     @Autowired
@@ -142,8 +141,8 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     }
 
     private UpdateChangeRecord getRecord(Asset<?> changedAsset) {
-        return (UpdateChangeRecord) changeRecordService
-                .getChanges(changedAsset, changeFilter()).getFirst();
+        return (UpdateChangeRecord)
+                changeRecordService.getChanges(changedAsset, changeFilter()).getFirst();
     }
 
     private <T extends Asset<?>> T update(T entity, RudService<T> service) {
@@ -171,8 +170,8 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
      * @param readValue supplier of the current attribute value
      * @param <T> The type of the attribute value
      */
-    private <T> void assertRollbackRequiresWriteAccess(UpdateChangeRecord record, T originalValue, T updatedValue,
-                                                       Supplier<T> readValue) {
+    private <T> void assertRollbackRequiresWriteAccess(
+            UpdateChangeRecord record, T originalValue, T updatedValue, Supplier<T> readValue) {
         final User reader = createUser(UserRole.RESTRICTED_USER);
         final User writer = createUser(UserRole.FULL_USER);
         grantAccess(reader, AccessLevel.READ);
@@ -199,8 +198,11 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         final MultilingualString updatedLabel = makeCopy(vocabulary.getLabel());
         final UpdateChangeRecord record = getRecord(vocabulary);
 
-        assertRollbackRequiresWriteAccess(record, originalLabel, updatedLabel,
-                                          () -> vocabularyService.findRequired(vocabulary.getUri()).getLabel());
+        assertRollbackRequiresWriteAccess(
+                record,
+                originalLabel,
+                updatedLabel,
+                () -> vocabularyService.findRequired(vocabulary.getUri()).getLabel());
     }
 
     @Test
@@ -210,9 +212,11 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         final Set<Object> updatedValues = Set.copyOf(term.getProperties().get(property.toString()));
         final UpdateChangeRecord record = getRecord(term);
 
-        assertRollbackRequiresWriteAccess(record, originalPropertyValue, updatedValues,
-                                          () -> termService.findRequired(term.getUri()).getProperties()
-                                                           .get(property.toString()));
+        assertRollbackRequiresWriteAccess(
+                record,
+                originalPropertyValue,
+                updatedValues,
+                () -> termService.findRequired(term.getUri()).getProperties().get(property.toString()));
     }
 
     @Test
@@ -234,7 +238,6 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         assertEquals(Set.of(vocabulary.getLabel()), record.getNewValue());
 
         sut.rollback(record);
-
 
         final Vocabulary rollbacked = vocabularyService.findRequired(vocabulary.getUri());
         assertEquals(originalValue, rollbacked.getLabel());
@@ -383,7 +386,8 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         sut.rollback(record);
 
         term = termService.findRequired(term.getUri());
-        assertEquals(originalValue, term.getProperties().get(customAttribute.getUri().toString()));
+        assertEquals(
+                originalValue, term.getProperties().get(customAttribute.getUri().toString()));
     }
 
     @Test
@@ -404,7 +408,9 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         assertThrows(UpdateChangeRecordRollbackException.class, () -> sut.rollback(record));
 
         term = termService.findRequired(term.getUri());
-        assertEquals(newValue, term.getProperties().get(customAttribute.getUri().toString()),
+        assertEquals(
+                newValue,
+                term.getProperties().get(customAttribute.getUri().toString()),
                 "The term reference must not change when rollback fails");
     }
 

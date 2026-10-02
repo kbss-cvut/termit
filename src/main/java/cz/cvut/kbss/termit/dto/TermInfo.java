@@ -61,8 +61,7 @@ public class TermInfo implements TermDescription {
     @Types
     private Set<String> types;
 
-    public TermInfo() {
-    }
+    public TermInfo() {}
 
     public TermInfo(URI uri) {
         this.uri = Objects.requireNonNull(uri);

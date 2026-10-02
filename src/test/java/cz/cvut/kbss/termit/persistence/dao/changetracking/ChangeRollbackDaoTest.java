@@ -128,12 +128,14 @@ class ChangeRollbackDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         term.setParentTerms(Set.of(Generator.generateTermInfoWithId()));
 
-        final Set<TermInfo> originalParents = Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId());
+        final Set<TermInfo> originalParents =
+                Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId());
         transactional(() -> {
             originalParents.forEach(em::persist);
         });
 
-        final Set<Object> parentIdentifiers = originalParents.stream().map(HasIdentifier::getUri).collect(Collectors.toUnmodifiableSet());
+        final Set<Object> parentIdentifiers =
+                originalParents.stream().map(HasIdentifier::getUri).collect(Collectors.toUnmodifiableSet());
 
         sut.rollbackClassAttribute(parentIdentifiers, term, Term_.parentTerms);
 
@@ -200,8 +202,9 @@ class ChangeRollbackDaoTest extends BaseDaoTestRunner {
     void rollbackNativePropertyRejectsAssetWithoutProperties() {
         final Document document = Generator.generateDocumentWithId();
 
-        assertThrows(IllegalArgumentException.class,
-                     () -> sut.rollbackNativeProperty(Set.of("original"), document, Generator.generateUri()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sut.rollbackNativeProperty(Set.of("original"), document, Generator.generateUri()));
     }
 
     private static UpdateChangeRecord recordForAttribute(URI changedAttribute) {

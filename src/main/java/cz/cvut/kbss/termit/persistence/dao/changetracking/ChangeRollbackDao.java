@@ -42,12 +42,12 @@ public class ChangeRollbackDao {
         Objects.requireNonNull(entityIdentifier);
         try {
             return em.createNativeQuery("ASK { ?x a ?type }", Boolean.class)
-                     .setParameter("x", entityIdentifier)
-                     .setHint(QueryHints.DISABLE_INFERENCE, "true")
-                     .getSingleResult();
+                    .setParameter("x", entityIdentifier)
+                    .setHint(QueryHints.DISABLE_INFERENCE, "true")
+                    .getSingleResult();
         } catch (RuntimeException e) {
-            throw new PersistenceException("Failed check existence of entity " +
-                    Utils.uriToString(entityIdentifier), e);
+            throw new PersistenceException(
+                    "Failed check existence of entity " + Utils.uriToString(entityIdentifier), e);
         }
     }
 
@@ -62,8 +62,8 @@ public class ChangeRollbackDao {
     public <T> Optional<Attribute<? super T, ?>> resolveClassAttribute(Class<T> entityType, UpdateChangeRecord record) {
         final IRI changedAttributeIRI = IRI.create(record.getChangedAttribute().toString());
         return em.getMetamodel().entity(entityType).getAttributes().stream()
-                        .filter(attribute -> changedAttributeIRI.equals(attribute.getIRI()))
-                        .findAny();
+                .filter(attribute -> changedAttributeIRI.equals(attribute.getIRI()))
+                .findAny();
     }
 
     /**
@@ -75,7 +75,8 @@ public class ChangeRollbackDao {
      * @param changedAsset the changed entity
      * @param classAttribute the changed Java attribute
      */
-    public void rollbackClassAttribute(Set<Object> originalValue, Asset<?> changedAsset, Attribute<?, ?> classAttribute) {
+    public void rollbackClassAttribute(
+            Set<Object> originalValue, Asset<?> changedAsset, Attribute<?, ?> classAttribute) {
         final Set<Object> mappedOriginalValue = resolveEntityReferences(originalValue, classAttribute);
         final Object newValue = getNewValue(mappedOriginalValue, classAttribute);
         EntityPropertiesUtils.setFieldValue(classAttribute.getJavaField(), changedAsset, newValue);
@@ -96,8 +97,9 @@ public class ChangeRollbackDao {
             return values;
         }
 
-        return values.stream().map(identifier -> em.getReference(valueType, identifier))
-                     .collect(Collectors.toSet());
+        return values.stream()
+                .map(identifier -> em.getReference(valueType, identifier))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -158,6 +160,7 @@ public class ChangeRollbackDao {
             }
             return withProperties.getProperties();
         }
-        throw new IllegalArgumentException("Asset does not implement HasProperties interface! " + Utils.uriToString(asset.getUri()));
+        throw new IllegalArgumentException(
+                "Asset does not implement HasProperties interface! " + Utils.uriToString(asset.getUri()));
     }
 }

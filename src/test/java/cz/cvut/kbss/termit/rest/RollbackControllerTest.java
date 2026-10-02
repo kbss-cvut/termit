@@ -57,8 +57,8 @@ public class RollbackControllerTest extends BaseControllerTestRunner {
         when(changeRollbackService.findUpdateRecord(record.getUri())).thenReturn(record);
 
         mockMvc.perform(post("/history/{localName}/rollback", recordLocalName)
-                       .param(Constants.QueryParams.NAMESPACE, recordNamespace)
-               ).andExpect(status().isNoContent());
+                        .param(Constants.QueryParams.NAMESPACE, recordNamespace))
+                .andExpect(status().isNoContent());
 
         verify(changeRollbackService).findUpdateRecord(record.getUri());
         verify(changeRollbackService).rollback(record);
@@ -70,14 +70,15 @@ public class RollbackControllerTest extends BaseControllerTestRunner {
         final UpdateChangeRecord record = createUpdateRecord(asset);
 
         final String recordLocalName = "instance-1085384276";
-        final String recordNamespace = "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/úprava-entity/";
+        final String recordNamespace =
+                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/úprava-entity/";
         record.setUri(URI.create(recordNamespace + recordLocalName));
 
         when(changeRollbackService.findUpdateRecord(record.getUri())).thenReturn(record);
 
         mockMvc.perform(post("/history/{localName}/rollback", recordLocalName)
-                .param(Constants.QueryParams.NAMESPACE, recordNamespace)
-        ).andExpect(status().isNoContent());
+                        .param(Constants.QueryParams.NAMESPACE, recordNamespace))
+                .andExpect(status().isNoContent());
 
         verify(changeRollbackService).findUpdateRecord(record.getUri());
         verify(changeRollbackService).rollback(record);

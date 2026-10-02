@@ -22,10 +22,7 @@ public class DuplicateSymmetricRelationshipPruner {
 
     private static final Logger LOG = LoggerFactory.getLogger(DuplicateSymmetricRelationshipPruner.class);
 
-    private static final List<IRI> SYMMETRIC_RELATIONSHIPS = List.of(
-            SKOS.RELATED_MATCH,
-            SKOS.EXACT_MATCH
-    );
+    private static final List<IRI> SYMMETRIC_RELATIONSHIPS = List.of(SKOS.RELATED_MATCH, SKOS.EXACT_MATCH);
 
     private final RepositoryConnection connection;
 
@@ -52,15 +49,14 @@ public class DuplicateSymmetricRelationshipPruner {
                                                                    }
                                                                    """);
         tq.setBinding("relationship", relationship);
-        tq.setIncludeInferred(false);   // Only explicit assertions
+        tq.setIncludeInferred(false); // Only explicit assertions
         try (final TupleQueryResult res = tq.evaluate()) {
             while (res.hasNext()) {
                 final BindingSet bs = res.next();
                 final IRI x = (IRI) bs.getValue("x");
                 final IRI y = (IRI) bs.getValue("y");
                 if (x.stringValue().compareTo(y.stringValue()) > 0) {
-                    final Statement statement = Values.getValueFactory()
-                                                      .createStatement(x, relationship, y);
+                    final Statement statement = Values.getValueFactory().createStatement(x, relationship, y);
                     connection.remove(statement);
                 }
             }

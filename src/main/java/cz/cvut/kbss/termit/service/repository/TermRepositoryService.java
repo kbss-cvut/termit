@@ -84,11 +84,15 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private final DataRepositoryService dataService;
 
-    public TermRepositoryService(Validator validator, IdentifierResolver idResolver, TermDao termDao,
-                                 OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
-                                 TermOccurrenceService termOccurrenceService,
-                                 VocabularyRepositoryService vocabularyService,
-                                 VocabularyNamespaceResolver namespaceResolver, DataRepositoryService dataService) {
+    public TermRepositoryService(
+            Validator validator,
+            IdentifierResolver idResolver,
+            TermDao termDao,
+            OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
+            TermOccurrenceService termOccurrenceService,
+            VocabularyRepositoryService vocabularyService,
+            VocabularyNamespaceResolver namespaceResolver,
+            DataRepositoryService dataService) {
         super(validator);
         this.idResolver = idResolver;
         this.termDao = termDao;
@@ -130,24 +134,27 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         final Term result = findRequired(id);
         termDao.detach(result);
         final URI termTypeUri = Term_.entityClassIRI.toURI();
-        final List<CustomAttribute> termCustomAtts = dataService.findCustomAttributesByDomainAndRange(termTypeUri,
-                                                                                                      termTypeUri);
+        final List<CustomAttribute> termCustomAtts =
+                dataService.findCustomAttributesByDomainAndRange(termTypeUri, termTypeUri);
         assert result.getProperties() != null;
-        termCustomAtts.stream().filter(ca -> result.getProperties().containsKey(ca.getUri().toString())).forEach(ca -> {
-            final Set<Object> values = result.getProperties().get(ca.getUri().toString());
-            final Set<TermInfo> toAdd = new HashSet<>();
-            final Iterator<Object> it = values.iterator();
-            while (it.hasNext()) {
-                final Object ref = it.next();
-                if (ref instanceof URI refUri) {
-                    termDao.findTermInfo(refUri).ifPresent(ti -> {
-                        it.remove();
-                        toAdd.add(ti);
-                    });
-                }
-            }
-            values.addAll(toAdd);
-        });
+        termCustomAtts.stream()
+                .filter(ca -> result.getProperties().containsKey(ca.getUri().toString()))
+                .forEach(ca -> {
+                    final Set<Object> values =
+                            result.getProperties().get(ca.getUri().toString());
+                    final Set<TermInfo> toAdd = new HashSet<>();
+                    final Iterator<Object> it = values.iterator();
+                    while (it.hasNext()) {
+                        final Object ref = it.next();
+                        if (ref instanceof URI refUri) {
+                            termDao.findTermInfo(refUri).ifPresent(ti -> {
+                                it.remove();
+                                toAdd.add(ti);
+                            });
+                        }
+                    }
+                    values.addAll(toAdd);
+                });
         return result;
     }
 
@@ -253,8 +260,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     public URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(termLabel);
-        return idResolver.generateIdentifier(namespaceResolver.resolveNamespace(vocabulary.getUri()),
-                                             termLabel.get(vocabulary.getPrimaryLanguage()));
+        return idResolver.generateIdentifier(
+                namespaceResolver.resolveNamespace(vocabulary.getUri()),
+                termLabel.get(vocabulary.getPrimaryLanguage()));
     }
 
     private void addTermAsRootToVocabulary(Term instance, URI vocabularyIri) {
@@ -397,7 +405,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      */
     @Transactional(readOnly = true)
     public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFull(vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
+        return termDao.findAllFull(vocabulary, pageSpec).stream()
+                .map(this::postLoad)
+                .collect(toList());
     }
 
     /**
@@ -410,7 +420,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      */
     @Transactional(readOnly = true)
     public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFull(searchString, vocabulary, pageSpec).stream().map(this::postLoad).collect(toList());
+        return termDao.findAllFull(searchString, vocabulary, pageSpec).stream()
+                .map(this::postLoad)
+                .collect(toList());
     }
 
     /**
@@ -424,8 +436,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return Matching root terms
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
-                                      Collection<URI> includeTerms) {
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
     }
 
@@ -454,7 +465,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return Matching root terms
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllRootsInVocabularies(Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
+    public List<TermDto> findAllRootsInVocabularies(
+            Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
         return termDao.findAllRootsInVocabularies(vocabularies, pageSpec, includeTerms);
     }
 
@@ -554,7 +566,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return Flat list of matching terms
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
+    public List<FlatTermDto> findAllFlatInVocabularies(
+            Collection<URI> vocabularies, Pageable pageSpec, Collection<URI> includeTerms) {
         return termDao.findAllFlatInVocabularies(vocabularies, pageSpec, includeTerms);
     }
 
@@ -584,8 +597,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return Flat list of matching terms
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlatInVocabularies(String searchString, Collection<URI> vocabularies,
-                                                      Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlatInVocabularies(
+            String searchString, Collection<URI> vocabularies, Pageable pageSpec) {
         return termDao.findAllFlatInVocabularies(searchString, vocabularies, pageSpec);
     }
 
@@ -736,7 +749,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         // do not check for occurrence existence if they will be removed
         if (!skipOccurrences && termOccurrenceService.existsOf(instance, true)) {
             throw annotationsExistException(termOccurrenceService.getOccurrenceInfo(instance).stream()
-                                                                 .filter(o -> !o.isSuggested()).toList());
+                    .filter(o -> !o.isSuggested())
+                    .toList());
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
@@ -749,18 +763,20 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     private static TermItException annotationsExistException(List<TermOccurrences> ai) {
-        final String resources = ai.stream().map(TermOccurrences::getResourceLabel).collect(
-                joining(","));
+        final String resources =
+                ai.stream().map(TermOccurrences::getResourceLabel).collect(joining(","));
         return new AssetRemovalException(
-                "Cannot delete the term. It is used for annotating resources: " + resources,
-                "error.term.remove.annotationsExist").addParameter("resources", resources);
+                        "Cannot delete the term. It is used for annotating resources: " + resources,
+                        "error.term.remove.annotationsExist")
+                .addParameter("resources", resources);
     }
 
     public static TermItException hasSubTermsException(Set<TermInfo> subTerms) {
-        final String children = subTerms.stream().map(t -> t.getUri().toString()).collect(joining(","));
+        final String children =
+                subTerms.stream().map(t -> t.getUri().toString()).collect(joining(","));
         return new AssetRemovalException(
-                "Cannot delete the term. It is a parent of other terms: " + children,
-                "error.term.remove.hasSubTerms")
+                        "Cannot delete the term. It is a parent of other terms: " + children,
+                        "error.term.remove.hasSubTerms")
                 .addParameter("subTerms", children);
     }
 
