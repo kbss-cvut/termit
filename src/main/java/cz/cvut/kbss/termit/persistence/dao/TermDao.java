@@ -91,6 +91,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
      * {@code skos:hasTopConcept} relations are excluded
+     *
      * @implNote Bindings are required in {@link #countReferences(AbstractTerm)},
      *           {@link #findReferencesInternal(AbstractTerm, Pageable, long)}, {@link #removeReferencesTo(AbstractTerm)}
      *           and {@link #referencesToTermExist(AbstractTerm)}
@@ -189,9 +190,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
     }
 
-    /**
-     * Flushes pending term changes and clears the persistence context.
-     */
+    /** Flushes pending term changes and clears the persistence context. */
     public void flushAndClear() {
         em.flush();
         em.clear();
@@ -210,9 +209,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Loads information about terms that have the specified term as object of assertion of the specified property.
      *
-     * @param term     Assertion object
+     * @param term Assertion object
      * @param property Property
-     * @param exclude  Terms to exclude from the result
+     * @param exclude Terms to exclude from the result
      * @return Set of matching terms
      */
     private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude) {
@@ -289,7 +288,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Persists the specified term into the specified vocabulary.
      *
-     * @param entity     The term to persist
+     * @param entity The term to persist
      * @param vocabulary Vocabulary which shall contain the persisted term
      */
     @ModifiesData
@@ -348,8 +347,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Evicts all descendants of the specified term from the cache - default context.
-     * <p>
-     * This is done to prevent stale references through the parentTerms chain.
+     *
+     * <p>This is done to prevent stale references through the parentTerms chain.
      *
      * @param term Term whose descendants to evict
      */
@@ -367,7 +366,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Sets state of the specified term to the specified value.
      *
-     * @param term  Term whose state to update
+     * @param term Term whose state to update
      * @param state State to set
      */
     public void setState(Term term, URI state) {
@@ -403,7 +402,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
-     * @param pageSpec   Page specification
+     * @param pageSpec Page specification
      * @return List of vocabulary term DTOs
      */
     public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
@@ -462,7 +461,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * as a flat list of DTOs.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
-     * @param pageSpec   Page specification
+     * @param pageSpec Page specification
      * @return Flat list of vocabulary term DTOs
      */
     public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
@@ -479,7 +478,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * as a flat list of DTOs.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
-     * @param pageSpec   Page specification
+     * @param pageSpec Page specification
      * @param includeTerms Identifier of terms that should be additionally included in the result
      * @return Flat list of vocabulary term DTOs
      * @see #findAllFlat(Pageable, Collection)
@@ -499,8 +498,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
      * that have label and definition in the instance language.
-     * <p>
-     * Terms are loaded <b>without</b> their subterms.
+     *
+     * <p>Terms are loaded <b>without</b> their subterms.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @return List of vocabulary term DTOs ordered by label
@@ -540,13 +539,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Gets terms from the specified vocabulary.
-     * <p>
-     * No differences are made between root terms and terms with parents. Note that this method returns terms with all
-     * their ancestors eagerly loaded. If only direct parent terms are necessary, prefer
+     *
+     * <p>No differences are made between root terms and terms with parents. Note that this method returns terms with
+     * all their ancestors eagerly loaded. If only direct parent terms are necessary, prefer
      * {@link #findAllFlat(Vocabulary, Pageable)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
-     * @param pageSpec   Page specification
+     * @param pageSpec Page specification
      * @return Matching terms, ordered by label
      * @see #findAllFlat(Vocabulary, Pageable)
      */
@@ -599,14 +598,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Gets all terms matching the specified search string from the specified vocabulary.
-     * <p>
-     * No differences are made between root terms and terms with parents. Note that this method returns terms with all
-     * their ancestors eagerly loaded. If only direct parent terms are necessary, prefer
-     * {@link #findAllFlat(String, Vocabulary, Pageable)}.
      *
-     * @param vocabulary   Vocabulary whose terms should be returned
+     * <p>No differences are made between root terms and terms with parents. Note that this method returns terms with
+     * all their ancestors eagerly loaded. If only direct parent terms are necessary, prefer {@link #findAllFlat(String,
+     * Vocabulary, Pageable)}.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned
      * @param searchString Search string
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @return Matching terms, ordered by label
      */
     public List<Term> findAllFull(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
@@ -684,11 +683,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Loads a page of root terms (terms without a parent) contained in the specified vocabulary.
-     * <p>
-     * Terms with a label in the instance language are prepended.
      *
-     * @param vocabulary   Vocabulary whose root terms should be returned
-     * @param pageSpec     Page specification
+     * <p>Terms with a label in the instance language are prepended.
+     *
+     * @param vocabulary Vocabulary whose root terms should be returned
+     * @param pageSpec Page specification
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms, ordered by their label
      */
@@ -734,10 +733,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Loads a page of root terms (terms without a parent).
-     * <p>
-     * Terms with a label in the instance language are prepended.
      *
-     * @param pageSpec     Page specification
+     * <p>Terms with a label in the instance language are prepended.
+     *
+     * @param pageSpec Page specification
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms, ordered by their label
      */
@@ -768,9 +767,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    /**
-     * Hydrates a collection of URIs into full Term instances.
-     */
+    /** Hydrates a collection of URIs into full Term instances. */
     public List<Term> findAllFullByUris(Collection<URI> uris) {
         if (uris == null || uris.isEmpty()) {
             return Collections.emptyList();
@@ -819,9 +816,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Recursively loads subterms for the specified term and its parents (if they exist).
-     * <p>
-     * This implementation ensures that the term hierarchy can be traversed both ways for the specified term. This has
-     * to be done to allow the tree-select component on the frontend to work properly and display the terms.
+     *
+     * <p>This implementation ensures that the term hierarchy can be traversed both ways for the specified term. This
+     * has to be done to allow the tree-select component on the frontend to work properly and display the terms.
      *
      * @param term The term to load subterms for
      */
@@ -834,11 +831,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Loads a page of root terms (terms without a parent) contained in any of the specified vocabularies.
-     * <p>
-     * Terms with a label in the instance language are prepended.
+     *
+     * <p>Terms with a label in the instance language are prepended.
      *
      * @param vocabularies Identifiers of vocabularies whose root terms should be returned
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms, ordered by their label
      */
@@ -872,12 +869,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Finds terms whose label contains the specified search string.
-     * <p>
-     * This method searches in the specified vocabulary only.
+     *
+     * <p>This method searches in the specified vocabulary only.
      *
      * @param searchString String the search term labels by
-     * @param vocabulary   Vocabulary whose terms should be searched
-     * @param pageSpec     Page specification
+     * @param vocabulary Vocabulary whose terms should be searched
+     * @param pageSpec Page specification
      * @return List of matching terms
      */
     public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
@@ -914,12 +911,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Finds terms whose label contains the specified search string in the specified vocabulary and returns them as a
      * flat list of DTOs.
-     * <p>
-     * This method searches in the specified vocabulary only.
+     *
+     * <p>This method searches in the specified vocabulary only.
      *
      * @param searchString String the search term labels by
-     * @param vocabulary   Vocabulary whose terms should be searched
-     * @param pageSpec     Page specification
+     * @param vocabulary Vocabulary whose terms should be searched
+     * @param pageSpec Page specification
      * @return Flat list of matching terms
      */
     public List<FlatTermDto> findAllFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
@@ -955,7 +952,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * Finds terms whose label contains the specified search string.
      *
      * @param searchString String the search term labels by
-     * @param pageSpec     Page specifying result number and position
+     * @param pageSpec Page specifying result number and position
      * @return List of matching terms
      */
     public List<TermDto> findAll(String searchString, Pageable pageSpec) {
@@ -1000,7 +997,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * Finds all terms whose label contains the specified search string and returns them as a flat list of DTOs.
      *
      * @param searchString String the search term labels by
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @return Flat list of matching terms
      */
     public List<FlatTermDto> findAllFlat(String searchString, Pageable pageSpec) {
@@ -1050,12 +1047,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Finds all terms contained in any of the specified vocabularies.
-     * <p>
-     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     *
+     * <p>Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
      * necessary, prefer {@link #findAllFlatInVocabularies(Collection, Pageable)}.
      *
      * @param vocabularies Identifiers of vocabularies whose terms should be returned
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @return List of matching terms
      */
     public List<TermDto> findAllInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
@@ -1088,11 +1085,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
-     * <p>
-     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
+     *
+     * <p>Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
      *
      * @param vocabularies Identifiers of vocabularies whose terms should be returned
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @return Flat list of matching terms
      */
     public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies, Pageable pageSpec) {
@@ -1123,13 +1120,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Finds terms whose label contains the specified search string in any of the specified vocabularies.
-     * <p>
-     * Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
+     *
+     * <p>Note that this method returns terms with all their ancestors eagerly loaded. If only direct parent terms are
      * necessary, prefer {@link #findAllFlatInVocabularies(String, Collection, Pageable)}.
      *
      * @param searchString String to search term labels by
      * @param vocabularies Identifiers of vocabularies whose terms should be searched
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @return List of matching terms
      */
     public List<TermDto> findAllInVocabularies(String searchString, Collection<URI> vocabularies, Pageable pageSpec) {
@@ -1165,11 +1162,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
-     * <p>
-     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
+     *
+     * <p>Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
      *
      * @param vocabularies Identifiers of vocabularies whose terms should be returned
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @param includeTerms Identifier of terms that should be additionally included in the result
      * @return Flat list of matching terms
      * @see #findAllFlatInVocabularies(String, Collection, Pageable)
@@ -1189,7 +1186,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param searchString String to search term labels by
      * @param vocabularies Identifiers of vocabularies whose terms should be searched
-     * @param pageSpec     Page specification
+     * @param pageSpec Page specification
      * @return Flat list of matching terms
      */
     public List<FlatTermDto> findAllFlatInVocabularies(
@@ -1249,12 +1246,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
-     * <p>
-     * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
+     *
+     * <p>Note that this method uses comparison ignoring case, so that two labels differing just in character case are
      * considered same here.
      *
-     * @param label       Label to check
-     * @param vocabulary  Vocabulary in which terms will be searched
+     * @param label Label to check
+     * @param vocabulary Vocabulary in which terms will be searched
      * @param languageTag Language tag of the label, optional. If {@code null}, any language is accepted
      * @return Whether term with {@code label} already exists in vocabulary
      */
@@ -1282,15 +1279,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Gets the identifier of a term with the specified label in a vocabulary with the specified URI.
-     * <p>
-     * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
+     *
+     * <p>Note that this method uses comparison ignoring case, so that two labels differing just in character case are
      * considered same here.
      *
-     * @param label       Label to search by
-     * @param vocabulary  Vocabulary in which terms will be searched
+     * @param label Label to search by
+     * @param vocabulary Vocabulary in which terms will be searched
      * @param languageTag Language tag of the label
      * @return Identifier of matching term wrapped in an {@code Optional}, empty {@code Optional} if there is no such
-     * term
+     *     term
      */
     public Optional<URI> findIdentifierByLabel(String label, Vocabulary vocabulary, String languageTag) {
         Objects.requireNonNull(label);
@@ -1372,8 +1369,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Checks whether there is any triple in any vocabulary where the term is an object.
-     * Excluding vocabulary snapshots.
+     * Checks whether there is any triple in any vocabulary where the term is an object. Excluding vocabulary snapshots.
      *
      * @param term term to which references should be checked
      * @return true if there is any triple where the term is an object

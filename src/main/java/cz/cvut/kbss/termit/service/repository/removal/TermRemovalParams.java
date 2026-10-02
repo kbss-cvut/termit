@@ -6,14 +6,14 @@ import java.util.Objects;
 
 /**
  * Describes how a term should be removed
+ *
  * @param termToRemove The Term that will be removed
  * @param subTermsStrategy Strategy to use for sub-terms handling
- * @param removeOccurrences Whether {@link cz.cvut.kbss.termit.model.assignment.TermOccurrence term occurrences} should be removed.
- *                          When {@code false} and a term occurrence exists, the removal will fail
- *                          and the term will not be removed.
- * @param removeRelationships Whether relationships referencing the term should be removed.
- *                            When {@code false} and the term is referenced in some relationship, the removal will fail
- *                            and the term will not be removed.
+ * @param removeOccurrences Whether {@link cz.cvut.kbss.termit.model.assignment.TermOccurrence term occurrences} should
+ *     be removed. When {@code false} and a term occurrence exists, the removal will fail and the term will not be
+ *     removed.
+ * @param removeRelationships Whether relationships referencing the term should be removed. When {@code false} and the
+ *     term is referenced in some relationship, the removal will fail and the term will not be removed.
  * @see cz.cvut.kbss.termit.service.repository.TermRepositoryService#remove(TermRemovalParams)
  */
 public record TermRemovalParams(

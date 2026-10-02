@@ -31,9 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Term representation that can export itself to an Excel row.
- */
+/** Term representation that can export itself to an Excel row. */
 public class ExcelTermExporter {
 
     private static final int MAX_CELL_LENGTH = 32767;

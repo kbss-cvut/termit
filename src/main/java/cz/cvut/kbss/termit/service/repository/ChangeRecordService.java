@@ -53,8 +53,8 @@ public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
 
     /**
      * Gets authors of the specified asset.
-     * <p>
-     * This method returns a collection because some assets may have multiple authors (e.g., when a vocabulary is
+     *
+     * <p>This method returns a collection because some assets may have multiple authors (e.g., when a vocabulary is
      * re-imported from SKOS by a different user). Also, some assets may not have recorded authors (e.g., terms from an
      * imported vocabulary), in which case the result of this method is empty.
      *

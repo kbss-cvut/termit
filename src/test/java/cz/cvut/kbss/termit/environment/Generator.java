@@ -118,8 +118,8 @@ public class Generator {
 
     /**
      * Generates a (pseudo) random integer.
-     * <p>
-     * This version has no bounds (aside from the integer range), so the returned number may be negative or zero.
+     *
+     * <p>This version has no bounds (aside from the integer range), so the returned number may be negative or zero.
      *
      * @return Randomly generated integer
      * @see #randomInt(int, int)
@@ -130,8 +130,8 @@ public class Generator {
 
     /**
      * Generates a (pseudo)random index of an element in the collection.
-     * <p>
-     * I.e. the returned number is in the interval <0, col.size()).
+     *
+     * <p>I.e. the returned number is in the interval <0, col.size()).
      *
      * @param col The collection
      * @return Random index
@@ -144,8 +144,8 @@ public class Generator {
 
     /**
      * Generates a (pseudo)random index of an element in the array.
-     * <p>
-     * I.e. the returned number is in the interval <0, arr.length).
+     *
+     * <p>I.e. the returned number is in the interval <0, arr.length).
      *
      * @param arr The array
      * @return Random index
@@ -169,6 +169,7 @@ public class Generator {
 
     /**
      * Returns a (pseudo)random element from the specified list.
+     *
      * @param lst List to select random element from
      * @return Element from the list
      * @param <T> Element type
@@ -188,8 +189,8 @@ public class Generator {
 
     /**
      * Creates a random instance of {@link User}.
-     * <p>
-     * The instance has no identifier set.
+     *
+     * <p>The instance has no identifier set.
      *
      * @return New {@code User} instance
      * @see #generateUserWithId()
@@ -205,8 +206,8 @@ public class Generator {
 
     /**
      * Creates a random instance of {@link User} with a generated identifier.
-     * <p>
-     * The presence of identifier is the only difference between this method and {@link #generateUser()}.
+     *
+     * <p>The presence of identifier is the only difference between this method and {@link #generateUser()}.
      *
      * @return New {@code User} instance
      */
@@ -217,8 +218,7 @@ public class Generator {
     }
 
     /**
-     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username and
-     * identifier.
+     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username and identifier.
      *
      * @return A new {@code UserAccount} instance
      */
@@ -245,8 +245,8 @@ public class Generator {
     }
 
     /**
-     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary, a model
-     * and {@link Environment#LANGUAGE} as the primary language.
+     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary, a model and
+     * {@link Environment#LANGUAGE} as the primary language.
      *
      * @return New {@code Vocabulary} instance
      */
@@ -377,11 +377,11 @@ public class Generator {
 
     /**
      * Generates a list of change records for the specified asset.
-     * <p>
-     * The list contains one persist record and several update records.
+     *
+     * <p>The list contains one persist record and several update records.
      *
      * @param asset Asset to generate change records for
-     * @param user  Author of the changes
+     * @param user Author of the changes
      * @return List of change records
      */
     public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
@@ -530,8 +530,9 @@ public class Generator {
     }
 
     /**
-     * Generates {@link File Files} with different modification and last backup timestamps.
-     * Generated files are linked to the provided document.
+     * Generates {@link File Files} with different modification and last backup timestamps. Generated files are linked
+     * to the provided document.
+     *
      * @param document the document to which the files should be added
      * @return generated files
      */

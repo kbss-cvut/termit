@@ -902,9 +902,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         });
     }
 
-    /**
-     * Bug kbss-cvut/termit-ui#282
-     */
+    /** Bug kbss-cvut/termit-ui#282 */
     @Test
     void removingExactMatchFromInverseSideWorksInTransaction() {
         enableRdfsInference(em);

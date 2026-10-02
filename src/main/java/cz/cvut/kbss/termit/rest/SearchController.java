@@ -111,10 +111,10 @@ public class SearchController extends BaseController {
      * runs full-text search on all assets.
      *
      * @param searchString Search string for full-text search.
-     * @param language     Language for full-text search, optional.
-     * @param pageSize     Page size for pagination, optional.
-     * @param pageNo       Page number for pagination, optional.
-     * @param full         Whether to return fully populated term entities, optional.
+     * @param language Language for full-text search, optional.
+     * @param pageSize Page size for pagination, optional.
+     * @param pageNo Page number for pagination, optional.
+     * @param full Whether to return fully populated term entities, optional.
      * @param searchParams Search parameters for faceted filtering, optional.
      * @return List of search results matching the full-text search and faceted filtering criteria.
      */
@@ -159,11 +159,11 @@ public class SearchController extends BaseController {
 
     /**
      * Runs a faceted search using the specified search parameters over all terms.
-     * <p>
-     * This endpoint is kept for backwards compatibility and uses the advanced search internally.
      *
-     * @param pageSize     Page size for pagination, optional.
-     * @param pageNo       Page number for pagination, optional.
+     * <p>This endpoint is kept for backwards compatibility and uses the advanced search internally.
+     *
+     * @param pageSize Page size for pagination, optional.
+     * @param pageNo Page number for pagination, optional.
      * @param searchParams Search parameters for faceted filtering.
      * @return List of search results matching the faceted filtering criteria.
      */

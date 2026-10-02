@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
 import jakarta.annotation.Nonnull;
 
 import java.net.URI;
@@ -37,9 +38,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Represents a change to an asset.
- */
+/** Represents a change to an asset. */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @OWLClass(iri = Vocabulary.s_c_change)
 public class AbstractChangeRecord extends AbstractEntity implements Comparable<AbstractChangeRecord>, HasTypes {

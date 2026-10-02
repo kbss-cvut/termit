@@ -390,9 +390,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     /**
      * Verifies that {@link TermDao#findAll(Vocabulary, org.springframework.data.domain.Pageable)} returns hierarchical
-     * DTOs (root has its child in subTerms) while
-     * {@link TermDao#findAllFlat(Vocabulary, org.springframework.data.domain.Pageable)} returns a flat list without a
-     * populated sub-term hierarchy.
+     * DTOs (root has its child in subTerms) while {@link TermDao#findAllFlat(Vocabulary,
+     * org.springframework.data.domain.Pageable)} returns a flat list without a populated sub-term hierarchy.
      */
     @Test
     void findAllFlatReturnsFlatListWithoutSubTerms() {
@@ -900,9 +899,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 result.stream().map(r -> r.getLabel().get("en")).toList());
     }
 
-    /**
-     * terms should be ordered - by language and then lexicographically, with the default language always first
-     */
+    /** terms should be ordered - by language and then lexicographically, with the default language always first */
     @Test
     void findAllRootsReturnsTermsInMultipleLanguagesWithoutPrimaryLabelInCorrectOrder() {
         configuration.getPersistence().setLanguage("en");
@@ -1224,9 +1221,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         }
     }
 
-    /**
-     * Bug #1576
-     */
+    /** Bug #1576 */
     @Test
     void updateClearsPossiblyStaleTermDtoFromCache() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
@@ -1277,9 +1272,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertFalse(toFind.get().getSubTerms().isEmpty());
     }
 
-    /**
-     * Bug #1634
-     */
+    /** Bug #1634 */
     @Test
     void findAllRootsLoadsSubTermsForAncestorsOfIncludedTerms() {
         enableRdfsInference(em);
@@ -1311,9 +1304,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         });
     }
 
-    /**
-     * Bug #1634
-     */
+    /** Bug #1634 */
     @Test
     void findAllRootsEnsuresIncludedTermsAreNotDuplicatedInResult() {
         final List<Term> rootTerms = generateTerms(4);
@@ -1798,9 +1789,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         return withIdentifier.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
     }
 
-    /**
-     * Adds {@code snaphost a versionOfVocabulary} and {@code snaphost isVersionOfVocabulary vocabulary} statements
-     */
+    /** Adds {@code snaphost a versionOfVocabulary} and {@code snaphost isVersionOfVocabulary vocabulary} statements */
     private void persistVocabularySnapshotType(URI snapshotUri, URI vocabulary) {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
@@ -1840,9 +1829,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         });
     }
 
-    /**
-     * Creates RDF4J {@link Statement}
-     */
+    /** Creates RDF4J {@link Statement} */
     protected static Statement statement(Resource subject, IRI predicate, Value object, Resource context) {
         return Values.getValueFactory().createStatement(subject, predicate, object, context);
     }

@@ -143,8 +143,8 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
     /**
      * Cleans up possibly orphaned term occurrences.
-     * <p>
-     * Such occurrences reference targets whose sources no longer exist in the repository.
+     *
+     * <p>Such occurrences reference targets whose sources no longer exist in the repository.
      */
     @Scheduled(cron = SCHEDULING_PATTERN)
     @Transactional
