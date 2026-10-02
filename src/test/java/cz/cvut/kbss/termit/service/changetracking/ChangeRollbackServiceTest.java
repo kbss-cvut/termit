@@ -170,11 +170,12 @@ class ChangeRollbackServiceTest {
 
     @ParameterizedTest
     @CsvSource(textBlock = WITH_REVERSIBLE_CSV_SOURCE)
-    void withReversibleTypeAddsReversibleTypeToReversibleVocabularyChange(boolean canRollback, boolean canModify, boolean expectedIsReversible) {
+    void withReversibleTypeAddsReversibleTypeToReversibleVocabularyChange(
+            boolean canRollback, boolean canModify, boolean expectedIsReversible) {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final UpdateChangeRecord record = recordFor(vocabulary);
 
-        when (vocabularyService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        when(vocabularyService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         lenient().when(rollbackValidator.canRollback(record, Vocabulary.class)).thenReturn(canRollback);
         when(vocabularyAuthorizationService.canModify(vocabulary)).thenReturn(canModify);
 
@@ -193,11 +194,12 @@ class ChangeRollbackServiceTest {
 
     @ParameterizedTest
     @CsvSource(textBlock = WITH_REVERSIBLE_CSV_SOURCE)
-    void withReversibleTypeAddsReversibleTypeToReversibleTermChange(boolean canRollback, boolean canModify, boolean expectedIsReversible) {
+    void withReversibleTypeAddsReversibleTypeToReversibleTermChange(
+            boolean canRollback, boolean canModify, boolean expectedIsReversible) {
         final Term term = Generator.generateTermWithId();
         final UpdateChangeRecord record = recordFor(term);
 
-        when (termService.find(term.getUri())).thenReturn(Optional.of(term));
+        when(termService.find(term.getUri())).thenReturn(Optional.of(term));
         lenient().when(rollbackValidator.canRollback(record, Term.class)).thenReturn(canRollback);
         when(termAuthorizationService.canModify(term)).thenReturn(canModify);
 

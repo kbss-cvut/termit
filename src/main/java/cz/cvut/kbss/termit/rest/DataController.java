@@ -76,18 +76,23 @@ public class DataController {
 
     @Operation(description = "Gets all unique RDF properties used by the data in the system.")
     @ApiResponse(responseCode = "200", description = "List of RDFS resources representing properties.")
-    @GetMapping(value = "/properties", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/properties",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getProperties() {
         return dataService.findAllProperties();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new unmapped RDF property in the repository.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Creates a new unmapped RDF property in the repository.")
     @ApiResponse(responseCode = "201", description = "Property successfully created.")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    @PostMapping(value = "/properties", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> createProperty(@Parameter(description = "Property metadata.")
-                                               @RequestBody RdfsResource property) {
+    @PostMapping(
+            value = "/properties",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> createProperty(
+            @Parameter(description = "Property metadata.") @RequestBody RdfsResource property) {
         dataService.persist(property);
         LOG.debug("Created property {}.", property);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
@@ -95,64 +100,81 @@ public class DataController {
 
     @Operation(description = "Gets all user-defined custom attributes in the system.")
     @ApiResponse(responseCode = "200", description = "List of custom attributes.")
-    @GetMapping(value = "/custom-attributes", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/custom-attributes",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<CustomAttribute> getCustomAttributes() {
         return dataService.findAllCustomAttributes();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new custom attribute.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Creates a new custom attribute.")
     @ApiResponse(responseCode = "201", description = "Attribute successfully created.")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @PostMapping(value = "/custom-attributes", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> createCustomAttribute(@Parameter(description = "Attribute metadata.")
-                                                      @RequestBody CustomAttribute attribute) {
+    @PostMapping(
+            value = "/custom-attributes",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> createCustomAttribute(
+            @Parameter(description = "Attribute metadata.") @RequestBody CustomAttribute attribute) {
         dataService.persistCustomAttribute(attribute);
         LOG.debug("Created custom attribute {}.", attribute);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates a custom attribute. Only label and description can be changed.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates a custom attribute. Only label and description can be changed.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Attribute successfully updated."),
-            @ApiResponse(responseCode = "404", description = "Attribute not found.")
+        @ApiResponse(responseCode = "204", description = "Attribute successfully updated."),
+        @ApiResponse(responseCode = "404", description = "Attribute not found.")
     })
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @PutMapping(value = "/custom-attributes/{localName}",
-                consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public void updateCustomAttribute(@Parameter(
-                                              description = "Locally (in the context of the custom attributes namespace) unique part of the attribute identifier.",
-                                              example = "custom-attribute")
-                                      @PathVariable String localName,
-                                      @Parameter(description = "Updated attribute metadata.")
-                                      @RequestBody CustomAttribute update) {
+    @PutMapping(
+            value = "/custom-attributes/{localName}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public void updateCustomAttribute(
+            @Parameter(
+                            description =
+                                    "Locally (in the context of the custom attributes namespace) unique part of the attribute identifier.",
+                            example = "custom-attribute")
+                    @PathVariable
+                    String localName,
+            @Parameter(description = "Updated attribute metadata.") @RequestBody CustomAttribute update) {
         dataService.updateCustomAttribute(update);
         LOG.debug("Updated custom attribute {}.", update);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Retrieves the triples where the specified custom attribute is used as predicate.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Retrieves the triples where the specified custom attribute is used as predicate.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "The list of triples with the custom attribute as predicate"),
-            @ApiResponse(responseCode = "404", description = "Attribute not found")
+        @ApiResponse(responseCode = "200", description = "The list of triples with the custom attribute as predicate"),
+        @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @GetMapping(value = "/custom-attributes/{localName}/usage", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<List<Statement>> getCustomAttributeUsage(@Parameter(
-                                                                           description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
-                                                                           example = "custom-attribute")
-                                                                   @PathVariable String localName,
-                                                                   @Parameter(
-                                                                           description = "Custom attribute identifier namespace",
-                                                                           example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
-                                                                   )
-                                                                   @RequestParam String namespace,
-                                                                   @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-                                                                   @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-                                                                   @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-                                                                   @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
+    @GetMapping(
+            value = "/custom-attributes/{localName}/usage",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<List<Statement>> getCustomAttributeUsage(
+            @Parameter(
+                            description =
+                                    "Locally (in the context of the namespace) unique part of the attribute identifier.",
+                            example = "custom-attribute")
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = "Custom attribute identifier namespace",
+                            example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/")
+                    @RequestParam
+                    String namespace,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false)
+                    Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false)
+                    Integer pageNo) {
         Pageable pageable = Constants.DEFAULT_PAGE_SPEC;
         if (pageSize != null && pageNo != null) {
             pageable = PageRequest.of(pageNo, pageSize);
@@ -164,30 +186,34 @@ public class DataController {
                 .body(result.getContent());
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes the custom attribute, " +
-                       "if the removeUsages is not enabled, the usages of the attribute wont be removed.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Removes the custom attribute, "
+                    + "if the removeUsages is not enabled, the usages of the attribute wont be removed.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Custom attribute was removed"),
-            @ApiResponse(responseCode = "404", description = "Attribute not found")
+        @ApiResponse(responseCode = "204", description = "Custom attribute was removed"),
+        @ApiResponse(responseCode = "404", description = "Attribute not found")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(value = "/custom-attributes/{localName}")
-    public void removeCustomAttribute(@Parameter(
-                                              description = "Locally (in the context of the namespace) unique part of the attribute identifier.",
-                                              example = "custom-attribute")
-                                      @PathVariable String localName,
-                                      @Parameter(
-                                              description = "Custom attribute identifier namespace",
-                                              example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/"
-                                      )
-                                      @RequestParam String namespace,
-                                      @Parameter(
-                                              description = "Indicates whether to remove the usages of the custom attribute as well" +
-                                                      "When false, only the attribute itself will be removed, its usages will be kept."
-                                      )
-                                      @RequestParam boolean removeUsages) {
+    public void removeCustomAttribute(
+            @Parameter(
+                            description =
+                                    "Locally (in the context of the namespace) unique part of the attribute identifier.",
+                            example = "custom-attribute")
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = "Custom attribute identifier namespace",
+                            example = "http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute/")
+                    @RequestParam
+                    String namespace,
+            @Parameter(
+                            description = "Indicates whether to remove the usages of the custom attribute as well"
+                                    + "When false, only the attribute itself will be removed, its usages will be kept.")
+                    @RequestParam
+                    boolean removeUsages) {
         final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
         dataService.removeCustomAttribute(identifier, removeUsages);
         LOG.debug("Removed custom attribute: {}", identifier);
@@ -195,30 +221,33 @@ public class DataController {
 
     @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "RDSF resource metadata."),
-            @ApiResponse(responseCode = "404", description = "Resource not found.")
+        @ApiResponse(responseCode = "200", description = "RDSF resource metadata."),
+        @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
-    @GetMapping(value = "/resource", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public RdfsResource getById(@Parameter(description = "Identifier of the resource to retrieve.")
-                                @RequestParam("iri") URI id) {
+    @GetMapping(
+            value = "/resource",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public RdfsResource getById(
+            @Parameter(description = "Identifier of the resource to retrieve.") @RequestParam("iri") URI id) {
         return dataService.find(id).orElseThrow(() -> NotFoundException.create("Resource", id));
     }
 
     @Operation(
-            description = "Gets the label of a RDFS resource with the specified IRI. " +
-                    "Unless a specific language is requested, the label is in the vocabulary language when available, " +
-                    "otherwise the configured persistence unit language is used instead.")
+            description = "Gets the label of a RDFS resource with the specified IRI. "
+                    + "Unless a specific language is requested, the label is in the vocabulary language when available, "
+                    + "otherwise the configured persistence unit language is used instead.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "RDFS resource label."),
-            @ApiResponse(responseCode = "404", description = "Resource not found.")
+        @ApiResponse(responseCode = "200", description = "RDFS resource label."),
+        @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
     @GetMapping(value = "/label")
-    public String getLabel(@Parameter(description = "Resource identifier.")
-                           @RequestParam("iri") URI id,
-                           @Parameter(description = "Label language")
-                           @RequestParam(value = "language", required = false) String language
-    ) {
-        return dataService.getLabel(id, language).orElseThrow(
-                () -> new NotFoundException("Resource with id " + id + " not found or it has no matching label."));
+    public String getLabel(
+            @Parameter(description = "Resource identifier.") @RequestParam("iri") URI id,
+            @Parameter(description = "Label language") @RequestParam(value = "language", required = false)
+                    String language) {
+        return dataService
+                .getLabel(id, language)
+                .orElseThrow(() ->
+                        new NotFoundException("Resource with id " + id + " not found or it has no matching label."));
     }
 }

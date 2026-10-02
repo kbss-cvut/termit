@@ -59,16 +59,19 @@ class VocabularyRepositoryServiceImportTest {
 
     @Test
     void passesInputStreamFromProvidedInputFileToImporter() throws IOException {
-        final MultipartFile input = new MockMultipartFile("vocabulary.ttl", "vocabulary.ttl",
-                                                          Constants.MediaType.TURTLE,
-                                                          Environment.loadFile("data/test-glossary.ttl"));
+        final MultipartFile input = new MockMultipartFile(
+                "vocabulary.ttl",
+                "vocabulary.ttl",
+                Constants.MediaType.TURTLE,
+                Environment.loadFile("data/test-glossary.ttl"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(importer.importVocabulary(any(VocabularyImporter.ImportConfiguration.class),
-                                       any(VocabularyImporter.ImportInput.class))).thenReturn(vocabulary);
+        when(importer.importVocabulary(
+                        any(VocabularyImporter.ImportConfiguration.class), any(VocabularyImporter.ImportInput.class)))
+                .thenReturn(vocabulary);
         when(dao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final Vocabulary result = sut.importVocabulary(vocabulary.getUri(), input);
-        final ArgumentCaptor<VocabularyImporter.ImportInput> captor = ArgumentCaptor.forClass(
-                VocabularyImporter.ImportInput.class);
+        final ArgumentCaptor<VocabularyImporter.ImportInput> captor =
+                ArgumentCaptor.forClass(VocabularyImporter.ImportInput.class);
         verify(importer).importVocabulary(any(VocabularyImporter.ImportConfiguration.class), captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);
@@ -76,15 +79,17 @@ class VocabularyRepositoryServiceImportTest {
 
     @Test
     void importTermTranslationsInvokesImporterWithProvidedData() throws IOException {
-        final MultipartFile input = new MockMultipartFile("vocabulary.xlsx", "vocabulary.xlsx",
-                                                          Constants.MediaType.EXCEL,
-                                                          Environment.loadFile("data/import-simple-en-cs.xlsx"));
+        final MultipartFile input = new MockMultipartFile(
+                "vocabulary.xlsx",
+                "vocabulary.xlsx",
+                Constants.MediaType.EXCEL,
+                Environment.loadFile("data/import-simple-en-cs.xlsx"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(importer.importTermTranslations(any(URI.class), any(VocabularyImporter.ImportInput.class))).thenReturn(
-                vocabulary);
+        when(importer.importTermTranslations(any(URI.class), any(VocabularyImporter.ImportInput.class)))
+                .thenReturn(vocabulary);
         final Vocabulary result = sut.importTermTranslations(vocabulary.getUri(), input);
-        final ArgumentCaptor<VocabularyImporter.ImportInput> captor = ArgumentCaptor.forClass(
-                VocabularyImporter.ImportInput.class);
+        final ArgumentCaptor<VocabularyImporter.ImportInput> captor =
+                ArgumentCaptor.forClass(VocabularyImporter.ImportInput.class);
         verify(importer).importTermTranslations(eq(vocabulary.getUri()), captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);

@@ -62,8 +62,8 @@ import static org.mockito.Mockito.when;
 
 class UtilsTest {
     private static final char DECIMAL_SEPARATOR = DecimalFormatSymbols.getInstance(
-                                                                              Locale.getDefault(Locale.Category.FORMAT))
-                                                                      .getDecimalSeparator();
+                    Locale.getDefault(Locale.Category.FORMAT))
+            .getDecimalSeparator();
     private static final String BASE = "BASE";
 
     @Test
@@ -109,8 +109,9 @@ class UtilsTest {
 
     @Test
     public void extractVocabularyNamespaceFromTermIrisThrowsExceptionIfNoConceptIsProvided() {
-        Assertions.assertThrows(IllegalArgumentException.class,
-                                () -> Utils.extractVocabularyNamespaceFromTermIris(Collections.emptySet()));
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> Utils.extractVocabularyNamespaceFromTermIris(Collections.emptySet()));
     }
 
     @Test
@@ -118,8 +119,8 @@ class UtilsTest {
         final Set<String> conceptIris = new HashSet<>();
         conceptIris.add("https://example.org/pojem/A");
         conceptIris.add("https://example2.org/pojem/B");
-        Assertions.assertThrows(IllegalArgumentException.class,
-                                () -> Utils.extractVocabularyNamespaceFromTermIris(conceptIris));
+        Assertions.assertThrows(
+                IllegalArgumentException.class, () -> Utils.extractVocabularyNamespaceFromTermIris(conceptIris));
     }
 
     @Test
@@ -156,8 +157,8 @@ class UtilsTest {
 
     @ParameterizedTest
     @MethodSource("collectionGenerator")
-    void joinCollectionsJoinsCollections(Collection<String> cOne, Collection<String> cTwo,
-                                         Collection<String> expected) {
+    void joinCollectionsJoinsCollections(
+            Collection<String> cOne, Collection<String> cTwo, Collection<String> expected) {
         assertEquals(expected, Utils.joinCollections(cOne, cTwo));
     }
 
@@ -166,8 +167,7 @@ class UtilsTest {
                 Arguments.of(Collections.singleton("a"), Collections.singletonList("b"), Arrays.asList("a", "b")),
                 Arguments.of(Collections.emptySet(), Collections.singleton("b"), Collections.singletonList("b")),
                 Arguments.of(null, null, Collections.emptyList()),
-                Arguments.of(null, Collections.singletonList("a"), Collections.singletonList("a"))
-        );
+                Arguments.of(null, Collections.singletonList("a"), Collections.singletonList("a")));
     }
 
     @Test
@@ -183,7 +183,8 @@ class UtilsTest {
 
     @Test
     public void htmlToPlainTextExtractsTextFromHtmlString() {
-        final String html = "<p>This is regular <b>text</b> mixed <i>with</i> <a href=\"www.inbas.cz\">HTML</a> tags.</p>";
+        final String html =
+                "<p>This is regular <b>text</b> mixed <i>with</i> <a href=\"www.inbas.cz\">HTML</a> tags.</p>";
         final String text = "This is regular text mixed with HTML tags.";
 
         assertThat(Utils.htmlToPlainText(html), containsString(text));
@@ -191,8 +192,7 @@ class UtilsTest {
 
     @Test
     void markdownToPlainTextExtractsTextFromMarkdownString() {
-        final String markdown = "# This is a headline\n" +
-                "**This is bold text**, _this is italics_";
+        final String markdown = "# This is a headline\n" + "**This is bold text**, _this is italics_";
         final String text = "This is a headline\n\nThis is bold text, this is italics";
 
         assertThat(Utils.markdownToPlainText(markdown), containsString(text));
@@ -200,15 +200,13 @@ class UtilsTest {
 
     @Test
     void markdownToPlainTextReturnsArgumentWhenItDoesNotContainMarkup() {
-        final String text = "This is text without any markup.\n" +
-                "It uses just newline";
+        final String text = "This is text without any markup.\n" + "It uses just newline";
         assertEquals(text, Utils.markdownToPlainText(text));
     }
 
     @Test
     void htmlToPlaintextReturnsArgumentWhenItDoesNotContainMarkup() {
-        final String text = "This is text without any markup.\n" +
-                "It uses just newline";
+        final String text = "This is text without any markup.\n" + "It uses just newline";
         assertEquals(text, Utils.htmlToPlainText(text));
     }
 
@@ -228,7 +226,8 @@ class UtilsTest {
         final ValueFactory vf = SimpleValueFactory.getInstance();
         final IRI subject = vf.createIRI(Generator.generateUriString());
         final IRI property = RDFS.LABEL;
-        final MultilingualString expected = MultilingualString.create("English", "en").set("cs", "Česky");
+        final MultilingualString expected =
+                MultilingualString.create("English", "en").set("cs", "Česky");
         expected.getValue().forEach((lang, v) -> model.add(subject, property, vf.createLiteral(v, lang)));
 
         assertEquals(expected, Utils.resolveTranslations(subject, property, model));
@@ -256,9 +255,9 @@ class UtilsTest {
 
     @Test
     void resolveContentTypeRecognizesTtlWhenPrefixIsWithoutAtSign() throws IOException {
-        final MultipartFile mf = new MockMultipartFile("mock-aviation-safety-skos.ttl", UtilsTest.class.getClassLoader()
-                                                                                                       .getResourceAsStream(
-                                                                                                               "data/mock-aviation-safety-skos.ttl"));
+        final MultipartFile mf = new MockMultipartFile(
+                "mock-aviation-safety-skos.ttl",
+                UtilsTest.class.getClassLoader().getResourceAsStream("data/mock-aviation-safety-skos.ttl"));
         assertEquals("text/turtle", Utils.resolveContentType(mf));
     }
 
@@ -270,8 +269,8 @@ class UtilsTest {
                 :man :hasSpouse :woman .
                 <<:man :hasSpouse :woman>> :startDate "2020-02-11"^^xsd:date .
                 """;
-        final MultipartFile mf = new MockMultipartFile("mock-turtle-star.ttls", turtleStarContent.getBytes(
-                StandardCharsets.UTF_8));
+        final MultipartFile mf =
+                new MockMultipartFile("mock-turtle-star.ttls", turtleStarContent.getBytes(StandardCharsets.UTF_8));
         assertEquals("text/turtle", Utils.resolveContentType(mf));
     }
 
@@ -280,8 +279,8 @@ class UtilsTest {
         final String nTriplesStarContent = """
                 <<<http://example.org/man> <http://example.org/hasSpouse> <http://example.org/woman>>> <http://example.org/startDate> "2020-02-11" .
                 """;
-        final MultipartFile mf = new MockMultipartFile("mock-n-triples-star.nt", nTriplesStarContent.getBytes(
-                StandardCharsets.UTF_8));
+        final MultipartFile mf =
+                new MockMultipartFile("mock-n-triples-star.nt", nTriplesStarContent.getBytes(StandardCharsets.UTF_8));
         assertEquals("application/n-triples", Utils.resolveContentType(mf));
     }
 

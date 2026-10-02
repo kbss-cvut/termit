@@ -55,8 +55,7 @@ class RollbackValidatorTest {
                 Set.of(true, false),
                 Set.of(MultilingualString.create("str value", "en")),
                 Set.of(new Date()),
-                Set.of(Instant.now(), Instant.now().plusSeconds(100))
-        );
+                Set.of(Instant.now(), Instant.now().plusSeconds(100)));
     }
 
     @ParameterizedTest
@@ -86,7 +85,8 @@ class RollbackValidatorTest {
 
     @Test
     void canRollbackReturnsFalseWhenChangedAttributeCannotBeResolved() {
-        final UpdateChangeRecord record = recordForChange(Set.of(Generator.generateUri()), Set.of(Generator.generateUri()));
+        final UpdateChangeRecord record =
+                recordForChange(Set.of(Generator.generateUri()), Set.of(Generator.generateUri()));
         when(changeRollbackDao.resolveClassAttribute(Term.class, record)).thenReturn(Optional.empty());
 
         assertFalse(sut.canRollback(record, Term.class));
@@ -96,8 +96,8 @@ class RollbackValidatorTest {
     void canRollbackReturnsTrueWhenAllOriginalEntityReferencesExist() {
         final URI firstReference = Generator.generateUri();
         final URI secondReference = Generator.generateUri();
-        final UpdateChangeRecord record = recordForChange(Set.of(firstReference, secondReference),
-                                                 Set.of(Generator.generateUri()));
+        final UpdateChangeRecord record =
+                recordForChange(Set.of(firstReference, secondReference), Set.of(Generator.generateUri()));
         mockReferenceAttribute(record);
         when(changeRollbackDao.entityExists(firstReference)).thenReturn(true);
         when(changeRollbackDao.entityExists(secondReference)).thenReturn(true);
@@ -109,7 +109,8 @@ class RollbackValidatorTest {
     void canRollbackReturnsFalseWhenOriginalEntityReferenceNoLongerExists() {
         final URI missingReference = Generator.generateUri();
         final URI existingReference = Generator.generateUri();
-        final UpdateChangeRecord record = recordForChange(Set.of(existingReference, missingReference), Set.of(Generator.generateUri()));
+        final UpdateChangeRecord record =
+                recordForChange(Set.of(existingReference, missingReference), Set.of(Generator.generateUri()));
         mockReferenceAttribute(record);
         lenient().when(changeRollbackDao.entityExists(existingReference)).thenReturn(true);
         when(changeRollbackDao.entityExists(missingReference)).thenReturn(false);
@@ -119,7 +120,8 @@ class RollbackValidatorTest {
 
     @Test
     void canRollbackRestoresRemovedMultilingualLabel() {
-        final UpdateChangeRecord record = recordForChange(Set.of(MultilingualString.create("Original", "en")), Set.of());
+        final UpdateChangeRecord record =
+                recordForChange(Set.of(MultilingualString.create("Original", "en")), Set.of());
 
         assertTrue(sut.canRollback(record, Term.class));
         verifyNoInteractions(changeRollbackDao);

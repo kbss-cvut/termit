@@ -42,14 +42,15 @@ public class ChangeRollbackService {
     private final IdentifierResolver identifierResolver;
     private final ChangeRecordDao changeRecordDao;
 
-    public ChangeRollbackService(RollbackValidator rollbackValidator,
-                                 ChangeRollbackDao rollbackDao,
-                                 TermRepositoryService termService,
-                                 VocabularyRepositoryService vocabularyService,
-                                 TermAuthorizationService termAuthorizationService,
-                                 VocabularyAuthorizationService vocabularyAuthorizationService,
-                                 IdentifierResolver identifierResolver,
-                                 ChangeRecordDao changeRecordDao) {
+    public ChangeRollbackService(
+            RollbackValidator rollbackValidator,
+            ChangeRollbackDao rollbackDao,
+            TermRepositoryService termService,
+            VocabularyRepositoryService vocabularyService,
+            TermAuthorizationService termAuthorizationService,
+            VocabularyAuthorizationService vocabularyAuthorizationService,
+            IdentifierResolver identifierResolver,
+            ChangeRecordDao changeRecordDao) {
         this.rollbackValidator = rollbackValidator;
         this.rollbackDao = rollbackDao;
         this.termService = termService;
@@ -87,14 +88,14 @@ public class ChangeRollbackService {
     public void withReversibleType(Collection<AbstractChangeRecord> records) {
         Asset<?> changedAsset = null;
         boolean authorized = false;
-        for(AbstractChangeRecord record : records) {
+        for (AbstractChangeRecord record : records) {
             if (changedAsset == null || !changedAsset.getUri().equals(record.getChangedEntity())) {
                 changedAsset = resolveChangedAsset(record);
                 authorized = isModificationAuthorized(changedAsset);
             }
-            if (authorized &&
-                    record instanceof UpdateChangeRecord updateRecord &&
-                    canRollback(updateRecord, changedAsset)) {
+            if (authorized
+                    && record instanceof UpdateChangeRecord updateRecord
+                    && canRollback(updateRecord, changedAsset)) {
                 updateRecord.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change);
             } else {
                 record.removeType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change);
@@ -142,8 +143,9 @@ public class ChangeRollbackService {
      * @throws cz.cvut.kbss.termit.exception.NotFoundException If no matching record is found
      */
     public UpdateChangeRecord findUpdateRecord(URI recordUri) {
-        return changeRecordDao.find(UpdateChangeRecord.class, recordUri)
-                              .orElseThrow(()-> new NotFoundException("UpdateChangeRecord not found"));
+        return changeRecordDao
+                .find(UpdateChangeRecord.class, recordUri)
+                .orElseThrow(() -> new NotFoundException("UpdateChangeRecord not found"));
     }
 
     /**
@@ -156,7 +158,8 @@ public class ChangeRollbackService {
      */
     private void doRollback(UpdateChangeRecord record, Asset<?> changedAsset) {
         final Class<? extends Asset<?>> entityClass = resolveEntityClass(changedAsset);
-        final Attribute<?, ?> classAttribute = rollbackDao.resolveClassAttribute(entityClass, record).orElse(null);
+        final Attribute<?, ?> classAttribute =
+                rollbackDao.resolveClassAttribute(entityClass, record).orElse(null);
         LOG.info("Rolling back change record {} of entity {}", record, entityClass);
         if (classAttribute != null) {
             rollbackDao.rollbackClassAttribute(record.getOriginalValue(), changedAsset, classAttribute);
@@ -194,8 +197,8 @@ public class ChangeRollbackService {
     private Asset<?> resolveChangedAssetRequired(UpdateChangeRecord record) {
         final Asset<?> changedAsset = resolveChangedAsset(record);
         if (changedAsset == null) {
-            throw new UpdateChangeRecordRollbackException("Rollback not supported for asset " +
-                    Utils.uriToString(record.getChangedEntity()));
+            throw new UpdateChangeRecordRollbackException(
+                    "Rollback not supported for asset " + Utils.uriToString(record.getChangedEntity()));
         }
         return changedAsset;
     }
@@ -262,7 +265,7 @@ public class ChangeRollbackService {
     }
 
     private UpdateChangeRecordRollbackException unsupportedAssetType(Asset<?> asset) {
-        return new UpdateChangeRecordRollbackException("The type of Asset " + Utils.uriToString(asset.getUri()) +
-                " is not supported");
+        return new UpdateChangeRecordRollbackException(
+                "The type of Asset " + Utils.uriToString(asset.getUri()) + " is not supported");
     }
 }

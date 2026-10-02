@@ -88,18 +88,21 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
         final List<AbstractChangeRecord> result = sut.getChanges(asset);
 
         // all change records generated are updates of title, which are reversible
-        assertTrue(result.stream().map(UpdateChangeRecord.class::cast)
+        assertTrue(result.stream()
+                .map(UpdateChangeRecord.class::cast)
                 .allMatch(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change)));
     }
 
     private List<AbstractChangeRecord> generateChanges() {
-        final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(i -> {
-            final UpdateChangeRecord r = new UpdateChangeRecord(asset);
-            r.setChangedAttribute(URI.create(DC.Terms.TITLE));
-            r.setAuthor(author);
-            r.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L));
-            return r;
-        }).collect(Collectors.toList());
+        final List<AbstractChangeRecord> records = IntStream.range(0, 5)
+                .mapToObj(i -> {
+                    final UpdateChangeRecord r = new UpdateChangeRecord(asset);
+                    r.setChangedAttribute(URI.create(DC.Terms.TITLE));
+                    r.setAuthor(author);
+                    r.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L));
+                    return r;
+                })
+                .collect(Collectors.toList());
         transactional(() -> {
             records.forEach(r -> dao.persist(r, asset));
         });

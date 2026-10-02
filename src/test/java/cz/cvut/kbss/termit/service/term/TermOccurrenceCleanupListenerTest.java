@@ -108,9 +108,11 @@ class TermOccurrenceCleanupListenerTest extends BaseServiceTestRunner {
         });
 
         doAnswer(invocation -> {
-            cleanupThread.set(Thread.currentThread());
-            return invocation.callRealMethod();
-        }).when(termOccurrenceDao).removeAllOf(any());
+                    cleanupThread.set(Thread.currentThread());
+                    return invocation.callRealMethod();
+                })
+                .when(termOccurrenceDao)
+                .removeAllOf(any());
 
         this.removalParams = new TermRemovalParams(term, SubTermRemovalStrategy.FAIL, true, false);
     }
@@ -183,8 +185,8 @@ class TermOccurrenceCleanupListenerTest extends BaseServiceTestRunner {
     }
 
     private void persistOccurrence(boolean suggested) {
-        final TermOccurrence occurrence = new TermDefinitionalOccurrence(term.getUri(),
-                new DefinitionalOccurrenceTarget(referencingTerm));
+        final TermOccurrence occurrence =
+                new TermDefinitionalOccurrence(term.getUri(), new DefinitionalOccurrenceTarget(referencingTerm));
         occurrence.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
         if (suggested) {
             occurrence.markSuggested();

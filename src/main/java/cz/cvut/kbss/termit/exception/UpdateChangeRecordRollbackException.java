@@ -5,8 +5,7 @@ package cz.cvut.kbss.termit.exception;
  * rollback
  */
 public class UpdateChangeRecordRollbackException extends TermItException {
-    public UpdateChangeRecordRollbackException() {
-    }
+    public UpdateChangeRecordRollbackException() {}
 
     public UpdateChangeRecordRollbackException(String message) {
         super(message);
