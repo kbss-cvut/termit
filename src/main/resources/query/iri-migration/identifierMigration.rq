@@ -1,0 +1,58 @@
+PREFIX dd:   <http://onto.fel.cvut.cz/ontologies/data-description/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# Replaces any occurrence of ?originalIri with ?newIri
+# Prevents snapshot modification except rewiring the is-version-of relations
+#   to maintain the link to the snapshotted entity
+
+DELETE {
+    GRAPH ?graph {
+        ?subject ?predicate ?object .
+    }
+}
+INSERT {
+    GRAPH ?graph {
+        ?newSubject ?newPredicate ?newObject .
+    }
+}
+WHERE {
+    GRAPH ?graph {
+        ?subject ?predicate ?object .
+    }
+
+    # only triples where the original IRI is used
+    FILTER (
+        ?subject = ?originalIri ||
+        ?predicate = ?originalIri ||
+        ?object = ?originalIri
+    )
+
+    FILTER (
+        # Prevent snapshot modification
+        NOT EXISTS { GRAPH ?graph { ?graph a dd:version-of-vocabulary } } ||
+        # Unless rewiring the is-version-of-* relation (is-version-of-vocabulary, is-version-of-term)
+        EXISTS { ?predicate rdfs:subPropertyOf* dd:is-version-of }
+    )
+
+    # bind new values replacing the original IRI
+    BIND(
+        IF(?subject = ?originalIri,
+            ?newIri,
+            ?subject)
+    AS ?newSubject
+    )
+
+    BIND(
+        IF(?predicate = ?originalIri,
+            ?newIri,
+            ?predicate)
+    AS ?newPredicate
+    )
+
+    BIND(
+        IF(?object = ?originalIri,
+            ?newIri,
+            ?object)
+    AS ?newObject
+    )
+}
