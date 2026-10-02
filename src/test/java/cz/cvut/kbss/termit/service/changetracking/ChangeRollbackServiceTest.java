@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord_;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -24,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -214,18 +212,6 @@ class ChangeRollbackServiceTest {
         verify(termAuthorizationService).canModify(term);
         verifyNoMoreInteractions(rollbackValidator);
         verifyNoMoreInteractions(termAuthorizationService);
-    }
-
-    @Test
-    void findRecordByLocalNameResolvesIdentifierUsingUpdateChangeRecordNamespace() {
-        final String recordLocalName = "updateRecord" + Generator.randomInt();
-        final URI expectedRecordUri = URI.create(UpdateChangeRecord_.entityClassIRI + "/" + recordLocalName);
-
-        when(changeRecordDao.find(UpdateChangeRecord.class, expectedRecordUri)).thenReturn(Optional.of(new UpdateChangeRecord()));
-
-        sut.findRecordByLocalName(recordLocalName);
-
-        verify(changeRecordDao).find(UpdateChangeRecord.class, expectedRecordUri);
     }
 
     private static UpdateChangeRecord recordFor(Asset<?> asset) {

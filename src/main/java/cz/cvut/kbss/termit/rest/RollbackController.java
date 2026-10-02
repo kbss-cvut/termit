@@ -1,12 +1,11 @@
 package cz.cvut.kbss.termit.rest;
 
-import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRollbackService;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,7 +28,7 @@ import java.net.URI;
 
 @Tag(name = "Rollback", description = "Change rollback API")
 @RestController
-@RequestMapping("/")
+@RequestMapping("/history")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class RollbackController extends BaseController {
     private static final Logger LOG = LoggerFactory.getLogger(RollbackController.class);
@@ -44,51 +43,20 @@ public class RollbackController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Rolls back the specified update change record of the vocabulary.")
+               description = "Rolls back the specified update change record.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary or update change record not found."),
-            @ApiResponse(responseCode = "422", description = "When the change record is associated with a different asset")
+            @ApiResponse(responseCode = "404", description = "Update change record not found."),
     })
-    @PostMapping("/vocabularies/{localName}/history/{changeRecord}/rollback")
+    @PostMapping("/{localName}/rollback")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void rollbackVocabulary(@Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                              example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                   @PathVariable String localName,
-                                   @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                              example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                   @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                                   @Parameter(description = "Local name of the update change record to roll back.")
-                                   @PathVariable String changeRecord) {
-        final URI vocabularyUri = resolveIdentifier(namespace, localName);
-        rollback(vocabularyUri, changeRecord, "Vocabulary");
-    }
-
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Rolls back the specified update change record of the term.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
-            @ApiResponse(responseCode = "404", description = "Term or update change record not found."),
-            @ApiResponse(responseCode = "422", description = "When the change record is associated with a different asset")
-    })
-    @PostMapping("/terms/{localName}/history/{changeRecord}/rollback")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void rollbackTerm(
-            @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @PathVariable String changeRecord,
-            @Parameter(description = TermController.ApiDoc.ID_NAMESPACE_DESCRIPTION, example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = resolveIdentifier(namespace, localName);
-        rollback(termUri, changeRecord, "Term");
-    }
-
-    private void rollback(URI entityUri, String changeRecord, String entityType) {
-        final UpdateChangeRecord record = changeRollbackService.findRecordByLocalName(changeRecord);
-        if (!entityUri.equals(record.getChangedEntity())) {
-            throw new InvalidParameterException("Record not associated with specified " + entityType);
-        }
+    public void rollback(@Parameter(description = "Local name of the update change record to roll back.")
+                         @PathVariable String localName,
+                         @Parameter(description = "Change record identifier namespace")
+                         @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+        final URI recordUri = resolveIdentifier(namespace, localName);
+        final UpdateChangeRecord record = changeRollbackService.findUpdateRecord(recordUri);
         changeRollbackService.rollback(record);
-        LOG.debug("Change record {} of {} <{}> rolled back.", changeRecord, entityType.toLowerCase(), entityUri);
+        LOG.debug("Change record <{}> rolled back.", record);
     }
 }
