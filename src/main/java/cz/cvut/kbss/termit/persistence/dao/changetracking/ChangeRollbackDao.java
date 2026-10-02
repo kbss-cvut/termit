@@ -52,8 +52,8 @@ public class ChangeRollbackDao {
     }
 
     /**
-     * Resolves the entity class from {@link cz.cvut.kbss.jopa.model.metamodel.Metamodel Metamodel}
-     * and tries to find attribute matching the changed attribute IRI.
+     * Resolves the entity class from {@link cz.cvut.kbss.jopa.model.metamodel.Metamodel Metamodel} and tries to find
+     * attribute matching the changed attribute IRI.
      *
      * @param entityType the type of the changed entity
      * @param record the change record
@@ -67,9 +67,9 @@ public class ChangeRollbackDao {
     }
 
     /**
-     * Sets the given {@code originalValue} as the new value of the changed Java attribute.
-     * The required class of the value is inspected from the {@code classAttribute} and identifiers
-     * are mapped to the respective entity objects when required.
+     * Sets the given {@code originalValue} as the new value of the changed Java attribute. The required class of the
+     * value is inspected from the {@code classAttribute} and identifiers are mapped to the respective entity objects
+     * when required.
      *
      * @param originalValue the value to set
      * @param changedAsset the changed entity
@@ -83,13 +83,13 @@ public class ChangeRollbackDao {
     }
 
     /**
-     * Maps the given values to their respective entity reference objects when the {@code classAttribute}
-     * holds entity objects.
+     * Maps the given values to their respective entity reference objects when the {@code classAttribute} holds entity
+     * objects.
      *
      * @param values Values to map
      * @param classAttribute the attribute description
-     * @return Mapped {@code values} when the value type of the {@code classAttribute} is a Jopa entity type.
-     *         Unchanged {@code values} otherwise.
+     * @return Mapped {@code values} when the value type of the {@code classAttribute} is a Jopa entity type. Unchanged
+     *     {@code values} otherwise.
      */
     private Set<Object> resolveEntityReferences(Set<Object> values, Attribute<?, ?> classAttribute) {
         final Class<?> valueType = classAttribute.getValueJavaType();
@@ -121,9 +121,8 @@ public class ChangeRollbackDao {
      *
      * @param originalValue the original value
      * @param classAttribute the Java attribute
-     * @return a mapped collection when attribute is a collection,
-     *         the first value from the {@code originalValue} when the attribute is singular,
-     *         {@code null} otherwise
+     * @return a mapped collection when attribute is a collection, the first value from the {@code originalValue} when
+     *     the attribute is singular, {@code null} otherwise
      */
     private Object getNewValue(Set<Object> originalValue, Attribute<?, ?> classAttribute) {
         if (classAttribute.isCollection()) {

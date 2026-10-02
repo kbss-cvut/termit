@@ -60,8 +60,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Perf #1283
-     * <p>
-     * Query for loading term occurrences targeting a specified source (file, another term) in a single go.
+     *
+     * <p>Query for loading term occurrences targeting a specified source (file, another term) in a single go.
      */
     private static final String FIND_ALL_TARGETING_QUERY =
             "SELECT ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition WHERE {"
@@ -128,8 +128,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Finds all term occurrences whose target points to the specified resource.
-     * <p>
-     * I.e., these term occurrences appear in the specified resource (presumably file).
+     *
+     * <p>I.e., these term occurrences appear in the specified resource (presumably file).
      *
      * @param target Asset to filter by
      * @return List of matching term occurrences
@@ -266,8 +266,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Removes all term occurrences whose target points to the specified asset.
-     * <p>
-     * Note that the removal may not be immediate. Rather, the occurrences are moved into a context that is scheduled
+     *
+     * <p>Note that the removal may not be immediate. Rather, the occurrences are moved into a context that is scheduled
      * for removal later.
      *
      * @param target Asset for which term occurrences will be removed
@@ -288,8 +288,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Removes all occurrences of the specified term.
-     * <p>
-     * That is, remove all term occurrences whose subject (not target) is the specified term.
+     *
+     * <p>That is, remove all term occurrences whose subject (not target) is the specified term.
      *
      * @param term Term whose occurrences to remove
      */
@@ -299,8 +299,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Removes all term occurrence whose target points to a non-existent asset.
-     * <p>
-     * This method exists mainly for legacy reasons - since occurrences are now stored in a particular context, their
+     *
+     * <p>This method exists mainly for legacy reasons - since occurrences are now stored in a particular context, their
      * batch removal (e.g., on corresponding asset remove) is implemented by dropping the whole context. However, old
      * occurrences were stored in the default context and thus the new removal logic does not affect them. This method
      * allows targeting such occurrences.

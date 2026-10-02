@@ -313,9 +313,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
         assertEquals(originalTermPropertiesSize, term.getProperties().size());
     }
 
-    /**
-     * TermIt cannot guarantee that the reference should not be valid Term/Vocabulary
-     */
+    /** TermIt cannot guarantee that the reference should not be valid Term/Vocabulary */
     @Test
     void rollbackThrowsForRollbackOfNativeURIProperty() {
         // apply change and create change record

@@ -247,7 +247,7 @@ public class Vocabulary extends Asset<MultilingualString>
      * Adds the specified value for the specified unmapped property.
      *
      * @param property Property
-     * @param value    Value to add
+     * @param value Value to add
      */
     public void addUnmappedPropertyValue(String property, Object value) {
         if (properties == null) {
