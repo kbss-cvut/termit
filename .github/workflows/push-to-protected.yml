@@ -19,6 +19,8 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v7
+      with:
+        fetch-depth: '0'
     - uses: actions/setup-java@v6
       with:
         java-version: '25'
