@@ -22,9 +22,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-/**
- * Validator supporting the rollback validation of change records of {@link Term} and {@link Vocabulary}.
- */
+/** Validator supporting the rollback validation of change records of {@link Term} and {@link Vocabulary}. */
 @Component
 public class RollbackValidator {
     private static final Class<?>[] LITERAL_CLASSES = {
@@ -53,8 +51,8 @@ public class RollbackValidator {
      * Checks whether the record can be rolled back.
      *
      * @param record the change record to check
-     * @return {@code true} if the change record is associated with existing {@link Term} or {@link Vocabulary}
-     * and can be rolled back, {@code false} otherwise.
+     * @return {@code true} if the change record is associated with existing {@link Term} or {@link Vocabulary} and can
+     *     be rolled back, {@code false} otherwise.
      */
     @Transactional(readOnly = true)
     public boolean canRollback(UpdateChangeRecord record, Class<?> entityClass) {
@@ -124,7 +122,8 @@ public class RollbackValidator {
     }
 
     /**
-     * Checks whether a matching custom attribute exists for the changed attribute and permits rollback based on its range.
+     * Checks whether a matching custom attribute exists for the changed attribute and permits rollback based on its
+     * range.
      *
      * @param record the change record to check
      * @return {@code true} if the custom attribute exists and its range permits rollback, {@code false} otherwise
@@ -140,9 +139,9 @@ public class RollbackValidator {
      * Checks whether the record can be rolled back based on the custom attribute range.
      *
      * @param attribute the custom attribute changed by the record
-     * @param record    the change record to check
+     * @param record the change record to check
      * @return {@code true} if the range permits rollback, including the validity of references where required,
-     *                      {@code false} otherwise
+     *     {@code false} otherwise
      */
     private boolean canRollbackCustomAttributeWithReferenceRange(CustomAttribute attribute, UpdateChangeRecord record) {
         return switch (attribute.getRange().toString()) {

@@ -29,8 +29,6 @@ import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +37,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Collections;
@@ -122,8 +123,8 @@ public class DataRepositoryService {
 
     /**
      * Persists the specified RDFS resource.
-     * <p>
-     * This method should be used scarcely or more suitable subclasses of {@link RdfsResource} should be provided as
+     *
+     * <p>This method should be used scarcely or more suitable subclasses of {@link RdfsResource} should be provided as
      * arguments.
      *
      * @param property The resource to persist
@@ -138,8 +139,8 @@ public class DataRepositoryService {
 
     /**
      * Persists the specified custom attribute.
-     * <p>
-     * Note that this method automatically sets {@link cz.cvut.kbss.jopa.vocabulary.SKOS#CONCEPT} as the attribute
+     *
+     * <p>Note that this method automatically sets {@link cz.cvut.kbss.jopa.vocabulary.SKOS#CONCEPT} as the attribute
      * domain.
      *
      * @param attribute Attribute to persist
@@ -205,9 +206,9 @@ public class DataRepositoryService {
     /**
      * Gets the label of a resource with the specified identifier.
      *
-     * @param id       Resource identifier
+     * @param id Resource identifier
      * @param language Label language, if null, the vocabulary language is used when available, otherwise the configured
-     *                 persistence unit language is used instead.
+     *     persistence unit language is used instead.
      * @return Matching resource identifier (if found)
      */
     @Transactional(readOnly = true)

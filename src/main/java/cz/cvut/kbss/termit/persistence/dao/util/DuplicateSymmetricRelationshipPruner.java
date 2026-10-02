@@ -15,8 +15,8 @@ import java.util.List;
 
 /**
  * Removes duplicate explicit symmetric SKOS relationship assertions from the repository, keeping only one direction.
- * <p>
- * The other direction is inferred by the repository.
+ *
+ * <p>The other direction is inferred by the repository.
  */
 public class DuplicateSymmetricRelationshipPruner {
 

@@ -7,9 +7,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
 
-/**
- * Enables asynchronous execution
- */
+/** Enables asynchronous execution */
 @TestConfiguration
 @EnableAsync
 @EnableResilientMethods

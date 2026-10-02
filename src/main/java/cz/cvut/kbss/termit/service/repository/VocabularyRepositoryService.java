@@ -41,8 +41,6 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
-import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -53,6 +51,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.annotation.Nonnull;
+import jakarta.validation.Validator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -166,8 +167,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     /**
      * Ensures that possible vocabulary import removals are not prevented by existing inter-vocabulary term
-     * relationships (terms from the updated vocabulary having parents from vocabularies whose import has been
-     * removed).
+     * relationships (terms from the updated vocabulary having parents from vocabularies whose import has been removed).
      */
     private void verifyVocabularyImports(Vocabulary update, Vocabulary original) {
         final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
@@ -214,7 +214,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq    Specification of the size and number of the page to return
+     * @param pageReq Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     @Transactional(readOnly = true)
@@ -304,9 +304,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     /**
      * Removes a vocabulary unless:
+     *
      * <ul>
-     *     <li>it is imported by another vocabulary, other relation with another vocabulary exists or</li>
-     *     <li>it contains terms that are a part of relations with another vocabulary</li>
+     *   <li>it is imported by another vocabulary, other relation with another vocabulary exists or
+     *   <li>it contains terms that are a part of relations with another vocabulary
      * </ul>
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
@@ -323,9 +324,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     /**
      * Ensures that the vocabulary to be removed complies with the rules allowing removal.
+     *
      * <ul>
-     *     <li>it is imported by another vocabulary or</li>
-     *     <li>it contains terms that are a part of relations with another vocabulary</li>
+     *   <li>it is imported by another vocabulary or
+     *   <li>it contains terms that are a part of relations with another vocabulary
      * </ul>
      *
      * @param instance The instance to be removed, not {@code null}
@@ -356,7 +358,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      *
      * @param vocabulary The vocabulary
      * @throws AssetRemovalException when there is a vocabulary with a term and relation to a term in the
-     *                               {@code vocabulary}
+     *     {@code vocabulary}
      */
     private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
         final List<RdfStatement> relations = vocabularyDao.getIncomingTermRelations(vocabulary);

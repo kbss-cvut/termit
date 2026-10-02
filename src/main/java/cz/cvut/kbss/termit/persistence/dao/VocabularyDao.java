@@ -49,13 +49,14 @@ import cz.cvut.kbss.termit.persistence.snapshot.VocabularySnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.time.Instant;
@@ -221,12 +222,12 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     /**
      * Forcefully removes the specified vocabulary.
-     * <p>
-     * This deletes the whole graph of the vocabulary, all terms in the vocabulary's glossary and then removes the
+     *
+     * <p>This deletes the whole graph of the vocabulary, all terms in the vocabulary's glossary and then removes the
      * vocabulary itself. Extreme caution should be exercised when using this method. All relevant data, including
      * documents and files, will be dropped.
-     * <p>
-     * Publishes {@link VocabularyWillBeRemovedEvent} before the actual removal to allow other services to clean up
+     *
+     * <p>Publishes {@link VocabularyWillBeRemovedEvent} before the actual removal to allow other services to clean up
      * related resources (e.g., delete the document).
      *
      * @param entity The vocabulary to delete
@@ -241,34 +242,33 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     /**
      * Does not publish the {@link VocabularyWillBeRemovedEvent}.
-     * <p>
-     * Forcefully removes the specified vocabulary.
-     * <p>
-     * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
+     *
+     * <p>Forcefully removes the specified vocabulary.
+     *
+     * <p>This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
      * should be exercised when using this method, as it does not check for any references or usage and just drops all
      * the relevant data.
-     * <p>
-     * The document is not removed.
+     *
+     * <p>The document is not removed.
      */
     public void removeVocabularyKeepDocument(Vocabulary entity) {
         this.removeVocabulary(entity, false);
     }
 
     /**
-     * <p>
-     * Does not publish the {@link VocabularyWillBeRemovedEvent}.<br> You should use {@link #remove(Vocabulary)}
-     * instead.
-     * <p>
-     * Forcefully removes the specified vocabulary.
-     * <p>
-     * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
+     * Does not publish the {@link VocabularyWillBeRemovedEvent}.<br>
+     * You should use {@link #remove(Vocabulary)} instead.
+     *
+     * <p>Forcefully removes the specified vocabulary.
+     *
+     * <p>This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
      * should be exercised when using this method, as it does not check for any references or usage and just drops all
      * the relevant data.
      *
-     * @param entity    The vocabulary to delete
-     * @param dropGraph if false, executes {@code  src/main/resources/query/remove/removeGlossaryTerms.ru} removing
-     *                  terms, their relations, model, glossary and vocabulary itself, keeps the document. When true,
-     *                  the whole vocabulary graph is dropped.
+     * @param entity The vocabulary to delete
+     * @param dropGraph if false, executes {@code src/main/resources/query/remove/removeGlossaryTerms.ru} removing
+     *     terms, their relations, model, glossary and vocabulary itself, keeps the document. When true, the whole
+     *     vocabulary graph is dropped.
      */
     private void removeVocabulary(Vocabulary entity, boolean dropGraph) {
         Objects.requireNonNull(entity);
@@ -303,7 +303,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * {@code targetVocabulary}.
      *
      * @param subjectVocabulary Subject vocabulary identifier
-     * @param targetVocabulary  Target vocabulary identifier
+     * @param targetVocabulary Target vocabulary identifier
      * @return Whether subject vocabulary terms reference target vocabulary terms
      */
     public boolean hasHierarchyBetweenTerms(URI subjectVocabulary, URI targetVocabulary) {
@@ -372,7 +372,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq    Specification of the size and number of the page to return
+     * @param pageReq Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(
@@ -492,11 +492,11 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     /**
      * Gets all explicit relations between any other term and terms in specified vocabulary.
-     * <p>
-     * This takes into consideration only SKOS matching properties such as exactMatch, relatedMatch and broadMatch.
+     *
+     * <p>This takes into consideration only SKOS matching properties such as exactMatch, relatedMatch and broadMatch.
      * Moreover, only explicit relations are considered, because others are inferred from different relations.
-     * <p>
-     * We are also not interested in relations where terms from the specified vocabulary are subjects.
+     *
+     * <p>We are also not interested in relations where terms from the specified vocabulary are subjects.
      */
     public List<RdfStatement> getIncomingTermRelations(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
@@ -578,8 +578,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     /**
      * Retrieves the preferred namespace of the vocabulary with the specified identifier.
-     * <p>
-     * The preferred namespace is used as a base for term identifiers.
+     *
+     * <p>The preferred namespace is used as a base for term identifiers.
      *
      * @param vocabularyUri Vocabulary identifier
      * @return Optional vocabulary preferred namespace

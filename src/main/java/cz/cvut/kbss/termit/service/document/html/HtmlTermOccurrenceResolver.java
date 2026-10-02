@@ -65,8 +65,8 @@ import java.util.stream.Collectors;
 
 /**
  * Resolves term occurrences from RDFa-annotated HTML document.
- * <p>
- * This class is not thread-safe and not re-entrant.
+ *
+ * <p>This class is not thread-safe and not re-entrant.
  */
 @Service("html")
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -306,11 +306,11 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
     /**
      * Tries to add existing approved term occurrences to the content.
-     * <p>
-     * This means finding matching text using the {@link TextQuoteSelector} (as it is more resilient to minor changes in
-     * the content file) and inserting a corresponding annotation element into the text.
-     * <p>
-     * If a matching element can be created in the text, the existing term occurrence is processed just as a new one
+     *
+     * <p>This means finding matching text using the {@link TextQuoteSelector} (as it is more resilient to minor changes
+     * in the content file) and inserting a corresponding annotation element into the text.
+     *
+     * <p>If a matching element can be created in the text, the existing term occurrence is processed just as a new one
      * would be.
      *
      * @param consumer Consumer of the occurrences

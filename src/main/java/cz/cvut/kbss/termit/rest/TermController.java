@@ -114,23 +114,23 @@ public class TermController extends BaseController {
 
     /**
      * Get all terms from vocabulary with the specified identification.
-     * <p>
-     * This method also allows exporting the terms into additional data formats (e.g., Excel, Turtle, RDF/XML) by using
-     * HTTP content type negotiation or filter terms by a search string.
      *
-     * @param localName       Vocabulary name
-     * @param namespace       Vocabulary namespace. Optional
-     * @param searchString    String to filter term labels by. Optional
+     * <p>This method also allows exporting the terms into additional data formats (e.g., Excel, Turtle, RDF/XML) by
+     * using HTTP content type negotiation or filter terms by a search string.
+     *
+     * @param localName Vocabulary name
+     * @param namespace Vocabulary namespace. Optional
+     * @param searchString String to filter term labels by. Optional
      * @param includeImported Whether to include imported vocabularies when searching for terms. Does not apply to term
-     *                        export. Optional, defaults to false
-     * @param includeRelated  Whether to include terms from related vocabularies. Optional, defaults to false
-     * @param exportType      Type of the export. Optional
-     * @param properties      A set of properties representing references to terms from other vocabularies to take into
-     *                        account in export. Relevant only for term export. Optional
-     * @param acceptType      MIME type accepted by the client, relevant only for term export
-     * @param flat            Whether to flatten the term hierarchy in the response. Optional, defaults to false
-     * @param pageSize        Limit the number of elements in the returned page. Optional
-     * @param pageNo          Number of the page to return. Optional
+     *     export. Optional, defaults to false
+     * @param includeRelated Whether to include terms from related vocabularies. Optional, defaults to false
+     * @param exportType Type of the export. Optional
+     * @param properties A set of properties representing references to terms from other vocabularies to take into
+     *     account in export. Relevant only for term export. Optional
+     * @param acceptType MIME type accepted by the client, relevant only for term export
+     * @param flat Whether to flatten the term hierarchy in the response. Optional, defaults to false
+     * @param pageSize Limit the number of elements in the returned page. Optional
+     * @param pageNo Number of the page to return. Optional
      * @return List of terms of the specific vocabulary
      */
     @Operation(
@@ -262,9 +262,9 @@ public class TermController extends BaseController {
      * @param localName vocabulary id fragment
      * @param namespace vocabulary namespace
      * @param prefLabel the label to check, optional
-     * @param language  language to check existence in, optional
+     * @param language language to check existence in, optional
      * @return OK response when term exists and label check was performed, Not Found otherwise. If no label to check was
-     * passed, an empty OK response with header containing total number of terms is returned
+     *     passed, an empty OK response with header containing total number of terms is returned
      */
     @Operation(
             description =
@@ -312,17 +312,17 @@ public class TermController extends BaseController {
 
     /**
      * Get all root terms from vocabulary with the specified identification.
-     * <p>
-     * Optionally, the terms can be filtered by the specified search string, so that only roots with descendants with
+     *
+     * <p>Optionally, the terms can be filtered by the specified search string, so that only roots with descendants with
      * label matching the specified string are returned.
      *
-     * @param localName       Vocabulary name
-     * @param namespace       Vocabulary namespace. Optional
-     * @param pageSize        Limit the number of elements in the returned page. Optional
-     * @param pageNo          Number of the page to return. Optional
+     * @param localName Vocabulary name
+     * @param namespace Vocabulary namespace. Optional
+     * @param pageSize Limit the number of elements in the returned page. Optional
+     * @param pageNo Number of the page to return. Optional
      * @param includeImported Whether a transitive closure of vocabulary imports should be used when getting the root
-     *                        terms. Optional, defaults to {@code false}
-     * @param includeRelated  Whether to include terms from related vocabularies. Optional, defaults to {@code false}
+     *     terms. Optional, defaults to {@code false}
+     * @param includeRelated Whether to include terms from related vocabularies. Optional, defaults to {@code false}
      * @return List of root terms of the specific vocabulary
      */
     @Operation(
@@ -683,9 +683,7 @@ public class TermController extends BaseController {
         return termService.findSubTerms(parent);
     }
 
-    /**
-     * A convenience endpoint for getting subterms of a Term without using its Vocabulary.
-     */
+    /** A convenience endpoint for getting subterms of a Term without using its Vocabulary. */
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets subterms of the term with the specified identifier.")
@@ -881,9 +879,9 @@ public class TermController extends BaseController {
 
     /**
      * Runs text analysis on the specified Term's definition.
-     * <p>
-     * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
-     * when specific conditions are fulfilled.
+     *
+     * <p>This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed
+     * automatically when specific conditions are fulfilled.
      */
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
@@ -1032,8 +1030,8 @@ public class TermController extends BaseController {
 
     /**
      * Gets history of changes of the specified Term.
-     * <p>
-     * This is a convenience method to allow access without using the Term's parent Vocabulary.
+     *
+     * <p>This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
      * @see #getHistory
      */
@@ -1113,8 +1111,8 @@ public class TermController extends BaseController {
 
     /**
      * Gets comments for the specified term.
-     * <p>
-     * This is method allows access without using the Term's Vocabulary.
+     *
+     * <p>This is method allows access without using the Term's Vocabulary.
      *
      * @see #getComments(String, String, Optional, Optional, Optional)
      */
@@ -1192,8 +1190,8 @@ public class TermController extends BaseController {
 
     /**
      * Adds the specified comment to the specified term.
-     * <p>
-     * This is a convenience method to allow access without using the Term's parent Vocabulary.
+     *
+     * <p>This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
      * @see #addComment(String, String, Optional, Comment)
      */
@@ -1358,9 +1356,7 @@ public class TermController extends BaseController {
         return ResponseEntity.ok(termService.findAll(searchString, createPageRequest(pageSize, pageNo), includeTerms));
     }
 
-    /**
-     * A couple of constants for the {@link TermController} API documentation.
-     */
+    /** A couple of constants for the {@link TermController} API documentation. */
     public static final class ApiDoc {
         public static final String ID_LOCAL_NAME_DESCRIPTION =
                 "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";

@@ -38,8 +38,8 @@ import java.util.Set;
 
 /**
  * Represents basic data about a {@link Term}.
- * <p>
- * This is not a full-blown entity and should not be used to modify data.
+ *
+ * <p>This is not a full-blown entity and should not be used to modify data.
  */
 @OWLClass(iri = SKOS.CONCEPT)
 public class TermInfo implements TermDescription {

@@ -78,8 +78,8 @@ import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 
 /**
  * Vocabulary management REST API.
- * <p>
- * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done on
+ *
+ * <p>Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done on
  * service level based on ACL.
  */
 @Tag(name = "Vocabularies", description = "Vocabulary management API")
@@ -459,9 +459,9 @@ public class VocabularyController extends BaseController {
 
     /**
      * Runs text analysis on definitions of all terms in vocabulary.
-     * <p>
-     * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
-     * when specific conditions are fulfilled.
+     *
+     * <p>This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed
+     * automatically when specific conditions are fulfilled.
      */
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
@@ -481,9 +481,9 @@ public class VocabularyController extends BaseController {
 
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
-     * <p>
-     * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
-     * when specific conditions are fulfilled.
+     *
+     * <p>This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed
+     * automatically when specific conditions are fulfilled.
      */
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
@@ -500,7 +500,7 @@ public class VocabularyController extends BaseController {
      *
      * @param localName vocabulary name
      * @param namespace (optional) vocabulary namespace
-     * @see VocabularyService#remove(Vocabulary)  for details.
+     * @see VocabularyService#remove(Vocabulary) for details.
      */
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
@@ -763,9 +763,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getAccessLevel(vocabulary);
     }
 
-    /**
-     * A couple of constants for the {@link VocabularyController} API documentation.
-     */
+    /** A couple of constants for the {@link VocabularyController} API documentation. */
     public static final class ApiDoc {
         public static final String ID_LOCAL_NAME_DESCRIPTION =
                 "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";

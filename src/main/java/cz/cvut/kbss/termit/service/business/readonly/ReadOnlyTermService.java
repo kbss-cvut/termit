@@ -64,10 +64,10 @@ public class ReadOnlyTermService {
 
     /**
      * Retrieves all terms from the specified vocabulary.
-     * <p>
-     * The provided selection params specify how many terms and in what form they will be returned.
      *
-     * @param vocabulary      Vocabulary whose terms will be returned. A reference is sufficient
+     * <p>The provided selection params specify how many terms and in what form they will be returned.
+     *
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
@@ -77,11 +77,11 @@ public class ReadOnlyTermService {
 
     /**
      * Retrieves all terms from the specified vocabulary whose label matches the specified search string.
-     * <p>
-     * The provided selection params specify how many terms and in what form they will be returned.
      *
-     * @param searchString    String to search terms by
-     * @param vocabulary      Vocabulary whose terms will be returned. A reference is sufficient
+     * <p>The provided selection params specify how many terms and in what form they will be returned.
+     *
+     * @param searchString String to search terms by
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
@@ -93,9 +93,9 @@ public class ReadOnlyTermService {
     /**
      * Retrieves all root terms from the specified vocabulary.
      *
-     * @param vocabulary      Vocabulary whose root terms will be returned. A reference is sufficient
+     * @param vocabulary Vocabulary whose root terms will be returned. A reference is sufficient
      * @param selectionParams Term selection parameters
-     * @param includeTerms    Identifiers of terms which should be included in the result
+     * @param includeTerms Identifiers of terms which should be included in the result
      * @return List of root terms
      */
     public List<TermDto> findAllRoots(
@@ -139,7 +139,7 @@ public class ReadOnlyTermService {
      *
      * @param term Term to get comments for
      * @param from Retrieval interval start
-     * @param to   Retrieval interval end
+     * @param to Retrieval interval end
      * @return List of comments
      */
     public List<Comment> getComments(Term term, Instant from, Instant to) {

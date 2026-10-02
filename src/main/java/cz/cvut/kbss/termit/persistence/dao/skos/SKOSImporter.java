@@ -33,8 +33,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
-import jakarta.validation.constraints.NotNull;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -61,6 +59,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -76,9 +77,9 @@ import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
  * The tool to import plain SKOS thesauri.
- * <p>
- * It takes the thesauri as a TermIt glossary and 1) creates the necessary metadata (vocabulary, model) 2) generates the
- * necessary hasTopConcept relationships based on the broader/narrower hierarchy.
+ *
+ * <p>It takes the thesauri as a TermIt glossary and 1) creates the necessary metadata (vocabulary, model) 2) generates
+ * the necessary hasTopConcept relationships based on the broader/narrower hierarchy.
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -348,9 +349,7 @@ public class SKOSImporter implements VocabularyImporter {
         });
     }
 
-    /**
-     * Extracts SKOS mapping property statements from the imported model into a separate one for later processing.
-     */
+    /** Extracts SKOS mapping property statements from the imported model into a separate one for later processing. */
     private void extractSkosMappingStatements() {
         INFERABLE_MAPPING_PROPERTIES.stream()
                 .flatMap(prop -> model.filter(null, prop, null).stream())
@@ -445,9 +444,9 @@ public class SKOSImporter implements VocabularyImporter {
      * Looks up the specified subject's property value in the model and loads values as a multilingual string. If no
      * property is found, an empty multilingual string is passed to the consumer.
      *
-     * @param subject         Subject to look up
-     * @param property        Property to look up
-     * @param consumer        Consumer to accept the multilingual string
+     * @param subject Subject to look up
+     * @param property Property to look up
+     * @param consumer Consumer to accept the multilingual string
      * @param defaultLanguage The language to use when no language is specified in the string property
      */
     private boolean handleStringStringProperty(

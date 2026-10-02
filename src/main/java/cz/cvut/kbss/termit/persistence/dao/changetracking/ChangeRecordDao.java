@@ -57,7 +57,7 @@ public class ChangeRecordDao {
     /**
      * Persists the specified change record into the specified repository context.
      *
-     * @param record       Record to save
+     * @param record Record to save
      * @param changedAsset The changed asset
      */
     public void persist(AbstractChangeRecord record, Asset<?> changedAsset) {
@@ -106,8 +106,8 @@ public class ChangeRecordDao {
     }
 
     /**
-     * Finds all records from change context resolved from {@code changeContextAsset}
-     * that are matching the filter and are related to an entity of the type {@code relatedEntityType}.
+     * Finds all records from change context resolved from {@code changeContextAsset} that are matching the filter and
+     * are related to an entity of the type {@code relatedEntityType}.
      */
     public List<AbstractChangeRecord> findAllRelatedToType(
             Asset<?> changeContextAsset, ChangeRecordFilterDto filterDto, URI relatedEntityType, Pageable pageable) {
@@ -277,7 +277,7 @@ public class ChangeRecordDao {
      * Finds a change record of the specified type and identifier.
      *
      * @param recordClass Change record type
-     * @param recordUri   Change record identifier
+     * @param recordUri Change record identifier
      * @return Matching record, or an empty optional if none is found
      */
     public <T extends AbstractChangeRecord> Optional<T> find(Class<T> recordClass, URI recordUri) {

@@ -103,9 +103,7 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
             fetch = FetchType.EAGER)
     private TermDefinitionSource definitionSource;
 
-    /**
-     * Parent terms from the same vocabulary.
-     */
+    /** Parent terms from the same vocabulary. */
     @OWLObjectProperty(
             iri = SKOS.BROADER,
             fetch = FetchType.EAGER,
@@ -114,8 +112,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
 
     /**
      * Parent terms from different vocabularies.
-     * <p>
-     * Represents the {@code skos:broadMatch} property.
+     *
+     * <p>Represents the {@code skos:broadMatch} property.
      */
     @JsonIgnore
     @OWLObjectProperty(
@@ -274,10 +272,10 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
     /**
      * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch,
      * exactMatch) terms into related (relatedMatch, exactMatch).
-     * <p>
-     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch})
-     * to {@code related} ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because
-     * of skos:related (skos:relatedMatch, skos:exactMatch) being symmetric.
+     *
+     * <p>This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch},
+     * {@code exactMatch}) to {@code related} ({@code relatedMatch}, {@code exactMatch}) so that they act as they should
+     * in reality because of skos:related (skos:relatedMatch, skos:exactMatch) being symmetric.
      */
     public void consolidateInferred() {
         if (inverseRelated != null) {
@@ -309,8 +307,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
 
     /**
      * Adds the specified term to the parent terms of this instance.
-     * <p>
-     * If the specified term is from the same glossary, it is added to {@link parentTerms}, otherwise, it is added to
+     *
+     * <p>If the specified term is from the same glossary, it is added to {@link parentTerms}, otherwise, it is added to
      * the {@link externalParentTerms}.
      *
      * @param term Term to add as parent
@@ -332,9 +330,9 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
 
     /**
      * Adds the specified term info to the parent terms of this instance.
-     * <p>
-     * If the specified term is from the same glossary, it is added to {@code
-     * parentTerms}, otherwise, it is added to the {@code externalParentTerms}.
+     *
+     * <p>If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
+     * the {@code externalParentTerms}.
      *
      * @param termInfo TermInfo to add as parent
      */
@@ -357,7 +355,7 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
      * Checks whether this term has a parent term in the same vocabulary.
      *
      * @return Whether this term has a parent in its vocabulary. Returns {@code false} also if this term has no parent
-     * term at all.
+     *     term at all.
      */
     public boolean hasParentInSameVocabulary() {
         return parentTerms != null
@@ -366,8 +364,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
 
     /**
      * Consolidates parent and external parent terms into just parent terms.
-     * <p>
-     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a
+     *
+     * <p>This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a
      * sub-property of broader). Clients need not know about their distinction, which is important only at repository
      * level.
      *
@@ -384,11 +382,11 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
 
     /**
      * Splits consolidated parent terms into external and (internal) parent terms.
-     * <p>
-     * This split is driven by the fact that external parents belong to a different glossary than this term and should
-     * thus be differentiated on repository level.
-     * <p>
-     * This method does the inverse of {@link #consolidateParents()}.
+     *
+     * <p>This split is driven by the fact that external parents belong to a different glossary than this term and
+     * should thus be differentiated on repository level.
+     *
+     * <p>This method does the inverse of {@link #consolidateParents()}.
      *
      * @see #consolidateParents()
      */
