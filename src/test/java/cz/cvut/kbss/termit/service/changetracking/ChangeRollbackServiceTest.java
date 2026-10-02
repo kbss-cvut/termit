@@ -180,9 +180,9 @@ class ChangeRollbackServiceTest {
         lenient().when(rollbackValidator.canRollback(record, Vocabulary.class)).thenReturn(canRollback);
         when(vocabularyAuthorizationService.canModify(vocabulary)).thenReturn(canModify);
 
-        assertFalse(record.hasType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS));
+        assertFalse(record.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change));
         sut.withReversibleType(List.of(record));
-        final boolean isReversibleResult = record.hasType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+        final boolean isReversibleResult = record.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change);
         assertEquals(expectedIsReversible, isReversibleResult);
 
         if (canModify) {
@@ -203,9 +203,9 @@ class ChangeRollbackServiceTest {
         lenient().when(rollbackValidator.canRollback(record, Term.class)).thenReturn(canRollback);
         when(termAuthorizationService.canModify(term)).thenReturn(canModify);
 
-        assertFalse(record.hasType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS));
+        assertFalse(record.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change));
         sut.withReversibleType(List.of(record));
-        final boolean isReversibleResult = record.hasType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+        final boolean isReversibleResult = record.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change);
         assertEquals(expectedIsReversible, isReversibleResult);
 
         if (canModify) {

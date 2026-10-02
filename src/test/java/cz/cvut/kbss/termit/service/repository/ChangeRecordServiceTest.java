@@ -89,7 +89,7 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
 
         // all change records generated are updates of title, which are reversible
         assertTrue(result.stream().map(UpdateChangeRecord.class::cast)
-                .allMatch(r -> r.hasType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS)));
+                .allMatch(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change)));
     }
 
     private List<AbstractChangeRecord> generateChanges() {

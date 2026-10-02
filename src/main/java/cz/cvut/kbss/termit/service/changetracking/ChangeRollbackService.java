@@ -78,7 +78,7 @@ public class ChangeRollbackService {
     }
 
     /**
-     * Sets the {@link UpdateChangeRecord#REVERSIBLE_CHANGE_CLASS reversible class}
+     * Sets the {@link  cz.cvut.kbss.termit.util.Vocabulary#s_c_reversible_change reversible class}
      * on each {@link UpdateChangeRecord} in the specified collection based on whether it
      * can be rolled back by the current user.
      *
@@ -96,9 +96,9 @@ public class ChangeRollbackService {
             if (authorized &&
                     record instanceof UpdateChangeRecord updateRecord &&
                     canRollback(updateRecord, changedAsset)) {
-                record.addType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+                updateRecord.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change);
             } else {
-                record.removeType(UpdateChangeRecord.REVERSIBLE_CHANGE_CLASS);
+                record.removeType(cz.cvut.kbss.termit.util.Vocabulary.s_c_reversible_change);
             }
         }
     }
