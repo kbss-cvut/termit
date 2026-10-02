@@ -21,17 +21,34 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.function.Supplier;
+
 public abstract class TransactionalTestRunner {
 
     @Autowired
     protected PlatformTransactionManager txManager;
 
+
+    protected <T> T transactional(Supplier<T> procedure) {
+        return Transaction.execute(txManager, procedure);
+    }
+
+    protected <T> T readOnlyTransactional(Supplier<T> procedure) {
+        return Transaction.executeReadOnly(txManager, procedure);
+    }
+
     protected void transactional(Runnable procedure) {
-        Transaction.execute(txManager, procedure);
+        Transaction.execute(txManager, () -> {
+            procedure.run();
+            return null;
+        });
     }
 
     protected void readOnlyTransactional(Runnable procedure) {
-        Transaction.executeReadOnly(txManager, procedure);
+        Transaction.executeReadOnly(txManager, () -> {
+            procedure.run();
+            return null;
+        });
     }
 
     protected void enableRdfsInference(EntityManager em) {
