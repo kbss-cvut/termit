@@ -73,8 +73,8 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     private static final String LIST_AVAILABLE_VOCABULARIES_QUERY = "import/listAvailableVocabularies.rq";
     private static final String EXPORT_FULL_VOCABULARY_QUERY = "import/exportFullVocabulary.rq";
 
-    public SparqlExternalVocabularyService(VocabularyRepositoryService repositoryService,
-                                           AccessControlListService aclService, Configuration config) {
+    public SparqlExternalVocabularyService(
+            VocabularyRepositoryService repositoryService, AccessControlListService aclService, Configuration config) {
         this.repositoryService = repositoryService;
         this.aclService = aclService;
         this.config = config;
@@ -121,8 +121,8 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
         return Optional.of(sparqlRepo);
     }
 
-    private List<RdfsResource> extractListOfAvailableVocabularies(
-            final TupleQueryResult result) throws QueryEvaluationException {
+    private List<RdfsResource> extractListOfAvailableVocabularies(final TupleQueryResult result)
+            throws QueryEvaluationException {
         List<RdfsResource> response = new ArrayList<>();
         RdfsResource current = null;
 
@@ -222,10 +222,9 @@ public class SparqlExternalVocabularyService implements ExternalVocabularyServic
     public void reloadExternalVocabularies() {
         LOG.debug("Reloading externally imported vocabularies.");
         List<String> externalVocabularies = repositoryService.findAll().stream()
-                                                             .filter((t) -> t.getTypes().contains(
-                                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_external))
-                                                             .map((t) -> t.getUri().toString())
-                                                             .toList();
+                .filter((t) -> t.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_external))
+                .map((t) -> t.getUri().toString())
+                .toList();
 
         importFromExternalUris(externalVocabularies);
     }

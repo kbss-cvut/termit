@@ -71,8 +71,7 @@ public class AccessControlListDao {
      * @return Matching ACL reference wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
      */
     public Optional<AccessControlList> getReference(URI id) {
-        return Optional.ofNullable(
-                em.getReference(AccessControlList.class, id, descriptor()));
+        return Optional.ofNullable(em.getReference(AccessControlList.class, id, descriptor()));
     }
 
     /**
@@ -86,10 +85,10 @@ public class AccessControlListDao {
         try {
             return Optional.of(
                     em.createNativeQuery("SELECT ?acl WHERE { ?subject ?hasAcl ?acl . }", AccessControlList.class)
-                      .setParameter("subject", subject.getUri())
-                      .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
-                      .setDescriptor(descriptor())
-                      .getSingleResult());
+                            .setParameter("subject", subject.getUri())
+                            .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                            .setDescriptor(descriptor())
+                            .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         }
@@ -151,8 +150,9 @@ public class AccessControlListDao {
         Objects.requireNonNull(acl);
         try {
             return Optional.of(em.createNativeQuery("SELECT ?x WHERE { ?x ?hasAcl ?acl . }", URI.class)
-                                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
-                                 .setParameter("acl", acl).getSingleResult());
+                    .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                    .setParameter("acl", acl)
+                    .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         }
@@ -173,20 +173,21 @@ public class AccessControlListDao {
      */
     public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@Nonnull AccessControlAgent agent) {
         Objects.requireNonNull(agent);
-        return em.createNativeQuery("SELECT ?a WHERE { " +
-                                            "?a a ?type ; " +
-                                            "?hasAcl ?acl . " +
-                                            "?acl ?hasRecord ?record . " +
-                                            "?record ?hasAccessLevel ?accessLevel ; " +
-                                            "?hasHolder ?agent . " +
-                                            "}", cz.cvut.kbss.termit.model.Vocabulary.class)
-                 .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
-                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_has_access_control_record))
-                 .setParameter("hasAccessLevel", URI.create(Vocabulary.s_p_has_access_level))
-                 .setParameter("accessLevel", URI.create(AccessLevel.SECURITY.getIri()))
-                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_has_access_level_holder))
-                 .setParameter("agent", agent)
-                 .getResultList();
+        return em.createNativeQuery(
+                        "SELECT ?a WHERE { " + "?a a ?type ; "
+                                + "?hasAcl ?acl . "
+                                + "?acl ?hasRecord ?record . "
+                                + "?record ?hasAccessLevel ?accessLevel ; "
+                                + "?hasHolder ?agent . "
+                                + "}",
+                        cz.cvut.kbss.termit.model.Vocabulary.class)
+                .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
+                .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                .setParameter("hasRecord", URI.create(Vocabulary.s_p_has_access_control_record))
+                .setParameter("hasAccessLevel", URI.create(Vocabulary.s_p_has_access_level))
+                .setParameter("accessLevel", URI.create(AccessLevel.SECURITY.getIri()))
+                .setParameter("hasHolder", URI.create(Vocabulary.s_p_has_access_level_holder))
+                .setParameter("agent", agent)
+                .getResultList();
     }
 }

@@ -68,8 +68,9 @@ public class ExportConfig {
             return false;
         }
         ExportConfig that = (ExportConfig) o;
-        return type == that.type && mediaType.equals(that.mediaType) && referenceProperties.equals(
-                that.referenceProperties);
+        return type == that.type
+                && mediaType.equals(that.mediaType)
+                && referenceProperties.equals(that.referenceProperties);
     }
 
     @Override
@@ -79,9 +80,6 @@ public class ExportConfig {
 
     @Override
     public String toString() {
-        return "ExportConfig{" +
-                "type=" + type +
-                ", mediaType=" + mediaType +
-                '}';
+        return "ExportConfig{" + "type=" + type + ", mediaType=" + mediaType + '}';
     }
 }

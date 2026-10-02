@@ -39,8 +39,8 @@ class AccessLevelTest {
                 Arguments.of(AccessLevel.NONE, List.of(AccessLevel.NONE)),
                 Arguments.of(AccessLevel.READ, List.of(AccessLevel.NONE, AccessLevel.READ)),
                 Arguments.of(AccessLevel.WRITE, List.of(AccessLevel.NONE, AccessLevel.READ, AccessLevel.WRITE)),
-                Arguments.of(AccessLevel.SECURITY,
-                             List.of(AccessLevel.NONE, AccessLevel.READ, AccessLevel.WRITE, AccessLevel.SECURITY))
-        );
+                Arguments.of(
+                        AccessLevel.SECURITY,
+                        List.of(AccessLevel.NONE, AccessLevel.READ, AccessLevel.WRITE, AccessLevel.SECURITY)));
     }
 }

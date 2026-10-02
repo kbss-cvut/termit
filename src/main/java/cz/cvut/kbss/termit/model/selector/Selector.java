@@ -25,5 +25,4 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
 @OWLClass(iri = Vocabulary.s_c_selector)
-public abstract class Selector extends AbstractEntity implements Copyable<Selector> {
-}
+public abstract class Selector extends AbstractEntity implements Copyable<Selector> {}

@@ -34,8 +34,7 @@ import java.util.stream.Collectors;
 @OWLClass(iri = Vocabulary.s_c_file_occurrence_target)
 public class FileOccurrenceTarget extends OccurrenceTarget {
 
-    public FileOccurrenceTarget() {
-    }
+    public FileOccurrenceTarget() {}
 
     @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public FileOccurrenceTarget(File source) {
@@ -46,7 +45,8 @@ public class FileOccurrenceTarget extends OccurrenceTarget {
     public FileOccurrenceTarget copy() {
         final FileOccurrenceTarget copy = new FileOccurrenceTarget();
         copy.setSource(getSource());
-        copy.setSelectors(Utils.emptyIfNull(getSelectors()).stream().map(Copyable::copy).collect(Collectors.toSet()));
+        copy.setSelectors(
+                Utils.emptyIfNull(getSelectors()).stream().map(Copyable::copy).collect(Collectors.toSet()));
         return copy;
     }
 

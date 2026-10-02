@@ -113,8 +113,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             generatePrefixMappingSheet(wb, prefixes.values());
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
-            return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
-                                                  ExportFormat.EXCEL.getFileExtension());
+            return new TypeAwareByteArrayResource(
+                    bos.toByteArray(), ExportFormat.EXCEL.getMediaType(), ExportFormat.EXCEL.getFileExtension());
         } catch (IOException e) {
             throw new TermItException("Unable to generate excel file from glossary of " + vocabulary, e);
         }
@@ -135,8 +135,10 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         final Set<String> uniqueLanguages = new HashSet<>();
         for (Term t : terms) {
             uniqueLanguages.addAll(t.getLabel().getLanguages());
-            uniqueLanguages.addAll(t.getDefinition() != null ? t.getDefinition().getLanguages() : Collections.emptyList());
-            uniqueLanguages.addAll(t.getDescription() != null ? t.getDescription().getLanguages() : Collections.emptyList());
+            uniqueLanguages.addAll(
+                    t.getDefinition() != null ? t.getDefinition().getLanguages() : Collections.emptyList());
+            uniqueLanguages.addAll(
+                    t.getDescription() != null ? t.getDescription().getLanguages() : Collections.emptyList());
             Utils.emptyIfNull(t.getAltLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getHiddenLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getExamples()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
@@ -152,9 +154,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     private void generateHeader(XSSFSheet sheet, String langCode) {
-        final List<String> columns = Constants.EXPORT_COLUMN_LABELS.getOrDefault(langCode,
-                                                                                 Constants.EXPORT_COLUMN_LABELS.get(
-                                                                                         Constants.DEFAULT_LANGUAGE));
+        final List<String> columns = Constants.EXPORT_COLUMN_LABELS.getOrDefault(
+                langCode, Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE));
         final Row row = generateHeaderRow(sheet);
         for (int i = 0; i < columns.size(); i++) {
             sheet.setColumnWidth(i, COLUMN_WIDTH * 256);
@@ -173,8 +174,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         return row;
     }
 
-    private void generateTermRows(List<Term> terms, XSSFSheet sheet, String langCode,
-                                  Map<URI, PrefixDeclaration> prefixes) {
+    private void generateTermRows(
+            List<Term> terms, XSSFSheet sheet, String langCode, Map<URI, PrefixDeclaration> prefixes) {
         final XSSFFont font = initFont(sheet.getWorkbook());
         final CellStyle style = sheet.getWorkbook().createCellStyle();
         style.setFont(font);
@@ -204,10 +205,12 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         allRelated.addAll(Utils.emptyIfNull(t.getInverseExactMatchTerms()));
         allRelated.addAll(Utils.emptyIfNull(t.getRelatedMatch()));
         allRelated.addAll(Utils.emptyIfNull(t.getInverseRelatedMatch()));
-        allRelated.addAll(
-                Utils.emptyIfNull(t.getExternalParentTerms()).stream().map(TermInfo::new).collect(Collectors.toSet()));
-        allRelated.stream().filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
-                  .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
+        allRelated.addAll(Utils.emptyIfNull(t.getExternalParentTerms()).stream()
+                .map(TermInfo::new)
+                .collect(Collectors.toSet()));
+        allRelated.stream()
+                .filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
+                .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
     }
 
     private void generatePrefixMappingSheet(XSSFWorkbook wb, Collection<PrefixDeclaration> prefixes) {

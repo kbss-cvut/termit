@@ -73,8 +73,12 @@ public class MainPersistenceFactory {
         properties.put(LANG, configuration.getPersistence().getLanguage());
         properties.put(PREFER_MULTILINGUAL_STRING, "true");
         if (configuration.getRepository().getUsername() != null) {
-            properties.put(OntoDriverProperties.DATA_SOURCE_USERNAME, configuration.getRepository().getUsername());
-            properties.put(OntoDriverProperties.DATA_SOURCE_PASSWORD, configuration.getRepository().getPassword());
+            properties.put(
+                    OntoDriverProperties.DATA_SOURCE_USERNAME,
+                    configuration.getRepository().getUsername());
+            properties.put(
+                    OntoDriverProperties.DATA_SOURCE_PASSWORD,
+                    configuration.getRepository().getPassword());
         }
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(Rdf4jOntoDriverProperties.LOAD_ALL_THRESHOLD, "1");

@@ -162,10 +162,10 @@ class ThrottleAspectTest {
     void mockA() throws Throwable {
         joinPointA = mock(ProceedingJoinPoint.class);
         when(joinPointA.proceed()).thenReturn(null);
-        signatureA = spy(new MockedMethodSignature("methodA", Void.TYPE, new Class[]{Object.class, Object.class}, new String[]{
-                "paramA", "paramB"}));
+        signatureA = spy(new MockedMethodSignature(
+                "methodA", Void.TYPE, new Class[] {Object.class, Object.class}, new String[] {"paramA", "paramB"}));
         when(joinPointA.getSignature()).thenReturn(signatureA);
-        when(joinPointA.getArgs()).thenReturn(new Object[]{new Object(), new Object()});
+        when(joinPointA.getArgs()).thenReturn(new Object[] {new Object(), new Object()});
         when(joinPointA.getTarget()).thenReturn(this);
 
         throttleA = new MockedThrottle("'string literal'", "'my.testing.group.A'");
@@ -174,10 +174,11 @@ class ThrottleAspectTest {
     void mockB() throws Throwable {
         joinPointB = mock(ProceedingJoinPoint.class);
         when(joinPointB.proceed()).thenReturn(null);
-        signatureB = spy(new MockedMethodSignature("methodB", Void.class, new Class[]{Map.class}, new String[]{"paramName"}));
+        signatureB = spy(
+                new MockedMethodSignature("methodB", Void.class, new Class[] {Map.class}, new String[] {"paramName"}));
         when(joinPointB.getSignature()).thenReturn(signatureB);
 
-        when(joinPointB.getArgs()).thenReturn(new Object[]{Map.of("first", "firstValue", "second", "secondValue")});
+        when(joinPointB.getArgs()).thenReturn(new Object[] {Map.of("first", "firstValue", "second", "secondValue")});
         when(joinPointB.getTarget()).thenReturn(this);
 
         throttleB = new MockedThrottle("{#paramName.get('second'), #paramName.get('first')}", "'my.testing.group.B'");
@@ -186,10 +187,10 @@ class ThrottleAspectTest {
     void mockC() throws Throwable {
         joinPointC = mock(ProceedingJoinPoint.class);
         when(joinPointC.proceed()).thenReturn(null);
-        signatureC = spy(new MockedMethodSignature("methodC", Void.TYPE, new Class[]{Object.class, Object.class}, new String[]{
-                "paramC", "paramD"}));
+        signatureC = spy(new MockedMethodSignature(
+                "methodC", Void.TYPE, new Class[] {Object.class, Object.class}, new String[] {"paramC", "paramD"}));
         when(joinPointC.getSignature()).thenReturn(signatureC);
-        when(joinPointC.getArgs()).thenReturn(new Object[]{new Object(), new Object()});
+        when(joinPointC.getArgs()).thenReturn(new Object[] {new Object(), new Object()});
         when(joinPointC.getTarget()).thenReturn(this);
 
         throttleC = new MockedThrottle("'string literal'", "'my.testing'");
@@ -206,7 +207,8 @@ class ThrottleAspectTest {
         taskScheduler = mock(TaskScheduler.class);
 
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).then(invocation -> {
-            final Runnable decorated = TaskUtils.decorateTaskWithErrorHandler(invocation.getArgument(0, Runnable.class), null, false);
+            final Runnable decorated =
+                    TaskUtils.decorateTaskWithErrorHandler(invocation.getArgument(0, Runnable.class), null, false);
             final ScheduledFutureTask<Object> task = new ScheduledFutureTask<>(Executors.callable(decorated));
             taskSchedulerTasks.put(task, invocation.getArgument(1, Instant.class));
             System.out.println("Scheduled task at " + invocation.getArgument(1, Instant.class));
@@ -223,7 +225,15 @@ class ThrottleAspectTest {
         transactionExecutor = spy(SynchronousTransactionExecutor.class);
         longRunningTasksRegistry = mock(LongRunningTasksRegistry.class);
 
-        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor, longRunningTasksRegistry, configuration);
+        sut = new ThrottleAspect(
+                throttledFutures,
+                lastRun,
+                scheduledFutures,
+                taskScheduler,
+                mockedClock,
+                transactionExecutor,
+                longRunningTasksRegistry,
+                configuration);
     }
 
     /**
@@ -242,10 +252,11 @@ class ThrottleAspectTest {
     }
 
     void skipDiscardThreshold() {
-        clock = Clock.fixed(clock.instant()
-                                 .plus(configuration.getThrottleDiscardThreshold())
-                                 .plus(configuration.getThrottleThreshold())
-                                 .plusSeconds(1),
+        clock = Clock.fixed(
+                clock.instant()
+                        .plus(configuration.getThrottleDiscardThreshold())
+                        .plus(configuration.getThrottleThreshold())
+                        .plusSeconds(1),
                 ZoneId.of("UTC"));
     }
 
@@ -303,7 +314,9 @@ class ThrottleAspectTest {
         final ThrottledFuture<String> methodFuture = ThrottledFuture.of(methodResult);
 
         // for each method call, make new future
-        doAnswer(invocation -> ThrottledFuture.of(anotherMethodResult)).when(joinPointA).proceed();
+        doAnswer(invocation -> ThrottledFuture.of(anotherMethodResult))
+                .when(joinPointA)
+                .proceed();
 
         final Instant firstCall = getInstant();
         // simulate first call
@@ -352,7 +365,7 @@ class ThrottleAspectTest {
      */
     @Test
     void callsInThrottleIntervalAreMerged() throws Throwable {
-        final String[] params = new String[]{"param1", "param2", "param3", "param4", "param5", "param6"};
+        final String[] params = new String[] {"param1", "param2", "param3", "param4", "param5", "param6"};
         // define a future as the return type of the method
         signatureA.setReturnType(Future.class);
 
@@ -360,12 +373,12 @@ class ThrottleAspectTest {
         doAnswer(invocation -> new ThrottledFuture<String>()).when(joinPointA).proceed();
 
         // simulate first call
-        when(joinPointA.getArgs()).thenReturn(new Object[]{params[0], params[1]});
+        when(joinPointA.getArgs()).thenReturn(new Object[] {params[0], params[1]});
         final Object result1 = sut.throttleMethodCall(joinPointA, throttleA);
 
         addSecond();
         // simulate second call
-        when(joinPointA.getArgs()).thenReturn(new Object[]{params[2], params[3]});
+        when(joinPointA.getArgs()).thenReturn(new Object[] {params[2], params[3]});
         final Object result2 = sut.throttleMethodCall(joinPointA, throttleA);
 
         // both calls returned the same future
@@ -533,7 +546,8 @@ class ThrottleAspectTest {
         assertEquals(1, scheduledFutures.size());
 
         final Future<Object> oldFuture = futures.values().iterator().next();
-        final Future<Object> currentFuture = scheduledFutures.values().iterator().next();
+        final Future<Object> currentFuture =
+                scheduledFutures.values().iterator().next();
         assertEquals(oldFuture, currentFuture);
         assertFalse(currentFuture.isDone());
         assertFalse(currentFuture.isCancelled());
@@ -578,25 +592,27 @@ class ThrottleAspectTest {
      * but with method returning a future
      */
     @Test
-    void callToThrottledMethodReturningFutureFromAlreadyThrottledThreadResultsInSynchronousExecution() throws Throwable {
+    void callToThrottledMethodReturningFutureFromAlreadyThrottledThreadResultsInSynchronousExecution()
+            throws Throwable {
         AtomicLong threadId = new AtomicLong(-1);
 
         signatureA.setReturnType(Future.class);
         signatureB.setReturnType(Future.class);
 
         // prepare a simulated nested throttled method
-        when(joinPointB.proceed()).then(invocation -> ThrottledFuture.of(()->
-            threadId.set(Thread.currentThread().getId())
-        ));
+        when(joinPointB.proceed())
+                .then(invocation -> ThrottledFuture.of(
+                        () -> threadId.set(Thread.currentThread().getId())));
 
         // when method A is executed, call throttled method B
-        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(() -> {
-            try {
-                sut.throttleMethodCall(joinPointB, throttleB);
-            } catch (Throwable t) {
-                fail(t);
-            }
-        }));
+        when(joinPointA.proceed())
+                .then(invocation -> ThrottledFuture.of(() -> {
+                    try {
+                        sut.throttleMethodCall(joinPointB, throttleB);
+                    } catch (Throwable t) {
+                        fail(t);
+                    }
+                }));
 
         sut.throttleMethodCall(joinPointA, throttleA);
 
@@ -618,7 +634,8 @@ class ThrottleAspectTest {
     @Test
     void taskFromMethodAnnotatedWithTransactionalIsExecutedWithTransactionExecutor() throws Throwable {
         // simulates a method object with transactional annotation
-        when(signatureA.getMethod()).thenReturn(SynchronousTransactionExecutor.class.getDeclaredMethod("execute", Runnable.class));
+        when(signatureA.getMethod())
+                .thenReturn(SynchronousTransactionExecutor.class.getDeclaredMethod("execute", Runnable.class));
         signatureA.setReturnType(Future.class);
         Runnable task = () -> {};
         when(joinPointA.proceed()).thenReturn(ThrottledFuture.of(task));
@@ -667,7 +684,6 @@ class ThrottleAspectTest {
         assertEquals(1, throttledFutures.size());
         assertEquals(1, lastRun.size());
     }
-
 
     @Test
     void aspectDoesNotThrowWhenMethodReturnsUnboxedVoidBySignature() throws Throwable {
@@ -764,9 +780,10 @@ class ThrottleAspectTest {
     @Test
     void exceptionPropagatedFromFutureTask() throws Throwable {
         final String exceptionMessage = "termit exception";
-        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(() -> {
-            throw new TermItException(exceptionMessage);
-        }));
+        when(joinPointA.proceed())
+                .then(invocation -> ThrottledFuture.of(() -> {
+                    throw new TermItException(exceptionMessage);
+                }));
         signatureA.setReturnType(Future.class);
 
         sut.throttleMethodCall(joinPointA, throttleA);
@@ -836,7 +853,8 @@ class ThrottleAspectTest {
 
     @Test
     void aspectConstructsFromAutowiredConstructor() {
-        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor, longRunningTasksRegistry, configuration));
+        assertDoesNotThrow(
+                () -> new ThrottleAspect(taskScheduler, transactionExecutor, longRunningTasksRegistry, configuration));
     }
 
     @Test
@@ -902,7 +920,7 @@ class ThrottleAspectTest {
         final AtomicBoolean allowFinish = new AtomicBoolean(false);
         when(joinPointA.proceed()).then(invocation -> {
             taskRunning.set(true);
-            while(!allowFinish.get()) {
+            while (!allowFinish.get()) {
                 Thread.yield();
             }
             return null;

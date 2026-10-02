@@ -60,10 +60,11 @@ public class TermItUserDetails implements UserDetails {
         final Set<GrantedAuthority> authorities = new HashSet<>(4);
         authorities.add(DEFAULT_AUTHORITY);
         if (user.getTypes() != null) {
-            authorities.addAll(user.getTypes().stream().filter(UserRole::exists)
-                .flatMap(r -> UserRole.fromType(r).getGranted().stream())
-                .map(r -> new SimpleGrantedAuthority(r.getName()))
-                .collect(Collectors.toSet()));
+            authorities.addAll(user.getTypes().stream()
+                    .filter(UserRole::exists)
+                    .flatMap(r -> UserRole.fromType(r).getGranted().stream())
+                    .map(r -> new SimpleGrantedAuthority(r.getName()))
+                    .collect(Collectors.toSet()));
         }
         return authorities;
     }
@@ -125,9 +126,6 @@ public class TermItUserDetails implements UserDetails {
 
     @Override
     public String toString() {
-        return "UserDetails{" +
-                "user=" + user +
-                ", authorities=" + authorities +
-                '}';
+        return "UserDetails{" + "user=" + user + ", authorities=" + authorities + '}';
     }
 }

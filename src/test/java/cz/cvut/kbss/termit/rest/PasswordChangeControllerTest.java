@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
@@ -62,10 +61,8 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
     void passwordResetRequestsPasswordReset() throws Exception {
         final UserAccount userAccount = Generator.generateUserAccount();
 
-        mockMvc.perform(post("/password")
-                       .content(userAccount.getUsername())
-                       .contentType(MediaType.TEXT_PLAIN))
-               .andExpect(status().isNoContent());
+        mockMvc.perform(post("/password").content(userAccount.getUsername()).contentType(MediaType.TEXT_PLAIN))
+                .andExpect(status().isNoContent());
         verify(userService).requestPasswordReset(userAccount.getUsername());
     }
 
@@ -75,12 +72,11 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         final String username = userAccount.getUsername();
 
         doThrow(NotFoundException.create(UserAccount.class, username))
-                .when(userService).requestPasswordReset(username);
+                .when(userService)
+                .requestPasswordReset(username);
 
-        mockMvc.perform(post("/password")
-                       .content(username)
-                       .contentType(MediaType.TEXT_PLAIN))
-               .andExpect(status().isNotFound());
+        mockMvc.perform(post("/password").content(username).contentType(MediaType.TEXT_PLAIN))
+                .andExpect(status().isNotFound());
 
         verify(userService).requestPasswordReset(eq(username));
     }
@@ -93,7 +89,7 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         dto.setToken(UUID.randomUUID().toString());
 
         mockMvc.perform(put("/password").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).changePassword(refEq(dto));
     }
 
@@ -104,12 +100,14 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         dto.setNewPassword(UUID.randomUUID().toString());
         dto.setToken(UUID.randomUUID().toString());
 
-        doThrow(new InvalidPasswordChangeRequestException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID))
-                .when(userService).changePassword(refEq(dto));
+        doThrow(new InvalidPasswordChangeRequestException(
+                        "Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID))
+                .when(userService)
+                .changePassword(refEq(dto));
 
         mockMvc.perform(put("/password").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(jsonPath("messageId").value(INVALID_TOKEN_ERROR_MESSAGE_ID))
-               .andExpect(status().isConflict());
+                .andExpect(jsonPath("messageId").value(INVALID_TOKEN_ERROR_MESSAGE_ID))
+                .andExpect(status().isConflict());
 
         verify(userService).changePassword(refEq(dto));
     }

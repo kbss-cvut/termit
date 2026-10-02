@@ -97,7 +97,6 @@ class TermAuthorizationServiceTest {
         verify(vocabularyAuthorizationService).canRemove(v);
     }
 
-
     @Test
     void removeUnauthorizedTermsAndAncestorsRemovesTermsFromUnauthorizedVocabulary() {
         final Vocabulary authorizedVoc = Generator.generateVocabularyWithId();
@@ -110,9 +109,9 @@ class TermAuthorizationServiceTest {
         term2.setUri(Generator.generateUri());
         term2.setVocabulary(unauthorizedVoc.getUri());
 
-        doAnswer(inv ->
-            inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVoc.getUri())
-        ).when(vocabularyAuthorizationService).canRead(any(Vocabulary.class));
+        doAnswer(inv -> inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVoc.getUri()))
+                .when(vocabularyAuthorizationService)
+                .canRead(any(Vocabulary.class));
 
         Set<TermInfoWithParents> terms = new HashSet<>(Set.of(term, term2));
 
@@ -141,9 +140,9 @@ class TermAuthorizationServiceTest {
         term.setParentTerms(Set.of(term2));
         term2.setParentTerms(Set.of(term3));
 
-        doAnswer(inv ->
-                inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVocabulary.getUri())
-        ).when(vocabularyAuthorizationService).canRead(any(Vocabulary.class));
+        doAnswer(inv -> inv.getArgument(0, Vocabulary.class).getUri().equals(authorizedVocabulary.getUri()))
+                .when(vocabularyAuthorizationService)
+                .canRead(any(Vocabulary.class));
 
         Set<TermInfoWithParents> terms = new HashSet<>(Set.of(term));
 

@@ -53,19 +53,23 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
         final URI vocabularyIri = Generator.generateUri();
         final Vocabulary snapshot = Generator.generateVocabularyWithId();
         snapshot.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
-        snapshot.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary,
-                                                        Collections.singleton(vocabularyIri.toString())));
+        snapshot.setProperties(Collections.singletonMap(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary,
+                Collections.singleton(vocabularyIri.toString())));
         transactional(() -> em.persist(snapshot, descriptorFactory.vocabularyDescriptor(snapshot)));
-        final Snapshot toRemove = new Snapshot(snapshot.getUri(), Utils.timestamp(), vocabularyIri,
-                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
+        final Snapshot toRemove = new Snapshot(
+                snapshot.getUri(),
+                Utils.timestamp(),
+                vocabularyIri,
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
         transactional(() -> sut.removeSnapshot(toRemove));
         verifyGraphEmpty(snapshot.getUri());
     }
 
     private void verifyGraphEmpty(URI graphUri) {
         assertFalse(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x ?y ?z . } }", Boolean.class)
-                      .setParameter("g", graphUri)
-                      .getSingleResult());
+                .setParameter("g", graphUri)
+                .getSingleResult());
     }
 
     @Test
@@ -73,23 +77,27 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
         final URI vocabularyOneIri = Generator.generateUri();
         final Vocabulary snapshotOne = Generator.generateVocabularyWithId();
         snapshotOne.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
-        snapshotOne.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary,
-                                                           Collections.singleton(vocabularyOneIri.toString())));
+        snapshotOne.setProperties(Collections.singletonMap(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary,
+                Collections.singleton(vocabularyOneIri.toString())));
         final URI termOneIri = Generator.generateUri();
         final Term tSnapshotOne = Generator.generateTermWithId(snapshotOne.getUri());
         tSnapshotOne.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term);
-        tSnapshotOne.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term,
-                                                            Collections.singleton(termOneIri.toString())));
+        tSnapshotOne.setProperties(Collections.singletonMap(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term,
+                Collections.singleton(termOneIri.toString())));
         final URI vocabularyTwoIri = Generator.generateUri();
         final Vocabulary snapshotTwo = Generator.generateVocabularyWithId();
         snapshotTwo.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
-        snapshotTwo.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary,
-                                                           Collections.singleton(vocabularyTwoIri.toString())));
+        snapshotTwo.setProperties(Collections.singletonMap(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary,
+                Collections.singleton(vocabularyTwoIri.toString())));
         final URI termTwoIri = Generator.generateUri();
         final Term tSnapshotTwo = Generator.generateTermWithId(snapshotTwo.getUri());
         tSnapshotTwo.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term);
-        tSnapshotTwo.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term,
-                                                            Collections.singleton(termTwoIri.toString())));
+        tSnapshotTwo.setProperties(Collections.singletonMap(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term,
+                Collections.singleton(termTwoIri.toString())));
 
         transactional(() -> {
             em.persist(snapshotOne, descriptorFactory.vocabularyDescriptor(snapshotOne));
@@ -99,13 +107,17 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
             em.persist(tSnapshotOne, descriptorFactory.termDescriptor(snapshotOne));
             em.persist(tSnapshotTwo, descriptorFactory.termDescriptor(snapshotTwo));
         });
-        // Separate transaction to prevent IndividualAlreadyManagedException for tSnapshotTwo as Term and TermInfo in persistence context
+        // Separate transaction to prevent IndividualAlreadyManagedException for tSnapshotTwo as Term and TermInfo in
+        // persistence context
 
         tSnapshotOne.addRelatedMatchTerm(new TermInfo(tSnapshotTwo));
         transactional(() -> em.merge(tSnapshotOne, descriptorFactory.termDescriptor(snapshotOne)));
 
-        final Snapshot toRemove = new Snapshot(snapshotOne.getUri(), Utils.timestamp(), vocabularyOneIri,
-                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
+        final Snapshot toRemove = new Snapshot(
+                snapshotOne.getUri(),
+                Utils.timestamp(),
+                vocabularyOneIri,
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
         transactional(() -> sut.removeSnapshot(toRemove));
         verifyGraphEmpty(snapshotOne.getUri());
         verifyGraphEmpty(snapshotTwo.getUri());
@@ -115,16 +127,17 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
     void removeSnapshotThrowsUnsupportedOperationExceptionWhenAttemptingToRemoveNormalVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
-        final Snapshot toRemove = new Snapshot(vocabulary.getUri(), Utils.timestamp(), null,
-                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
-        transactional(
-                () -> assertThrows(UnsupportedOperationException.class, () -> sut.removeSnapshot(toRemove)));
+        final Snapshot toRemove = new Snapshot(
+                vocabulary.getUri(),
+                Utils.timestamp(),
+                null,
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
+        transactional(() -> assertThrows(UnsupportedOperationException.class, () -> sut.removeSnapshot(toRemove)));
     }
 
     @Test
     void removeSnapshotThrowsUnsupportedAssetOperationExceptionWhenProvidedSnapshotIsNotVocabulary() {
         final Snapshot toRemove = Generator.generateSnapshot(Generator.generateTermWithId());
-        transactional(
-                () -> assertThrows(UnsupportedAssetOperationException.class, () -> sut.removeSnapshot(toRemove)));
+        transactional(() -> assertThrows(UnsupportedAssetOperationException.class, () -> sut.removeSnapshot(toRemove)));
     }
 }

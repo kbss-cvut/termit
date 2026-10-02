@@ -68,8 +68,9 @@ public class UserGroupController extends BaseController {
         this.groupService = groupService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets a list of user groups.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets a list of user groups.")
     @ApiResponse(responseCode = "200", description = "A list of user groups.")
     @PreAuthorize("hasAnyRole('" + SecurityConstants.ROLE_ADMIN + "', '" + SecurityConstants.ROLE_FULL_USER + "')")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -77,108 +78,130 @@ public class UserGroupController extends BaseController {
         return groupService.findAll();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new user group.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Creates a new user group.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User group successfully created."),
-            @ApiResponse(responseCode = "409", description = "Provided data are invalid.")
+        @ApiResponse(responseCode = "201", description = "User group successfully created."),
+        @ApiResponse(responseCode = "409", description = "Provided data are invalid.")
     })
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> create(@Parameter(description = "User group metadata.")
-                                       @RequestBody UserGroup group) {
+    public ResponseEntity<Void> create(@Parameter(description = "User group metadata.") @RequestBody UserGroup group) {
         groupService.persist(group);
         LOG.debug("Group {} created.", group);
         return ResponseEntity.created(generateLocation(group.getUri())).build();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the user group with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets the user group with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "User group metadata."),
-            @ApiResponse(responseCode = "404", description = "User group not found.")
+        @ApiResponse(responseCode = "200", description = "User group metadata."),
+        @ApiResponse(responseCode = "404", description = "User group not found.")
     })
-    @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public UserGroup getById(@Parameter(description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                        example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                             @PathVariable String localName) {
+    @GetMapping(
+            value = "/{localName}",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public UserGroup getById(
+            @Parameter(
+                            description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName) {
         final URI uri = resolveIdentifier(UserGroup.NAMESPACE, localName);
         return groupService.findRequired(uri);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Deletes user group with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Deletes user group with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User group successfully deleted."),
-            @ApiResponse(responseCode = "404", description = "User group not found.")
+        @ApiResponse(responseCode = "204", description = "User group successfully deleted."),
+        @ApiResponse(responseCode = "404", description = "User group not found.")
     })
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remove(@Parameter(description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                  example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                       @PathVariable String fragment) {
+    public void remove(
+            @Parameter(
+                            description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String fragment) {
         final URI uri = resolveIdentifier(UserGroup.NAMESPACE, fragment);
         final UserGroup toRemove = groupService.getReference(uri);
         groupService.remove(toRemove);
         LOG.debug("Group {} removed.", toRemove);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates the label of the user group with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates the label of the user group with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User group successfully updated."),
-            @ApiResponse(responseCode = "404", description = "User group not found.")
+        @ApiResponse(responseCode = "204", description = "User group successfully updated."),
+        @ApiResponse(responseCode = "404", description = "User group not found.")
     })
     @PutMapping(value = "/{fragment}/label")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateGroupLabel(
-            @Parameter(description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String fragment,
-            @Parameter(description = "New group name.")
-            @RequestBody String label) {
+            @Parameter(
+                            description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String fragment,
+            @Parameter(description = "New group name.") @RequestBody String label) {
         final UserGroup group = getById(fragment);
         group.setLabel(label);
         groupService.update(group);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Adds members to the user group with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Adds members to the user group with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Members successfully added."),
-            @ApiResponse(responseCode = "404", description = "User group or user not found.")
+        @ApiResponse(responseCode = "204", description = "Members successfully added."),
+        @ApiResponse(responseCode = "404", description = "User group or user not found.")
     })
-    @PostMapping(value = "/{fragment}/members", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(
+            value = "/{fragment}/members",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addMembers(
-            @Parameter(description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String fragment,
-            @Parameter(description = "Identifiers of users to add to the target user group.")
-            @RequestBody Set<URI> toAdd) {
+            @Parameter(
+                            description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String fragment,
+            @Parameter(description = "Identifiers of users to add to the target user group.") @RequestBody
+                    Set<URI> toAdd) {
         final UserGroup target = getById(fragment);
-        final List<User> usersToAdd = toAdd.stream().map(groupService::findRequiredUser)
-                                           .collect(Collectors.toList());
+        final List<User> usersToAdd =
+                toAdd.stream().map(groupService::findRequiredUser).collect(Collectors.toList());
         groupService.addMembers(target, usersToAdd);
         LOG.debug("{} users added to group {}.", usersToAdd.size(), target);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes members from the user group with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Removes members from the user group with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Members successfully removed."),
-            @ApiResponse(responseCode = "404", description = "User group or user not found.")
+        @ApiResponse(responseCode = "204", description = "Members successfully removed."),
+        @ApiResponse(responseCode = "404", description = "User group or user not found.")
     })
-    @DeleteMapping(value = "/{fragment}/members", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @DeleteMapping(
+            value = "/{fragment}/members",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMembers(
-            @Parameter(description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String fragment,
-            @Parameter(description = "Identifiers of users to remove from the target user group.")
-            @RequestBody Set<URI> toRemove) {
+            @Parameter(
+                            description = UserGroupControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String fragment,
+            @Parameter(description = "Identifiers of users to remove from the target user group.") @RequestBody
+                    Set<URI> toRemove) {
         final UserGroup target = getById(fragment);
-        final List<User> usersToRemove = toRemove.stream().map(groupService::findRequiredUser)
-                                                 .collect(Collectors.toList());
+        final List<User> usersToRemove =
+                toRemove.stream().map(groupService::findRequiredUser).collect(Collectors.toList());
         groupService.removeMembers(target, usersToRemove);
         LOG.debug("{} users removed from group {}.", usersToRemove.size(), target);
     }
@@ -187,7 +210,8 @@ public class UserGroupController extends BaseController {
      * A couple of constants for the {@link UserGroupController} API documentation.
      */
     private static final class UserGroupControllerDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the user group identifier.";
+        private static final String ID_LOCAL_NAME_DESCRIPTION =
+                "Locally (in the context of the specified namespace) unique part of the user group identifier.";
         private static final String ID_LOCAL_NAME_EXAMPLE = "instance-12345";
     }
 }

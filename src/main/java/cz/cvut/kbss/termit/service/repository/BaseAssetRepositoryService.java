@@ -32,7 +32,8 @@ import org.springframework.data.domain.Pageable;
  *
  * @param <T> Asset type
  */
-public abstract class BaseAssetRepositoryService<T extends Asset<?>, DTO extends HasIdentifier> extends BaseRepositoryService<T, DTO> {
+public abstract class BaseAssetRepositoryService<T extends Asset<?>, DTO extends HasIdentifier>
+        extends BaseRepositoryService<T, DTO> {
 
     protected BaseAssetRepositoryService(Validator validator) {
         super(validator);

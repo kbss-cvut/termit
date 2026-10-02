@@ -87,80 +87,100 @@ public class ResourceController extends BaseController {
         this.resourceService = resourceService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets detail of the resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets detail of the resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Matching resource metadata."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Matching resource metadata."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Resource getResource(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final URI identifier = resolveIdentifier(resourceNamespace(namespace), localName);
         return resourceService.findRequired(identifier);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Resource successfully updated."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409", description = "Resource metadata are invalid.")
+        @ApiResponse(responseCode = "204", description = "Resource successfully updated."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409", description = "Resource metadata are invalid.")
     })
-    @PutMapping(value = "/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PutMapping(
+            value = "/{localName}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateResource(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                          example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                               @PathVariable String localName,
-                               @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                          example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                               @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                               @Parameter(description = "Updated resource metadata.")
-                               @RequestBody Resource resource) {
+    public void updateResource(
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "Updated resource metadata.") @RequestBody Resource resource) {
         final URI identifier = resolveIdentifier(resourceNamespace(namespace), localName);
         verifyRequestAndEntityIdentifier(resource, identifier);
         resourceService.update(resource);
         LOG.debug("Resource {} updated.", resource);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the content of the resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets the content of the resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Resource content."),
-            @ApiResponse(responseCode = "404", description = "Resource not found or its content is not stored.")
+        @ApiResponse(responseCode = "200", description = "Resource content."),
+        @ApiResponse(responseCode = "404", description = "Resource not found or its content is not stored.")
     })
     @GetMapping(value = "/{localName}/content")
     public ResponseEntity<org.springframework.core.io.Resource> getContent(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = "Whether to return the content as a file attachment or directly in response body.")
-            @RequestParam(name = "attachment", required = false) boolean asAttachment,
             @Parameter(
-                    description = "Datetime (ISO-format) at which the content is expected to be valid. Allows getting older revisions of the resource content.")
-            @RequestParam(name = "at", required = false) Optional<String> at,
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "Whether to return the content as a file attachment or directly in response body.")
+                    @RequestParam(name = "attachment", required = false)
+                    boolean asAttachment,
+            @Parameter(
+                            description =
+                                    "Datetime (ISO-format) at which the content is expected to be valid. Allows getting older revisions of the resource content.")
+                    @RequestParam(name = "at", required = false)
+                    Optional<String> at,
             @Parameter(description = "Whether to return the content without unconfirmed term occurrences.")
-            @RequestParam(name = "withoutUnconfirmedOccurrences",
-                          required = false) boolean withoutUnconfirmedOccurrences) {
+                    @RequestParam(name = "withoutUnconfirmedOccurrences", required = false)
+                    boolean withoutUnconfirmedOccurrences) {
         final Resource resource = getResource(localName, namespace);
         try {
             final Optional<Instant> timestamp = at.map(RestUtils::parseTimestamp);
-            final TypeAwareResource content = resourceService.getContent(resource,
-                    new ResourceRetrievalSpecification(timestamp,
-                            withoutUnconfirmedOccurrences));
+            final TypeAwareResource content = resourceService.getContent(
+                    resource, new ResourceRetrievalSpecification(timestamp, withoutUnconfirmedOccurrences));
             final ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
-                                                                     .contentLength(content.contentLength())
-                                                                     .contentType(MediaType.parseMediaType(
-                                                                             content.getMediaType()
-                                                                                    .orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)));
+                    .contentLength(content.contentLength())
+                    .contentType(MediaType.parseMediaType(
+                            content.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)));
             if (asAttachment) {
                 builder.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + localName + "\"");
             }
@@ -170,81 +190,105 @@ public class ResourceController extends BaseController {
         }
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Saves new content of the resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Saves new content of the resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Content successfully saved."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Content successfully saved."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PutMapping(value = "/{localName}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Void saveContent(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                 example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                      @PathVariable String localName,
-                                      @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                 example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                      @RequestParam(name = QueryParams.NAMESPACE,
-                                                    required = false) Optional<String> namespace,
-                                      @Parameter(description = "The reason for saving the resource")
-                                      @RequestParam(name = "reason", required = false)
-                                                 Optional<ResourceSaveReason> reason,
-                                      @Parameter(description = "File with the new content.")
-                                      @RequestParam(name = "file") MultipartFile attachment) {
+    public Void saveContent(
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "The reason for saving the resource")
+                    @RequestParam(name = "reason", required = false)
+                    Optional<ResourceSaveReason> reason,
+            @Parameter(description = "File with the new content.") @RequestParam(name = "file")
+                    MultipartFile attachment) {
 
         final Resource resource = getResource(localName, namespace);
         try {
-            resourceService.saveContent(resource, attachment.getInputStream(), reason.orElse(ResourceSaveReason.UNKNOWN));
+            resourceService.saveContent(
+                    resource, attachment.getInputStream(), reason.orElse(ResourceSaveReason.UNKNOWN));
         } catch (IOException e) {
-            throw new TermItException("Unable to read file (fileName=\"" + attachment.getOriginalFilename() + "\") content from request.", e);
+            throw new TermItException(
+                    "Unable to read file (fileName=\"" + attachment.getOriginalFilename() + "\") content from request.",
+                    e);
         }
         LOG.debug("Content saved for resource {}.", resource);
         return null;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Checks whether content is stored for the resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Checks whether content is stored for the resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200",
-                         description = "Content is stored. Content-Type header returns stored content type."),
-            @ApiResponse(responseCode = "404", description = "Resource not found or its content is not stored.")
+        @ApiResponse(
+                responseCode = "200",
+                description = "Content is stored. Content-Type header returns stored content type."),
+        @ApiResponse(responseCode = "404", description = "Resource not found or its content is not stored.")
     })
     @RequestMapping(value = "/{localName}/content", method = RequestMethod.HEAD)
-    public ResponseEntity<Void> hasContent(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                      example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                           @PathVariable String localName,
-                                           @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                      example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                           @RequestParam(name = QueryParams.NAMESPACE,
-                                                         required = false) Optional<String> namespace) {
+    public ResponseEntity<Void> hasContent(
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final Resource r = getResource(localName, namespace);
         final boolean hasContent = resourceService.hasContent(r);
         if (!hasContent) {
             return ResponseEntity.notFound().build();
         } else {
-            final String contentType = resourceService.getContent(r,
-                                                              new ResourceRetrievalSpecification(Optional.empty(),
-                                                                      false))
-                                                      .getMediaType().orElse(null);
-            return ResponseEntity.noContent().header(HttpHeaders.CONTENT_TYPE, contentType).build();
+            final String contentType = resourceService
+                    .getContent(r, new ResourceRetrievalSpecification(Optional.empty(), false))
+                    .getMediaType()
+                    .orElse(null);
+            return ResponseEntity.noContent()
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .build();
         }
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets files associated with the document with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets files associated with the document with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Document files."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409", description = "Resource is not a document.")
+        @ApiResponse(responseCode = "200", description = "Document files."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409", description = "Resource is not a document.")
     })
-    @GetMapping(value = "/{localName}/files", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<File> getFiles(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                          example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                               @PathVariable String localName,
-                               @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                          example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                               @RequestParam(name = QueryParams.NAMESPACE,
-                                             required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getResource()), localName);
+    @GetMapping(
+            value = "/{localName}/files",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<File> getFiles(
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
+        final URI identifier =
+                resolveIdentifier(namespace.orElse(config.getNamespace().getResource()), localName);
         return resourceService.getFiles(resourceService.getReference(identifier));
     }
 
@@ -252,166 +296,212 @@ public class ResourceController extends BaseController {
         return namespace.orElse(config.getNamespace().getResource());
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Adds a file to the document with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Adds a file to the document with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "File added."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409", description = "Resource is not a document.")
+        @ApiResponse(responseCode = "201", description = "File added."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409", description = "Resource is not a document.")
     })
-    @PostMapping(value = "/{localName}/files", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(
+            value = "/{localName}/files",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> addFileToDocument(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace,
-            @Parameter(description = "File to add to the document.")
-            @RequestBody File file) {
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "File to add to the document.") @RequestBody File file) {
         final URI identifier = resolveIdentifier(resourceNamespace(namespace), localName);
         resourceService.addFileToDocument(resourceService.findRequired(identifier), file);
         LOG.debug("File {} successfully added to document {}.", file, identifier);
-        return ResponseEntity.created(createFileLocation(file.getUri(), localName)).build();
+        return ResponseEntity.created(createFileLocation(file.getUri(), localName))
+                .build();
     }
 
     private URI createFileLocation(URI childUri, String parentIdFragment) {
-        final String u = generateLocation(childUri, config.getNamespace().getResource()).toString();
+        final String u =
+                generateLocation(childUri, config.getNamespace().getResource()).toString();
         return URI.create(u.replace("/" + parentIdFragment + "/files", ""));
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes a file from the document with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Removes a file from the document with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "File removed."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409", description = "Resource is not a document.")
+        @ApiResponse(responseCode = "204", description = "File removed."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409", description = "Resource is not a document.")
     })
     @DeleteMapping(value = "/{resourceLocalName}/files/{fileName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFileFromDocument(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                  example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                       @PathVariable String resourceLocalName,
-                                       @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                  example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                       @RequestParam(name = QueryParams.NAMESPACE,
-                                                     required = false) Optional<String> namespace,
-                                       @Parameter(
-                                               description = "Local (in the context of the parent document identifier) name of the file to remove.")
-                                       @PathVariable String fileName) {
+    public void removeFileFromDocument(
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String resourceLocalName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description =
+                                    "Local (in the context of the parent document identifier) name of the file to remove.")
+                    @PathVariable
+                    String fileName) {
         final URI fileIdentifier = resolveIdentifier(resourceNamespace(namespace), fileName);
         final File file = (File) resourceService.findRequired(fileIdentifier);
         resourceService.removeFile(file);
         LOG.debug("File {} successfully removed.", fileIdentifier);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Runs text analysis on the content of the resource with the specified identifier. Analysis will be performed asynchronously sometime in the future.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Runs text analysis on the content of the resource with the specified identifier. Analysis will be performed asynchronously sometime in the future.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Text analysis executed."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409", description = "Resource has no content to analyze.")
+        @ApiResponse(responseCode = "204", description = "Text analysis executed."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409", description = "Resource has no content to analyze.")
     })
     @PutMapping(value = "/{localName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void runTextAnalysis(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                          @PathVariable String localName,
-                                          @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                          @RequestParam(name = QueryParams.NAMESPACE,
-                                                        required = false) Optional<String> namespace,
-                                          @Parameter(
-                                                  description = "Identifiers of vocabularies whose terms are used to seed text analysis.")
-                                          @RequestParam(name = "vocabulary", required = false,
-                                                        defaultValue = "") Set<URI> vocabularies) {
+    public void runTextAnalysis(
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "Identifiers of vocabularies whose terms are used to seed text analysis.")
+                    @RequestParam(name = "vocabulary", required = false, defaultValue = "")
+                    Set<URI> vocabularies) {
         final Resource resource = getResource(localName, namespace);
         resourceService.runTextAnalysis(resource, vocabularies);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the result of the latest text analysis of the content of the resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Gets the result of the latest text analysis of the content of the resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Text analysis record."),
-            @ApiResponse(responseCode = "404",
-                         description = "Resource not found or no text analysis record exists for it."),
+        @ApiResponse(responseCode = "200", description = "Text analysis record."),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Resource not found or no text analysis record exists for it."),
     })
-    @GetMapping(value = "/{localName}/text-analysis/records/latest", produces = {MediaType.APPLICATION_JSON_VALUE,
-                                                                                 JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/text-analysis/records/latest",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public TextAnalysisRecord getLatestTextAnalysisRecord(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final Resource resource = getResource(localName, namespace);
         return resourceService.findLatestTextAnalysisRecord(resource);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets a list of changes made to metadata of the resource with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets a list of changes made to metadata of the resource with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of change records."),
-            @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION)
-
+        @ApiResponse(responseCode = "200", description = "List of change records."),
+        @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{localName}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/history",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
-        final Resource resource = resourceService
-                .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
+        final Resource resource =
+                resourceService.getReference(resolveIdentifier(resourceNamespace(namespace), localName));
         return resourceService.getChanges(resource, new ChangeRecordFilterDto());
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Returns the count of available backups for the resource in header " + Constants.X_TOTAL_COUNT_HEADER)
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Returns the count of available backups for the resource in header "
+                    + Constants.X_TOTAL_COUNT_HEADER)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Count of available backups for the resource"),
-            @ApiResponse(responseCode = "404", description = "Resource not found.")
+        @ApiResponse(responseCode = "200", description = "Count of available backups for the resource"),
+        @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
     @RequestMapping(method = RequestMethod.HEAD, path = "/{localName}/backups")
     public ResponseEntity<Void> getBackupsCount(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace
-    ) {
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final Resource resource = getResource(localName, namespace);
         // we still need to load all backups (and parse the names) to actually get their real count
         final int count = resourceService.getBackupFiles(resource).size();
-        return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, String.valueOf(count)).build();
+        return ResponseEntity.ok()
+                .header(Constants.X_TOTAL_COUNT_HEADER, String.valueOf(count))
+                .build();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets all available backups for the resource.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets all available backups for the resource.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Resource backups."),
-            @ApiResponse(responseCode = "404", description = "Resource not found.")
+        @ApiResponse(responseCode = "200", description = "Resource backups."),
+        @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
-    @GetMapping(value = "/{localName}/backups", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/backups",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<FileBackupDto>> getBackups(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+                    @RequestParam(name = "page", required = false, defaultValue = "0")
+                    int page,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-            @RequestParam(name = "pageSize", required = false, defaultValue = "-1") int pageSize
-            ) {
+                    @RequestParam(name = "pageSize", required = false, defaultValue = "-1")
+                    int pageSize) {
         final Resource resource = getResource(localName, namespace);
         Pageable pageable = Constants.DEFAULT_PAGE_SPEC;
         if (pageSize > -1) {
@@ -426,23 +516,27 @@ public class ResourceController extends BaseController {
         return ResponseEntity.ok(dtos);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Restores backup from the given timestamp.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Restores backup from the given timestamp.")
     @ApiResponses({
-            @ApiResponse(responseCode = "202", description = "Backup restoration started"),
-            @ApiResponse(responseCode = "404", description = "Resource not found.")
+        @ApiResponse(responseCode = "202", description = "Backup restoration started"),
+        @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
     @PostMapping(value = "/{localName}/backups/restore")
     public ResponseEntity<Void> restoreBackup(
-            @Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = "Timestamp of the backup to restore")
-            @RequestParam(name = "backupTimestamp") Instant backupTimestamp
-    ) {
+            @Parameter(
+                            description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "Timestamp of the backup to restore") @RequestParam(name = "backupTimestamp")
+                    Instant backupTimestamp) {
         final Resource resource = getResource(localName, namespace);
         resourceService.restoreBackup(resource, backupTimestamp);
         return ResponseEntity.accepted().build();
@@ -453,11 +547,13 @@ public class ResourceController extends BaseController {
      */
     private static final class ResourceControllerDoc {
 
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default resource namespace) unique part of the resource identifier.";
+        private static final String ID_LOCAL_NAME_DESCRIPTION =
+                "Locally (in the context of the specified namespace/default resource namespace) unique part of the resource identifier.";
 
         private static final String ID_LOCAL_NAME_EXAMPLE = "mpp-draft.html";
 
-        private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default resource identifier namespace.";
+        private static final String ID_NAMESPACE_DESCRIPTION =
+                "Identifier namespace. Allows to override the default resource identifier namespace.";
 
         private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/zdroj/";
 

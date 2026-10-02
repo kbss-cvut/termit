@@ -47,7 +47,8 @@ public class ChangeTrackingHelperDao {
         if (result == null) {
             throw NotFoundException.create(update.getClass().getSimpleName(), update.getUri());
         }
-        // We do not want the result to be in the persistence context when updates happen later (mainly to prevent issues with repository contexts)
+        // We do not want the result to be in the persistence context when updates happen later (mainly to prevent
+        // issues with repository contexts)
         em.detach(result);
         return result;
     }

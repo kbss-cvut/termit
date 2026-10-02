@@ -43,13 +43,13 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @Execution(ExecutionMode.SAME_THREAD)
 // intentionally not enabling test profile
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {ThrottleAspectTestContextConfig.class},
-                      initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {ThrottleAspectTestContextConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ThrottleAspectBeanTest {
 
@@ -68,10 +68,11 @@ class ThrottleAspectBeanTest {
     @BeforeEach
     void beforeEach() {
         reset(longRunningTaskScheduler);
-        when(longRunningTaskScheduler.schedule(any(Runnable.class), any(Instant.class))).then(invocation -> {
-            Runnable task = invocation.getArgument(0, Runnable.class);
-            return new ScheduledFutureTask<>(task, null);
-        });
+        when(longRunningTaskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                .then(invocation -> {
+                    Runnable task = invocation.getArgument(0, Runnable.class);
+                    return new ScheduledFutureTask<>(task, null);
+                });
     }
 
     @Test
@@ -84,5 +85,4 @@ class ThrottleAspectBeanTest {
 
         verify(throttleAspect).throttleMethodCall(any(), eq(annotation));
     }
-
 }

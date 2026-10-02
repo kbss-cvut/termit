@@ -19,8 +19,8 @@ package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
@@ -45,19 +45,19 @@ class AssetToRdfsResourceMapper implements AssetVisitor {
 
     @Override
     public void visitVocabulary(Vocabulary vocabulary) {
-        this.rdfsResource = new RdfsResource(vocabulary.getUri(),
-                                             vocabulary.getLabel(),
-                                             vocabulary.getDescription(),
-                                             SKOS.CONCEPT_SCHEME);
+        this.rdfsResource = new RdfsResource(
+                vocabulary.getUri(), vocabulary.getLabel(), vocabulary.getDescription(), SKOS.CONCEPT_SCHEME);
     }
 
     @Override
     public void visitResources(Resource resource) {
-        this.rdfsResource = new RdfsResource(resource.getUri(),
-                                             MultilingualString.create(resource.getLabel(), language),
-                                             resource.getDescription() != null ?
-                                             MultilingualString.create(resource.getDescription(), language) : null,
-                                             EntityToOwlClassMapper.getOwlClassForEntity(resource.getClass()));
+        this.rdfsResource = new RdfsResource(
+                resource.getUri(),
+                MultilingualString.create(resource.getLabel(), language),
+                resource.getDescription() != null
+                        ? MultilingualString.create(resource.getDescription(), language)
+                        : null,
+                EntityToOwlClassMapper.getOwlClassForEntity(resource.getClass()));
     }
 
     public RdfsResource getRdfsResource() {

@@ -63,13 +63,13 @@ public class FreeRegistrationController {
 
     @Operation(description = "Registers the specified user account.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User account successfully registered."),
-            @ApiResponse(responseCode = "409", description = "User data are invalid.")
+        @ApiResponse(responseCode = "201", description = "User account successfully registered."),
+        @ApiResponse(responseCode = "409", description = "User data are invalid.")
     })
     @PreAuthorize("permitAll()")
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> createUser(@Parameter(description = "User account data.")
-                                           @RequestBody UserAccount user) {
+    public ResponseEntity<Void> createUser(
+            @Parameter(description = "User account data.") @RequestBody UserAccount user) {
         userService.persist(user);
         LOG.info("User {} successfully registered.", user);
         return new ResponseEntity<>(HttpStatus.CREATED);

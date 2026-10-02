@@ -69,8 +69,6 @@ public class DocumentDto {
 
     @Override
     public String toString() {
-        return "DocumentDto{" + label +
-                " " + Utils.uriToString(uri) +
-                '}';
+        return "DocumentDto{" + label + " " + Utils.uriToString(uri) + '}';
     }
 }

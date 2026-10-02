@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -34,7 +35,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Repository;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -144,17 +144,18 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
     @Override
     public List<Resource> findAll() {
         try {
-            return em.createNativeQuery("SELECT ?x WHERE {" +
-                                                "?x a ?type ;" +
-                                                "?hasLabel ?label ." +
-                                                "FILTER NOT EXISTS { ?y ?hasFile ?x . } " +
-                                                "FILTER NOT EXISTS { ?x a ?vocabulary . } " +
-                                                "} ORDER BY LCASE(?label)", Resource.class)
-                     .setParameter("type", typeUri)
-                     .setParameter("hasLabel", labelProperty())
-                     .setParameter("hasFile", URI.create(Vocabulary.s_p_has_file))
-                     .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                     .getResultList();
+            return em.createNativeQuery(
+                            "SELECT ?x WHERE {" + "?x a ?type ;"
+                                    + "?hasLabel ?label ."
+                                    + "FILTER NOT EXISTS { ?y ?hasFile ?x . } "
+                                    + "FILTER NOT EXISTS { ?x a ?vocabulary . } "
+                                    + "} ORDER BY LCASE(?label)",
+                            Resource.class)
+                    .setParameter("type", typeUri)
+                    .setParameter("hasLabel", labelProperty())
+                    .setParameter("hasFile", URI.create(Vocabulary.s_p_has_file))
+                    .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -187,9 +188,9 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
                     FILTER(?modified > ?lastBackup)
                 }
                 """, File.class)
-                 .setParameter("file", File_.entityClassIRI)
-                 .setParameter("hasModified", File_.modified.getIRI())
-                 .setParameter("hasLastBackup", File_.lastBackup.getIRI())
-                 .getResultList();
+                .setParameter("file", File_.entityClassIRI)
+                .setParameter("hasModified", File_.modified.getIRI())
+                .setParameter("hasLastBackup", File_.lastBackup.getIRI())
+                .getResultList();
     }
 }

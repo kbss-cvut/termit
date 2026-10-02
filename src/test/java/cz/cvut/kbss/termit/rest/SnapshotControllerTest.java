@@ -59,7 +59,7 @@ class SnapshotControllerTest extends BaseControllerTestRunner {
         when(idResolver.resolveIdentifier(namespace, localName)).thenReturn(snapshot.getUri());
         when(snapshotService.findRequired(snapshot.getUri())).thenReturn(snapshot);
         mockMvc.perform(delete(SnapshotController.PATH + "/" + localName).queryParam(NAMESPACE, namespace))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         verify(snapshotService).findRequired(snapshot.getUri());
         verify(snapshotService).remove(snapshot);

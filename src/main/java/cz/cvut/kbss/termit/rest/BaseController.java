@@ -62,10 +62,12 @@ public class BaseController {
 
     URI generateLocation(URI identifier, String namespace) {
         if (Objects.equals(IdentifierResolver.extractIdentifierNamespace(identifier), namespace)) {
-            return RestUtils.createLocationFromCurrentUriWithPath("/{name}",
-                    IdentifierResolver.extractIdentifierFragment(identifier));
+            return RestUtils.createLocationFromCurrentUriWithPath(
+                    "/{name}", IdentifierResolver.extractIdentifierFragment(identifier));
         } else {
-            return RestUtils.createLocationFromCurrentUriWithPathAndQuery("/{name}", QueryParams.NAMESPACE,
+            return RestUtils.createLocationFromCurrentUriWithPathAndQuery(
+                    "/{name}",
+                    QueryParams.NAMESPACE,
                     IdentifierResolver.extractIdentifierNamespace(identifier),
                     IdentifierResolver.extractIdentifierFragment(identifier));
         }
@@ -80,9 +82,8 @@ public class BaseController {
      */
     void verifyRequestAndEntityIdentifier(HasIdentifier entity, URI requestIdentifier) {
         if (!requestIdentifier.equals(entity.getUri())) {
-            throw new ValidationException(
-                    "The ID " + requestIdentifier +
-                            ", resolved from request URL, does not match the ID of the specified entity.");
+            throw new ValidationException("The ID " + requestIdentifier
+                    + ", resolved from request URL, does not match the ID of the specified entity.");
         }
     }
 }

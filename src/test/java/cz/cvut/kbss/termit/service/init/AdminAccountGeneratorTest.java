@@ -82,9 +82,9 @@ class AdminAccountGeneratorTest {
         final File toDelete = new File(adminCredentialsDir);
         if (toDelete.exists()) {
             Files.walk(toDelete.toPath())
-                 .sorted(Comparator.reverseOrder())
-                 .map(Path::toFile)
-                 .forEach(File::delete);
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
         }
     }
 
@@ -113,15 +113,18 @@ class AdminAccountGeneratorTest {
     @Test
     void savesAdminLoginCredentialsIntoHiddenFileInUserHome() throws Exception {
         doAnswer(arg -> {
-            final UserAccount account = arg.getArgument(0, UserAccount.class);
-            account.setPassword(new BCryptPasswordEncoder().encode(account.getPassword()));
-            return null;
-        }).when(userService).persist(any(UserAccount.class));
+                    final UserAccount account = arg.getArgument(0, UserAccount.class);
+                    account.setPassword(new BCryptPasswordEncoder().encode(account.getPassword()));
+                    return null;
+                })
+                .when(userService)
+                .persist(any(UserAccount.class));
         sut.initSystemAdmin();
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(userService).persist(captor.capture());
         final String home = config.getAdmin().getCredentialsLocation();
-        final File credentialsFile = new File(home + File.separator + config.getAdmin().getCredentialsFile());
+        final File credentialsFile =
+                new File(home + File.separator + config.getAdmin().getCredentialsFile());
         assertTrue(credentialsFile.exists());
         assertTrue(credentialsFile.isHidden());
         verifyAdminCredentialsFileContent(captor.getValue(), credentialsFile);
@@ -137,10 +140,12 @@ class AdminAccountGeneratorTest {
     @Test
     void savesAdminLoginCredentialsIntoConfiguredFile() throws Exception {
         doAnswer(arg -> {
-            final UserAccount account = arg.getArgument(0, UserAccount.class);
-            account.setPassword(new BCryptPasswordEncoder().encode(account.getPassword()));
-            return null;
-        }).when(userService).persist(any(UserAccount.class));
+                    final UserAccount account = arg.getArgument(0, UserAccount.class);
+                    account.setPassword(new BCryptPasswordEncoder().encode(account.getPassword()));
+                    return null;
+                })
+                .when(userService)
+                .persist(any(UserAccount.class));
         final String adminFileName = ".admin-file-with-different-name";
         config.getAdmin().setCredentialsFile(adminFileName);
         this.sut = new AdminAccountGenerator(userService, config);

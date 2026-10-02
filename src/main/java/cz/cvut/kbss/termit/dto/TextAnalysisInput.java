@@ -61,8 +61,7 @@ public class TextAnalysisInput {
      */
     private Set<URI> vocabularyContexts;
 
-    public TextAnalysisInput() {
-    }
+    public TextAnalysisInput() {}
 
     public TextAnalysisInput(String content, String language, URI vocabularyRepository) {
         this.content = content;
@@ -128,11 +127,11 @@ public class TextAnalysisInput {
     @Override
     public String toString() {
         assert content != null;
-        return "TextAnalysisInput{" +
-                "content='" + (content.length() > 50 ? content.substring(0, 50) + "..." : content) + '\'' +
-                ", vocabularyRepository=" + vocabularyRepository +
-                ", vocabularyContexts=" + vocabularyContexts +
-                ", language=" + language +
-                '}';
+        return "TextAnalysisInput{" + "content='"
+                + (content.length() > 50 ? content.substring(0, 50) + "..." : content) + '\''
+                + ", vocabularyRepository="
+                + vocabularyRepository + ", vocabularyContexts="
+                + vocabularyContexts + ", language="
+                + language + '}';
     }
 }

@@ -75,11 +75,12 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         }
     }
 
-    @Throttle(value = "{#originVocabularyIri}", name="vocabularyValidation")
+    @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
     @Transactional
     @Override
     @Nonnull
-    public ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris) {
+    public ThrottledFuture<Collection<ValidationResult>> validate(
+            @Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris) {
         final Set<URI> iris = Set.copyOf(vocabularyIris);
 
         if (iris.isEmpty()) {
@@ -92,7 +93,8 @@ public class ResultCachingValidator implements VocabularyContentValidator {
             return ThrottledFuture.done(cached.get());
         }
 
-        return ThrottledFuture.of(() -> runValidation(originVocabularyIri, iris)).setCachedResult(cached.orElse(null));
+        return ThrottledFuture.of(() -> runValidation(originVocabularyIri, iris))
+                .setCachedResult(cached.orElse(null));
     }
 
     @Nonnull
@@ -127,7 +129,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
 
     @Lookup
     ThrottlingValidator getValidator() {
-        return null;    // Will be replaced by Spring
+        return null; // Will be replaced by Spring
     }
 
     /**

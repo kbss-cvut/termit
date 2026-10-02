@@ -80,11 +80,15 @@ public class UserService {
     private final PasswordChangeNotifier passwordChangeNotifier;
 
     @Autowired
-    public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
-                       AccessControlListService aclService, SecurityUtils securityUtils, DtoMapper dtoMapper,
-                       Configuration configuration,
-                       PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService,
-                       PasswordChangeNotifier passwordChangeNotifier) {
+    public UserService(
+            UserRepositoryService repositoryService,
+            UserRoleRepositoryService userRoleRepositoryService,
+            AccessControlListService aclService,
+            SecurityUtils securityUtils,
+            DtoMapper dtoMapper,
+            Configuration configuration,
+            PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService,
+            PasswordChangeNotifier passwordChangeNotifier) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
         this.aclService = aclService;
@@ -326,29 +330,32 @@ public class UserService {
     public List<RdfsResource> getManagedAssets(@Nonnull UserAccount user) {
         Objects.requireNonNull(user);
         return aclService.findAssetsByAgentWithSecurityAccess(user.toUser()).stream()
-                         .map(dtoMapper::assetToRdfsResource).collect(Collectors.toList());
+                .map(dtoMapper::assetToRdfsResource)
+                .collect(Collectors.toList());
     }
 
     private PasswordChangeRequest createPasswordChangeRequest(UserAccount userAccount) {
         // delete any existing request for the user
-        passwordChangeRequestRepositoryService.findAllByUserAccount(userAccount)
-                                              .forEach(passwordChangeRequestRepositoryService::remove);
+        passwordChangeRequestRepositoryService
+                .findAllByUserAccount(userAccount)
+                .forEach(passwordChangeRequestRepositoryService::remove);
 
         return passwordChangeRequestRepositoryService.create(userAccount);
     }
 
     @Transactional
     public void requestPasswordReset(String username) {
-        final UserAccount account = repositoryService.findByUsername(username)
-                                                     .orElseThrow(() -> NotFoundException.create(UserAccount.class,
-                                                                                                 username));
+        final UserAccount account = repositoryService
+                .findByUsername(username)
+                .orElseThrow(() -> NotFoundException.create(UserAccount.class, username));
         PasswordChangeRequest request = createPasswordChangeRequest(account);
         passwordChangeNotifier.sendPasswordResetEmail(request);
     }
 
     private boolean isValid(PasswordChangeRequest request) {
-        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity())
-                      .isAfter(Utils.timestamp());
+        return request.getCreatedAt()
+                .plus(securityConfig.getPasswordChangeRequestValidity())
+                .isAfter(Utils.timestamp());
     }
 
     /**
@@ -360,15 +367,16 @@ public class UserService {
     public void changePassword(PasswordChangeDto passwordChangeDto) {
         Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeRequestException(
                 "Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
-        PasswordChangeRequest request = passwordChangeRequestRepositoryService.find(passwordChangeDto.getUri())
-                                                                              .orElseThrow(exception);
+        PasswordChangeRequest request = passwordChangeRequestRepositoryService
+                .find(passwordChangeDto.getUri())
+                .orElseThrow(exception);
 
         if (!request.getToken().equals(passwordChangeDto.getToken()) || !isValid(request)) {
             throw exception.get();
         }
 
-        UserAccount account = repositoryService.find(request.getUserAccount().getUri())
-                                               .orElseThrow(exception);
+        UserAccount account =
+                repositoryService.find(request.getUserAccount().getUri()).orElseThrow(exception);
 
         passwordChangeRequestRepositoryService.remove(request);
         account.unlock();

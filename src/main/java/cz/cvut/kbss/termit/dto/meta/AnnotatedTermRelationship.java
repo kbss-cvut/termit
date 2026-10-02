@@ -26,8 +26,7 @@ public class AnnotatedTermRelationship {
     @OWLObjectProperty(iri = DC.Terms.RELATION)
     private URI annotationProperty;
 
-    public AnnotatedTermRelationship() {
-    }
+    public AnnotatedTermRelationship() {}
 
     public AnnotatedTermRelationship(TermInfo subject, URI property, TermInfo object, URI annotationProperty) {
         this.subject = subject;

@@ -29,5 +29,4 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface IgnoreChanges {
-}
+public @interface IgnoreChanges {}

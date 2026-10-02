@@ -11,30 +11,41 @@ class SearchResultTest {
 
     @Test
     void constructorSeparatesGroupConcatenatedLabelsIntoMultilingualString() {
-        final SearchResult sut = new SearchResult(Generator.generateUri(),
-                                                  generateGroupConcatenatedString("Label"), "Test",
-                                                  Generator.generateUri(), Generator.generateUri(),
-                                                  SKOS.CONCEPT, "prefLabel", "<em>Label</em>", 3.1419);
+        final SearchResult sut = new SearchResult(
+                Generator.generateUri(),
+                generateGroupConcatenatedString("Label"),
+                "Test",
+                Generator.generateUri(),
+                Generator.generateUri(),
+                SKOS.CONCEPT,
+                "prefLabel",
+                "<em>Label</em>",
+                3.1419);
         assertEquals("Label - Czech", sut.getLabel().get("cs"));
         assertEquals("Label - English", sut.getLabel().get("en"));
         assertEquals("Label - German", sut.getLabel().get("de"));
     }
 
     private static String generateGroupConcatenatedString(String base) {
-        return base + " - Czech" + "@cs" + Constants.GROUP_CONCAT_SEPARATOR +
-                base + " - English" + "@en" + Constants.GROUP_CONCAT_SEPARATOR +
-                base + " - German" + "@de";
+        return base + " - Czech" + "@cs" + Constants.GROUP_CONCAT_SEPARATOR + base
+                + " - English" + "@en" + Constants.GROUP_CONCAT_SEPARATOR + base
+                + " - German" + "@de";
     }
 
     @Test
     void constructorSeparatesGroupConcatenatedDescriptionsIntoMultilingualString() {
-        final SearchResult sut = new SearchResult(Generator.generateUri(), "Test",
-                                                  generateGroupConcatenatedString("Description"),
-                                                  Generator.generateUri(), Generator.generateUri(),
-                                                  SKOS.CONCEPT, "definition", "<em>Label</em>", 3.1419);
+        final SearchResult sut = new SearchResult(
+                Generator.generateUri(),
+                "Test",
+                generateGroupConcatenatedString("Description"),
+                Generator.generateUri(),
+                Generator.generateUri(),
+                SKOS.CONCEPT,
+                "definition",
+                "<em>Label</em>",
+                3.1419);
         assertEquals("Description - Czech", sut.getDescription().get("cs"));
         assertEquals("Description - English", sut.getDescription().get("en"));
         assertEquals("Description - German", sut.getDescription().get("de"));
     }
-
 }

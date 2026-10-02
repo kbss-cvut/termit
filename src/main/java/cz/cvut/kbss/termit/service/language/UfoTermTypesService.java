@@ -67,39 +67,46 @@ public class UfoTermTypesService {
         if (cache == null) {
             cache = loadTermTypes();
         }
-        return cache.stream().map(t -> {
-            final Term copy = new Term(t.getUri());
-            copy.setLabel(new MultilingualString(t.getLabel().getValue()));
-            copy.setDescription(new MultilingualString(t.getDescription().getValue()));
-            copy.setSubTerms(t.getSubTerms().stream().map(ti -> new TermInfo(ti.getUri())).collect(Collectors.toSet()));
-            return copy;
-        }).collect(Collectors.toList());
+        return cache.stream()
+                .map(t -> {
+                    final Term copy = new Term(t.getUri());
+                    copy.setLabel(new MultilingualString(t.getLabel().getValue()));
+                    copy.setDescription(
+                            new MultilingualString(t.getDescription().getValue()));
+                    copy.setSubTerms(t.getSubTerms().stream()
+                            .map(ti -> new TermInfo(ti.getUri()))
+                            .collect(Collectors.toSet()));
+                    return copy;
+                })
+                .collect(Collectors.toList());
     }
 
     @Nonnull
     private List<Term> loadTermTypes() {
         try {
             final Model model = Rio.parse(languageTtlUrl.getInputStream(), RDFFormat.TURTLE);
-            return model.filter(null, RDF.TYPE, SKOS.CONCEPT)
-                        .stream().map(s -> {
+            return model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream()
+                    .map(s -> {
                         final org.eclipse.rdf4j.model.Resource type = s.getSubject();
                         final Term term = new Term(URI.create(type.stringValue()));
                         final Model statements = model.filter(type, null, null);
                         term.setLabel(Utils.resolveTranslations(type, SKOS.PREF_LABEL, statements));
                         term.setDescription(Utils.resolveTranslations(type, SKOS.SCOPE_NOTE, statements));
                         final Set<URI> subTerms = statements.filter(type, SKOS.NARROWER, null).stream()
-                                                   .filter(st -> st.getObject().isIRI())
-                                                   .map(st -> URI.create(st.getObject().stringValue()))
-                                                   .collect(Collectors.toSet());
+                                .filter(st -> st.getObject().isIRI())
+                                .map(st -> URI.create(st.getObject().stringValue()))
+                                .collect(Collectors.toSet());
                         model.filter(null, SKOS.BROADER, type).stream()
-                                  .filter(st -> st.getSubject().isIRI())
-                                  .map(st -> URI.create(st.getSubject().stringValue()))
-                                  .forEach(subTerms::add);
+                                .filter(st -> st.getSubject().isIRI())
+                                .map(st -> URI.create(st.getSubject().stringValue()))
+                                .forEach(subTerms::add);
                         term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
                         return term;
-                    }).collect(Collectors.toList());
+                    })
+                    .collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
-            throw new LanguageRetrievalException("Unable to load term types from file " + languageTtlUrl.getFilename(), e);
+            throw new LanguageRetrievalException(
+                    "Unable to load term types from file " + languageTtlUrl.getFilename(), e);
         }
     }
 }

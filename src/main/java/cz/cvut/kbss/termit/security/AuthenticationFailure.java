@@ -50,8 +50,9 @@ public class AuthenticationFailure implements AuthenticationFailureHandler {
     }
 
     @Override
-    public void onAuthenticationFailure(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                                        AuthenticationException e) throws IOException {
+    public void onAuthenticationFailure(
+            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e)
+            throws IOException {
         LOG.trace("Login failed for user {}.", httpServletRequest.getParameter(SecurityConstants.USERNAME_PARAM));
         final LoginStatus status = new LoginStatus(false, false, null, e.getMessage());
         if (e instanceof LockedException) {

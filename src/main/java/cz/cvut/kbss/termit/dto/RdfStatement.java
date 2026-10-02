@@ -37,13 +37,17 @@ import java.util.Objects;
  */
 @NonEntity
 @OWLClass(iri = RDF.STATEMENT)
-@SparqlResultSetMapping(name = "RDFStatement",
-                        classes = {@ConstructorResult(targetClass = RdfStatement.class,
-                                                      variables = {
-                                                              @VariableResult(name = "subject", type = URI.class),
-                                                              @VariableResult(name = "relation", type = URI.class),
-                                                              @VariableResult(name = "object", type = URI.class)
-                                                      })})
+@SparqlResultSetMapping(
+        name = "RDFStatement",
+        classes = {
+            @ConstructorResult(
+                    targetClass = RdfStatement.class,
+                    variables = {
+                        @VariableResult(name = "subject", type = URI.class),
+                        @VariableResult(name = "relation", type = URI.class),
+                        @VariableResult(name = "object", type = URI.class)
+                    })
+        })
 public class RdfStatement implements Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
@@ -58,8 +62,7 @@ public class RdfStatement implements Serializable {
     @OWLObjectProperty(iri = RDF.OBJECT)
     private URI object;
 
-    public RdfStatement() {
-    }
+    public RdfStatement() {}
 
     public RdfStatement(URI subject, URI relation, URI object) {
         this.subject = subject;
@@ -96,9 +99,9 @@ public class RdfStatement implements Serializable {
         if (!(o instanceof RdfStatement that)) {
             return false;
         }
-        return Objects.equals(object, that.object) && Objects.equals(relation,
-                                                                     that.relation) && Objects.equals(
-                subject, that.subject);
+        return Objects.equals(object, that.object)
+                && Objects.equals(relation, that.relation)
+                && Objects.equals(subject, that.subject);
     }
 
     @Override

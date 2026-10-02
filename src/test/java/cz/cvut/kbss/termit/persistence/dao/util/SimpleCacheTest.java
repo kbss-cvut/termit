@@ -56,7 +56,9 @@ class SimpleCacheTest {
     }
 
     private Set<TermInfo> generateData() {
-        return IntStream.range(0, 5).mapToObj(i -> Generator.generateTermInfoWithId()).collect(Collectors.toSet());
+        return IntStream.range(0, 5)
+                .mapToObj(i -> Generator.generateTermInfoWithId())
+                .collect(Collectors.toSet());
     }
 
     @Test

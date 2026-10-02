@@ -95,8 +95,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     @Autowired
     private ApplicationContext context;
 
-    private final Consumer<cz.cvut.kbss.termit.model.Vocabulary> persister = (cz.cvut.kbss.termit.model.Vocabulary v) -> vocabularyDao.persist(
-            v);
+    private final Consumer<cz.cvut.kbss.termit.model.Vocabulary> persister =
+            (cz.cvut.kbss.termit.model.Vocabulary v) -> vocabularyDao.persist(v);
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
@@ -116,20 +116,17 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importVocabularyImportsItFromSpecifiedStream() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_user), RDF.TYPE, SKOS.CONCEPT,
-                                             false));
-                assertTrue(
-                        conn.hasStatement(vf.createIRI(Vocabulary.s_c_reader), RDF.TYPE, SKOS.CONCEPT,
-                                          false));
-                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_blocked_user), RDF.TYPE,
-                                             SKOS.CONCEPT, false));
+                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_user), RDF.TYPE, SKOS.CONCEPT, false));
+                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_reader), RDF.TYPE, SKOS.CONCEPT, false));
+                assertTrue(conn.hasStatement(vf.createIRI(Vocabulary.s_c_blocked_user), RDF.TYPE, SKOS.CONCEPT, false));
             }
         });
     }
@@ -138,22 +135,26 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importVocabularyRenamesVocabularyIriWhenAlreadyPresent() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(true, null, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(true, null, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(true, null, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(true, null, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertTrue(conn.hasStatement(vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit-0"),
-                                             RDF.TYPE,
-                                             SKOS.CONCEPT_SCHEME, false));
+                assertTrue(conn.hasStatement(
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit-0"),
+                        RDF.TYPE,
+                        SKOS.CONCEPT_SCHEME,
+                        false));
             }
         });
     }
@@ -162,25 +163,26 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importVocabularyRenamesTermIriUponRenamingVocabularyIri() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(true, null, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(true, null, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(true, null, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(true, null, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             final List<cz.cvut.kbss.termit.model.Vocabulary> vocabularies = vocabularyDao.findAll();
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                vocabularies.stream().filter(v -> !v.getUri().equals(VOCABULARY_IRI))
-                            .forEach(v -> assertTrue(conn.hasStatement(null,
-                                                                       SKOS.IN_SCHEME,
-                                                                       vf.createIRI(v.getUri().toString()),
-                                                                       false)));
+                vocabularies.stream()
+                        .filter(v -> !v.getUri().equals(VOCABULARY_IRI))
+                        .forEach(v -> assertTrue(conn.hasStatement(
+                                null, SKOS.IN_SCHEME, vf.createIRI(v.getUri().toString()), false)));
             }
         });
     }
@@ -189,11 +191,11 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importThrowsIllegalArgumentExceptionWhenNoStreamIsProvided() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            assertThrows(IllegalArgumentException.class,
-                         () -> sut.importVocabulary(
-                                 new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    (InputStream) null)));
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                            new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, (InputStream) null)));
         });
     }
 
@@ -201,12 +203,13 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importThrowsIllegalArgumentExceptionWhenVocabularyIriIsGivenButDoesNotMatchTheImportedData() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            assertThrows(IllegalArgumentException.class, () ->
-                    sut.importVocabulary(
-                            new VocabularyImporter.ImportConfiguration(false, URI.create(VOCABULARY_IRI_S + "-1"),
-                                                                       persister),
-                            new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                               Environment.loadFile("data/test-glossary.ttl"))));
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(
+                                    false, URI.create(VOCABULARY_IRI_S + "-1"), persister),
+                            new VocabularyImporter.ImportInput(
+                                    Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl"))));
         });
     }
 
@@ -217,14 +220,17 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 existingStatementCountInDefault.set(
-                        conn.getStatements(null, null, null, false, (Resource) null).stream().toList().size());
+                        conn.getStatements(null, null, null, false, (Resource) null).stream()
+                                .toList()
+                                .size());
             }
         });
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
@@ -232,11 +238,13 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final List<Resource> contexts = conn.getContextIDs().stream().toList();
                 assertFalse(contexts.isEmpty());
                 final Optional<Resource> ctx = contexts.stream()
-                                                       .filter(r -> r.stringValue().contains(VOCABULARY_IRI.toString()))
-                                                       .findFirst();
+                        .filter(r -> r.stringValue().contains(VOCABULARY_IRI.toString()))
+                        .findFirst();
                 assertTrue(ctx.isPresent());
-                final List<Statement> inAll = conn.getStatements(null, null, null, false).stream().toList();
-                final List<Statement> inCtx = conn.getStatements(null, null, null, false, ctx.get()).stream().toList();
+                final List<Statement> inAll =
+                        conn.getStatements(null, null, null, false).stream().toList();
+                final List<Statement> inCtx = conn.getStatements(null, null, null, false, ctx.get()).stream()
+                        .toList();
                 assertEquals(inAll.size() - existingStatementCountInDefault.get(), inCtx.size());
             }
         });
@@ -260,16 +268,13 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                 "Blocked TermIt user"@en , "Zablokovaný uživatel TermItu"@cs .""";
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
-                                                              () -> sut.importVocabulary(
-                                                                      new VocabularyImporter.ImportConfiguration(false,
-                                                                                                                 VOCABULARY_IRI,
-                                                                                                                 persister),
-                                                                      new VocabularyImporter.ImportInput(
-                                                                              Constants.MediaType.TURTLE,
-                                                                              new ByteArrayInputStream(
-                                                                                      input.getBytes(
-                                                                                              StandardCharsets.UTF_8)))));
+            final VocabularyImportException ex = assertThrows(
+                    VocabularyImportException.class,
+                    () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                            new VocabularyImporter.ImportInput(
+                                    Constants.MediaType.TURTLE,
+                                    new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)))));
             assertThat(ex.getMessage(), containsString("No unique skos:ConceptScheme found in the provided data."));
         });
     }
@@ -278,10 +283,12 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importThrowsUnsupportedImportMediaTypeExceptionForUnsupportedDataType() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            assertThrows(UnsupportedImportMediaTypeException.class, () -> sut.importVocabulary(
-                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                    new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                       Environment.loadFile("data/test-glossary.ttl"))));
+            assertThrows(
+                    UnsupportedImportMediaTypeException.class,
+                    () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                            new VocabularyImporter.ImportInput(
+                                    Constants.MediaType.EXCEL, Environment.loadFile("data/test-glossary.ttl"))));
         });
     }
 
@@ -291,8 +298,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             final cz.cvut.kbss.termit.model.Vocabulary result = sut.importVocabulary(
                     new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                    new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                       Environment.loadFile("data/test-glossary.ttl")));
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
             assertNotNull(result);
             assertEquals(VOCABULARY_IRI, result.getUri());
             assertEquals("Vocabulary of system TermIt - glossary", getPrimaryLabel(result));
@@ -303,19 +310,21 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importGeneratesRelationshipsBetweenTermsAndVocabulary() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 final List<Resource> terms = conn.getStatements(null, RDF.TYPE, SKOS.CONCEPT).stream()
-                                                 .map(Statement::getSubject).toList();
+                        .map(Statement::getSubject)
+                        .toList();
                 assertFalse(terms.isEmpty());
                 terms.forEach(t -> {
-                    final List<Statement> inScheme = conn.getStatements(t, SKOS.IN_SCHEME,
-                                                                        vf.createIRI(VOCABULARY_IRI_S))
-                                                         .stream().toList();
+                    final List<Statement> inScheme =
+                            conn.getStatements(t, SKOS.IN_SCHEME, vf.createIRI(VOCABULARY_IRI_S)).stream()
+                                    .toList();
                     assertFalse(inScheme.isEmpty());
                 });
             }
@@ -326,14 +335,16 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importGeneratesTopConceptAssertions() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
-                                              .map(Statement::getObject).collect(Collectors.toList());
+                        .map(Statement::getObject)
+                        .collect(Collectors.toList());
                 assertEquals(1, terms.size());
                 assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_user)));
             }
@@ -344,14 +355,16 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importGeneratesTopConceptAssertionsForGlossaryUsingNarrowerProperty() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
-                                         "data/test-glossary-narrower.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary-narrower.ttl")));
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
-                                              .map(Statement::getObject).collect(Collectors.toList());
+                        .map(Statement::getObject)
+                        .collect(Collectors.toList());
                 assertEquals(1, terms.size());
                 assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_user)));
             }
@@ -363,16 +376,20 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             final MissingLanguageTagException ex = assertThrows(
-                    MissingLanguageTagException.class, () -> sut.importVocabulary(
+                    MissingLanguageTagException.class,
+                    () -> sut.importVocabulary(
                             new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                            new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
-                                    "data/test-glossary.ttl"),
-                                                               Environment.loadFile(
-                                                                       "data/test-glossary-with-definition-with-empty-language-tag.ttl"))));
-            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user",
-                         ex.getParameters().get("term"));
-            assertEquals("http://www.w3.org/2004/02/skos/core#definition",
-                         ex.getParameters().get("property"));
+                            new VocabularyImporter.ImportInput(
+                                    Constants.MediaType.TURTLE,
+                                    Environment.loadFile("data/test-glossary.ttl"),
+                                    Environment.loadFile(
+                                            "data/test-glossary-with-definition-with-empty-language-tag.ttl"))));
+            assertEquals(
+                    "http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user",
+                    ex.getParameters().get("term"));
+            assertEquals(
+                    "http://www.w3.org/2004/02/skos/core#definition",
+                    ex.getParameters().get("property"));
         });
     }
 
@@ -380,11 +397,12 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importThrowsVocabularyExistsExceptionWhenVocabularyExists() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            assertThrows(VocabularyExistsException.class,
-                         () -> sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, null, persister),
-                                                    new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                                       Environment.loadFile(
-                                                                                               "data/test-glossary.ttl"))));
+            assertThrows(
+                    VocabularyExistsException.class,
+                    () -> sut.importVocabulary(
+                            new VocabularyImporter.ImportConfiguration(false, null, persister),
+                            new VocabularyImporter.ImportInput(
+                                    Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl"))));
         });
     }
 
@@ -399,9 +417,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
@@ -410,27 +429,30 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     }
 
     private cz.cvut.kbss.termit.model.Vocabulary findVocabulary() {
-        return em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
-                       SKOSImporterTest.VOCABULARY_IRI,
-                       descriptorFactory.vocabularyDescriptor(SKOSImporterTest.VOCABULARY_IRI));
+        return em.find(
+                cz.cvut.kbss.termit.model.Vocabulary.class,
+                SKOSImporterTest.VOCABULARY_IRI,
+                descriptorFactory.vocabularyDescriptor(SKOSImporterTest.VOCABULARY_IRI));
     }
 
     @Test
     void importSkipsAssertedTopConceptOfStatements() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
-                                         "data/test-glossary-with-topconceptof.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE,
+                            Environment.loadFile("data/test-glossary-with-topconceptof.ttl")));
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
-                                              .map(Statement::getObject).collect(Collectors.toList());
+                        .map(Statement::getObject)
+                        .collect(Collectors.toList());
                 assertEquals(1, terms.size());
                 assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_user)));
-                assertFalse(conn.hasStatement(vf.createIRI(Vocabulary.s_c_user), SKOS.TOP_CONCEPT_OF, null,
-                                              false));
+                assertFalse(conn.hasStatement(vf.createIRI(Vocabulary.s_c_user), SKOS.TOP_CONCEPT_OF, null, false));
             }
         });
     }
@@ -439,9 +461,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importResolvesVocabularyDescription() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
 
         final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
@@ -459,9 +482,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         });
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
@@ -473,9 +497,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importImportsVocabularyLabelAndDescriptionInAllDeclaredLanguages() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
         final Set<String> languages = Set.of("en", "cs");
 
@@ -502,10 +527,11 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importVocabularyRemovesSelfReferencingSkosStatements() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile(
-                                                                            "data/test-glossary-self-referencing-terms.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE,
+                            Environment.loadFile("data/test-glossary-self-referencing-terms.ttl")));
         });
 
         transactional(() -> {
@@ -524,9 +550,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importVocabularyUsesPreferredNamespaceFromImportedData() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile("data/test-glossary.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
@@ -539,10 +566,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final String lang = "pl";
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile(
-                                                                            "data/test-glossary-with-language.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary-with-language.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
@@ -555,27 +582,32 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final String lang = "pl";
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile(
-                                                                            "data/test-glossary-without-language.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE,
+                            Environment.loadFile("data/test-glossary-without-language.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertEquals(lang, result.getPrimaryLanguage());
         assertEquals("Słownictwo systemu TermIt - glosariusz", result.getPrimaryLabel());
-        assertEquals("To jest wersja testowa słownictwa TermIt", result.getDescription().get(lang));
+        assertEquals(
+                "To jest wersja testowa słownictwa TermIt",
+                result.getDescription().get(lang));
     }
 
     @Test
     void importVocabularyUsesLabelLanguageMatchingInstanceWhenNoPrimaryLanguageIsImported() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile(
-                                                                            "data/test-glossary-without-language-and-label-matching-instance.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE,
+                            Environment.loadFile(
+                                    "data/test-glossary-without-language-and-label-matching-instance.ttl")));
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
@@ -583,7 +615,9 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         assertEquals(Environment.LANGUAGE, result.getPrimaryLanguage());
         assertEquals("Vocabulary of system TermIt - glossary", result.getPrimaryLabel());
         // description was imported even when it does not match the language
-        assertEquals("To jest wersja testowa słownictwa TermIt", result.getDescription().get("pl"));
+        assertEquals(
+                "To jest wersja testowa słownictwa TermIt",
+                result.getDescription().get("pl"));
     }
 
     @Test
@@ -591,13 +625,16 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             final VocabularyImportException ex = assertThrows(
-                    VocabularyImportException.class, () -> sut.importVocabulary(
+                    VocabularyImportException.class,
+                    () -> sut.importVocabulary(
                             new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                            new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE, Environment.loadFile(
-                                    "data/test-glossary-term-without-label.ttl"))));
+                            new VocabularyImporter.ImportInput(
+                                    Constants.MediaType.TURTLE,
+                                    Environment.loadFile("data/test-glossary-term-without-label.ttl"))));
             assertEquals("error.vocabulary.import.skos.missingLabel", ex.getMessageId());
-            assertEquals("http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user",
-                         ex.getParameters().get("term"));
+            assertEquals(
+                    "http://onto.fel.cvut.cz/ontologies/application/termit/blocked-user",
+                    ex.getParameters().get("term"));
         });
     }
 
@@ -605,17 +642,18 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importResolvesVocabularyNamespaceFromTermIrisWhenItIsNotExplicitlySpecified() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
-            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
-                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
-                                                                    Environment.loadFile(
-                                                                            "data/test-glossary-no-separator.ttl")));
+            sut.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(
+                            Constants.MediaType.TURTLE, Environment.loadFile("data/test-glossary-no-separator.ttl")));
         });
 
         final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
         assertTrue(result.isPresent());
-        final List<TermInfo> terms = em.createQuery("SELECT t FROM TermInfo t WHERE t.vocabulary = :vocabulary",
-                                                    TermInfo.class)
-                                       .setParameter("vocabulary", VOCABULARY_IRI).getResultList();
+        final List<TermInfo> terms = em.createQuery(
+                        "SELECT t FROM TermInfo t WHERE t.vocabulary = :vocabulary", TermInfo.class)
+                .setParameter("vocabulary", VOCABULARY_IRI)
+                .getResultList();
         terms.forEach(t -> {
             assertThat(t.getUri().toString(), startsWith(VOCABULARY_IRI_S));
             assertThat(t.getUri().toString(), not(containsString("/pojem")));

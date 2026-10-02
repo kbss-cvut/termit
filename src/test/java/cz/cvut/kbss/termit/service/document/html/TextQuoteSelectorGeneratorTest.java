@@ -46,7 +46,8 @@ class TextQuoteSelectorGeneratorTest {
     @Test
     void generateSelectorExtractsPrefixAndSuffixFromElementSiblingTextNodes() {
         final String prefix = "This is a prefix for the exact value ";
-        final String suffix = ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
+        final String suffix =
+                ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
         final String exact = "EXACT";
         document.html("<div>" + prefix + "<span id=\"elem\">" + exact + "</span>" + suffix + "</div>");
         final Element element = document.getElementById("elem");
@@ -60,7 +61,8 @@ class TextQuoteSelectorGeneratorTest {
     @Test
     void generateSelectorExtractsShorterPrefixWhenThereIsNotEnoughText() {
         final String prefix = "Short prefix of ";
-        final String suffix = ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
+        final String suffix =
+                ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
         final String exact = "EXACT";
         document.html("<div>" + prefix + "<span id=\"elem\">" + exact + "</span>" + suffix + "</div>");
         final Element element = document.getElementById("elem");
@@ -88,10 +90,11 @@ class TextQuoteSelectorGeneratorTest {
     @Test
     void generateSelectorUsesTextContentOfMultipleSiblingsToFillPrefix() {
         final String prefix = "Prefix is now split with tags. ";
-        final String suffix = ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
+        final String suffix =
+                ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
         final String exact = "EXACT";
-        document.html("<div>Prefix is now <i>split</i> with tags. <span id=\"elem\">" + exact + "</span>" + suffix +
-                "</div>");
+        document.html("<div>Prefix is now <i>split</i> with tags. <span id=\"elem\">" + exact + "</span>" + suffix
+                + "</div>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);
@@ -105,8 +108,8 @@ class TextQuoteSelectorGeneratorTest {
         final String prefix = "Prefix is still plain text, ";
         final String suffix = " but suffix is split into multiple nodes and is long.";
         final String exact = "EXACT";
-        document.html("<div>" + prefix + "<span id=\"elem\">" + exact +
-                "</span> but <b>suffix is split</b> into multiple nodes and is long.</div>");
+        document.html("<div>" + prefix + "<span id=\"elem\">" + exact
+                + "</span> but <b>suffix is split</b> into multiple nodes and is long.</div>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);
@@ -118,11 +121,11 @@ class TextQuoteSelectorGeneratorTest {
     @Test
     void generateSelectorUsesTextContentOfParentSiblingsToFillPrefix() {
         final String prefix = "TitleTitle will be part of prefix, ";
-        final String suffix = ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
+        final String suffix =
+                ". And this is the suffix. It started with a dot ending the previous sentence and continues here.";
         final String exact = "EXACT";
-        document.html(
-                "<div><h1>Title</h1><p>Title will be part of prefix, <span id=\"elem\">" + exact + "</span>" + suffix +
-                        "</p></div>");
+        document.html("<div><h1>Title</h1><p>Title will be part of prefix, <span id=\"elem\">" + exact + "</span>"
+                + suffix + "</p></div>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);
@@ -136,9 +139,8 @@ class TextQuoteSelectorGeneratorTest {
         final String prefix = "Title ";
         final String suffix = " FollowsSuffix is completely inside parent's sibling.";
         final String exact = "EXACT";
-        document.html(
-                "<div><h1>Title <span id=\"elem\">" + exact +
-                        "</span> Follows</h1><p>Suffix is completely inside parent's sibling.</p></div>");
+        document.html("<div><h1>Title <span id=\"elem\">" + exact
+                + "</span> Follows</h1><p>Suffix is completely inside parent's sibling.</p></div>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);
@@ -151,9 +153,8 @@ class TextQuoteSelectorGeneratorTest {
     void generateSelectorLeavesEmptyPrefixWhenNoPreviousNodesExist() {
         final String suffix = " FollowsSuffix is completely inside parent's sibling.";
         final String exact = "EXACT";
-        document.html(
-                "<div><h1><span id=\"elem\">" + exact +
-                        "</span> Follows</h1><p>Suffix is completely inside parent's sibling.</p></div>");
+        document.html("<div><h1><span id=\"elem\">" + exact
+                + "</span> Follows</h1><p>Suffix is completely inside parent's sibling.</p></div>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);
@@ -166,9 +167,8 @@ class TextQuoteSelectorGeneratorTest {
     void generateSelectorLeavesEmptySuffixWhenNoFollowingNodesExist() {
         final String prefix = "TitleFollowed by paragraph ending with ";
         final String exact = "EXACT";
-        document.html(
-                "<div><h1>Title</h1><p>Followed by paragraph ending with <span id=\"elem\">" + exact +
-                        "</span></p></div>");
+        document.html("<div><h1>Title</h1><p>Followed by paragraph ending with <span id=\"elem\">" + exact
+                + "</span></p></div>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);
@@ -210,7 +210,8 @@ class TextQuoteSelectorGeneratorTest {
     void generateSelectorDoctypeDeclarationOfDocument() {
         final String exact = "EXACT";
         final String suffix = ". Suffix";
-        document = Jsoup.parse("<!DOCTYPE html><html><head></head><body><div><span id=\"elem\">" + exact + "</span>" + suffix + "</div></body></html>");
+        document = Jsoup.parse("<!DOCTYPE html><html><head></head><body><div><span id=\"elem\">" + exact + "</span>"
+                + suffix + "</div></body></html>");
         final Element element = document.getElementById("elem");
         final TextQuoteSelector result = sut.generateSelector(element);
         assertNotNull(result);

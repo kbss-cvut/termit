@@ -70,9 +70,13 @@ public class AccessControlListRepositoryService implements AccessControlListServ
 
     private final Configuration.ACL aclConfig;
 
-    public AccessControlListRepositoryService(AccessControlListDao dao, ChangeRecordService changeRecordService,
-                                              UserRoleRepositoryService userRoleService,
-                                              DtoMapper dtoMapper, SecurityUtils securityUtils, Configuration config) {
+    public AccessControlListRepositoryService(
+            AccessControlListDao dao,
+            ChangeRecordService changeRecordService,
+            UserRoleRepositoryService userRoleService,
+            DtoMapper dtoMapper,
+            SecurityUtils securityUtils,
+            Configuration config) {
         this.dao = dao;
         this.changeRecordService = changeRecordService;
         this.userRoleService = userRoleService;
@@ -122,23 +126,30 @@ public class AccessControlListRepositoryService implements AccessControlListServ
     private void setInitialAccessControlRecords(HasIdentifier subject, AccessControlList acl) {
         // Add current user - author in case the subject is just being created
         if (SecurityUtils.authenticated()) {
-            acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, securityUtils.getCurrentUser().toUser()));
+            acl.addRecord(new UserAccessControlRecord(
+                    AccessLevel.SECURITY, securityUtils.getCurrentUser().toUser()));
         }
         // Add possible authors in case the subject already existed
-        changeRecordService.getAuthors(subject)
-                           .forEach(u -> acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, u)));
+        changeRecordService
+                .getAuthors(subject)
+                .forEach(u -> acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, u)));
         // Add record with configured access level for reader and editor user roles
         final List<UserRole> roles = userRoleService.findAll();
-        roles.stream().filter(AccessControlListRepositoryService::isFullUser)
-             .findAny().ifPresent(
-                     editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultEditorAccessLevel(), editor)));
         roles.stream()
-             .filter(AccessControlListRepositoryService::isRestricted)
-             .findAny().ifPresent(
-                     editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
-        roles.stream().filter(AccessControlListRepositoryService::isAnonymous)
-                .findAny().ifPresent(
-                        anonymous -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultAnonymousAccessLevel(), anonymous)));
+                .filter(AccessControlListRepositoryService::isFullUser)
+                .findAny()
+                .ifPresent(editor ->
+                        acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultEditorAccessLevel(), editor)));
+        roles.stream()
+                .filter(AccessControlListRepositoryService::isRestricted)
+                .findAny()
+                .ifPresent(editor ->
+                        acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
+        roles.stream()
+                .filter(AccessControlListRepositoryService::isAnonymous)
+                .findAny()
+                .ifPresent(anonymous -> acl.addRecord(
+                        new RoleAccessControlRecord(aclConfig.getDefaultAnonymousAccessLevel(), anonymous)));
     }
 
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
@@ -155,8 +166,9 @@ public class AccessControlListRepositoryService implements AccessControlListServ
         Objects.requireNonNull(original);
         LOG.debug("Creating a new ACL by cloning {}.", original);
         final AccessControlList clone = new AccessControlList();
-        clone.setRecords(Utils.emptyIfNull(original.getRecords()).stream().map(AccessControlRecord::copy)
-                              .collect(Collectors.toSet()));
+        clone.setRecords(Utils.emptyIfNull(original.getRecords()).stream()
+                .map(AccessControlRecord::copy)
+                .collect(Collectors.toSet()));
         dao.persist(clone);
         return clone;
     }
@@ -216,8 +228,10 @@ public class AccessControlListRepositoryService implements AccessControlListServ
             }
         }
         if (!readerFound || !editorFound || !anonymousFound) {
-            throw new UnsupportedOperationException(
-                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + ", " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
+            throw new UnsupportedOperationException("Access control list must contain a record for user roles "
+                    + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + ", "
+                    + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER + " and "
+                    + cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         }
     }
 
@@ -243,7 +257,9 @@ public class AccessControlListRepositoryService implements AccessControlListServ
      * @return {@code true} if the role is the full user role, {@code false} otherwise
      */
     public static boolean isFullUser(UserRole role) {
-        return cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(role.getUri().toString());
+        return cz.cvut.kbss.termit.security.model.UserRole.FULL_USER
+                .getType()
+                .equals(role.getUri().toString());
     }
 
     /**
@@ -254,8 +270,9 @@ public class AccessControlListRepositoryService implements AccessControlListServ
      * @return {@code true} if the role is the anonymous user role, {@code false} otherwise
      */
     public static boolean isAnonymous(UserRole role) {
-        return cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER.getType()
-                                                                         .equals(role.getUri().toString());
+        return cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER
+                .getType()
+                .equals(role.getUri().toString());
     }
 
     /**
@@ -266,8 +283,9 @@ public class AccessControlListRepositoryService implements AccessControlListServ
      * @return {@code true} if the role is the restricted user role, {@code false} otherwise
      */
     public static boolean isRestricted(UserRole role) {
-        return cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType()
-                                                                          .equals(role.getUri().toString());
+        return cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER
+                .getType()
+                .equals(role.getUri().toString());
     }
 
     /**
@@ -288,18 +306,20 @@ public class AccessControlListRepositoryService implements AccessControlListServ
         if (controlRecord.getHolder() instanceof UserRole role) {
             // check that the anonymous user does not have greater access level than READ
             if (isAnonymous(role) && controlRecord.getAccessLevel().compareTo(AccessLevel.READ) > 0) {
-                throw new UnsupportedOperationException("Access control record for anonymous user cannot grant greater access level than READ.");
+                throw new UnsupportedOperationException(
+                        "Access control record for anonymous user cannot grant greater access level than READ.");
             }
             // check that the reader role does not have SECURITY access level
             if (isRestricted(role) && controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
-                throw new UnsupportedOperationException("Access control record for restricted user cannot have access level SECURITY.");
+                throw new UnsupportedOperationException(
+                        "Access control record for restricted user cannot have access level SECURITY.");
             }
-
         }
         // check that a user group does not have SECURITY access level
-        if (controlRecord.getHolder() instanceof UserGroup &&
-                controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
-            throw new UnsupportedOperationException("Access control record for user group cannot have access level SECURITY.");
+        if (controlRecord.getHolder() instanceof UserGroup
+                && controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
+            throw new UnsupportedOperationException(
+                    "Access control record for user group cannot have access level SECURITY.");
         }
     }
 
@@ -311,12 +331,18 @@ public class AccessControlListRepositoryService implements AccessControlListServ
         Objects.requireNonNull(record);
         final AccessControlList toUpdate = findRequired(acl.getUri());
 
-        Utils.emptyIfNull(toUpdate.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
-             .findAny().ifPresent(r -> {
-                 LOG.debug("Updating access level from {} to {} in record {} in ACL {}.", r.getAccessLevel(),
-                           record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
-                 r.setAccessLevel(record.getAccessLevel());
-             });
+        Utils.emptyIfNull(toUpdate.getRecords()).stream()
+                .filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
+                .findAny()
+                .ifPresent(r -> {
+                    LOG.debug(
+                            "Updating access level from {} to {} in record {} in ACL {}.",
+                            r.getAccessLevel(),
+                            record.getAccessLevel(),
+                            Utils.uriToString(record.getUri()),
+                            toUpdate);
+                    r.setAccessLevel(record.getAccessLevel());
+                });
         validate(toUpdate);
     }
 

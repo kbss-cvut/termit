@@ -56,8 +56,8 @@ class SnapshotAuthorizationServiceTest {
     private VocabularyAuthorizationService vocabularyAuthorizationService;
 
     @Spy
-    private SecurityUtils securityUtils = new SecurityUtils(null, new BCryptPasswordEncoder(), null,
-                                                            new Configuration());
+    private SecurityUtils securityUtils =
+            new SecurityUtils(null, new BCryptPasswordEncoder(), null, new Configuration());
 
     @InjectMocks
     private SnapshotAuthorizationService sut;
@@ -74,8 +74,8 @@ class SnapshotAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("removalOfNonVocabularySnapshotRights")
-    void canRemoveRequiresUserToBeAtLeastEditorForRemovalOfSnapshotOfDifferentAssetThanVocabulary(boolean expected,
-                                                                                                  UserRole role) {
+    void canRemoveRequiresUserToBeAtLeastEditorForRemovalOfSnapshotOfDifferentAssetThanVocabulary(
+            boolean expected, UserRole role) {
         final UserAccount currentUser = Generator.generateUserAccount();
         currentUser.addType(role.getType());
         Environment.setCurrentUser(currentUser);
@@ -90,7 +90,6 @@ class SnapshotAuthorizationServiceTest {
         return Stream.of(
                 Arguments.of(false, UserRole.RESTRICTED_USER),
                 Arguments.of(true, UserRole.FULL_USER),
-                Arguments.of(true, UserRole.ADMIN)
-        );
+                Arguments.of(true, UserRole.ADMIN));
     }
 }

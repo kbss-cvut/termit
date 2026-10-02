@@ -71,10 +71,11 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
     void createReturnsCreatedResponseWithLocationHeader() throws Exception {
         final UserGroup group = Generator.generateUserGroup();
         final String fragment = IdentifierResolver.extractIdentifierFragment(group.getUri());
-        final MvcResult mvcResult = mockMvc.perform(post(UserGroupController.PATH).content(toJson(group))
-                                                                                  .contentType(
-                                                                                          MediaType.APPLICATION_JSON_VALUE))
-                                           .andExpect(status().isCreated()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(post(UserGroupController.PATH)
+                        .content(toJson(group))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isCreated())
+                .andReturn();
         verifyLocationEquals(UserGroupController.PATH + "/" + fragment, mvcResult);
         verify(groupService).persist(group);
     }
@@ -96,9 +97,9 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         final List<User> users = List.of(Generator.generateUserWithId(), Generator.generateUserWithId());
         users.forEach(u -> when(groupService.findRequiredUser(u.getUri())).thenReturn(u));
         mockMvc.perform(post(UserGroupController.PATH + "/" + fragment + "/members")
-                                .content(toJson(users.stream().map(User::getUri).collect(Collectors.toList())))
-                                .contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isNoContent());
+                        .content(toJson(users.stream().map(User::getUri).collect(Collectors.toList())))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
         users.forEach(u -> verify(groupService).findRequiredUser(u.getUri()));
         final ArgumentCaptor<Collection<User>> captor = ArgumentCaptor.forClass(Collection.class);
         verify(groupService).addMembers(eq(target), captor.capture());
@@ -114,9 +115,9 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         target.setMembers(new HashSet<>(users));
         users.forEach(u -> when(groupService.findRequiredUser(u.getUri())).thenReturn(u));
         mockMvc.perform(delete(UserGroupController.PATH + "/" + fragment + "/members")
-                                .content(toJson(users.stream().map(User::getUri).collect(Collectors.toList())))
-                                .contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isNoContent());
+                        .content(toJson(users.stream().map(User::getUri).collect(Collectors.toList())))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
         users.forEach(u -> verify(groupService).findRequiredUser(u.getUri()));
         final ArgumentCaptor<Collection<User>> captor = ArgumentCaptor.forClass(Collection.class);
         verify(groupService).removeMembers(eq(target), captor.capture());
@@ -129,9 +130,10 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         final String fragment = IdentifierResolver.extractIdentifierFragment(target.getUri());
         when(groupService.findRequired(target.getUri())).thenReturn(target);
         final String newLabel = "new label";
-        mockMvc.perform(put(UserGroupController.PATH + "/" + fragment + "/label").content(newLabel)
-                                                                                 .contentType(MediaType.TEXT_PLAIN))
-               .andExpect(status().isNoContent());
+        mockMvc.perform(put(UserGroupController.PATH + "/" + fragment + "/label")
+                        .content(newLabel)
+                        .contentType(MediaType.TEXT_PLAIN))
+                .andExpect(status().isNoContent());
         final ArgumentCaptor<UserGroup> captor = ArgumentCaptor.forClass(UserGroup.class);
         verify(groupService).update(captor.capture());
         assertEquals(newLabel, captor.getValue().getLabel());

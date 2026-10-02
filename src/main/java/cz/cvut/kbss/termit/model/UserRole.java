@@ -36,8 +36,7 @@ public class UserRole extends AccessControlAgent implements HasIdentifier {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_scopeNote)
     private MultilingualString description;
 
-    public UserRole() {
-    }
+    public UserRole() {}
 
     public UserRole(URI uri) {
         setUri(uri);

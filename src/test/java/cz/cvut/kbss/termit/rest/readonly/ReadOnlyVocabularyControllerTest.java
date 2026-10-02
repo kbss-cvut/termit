@@ -73,13 +73,14 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRetrievesAllVocabulariesFromService() throws Exception {
-        final List<ReadOnlyVocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> new ReadOnlyVocabulary(
-                Generator.generateVocabularyWithId())).collect(Collectors.toList());
+        final List<ReadOnlyVocabulary> vocabularies = IntStream.range(0, 5)
+                .mapToObj(i -> new ReadOnlyVocabulary(Generator.generateVocabularyWithId()))
+                .collect(Collectors.toList());
         when(vocabularyService.findAll()).thenReturn(vocabularies);
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
-        final List<ReadOnlyVocabulary> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult =
+                mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
+        final List<ReadOnlyVocabulary> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(vocabularies, result);
         verify(vocabularyService).findAll();
     }
@@ -94,9 +95,10 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
         when(vocabularyService.findRequired(any())).thenReturn(vocabulary);
         when(idResolver.resolveIdentifier(namespace, fragment)).thenReturn(uri);
 
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + fragment).param(Constants.QueryParams.NAMESPACE, namespace))
-                .andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(
+                        get(PATH + "/" + fragment).param(Constants.QueryParams.NAMESPACE, namespace))
+                .andExpect(status().isOk())
+                .andReturn();
         final ReadOnlyVocabulary result = readValue(mvcResult, ReadOnlyVocabulary.class);
         assertEquals(vocabulary, result);
         verify(vocabularyService).findRequired(uri);
@@ -120,15 +122,16 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
         final ReadOnlyVocabulary vocabulary = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
         vocabulary.setUri(uri);
         when(vocabularyService.findRequired(any())).thenReturn(vocabulary);
-        when(idResolver.resolveIdentifier(configuration.getNamespace().getVocabulary(), fragment)).thenReturn(uri);
-        final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri())
-                .collect(Collectors.toSet());
+        when(idResolver.resolveIdentifier(configuration.getNamespace().getVocabulary(), fragment))
+                .thenReturn(uri);
+        final Set<URI> imports =
+                IntStream.range(0, 3).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
         when(vocabularyService.getTransitivelyImportedVocabularies(any())).thenReturn(imports);
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + fragment + "/imports")).andExpect(status().isOk())
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + fragment + "/imports"))
+                .andExpect(status().isOk())
                 .andReturn();
-        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(imports, result);
         verify(vocabularyService).getTransitivelyImportedVocabularies(vocabulary);
     }

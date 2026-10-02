@@ -28,8 +28,7 @@ import java.net.URI;
 @OWLClass(iri = Vocabulary.s_c_definition_term_occurrence)
 public class TermDefinitionalOccurrence extends TermOccurrence {
 
-    public TermDefinitionalOccurrence() {
-    }
+    public TermDefinitionalOccurrence() {}
 
     public TermDefinitionalOccurrence(URI term, DefinitionalOccurrenceTarget target) {
         super(term, target);

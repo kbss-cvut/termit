@@ -39,7 +39,6 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -49,6 +48,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -71,9 +71,9 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
      */
     public static Stream<Arguments> stompCommands() {
         return Arrays.stream(StompCommand.values())
-                     .filter(c -> c != StompCommand.CONNECT && c != StompCommand.DISCONNECT && c != StompCommand.STOMP)
-                     .map(Enum::name)
-                     .flatMap(name -> Stream.of(Arguments.of(name, true), Arguments.of(name, false)));
+                .filter(c -> c != StompCommand.CONNECT && c != StompCommand.DISCONNECT && c != StompCommand.STOMP)
+                .map(Enum::name)
+                .flatMap(name -> Stream.of(Arguments.of(name, true), Arguments.of(name, false)));
     }
 
     /**
@@ -86,14 +86,14 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final AtomicBoolean receivedReply = new AtomicBoolean(false);
         final AtomicBoolean receivedError = new AtomicBoolean(false);
 
-        final String auth = withAuth ?
-                            HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + generateToken() + "\n" :
-                            "";
+        final String auth = withAuth
+                ? HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + generateToken() + "\n"
+                : "";
         final TextMessage message = new TextMessage(stompCommand + "\n" + auth + "\n\0");
 
         final WebSocketClient wsClient = new StandardWebSocketClient();
-        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError),
-                                                                  url);
+        Future<WebSocketSession> connectFuture =
+                wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
 
         WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
@@ -135,12 +135,12 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final AtomicBoolean receivedReply = new AtomicBoolean(false);
         final AtomicBoolean receivedError = new AtomicBoolean(false);
 
-        final TextMessage message = new TextMessage(
-                StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + "DefinitelyNotValidToken\n\n\0");
+        final TextMessage message = new TextMessage(StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":"
+                + SecurityConstants.JWT_TOKEN_PREFIX + "DefinitelyNotValidToken\n\n\0");
 
         final WebSocketClient wsClient = new StandardWebSocketClient();
-        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError),
-                                                                  url);
+        Future<WebSocketSession> connectFuture =
+                wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
 
         WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
@@ -169,12 +169,12 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         // creates "valid" JWT token but with invalid signature
         final String token = generateJwtToken(issued);
 
-        final TextMessage message = new TextMessage(
-                StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":" + SecurityConstants.JWT_TOKEN_PREFIX + token + "\n\n\0");
+        final TextMessage message = new TextMessage(StompCommand.CONNECT + "\n" + HttpHeaders.AUTHORIZATION + ":"
+                + SecurityConstants.JWT_TOKEN_PREFIX + token + "\n\n\0");
 
         final WebSocketClient wsClient = new StandardWebSocketClient();
-        Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError),
-                                                                  url);
+        Future<WebSocketSession> connectFuture =
+                wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
 
         WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
@@ -193,15 +193,17 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
     }
 
     private String generateJwtToken(Instant issued) throws Exception {
-        final MACSigner signer = new MACSigner(
-                new SecretKeySpec("my very secure and really private key".getBytes(StandardCharsets.UTF_8),
-                                  "HmacSHA256"));
-        return JwtUtils.sign(new JWTClaimsSet.Builder().subject(userDetails.getUser().getUsername())
-                                                       .jwtID(userDetails.getUser().getUri().toString())
-                                                       .issueTime(Date.from(issued))
-                                                       .expirationTime(Date.from(
-                                                               issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
-                                                       .build(), null, signer);
+        final MACSigner signer = new MACSigner(new SecretKeySpec(
+                "my very secure and really private key".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        return JwtUtils.sign(
+                new JWTClaimsSet.Builder()
+                        .subject(userDetails.getUser().getUsername())
+                        .jwtID(userDetails.getUser().getUri().toString())
+                        .issueTime(Date.from(issued))
+                        .expirationTime(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
+                        .build(),
+                null,
+                signer);
     }
 
     /**

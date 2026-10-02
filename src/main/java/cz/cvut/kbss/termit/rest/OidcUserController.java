@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -64,8 +63,9 @@ public class OidcUserController extends BaseController {
         this.userService = userService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets all users of the system.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets all users of the system.")
     @ApiResponse(responseCode = "200", description = "List of users ordered by name.")
     @PreAuthorize("hasAnyRole('" + SecurityConstants.ROLE_ADMIN + "', '" + SecurityConstants.ROLE_FULL_USER + "')")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -73,32 +73,42 @@ public class OidcUserController extends BaseController {
         return userService.findAll();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the currently logged-in user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets the currently logged-in user.")
     @ApiResponse(responseCode = "200", description = "Metadata of the current user's account.")
-    @GetMapping(value = UserController.CURRENT_USER_PATH,
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = UserController.CURRENT_USER_PATH,
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets assets that the user with the specified identifier can manage, i.e., has security-level access to them.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Gets assets that the user with the specified identifier can manage, i.e., has security-level access to them.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of managed assets."),
-            @ApiResponse(responseCode = "404", description = "Account not found.")
+        @ApiResponse(responseCode = "200", description = "List of managed assets."),
+        @ApiResponse(responseCode = "404", description = "Account not found.")
     })
-    @GetMapping(value = "/{localName}/managed-assets", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/managed-assets",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     public List<RdfsResource> getManagedAssets(
-            @Parameter(description = UserController.UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = UserController.UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = UserController.UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = UserController.UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
-        final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()), localName);
+            @Parameter(
+                            description = UserController.UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserController.UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = UserController.UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = UserController.UserControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
+        final URI id = idResolver.resolveIdentifier(
+                namespace.orElse(config.getNamespace().getUser()), localName);
         return userService.getManagedAssets(userService.getReference(id));
     }
 }

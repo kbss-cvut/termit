@@ -25,8 +25,7 @@ import jakarta.annotation.Nonnull;
 @OWLClass(iri = Vocabulary.s_c_creation_of_entity)
 public class PersistChangeRecord extends AbstractChangeRecord {
 
-    public PersistChangeRecord() {
-    }
+    public PersistChangeRecord() {}
 
     public PersistChangeRecord(Asset<?> changedAsset) {
         super(changedAsset);

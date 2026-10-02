@@ -40,11 +40,14 @@ public class StompExceptionHandler extends StompSubProtocolErrorHandler {
     }
 
     @Override
-    protected @Nonnull Message<byte[]> handleInternal(@Nonnull StompHeaderAccessor errorHeaderAccessor,
-                                                      @Nonnull byte[] errorPayload,
-                                                      @Nullable Throwable cause,
-                                                      @Nullable StompHeaderAccessor clientHeaderAccessor) {
-        final Message<?> message = MessageBuilder.withPayload(errorPayload).setHeaders(errorHeaderAccessor).build();
+    protected @Nonnull Message<byte[]> handleInternal(
+            @Nonnull StompHeaderAccessor errorHeaderAccessor,
+            @Nonnull byte[] errorPayload,
+            @Nullable Throwable cause,
+            @Nullable StompHeaderAccessor clientHeaderAccessor) {
+        final Message<?> message = MessageBuilder.withPayload(errorPayload)
+                .setHeaders(errorHeaderAccessor)
+                .build();
         Throwable causeToHandle = cause;
         if (causeToHandle != null && causeToHandle.getCause() != null) {
             causeToHandle = causeToHandle.getCause();
@@ -70,7 +73,8 @@ public class StompExceptionHandler extends StompSubProtocolErrorHandler {
      * has not (yet) completed the STOMP CONNECT handshake.
      */
     private static boolean isUnknownStompSession(@Nullable Throwable cause) {
-        return cause instanceof IllegalStateException && cause.getMessage() != null
+        return cause instanceof IllegalStateException
+                && cause.getMessage() != null
                 && cause.getMessage().startsWith("Unknown session");
     }
 }

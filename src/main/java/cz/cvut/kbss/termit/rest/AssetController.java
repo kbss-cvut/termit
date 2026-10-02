@@ -42,7 +42,6 @@ import java.util.List;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 
-
 @Tag(name = "Assets", description = "API with basic info about all assets")
 @RestController
 @RequestMapping("/assets")
@@ -59,70 +58,93 @@ public class AssetController {
         this.assetService = assetService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets recently edited assets with info on the change.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets recently edited assets with info on the change.")
     @ApiResponse(responseCode = "200", description = "List of changed assets.")
-    @GetMapping(value = "/last-edited", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<RecentlyModifiedAsset> getLastEdited(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-                                                     @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
-                                                                   required = false,
-                                                                   defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
-                                                     @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-                                                     @RequestParam(name = Constants.QueryParams.PAGE, required = false,
-                                                                   defaultValue = DEFAULT_PAGE) Integer pageNo,
-                                                     @Parameter(
-                                                             description = "Whether only changes done by the current user should be retrieved.")
-                                                     @RequestParam(name = "forCurrentUserOnly", required = false,
-                                                                   defaultValue = "false") Boolean forCurrentUserOnly) {
+    @GetMapping(
+            value = "/last-edited",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RecentlyModifiedAsset> getLastEdited(
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                    @RequestParam(
+                            name = Constants.QueryParams.PAGE_SIZE,
+                            required = false,
+                            defaultValue = DEFAULT_PAGE_SIZE)
+                    Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE)
+                    Integer pageNo,
+            @Parameter(description = "Whether only changes done by the current user should be retrieved.")
+                    @RequestParam(name = "forCurrentUserOnly", required = false, defaultValue = "false")
+                    Boolean forCurrentUserOnly) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
-        return forCurrentUserOnly ? assetService.findMyLastEdited(pageReq).getContent() :
-               assetService.findLastEdited(pageReq).getContent();
+        return forCurrentUserOnly
+                ? assetService.findMyLastEdited(pageReq).getContent()
+                : assetService.findLastEdited(pageReq).getContent();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets recently commented assets with the relevant comments.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets recently commented assets with the relevant comments.")
     @ApiResponse(responseCode = "200", description = "List of recent comments.")
-    @GetMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/last-commented",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastCommented(
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
-                          required = false,
-                          defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
+                    @RequestParam(
+                            name = Constants.QueryParams.PAGE_SIZE,
+                            required = false,
+                            defaultValue = DEFAULT_PAGE_SIZE)
+                    Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE,
-                          required = false,
-                          defaultValue = DEFAULT_PAGE) Integer pageNo) {
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE)
+                    Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         return assetService.findLastCommented(pageReq).getContent();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets recently commented assets in reaction to the current user's comment, with the relevant comments.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Gets recently commented assets in reaction to the current user's comment, with the relevant comments.")
     @ApiResponse(responseCode = "200", description = "List of matching comments.")
-    @GetMapping(value = "/last-commented-in-reaction-to-mine",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/last-commented-in-reaction-to-mine",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastReactingCommentsToMine(
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false,
-                          defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
+                    @RequestParam(
+                            name = Constants.QueryParams.PAGE_SIZE,
+                            required = false,
+                            defaultValue = DEFAULT_PAGE_SIZE)
+                    Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE, required = false,
-                          defaultValue = DEFAULT_PAGE) Integer pageNo) {
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE)
+                    Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         return assetService.findLastCommentedInReactionToMine(pageReq).getContent();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets recently commented assets whose author is the current user, with the relevant comments.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Gets recently commented assets whose author is the current user, with the relevant comments.")
     @ApiResponse(responseCode = "200", description = "List of matching comments.")
-    @GetMapping(value = "/my-last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/my-last-commented",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getMyLastCommented(
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false,
-                          defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
+                    @RequestParam(
+                            name = Constants.QueryParams.PAGE_SIZE,
+                            required = false,
+                            defaultValue = DEFAULT_PAGE_SIZE)
+                    Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-            @RequestParam(name = Constants.QueryParams.PAGE, required = false,
-                          defaultValue = DEFAULT_PAGE) Integer pageNo) {
+                    @RequestParam(name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE)
+                    Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         return assetService.findMyLastCommented(pageReq).getContent();
     }

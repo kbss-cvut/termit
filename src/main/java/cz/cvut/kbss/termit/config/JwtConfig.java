@@ -53,8 +53,7 @@ public class JwtConfig {
                 // checks token expiration with default clockSkew 60s
                 new JwtTimestampValidator(),
                 // validates user details loaded into the token
-                new JwtUserDetailsValidator()
-        ));
+                new JwtUserDetailsValidator()));
     }
 
     /**
@@ -73,9 +72,9 @@ public class JwtConfig {
      */
     public NimbusJwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withSecretKey(jwtUtils.getJwtSigningKey())
-                               .macAlgorithm(MacAlgorithm.from(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM))
-                               .jwtProcessorCustomizer(JwtConfig::setJWSTypeVerifier)
-                               .build();
+                .macAlgorithm(MacAlgorithm.from(SecurityConstants.JWT_DEFAULT_KEY_ALGORITHM))
+                .jwtProcessorCustomizer(JwtConfig::setJWSTypeVerifier)
+                .build();
     }
 
     public JwtAuthorizationFilter jwtAuthorizationFilter(AuthenticationManager authenticationManager) {
@@ -130,8 +129,7 @@ public class JwtConfig {
     public JwtDecoder patDecoder(PersonalAccessTokenService personalAccessTokenService) {
         NimbusJwtDecoder decoder = jwtDecoder();
         decoder.setClaimSetConverter(MappedJwtClaimSetConverter.withDefaults(
-                Map.of(JwtClaimNames.SUB, new PatToUserDetailsConverter(personalAccessTokenService))
-        ));
+                Map.of(JwtClaimNames.SUB, new PatToUserDetailsConverter(personalAccessTokenService))));
         decoder.setJwtValidator(jwtValidator());
         return decoder;
     }

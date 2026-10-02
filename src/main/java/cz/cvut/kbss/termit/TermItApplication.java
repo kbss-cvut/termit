@@ -29,9 +29,11 @@ public class TermItApplication {
 
     public static void main(String[] args) {
         // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
-        // Need to call it here before any of the Spring services depending on security context holder strategy are initialized
+        // Need to call it here before any of the Spring services depending on security context holder strategy are
+        // initialized
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-        new SpringApplicationBuilder(TermItApplication.class).initializers(new OntologyMigrationInitializer())
-                                                             .run(args);
+        new SpringApplicationBuilder(TermItApplication.class)
+                .initializers(new OntologyMigrationInitializer())
+                .run(args);
     }
 }

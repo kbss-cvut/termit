@@ -79,8 +79,9 @@ public class MessageComposer {
         } catch (ResourceNotFoundException e) {
             // If we do not find it, fall back to the default one
             LOG.warn("Unable to find localized message template. Falling back to the default one.", e);
-            return velocityEngine.getTemplate(TEMPLATES_DIRECTORY + Constants.DEFAULT_LANGUAGE + "/" + templateName,
-                                              StandardCharsets.UTF_8.name());
+            return velocityEngine.getTemplate(
+                    TEMPLATES_DIRECTORY + Constants.DEFAULT_LANGUAGE + "/" + templateName,
+                    StandardCharsets.UTF_8.name());
         }
     }
 }

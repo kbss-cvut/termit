@@ -38,17 +38,19 @@ import static cz.cvut.kbss.termit.dto.assignment.TermOccurrences.COUNT_PROPERTY;
  * It contains info about the Term - identifier, label, vocabulary identifier - and how many times it occurs in the
  * Resource.
  */
-@SparqlResultSetMapping(name = "ResourceTermOccurrences", classes = @ConstructorResult(
-        targetClass = ResourceTermOccurrences.class,
-        variables = {
-                @VariableResult(name = "term", type = URI.class),
-                @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "vocabulary", type = URI.class),
-                @VariableResult(name = "res", type = URI.class),
-                @VariableResult(name = "cnt", type = Integer.class),
-                @VariableResult(name = "suggested", type = Boolean.class)
-        }
-))
+@SparqlResultSetMapping(
+        name = "ResourceTermOccurrences",
+        classes =
+                @ConstructorResult(
+                        targetClass = ResourceTermOccurrences.class,
+                        variables = {
+                            @VariableResult(name = "term", type = URI.class),
+                            @VariableResult(name = "label", type = String.class),
+                            @VariableResult(name = "vocabulary", type = URI.class),
+                            @VariableResult(name = "res", type = URI.class),
+                            @VariableResult(name = "cnt", type = Integer.class),
+                            @VariableResult(name = "suggested", type = Boolean.class)
+                        }))
 public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
 
     @OWLAnnotationProperty(iri = RDFS.LABEL)
@@ -60,11 +62,10 @@ public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
     @OWLDataProperty(iri = COUNT_PROPERTY)
     private Integer count;
 
-    public ResourceTermOccurrences() {
-    }
+    public ResourceTermOccurrences() {}
 
-    public ResourceTermOccurrences(URI term, String termLabel, URI vocabulary, URI resource, Integer count,
-                                   Boolean suggested) {
+    public ResourceTermOccurrences(
+            URI term, String termLabel, URI vocabulary, URI resource, Integer count, Boolean suggested) {
         super(term, resource);
         this.termLabel = termLabel;
         this.vocabulary = vocabulary;
@@ -110,7 +111,9 @@ public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
         if (!super.equals(o)) {
             return false;
         }
-        return Objects.equals(termLabel, that.termLabel) && Objects.equals(vocabulary, that.vocabulary) && Objects.equals(count, that.count);
+        return Objects.equals(termLabel, that.termLabel)
+                && Objects.equals(vocabulary, that.vocabulary)
+                && Objects.equals(count, that.count);
     }
 
     @Override
@@ -120,9 +123,6 @@ public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
 
     @Override
     public String toString() {
-        return "ResourceTermOccurrences{" +
-                super.toString() +
-                ", count=" + count +
-                '}';
+        return "ResourceTermOccurrences{" + super.toString() + ", count=" + count + '}';
     }
 }

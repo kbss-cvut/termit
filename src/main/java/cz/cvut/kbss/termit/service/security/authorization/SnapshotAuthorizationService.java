@@ -39,8 +39,8 @@ public class SnapshotAuthorizationService {
 
     private final SecurityUtils securityUtils;
 
-    public SnapshotAuthorizationService(VocabularyAuthorizationService vocabularyAuthorizationService,
-                                        SecurityUtils securityUtils) {
+    public SnapshotAuthorizationService(
+            VocabularyAuthorizationService vocabularyAuthorizationService, SecurityUtils securityUtils) {
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
         this.securityUtils = securityUtils;
     }

@@ -77,7 +77,8 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
         Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
         final ConfigurationDto config = generateConfiguration();
         when(configurationProvider.getConfiguration()).thenReturn(config);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult =
+                mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
         final ConfigurationDto result = readValue(mvcResult, ConfigurationDto.class);
         assertNotNull(result);
         assertEquals(config.getLanguage(), result.getLanguage());
@@ -87,11 +88,13 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
     private static ConfigurationDto generateConfiguration() {
         final ConfigurationDto config = new ConfigurationDto();
         config.setLanguage(Environment.LANGUAGE);
-        config.setRoles(IntStream.range(0, 3).mapToObj(i -> {
-            final UserRole r = new UserRole(Generator.generateUri());
-            r.setLabel(MultilingualString.create("Role - " + i, Environment.LANGUAGE));
-            return r;
-        }).collect(Collectors.toSet()));
+        config.setRoles(IntStream.range(0, 3)
+                .mapToObj(i -> {
+                    final UserRole r = new UserRole(Generator.generateUri());
+                    r.setLabel(MultilingualString.create("Role - " + i, Environment.LANGUAGE));
+                    return r;
+                })
+                .collect(Collectors.toSet()));
         return config;
     }
 
@@ -100,7 +103,8 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
     void getConfigurationReturnsConfigurationWithoutRolesWhenUserIsNotAuthenticated() throws Exception {
         final ConfigurationDto config = generateConfiguration();
         when(configurationProvider.getConfiguration()).thenReturn(config);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult =
+                mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
         final ConfigurationDto result = readValue(mvcResult, ConfigurationDto.class);
         assertNotNull(result);
         assertEquals(config.getLanguage(), result.getLanguage());

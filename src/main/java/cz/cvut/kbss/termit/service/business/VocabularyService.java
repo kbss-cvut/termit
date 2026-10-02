@@ -87,7 +87,6 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
-
 /**
  * Business logic concerning vocabularies.
  * <p>
@@ -97,7 +96,10 @@ import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELA
  */
 @Service
 public class VocabularyService
-        implements CrudService<Vocabulary, VocabularyDto>, ChangeRecordProvider<Vocabulary>, SupportsLastModification, ApplicationEventPublisherAware {
+        implements CrudService<Vocabulary, VocabularyDto>,
+                ChangeRecordProvider<Vocabulary>,
+                SupportsLastModification,
+                ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
 
@@ -123,16 +125,17 @@ public class VocabularyService
 
     private ApplicationEventPublisher eventPublisher;
 
-    public VocabularyService(VocabularyRepositoryService repositoryService,
-                             ExternalVocabularyService externalVocabularyService,
-                             ChangeRecordService changeRecordService,
-                             @Lazy TermService termService,
-                             VocabularyContextMapper contextMapper,
-                             AccessControlListService aclService,
-                             VocabularyAuthorizationService authorizationService,
-                             VocabularyRelationshipResolver relationshipResolver,
-                             VocabularyContentValidator vocabularyValidator,
-                             ApplicationContext context) {
+    public VocabularyService(
+            VocabularyRepositoryService repositoryService,
+            ExternalVocabularyService externalVocabularyService,
+            ChangeRecordService changeRecordService,
+            @Lazy TermService termService,
+            VocabularyContextMapper contextMapper,
+            AccessControlListService aclService,
+            VocabularyAuthorizationService authorizationService,
+            VocabularyRelationshipResolver relationshipResolver,
+            VocabularyContentValidator vocabularyValidator,
+            ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.externalVocabularyService = externalVocabularyService;
         this.changeRecordService = changeRecordService;
@@ -198,8 +201,8 @@ public class VocabularyService
     private void loadFullAuthorInfo(VocabularySnapshotDto snapshotDto) {
         if (snapshotDto.getAuthor() != null && snapshotDto.getAuthor().getFirstName() == null) {
             context.getBean(UserRepositoryService.class)
-                   .find(snapshotDto.getAuthor().getUri())
-                   .ifPresent(snapshotDto::setAuthor);
+                    .find(snapshotDto.getAuthor().getUri())
+                    .ifPresent(snapshotDto::setAuthor);
         }
     }
 
@@ -358,16 +361,19 @@ public class VocabularyService
 
     private TypeAwareResource getExcelTemplate(String fileName) {
         final Configuration config = context.getBean(Configuration.class);
-        return config.getTemplate().getExcelImport().map(File::new)
-                     .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f,
-                                                                                   ExportFormat.EXCEL.getMediaType()))
-                     .orElseGet(() -> {
-                         assert getClass().getClassLoader().getResource(
-                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
-                         return new TypeAwareClasspathResource(
-                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
-                                 ExportFormat.EXCEL.getMediaType());
-                     });
+        return config.getTemplate()
+                .getExcelImport()
+                .map(File::new)
+                .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f, ExportFormat.EXCEL.getMediaType()))
+                .orElseGet(() -> {
+                    assert getClass()
+                                    .getClassLoader()
+                                    .getResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension())
+                            != null;
+                    return new TypeAwareClasspathResource(
+                            "template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
+                            ExportFormat.EXCEL.getMediaType());
+                });
     }
 
     /**
@@ -401,8 +407,8 @@ public class VocabularyService
      * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
-                                                                  Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(
+            Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
@@ -413,9 +419,10 @@ public class VocabularyService
      * @param vocabularyUri Vocabulary to be analyzed
      */
     @Transactional
-    @Throttle(value = "{#vocabularyUri}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
-              name = "allTermsVocabularyAnalysis")
+    @Throttle(
+            value = "{#vocabularyUri}",
+            group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
+            name = "allTermsVocabularyAnalysis")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
     public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
         final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
@@ -424,14 +431,12 @@ public class VocabularyService
         final List<TermDto> allTerms = termService.findAllWithDefinition(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary)
                 .forEach(importedVocabulary ->
-                                 allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
+                        allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
 
         final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
         allTerms.forEach(t -> contextToTerms
-                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()),
-                                 k -> new ArrayList<>())
-                .add(t)
-        );
+                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()), k -> new ArrayList<>())
+                .add(t));
         termService.analyzeTermDefinitions(contextToTerms, vocabulary.getPrimaryLanguage());
     }
 
@@ -553,15 +558,17 @@ public class VocabularyService
     @Transactional(readOnly = true)
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public AccessControlListDto getAccessControlList(Vocabulary vocabulary) {
-        return aclService.findForAsDto(vocabulary).orElseThrow(
-                () -> new NotFoundException("Access control list for vocabulary " + Utils.uriToString(
-                        vocabulary.getUri()) + " not found."));
+        return aclService
+                .findForAsDto(vocabulary)
+                .orElseThrow(() -> new NotFoundException("Access control list for vocabulary "
+                        + Utils.uriToString(vocabulary.getUri()) + " not found."));
     }
 
     private AccessControlList findRequiredAclForVocabulary(Vocabulary vocabulary) {
-        return aclService.findFor(vocabulary).orElseThrow(
-                () -> new NotFoundException("Access control list for vocabulary " + Utils.uriToString(
-                        vocabulary.getUri()) + " not found."));
+        return aclService
+                .findFor(vocabulary)
+                .orElseThrow(() -> new NotFoundException("Access control list for vocabulary "
+                        + Utils.uriToString(vocabulary.getUri()) + " not found."));
     }
 
     /**

@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEvent;
  */
 public class BeforeAssetDeleteEvent extends ApplicationEvent {
     final Asset<?> asset;
+
     public BeforeAssetDeleteEvent(Object source, Asset<?> asset) {
         super(source);
         this.asset = asset;

@@ -54,7 +54,8 @@ public class ChangeTrackingContextResolver {
         if (changedAsset instanceof Vocabulary) {
             return URI.create(changedAsset.getUri().toString().concat(contextExtension));
         } else if (changedAsset instanceof Term) {
-            return URI.create(resolveTermVocabulary((Term) changedAsset).toString().concat(contextExtension));
+            return URI.create(
+                    resolveTermVocabulary((Term) changedAsset).toString().concat(contextExtension));
         }
         return URI.create(changedAsset.getUri().toString().concat(contextExtension));
     }

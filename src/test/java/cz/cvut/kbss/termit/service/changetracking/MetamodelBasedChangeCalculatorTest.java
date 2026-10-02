@@ -76,7 +76,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
 
     @Test
     void calculateChangesDiscoversInSingularReferenceAttribute() {
-        // Note: This does not normally happen, it simulates possible changes in model when assets would have singular references to other objects
+        // Note: This does not normally happen, it simulates possible changes in model when assets would have singular
+        // references to other objects
         final Vocabulary original = Generator.generateVocabularyWithId();
         original.setDocument(Generator.generateDocumentWithId());
         final Vocabulary changed = cloneOf(original);
@@ -86,14 +87,16 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getUri(), record.getChangedEntity());
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_describes_document), record.getChangedAttribute());
+        assertEquals(
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_describes_document), record.getChangedAttribute());
     }
 
     @Test
     void calculateChangesDiscoversChangeInPluralLiteralAttribute() {
         final Term original = Generator.generateTermWithId();
         final Term changed = cloneOf(original);
-        changed.setSources(IntStream.range(0, 5).mapToObj(i -> "http://source" + i).collect(Collectors.toSet()));
+        changed.setSources(
+                IntStream.range(0, 5).mapToObj(i -> "http://source" + i).collect(Collectors.toSet()));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
@@ -155,8 +158,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getUri(), record.getChangedEntity());
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary),
-                record.getChangedAttribute());
+        assertEquals(
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary), record.getChangedAttribute());
     }
 
     @Test
@@ -280,7 +283,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
 
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfSingularReferenceAttribute() {
-        // Note: This does not normally happen, it simulates possible changes in model when assets would have singular references to other objects
+        // Note: This does not normally happen, it simulates possible changes in model when assets would have singular
+        // references to other objects
         final Vocabulary original = Generator.generateVocabularyWithId();
         original.setDocument(Generator.generateDocumentWithId());
         final Vocabulary changed = cloneOf(original);
@@ -298,7 +302,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Term original = Generator.generateTermWithId();
         original.setSources(null);
         final Term changed = cloneOf(original);
-        changed.setSources(IntStream.range(0, 5).mapToObj(i -> "http://source" + i).collect(Collectors.toSet()));
+        changed.setSources(
+                IntStream.range(0, 5).mapToObj(i -> "http://source" + i).collect(Collectors.toSet()));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
@@ -317,9 +322,11 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(original.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
+        assertEquals(
+                original.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
                 record.getOriginalValue());
-        assertEquals(changed.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
+        assertEquals(
+                changed.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
                 record.getNewValue());
     }
 
@@ -362,8 +369,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(original.getTypes().stream().map(URI::create).collect(Collectors.toSet()),
-                record.getOriginalValue());
+        assertEquals(
+                original.getTypes().stream().map(URI::create).collect(Collectors.toSet()), record.getOriginalValue());
         assertNull(record.getNewValue());
     }
 
@@ -406,7 +413,8 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertThat(record.getOriginalValue(), anyOf(nullValue(), emptyCollectionOf(Object.class)));
-        assertEquals(changed.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
+        assertEquals(
+                changed.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet()),
                 record.getNewValue());
     }
 

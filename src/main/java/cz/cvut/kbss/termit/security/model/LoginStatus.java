@@ -29,10 +29,10 @@ public class LoginStatus {
      * Represents identifier of the error, which can be resolved to a localized message in the JS UI
      */
     private String errorId;
+
     private boolean success;
 
-    public LoginStatus() {
-    }
+    public LoginStatus() {}
 
     public LoginStatus(boolean loggedIn, boolean success, String username, String errorMessage) {
         this.loggedIn = loggedIn;

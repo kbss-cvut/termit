@@ -58,9 +58,6 @@ public class TermTypeDistributionDto {
 
     @Override
     public String toString() {
-        return "TermTypeDistributionDto{" +
-                "vocabulary=" + vocabulary +
-                ", typeDistribution=" + typeDistribution +
-                '}';
+        return "TermTypeDistributionDto{" + "vocabulary=" + vocabulary + ", typeDistribution=" + typeDistribution + '}';
     }
 }

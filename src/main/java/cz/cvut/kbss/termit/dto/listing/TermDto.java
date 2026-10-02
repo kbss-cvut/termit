@@ -42,8 +42,7 @@ public class TermDto extends AbstractTerm {
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<TermDto> parentTerms;
 
-    public TermDto() {
-    }
+    public TermDto() {}
 
     public TermDto(AbstractTerm other) {
         super(other);
@@ -52,15 +51,17 @@ public class TermDto extends AbstractTerm {
     public TermDto(Term other) {
         super(other);
         if (other.getParentTerms() != null) {
-            setParentTerms(other.getParentTerms().stream().map(ti -> {
-                final TermDto result = new TermDto();
-                result.setUri(ti.getUri());
-                result.setLabel(ti.getLabel());
-                result.setVocabulary(ti.getVocabulary());
-                result.setState(ti.getState());
-                result.setTypes(new HashSet<>(Utils.emptyIfNull(ti.getTypes())));
-                return result;
-            }).collect(Collectors.toSet()));
+            setParentTerms(other.getParentTerms().stream()
+                    .map(ti -> {
+                        final TermDto result = new TermDto();
+                        result.setUri(ti.getUri());
+                        result.setLabel(ti.getLabel());
+                        result.setVocabulary(ti.getVocabulary());
+                        result.setState(ti.getState());
+                        result.setTypes(new HashSet<>(Utils.emptyIfNull(ti.getTypes())));
+                        return result;
+                    })
+                    .collect(Collectors.toSet()));
         }
     }
 

@@ -6,7 +6,6 @@ import java.net.URI;
  * Severity of SHACL rule violation.
  */
 enum ShaclSeverity {
-
     VIOLATION("http://www.w3.org/ns/shacl#Violation"),
     WARNING("http://www.w3.org/ns/shacl#Warning"),
     INFO("http://www.w3.org/ns/shacl#Info");

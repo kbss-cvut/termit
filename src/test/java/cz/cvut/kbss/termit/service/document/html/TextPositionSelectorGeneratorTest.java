@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.document.html;
 
-
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -57,8 +56,8 @@ class TextPositionSelectorGeneratorTest {
     @Test
     void generateSelectorGetsStartPositionFromDocumentBeginning() {
         final String prefix = "TitleParagraph containing the element with ";
-        document.html("<div><h1>Title</h1><p>Paragraph containing the element with <span id=\"elem\">" + MATCH +
-                "</span>.</p></div>");
+        document.html("<div><h1>Title</h1><p>Paragraph containing the element with <span id=\"elem\">" + MATCH
+                + "</span>.</p></div>");
         final Element element = document.getElementById("elem");
         final TextPositionSelector result = sut.generateSelector(element);
         assertNotNull(result);

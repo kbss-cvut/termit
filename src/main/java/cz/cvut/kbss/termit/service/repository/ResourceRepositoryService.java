@@ -52,10 +52,12 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     private final Configuration.Namespace cfgNamespace;
 
     @Autowired
-    public ResourceRepositoryService(Validator validator, ResourceDao resourceDao,
-                                     TermOccurrenceDao termOccurrenceDao,
-                                     IdentifierResolver idResolver,
-                                     Configuration config) {
+    public ResourceRepositoryService(
+            Validator validator,
+            ResourceDao resourceDao,
+            TermOccurrenceDao termOccurrenceDao,
+            IdentifierResolver idResolver,
+            Configuration config) {
         super(validator);
         this.resourceDao = resourceDao;
         this.termOccurrenceDao = termOccurrenceDao;

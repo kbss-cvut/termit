@@ -77,37 +77,47 @@ class SearchServiceTest {
     @BeforeEach
     void setUp() {
         this.allowedVocabularies = IntStream.range(0, 5)
-                                            .mapToObj(i -> Generator.generateVocabularyWithId())
-                                            .map(v -> {
-                                                final DtoMapper dtoMapper = Environment.getDtoMapper();
-                                                return dtoMapper.vocabularyToVocabularyDto(v);
-                                            }).toList();
-        this.allowedVocabularyUris = allowedVocabularies.stream().map(AbstractEntity::getUri).toList();
+                .mapToObj(i -> Generator.generateVocabularyWithId())
+                .map(v -> {
+                    final DtoMapper dtoMapper = Environment.getDtoMapper();
+                    return dtoMapper.vocabularyToVocabularyDto(v);
+                })
+                .toList();
+        this.allowedVocabularyUris =
+                allowedVocabularies.stream().map(AbstractEntity::getUri).toList();
     }
 
     @Test
     void advancedSearchValidatesEachSearchParamBeforeInvokingSearch() {
-        final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()),
-                                                  MatchType.IRI);
-        final SearchParam spTwo = new SearchParam(URI.create(SKOS.NOTATION), Set.of("will be removed"),
-                                                  MatchType.SUBSTRING);
+        final SearchParam spOne =
+                new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
+        final SearchParam spTwo =
+                new SearchParam(URI.create(SKOS.NOTATION), Set.of("will be removed"), MatchType.SUBSTRING);
         spTwo.setValue(null);
         final List<SearchParam> params = List.of(spOne, spTwo);
-        assertThrows(ValidationException.class,
-                     () -> sut.advancedSearch(new SearchString("test", null), params, Constants.DEFAULT_PAGE_SPEC));
+        assertThrows(
+                ValidationException.class,
+                () -> sut.advancedSearch(new SearchString("test", null), params, Constants.DEFAULT_PAGE_SPEC));
         verify(searchDao, never()).advancedSearch(any(), anyCollection(), any(), eq(allowedVocabularyUris));
     }
 
     @Test
     void advancedSearchExecutesSearchOnDaoAndReturnsResults() {
         when(authService.getReadableVocabularies()).thenReturn(allowedVocabularies);
-        final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()),
-                                                  MatchType.IRI);
+        final SearchParam spOne =
+                new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
         final SearchResult item = new SearchResult(
-                Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
-                SKOS.CONCEPT, "test", "test", 1.0);
-        when(searchDao.advancedSearch(any(), anyCollection(), any(Pageable.class), anyCollection())).thenReturn(
-                new PageImpl<>(List.of(item)));
+                Generator.generateUri(),
+                "Test term",
+                null,
+                Generator.generateUri(),
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0);
+        when(searchDao.advancedSearch(any(), anyCollection(), any(Pageable.class), anyCollection()))
+                .thenReturn(new PageImpl<>(List.of(item)));
         final Pageable pageSpec = PageRequest.of(2, 100);
 
         final SearchString searchString = new SearchString("test", null);
@@ -131,29 +141,29 @@ class SearchServiceTest {
                 "test",
                 "test",
                 1.0);
-        when(searchDao.advancedSearch(any(), anyCollection(), any(Pageable.class), anyCollection())).thenReturn(
-                new PageImpl<>(List.of(item)));
+        when(searchDao.advancedSearch(any(), anyCollection(), any(Pageable.class), anyCollection()))
+                .thenReturn(new PageImpl<>(List.of(item)));
 
         final List<SearchResult> result = sut.fullTextSearchOfTerms(searchString, Set.of(vocabulary));
 
         assertEquals(List.of(item), result);
-        verify(searchDao).advancedSearch(eq(searchString), argThat(params ->
-                                                                           params.size() == 2
-                                                                                   && params.stream().anyMatch(
-                                                                                   p -> p.getProperty().toString()
-                                                                                         .equals(RDF.TYPE)
-                                                                                           && p.getMatchType() == MatchType.IRI
-                                                                                           && p.getValue()
-                                                                                               .equals(Set.of(
-                                                                                                       SKOS.CONCEPT)))
-                                                                                   && params.stream().anyMatch(
-                                                                                   p -> p.getProperty().toString()
-                                                                                         .equals(SKOS.IN_SCHEME)
-                                                                                           && p.getMatchType() == MatchType.IRI
-                                                                                           && p.getValue()
-                                                                                               .equals(Set.of(
-                                                                                                       vocabulary.toString())))),
-                                         argThat(pageable -> !pageable.isPaged()), eq(allowedVocabularyUris));
+        verify(searchDao)
+                .advancedSearch(
+                        eq(searchString),
+                                argThat(params -> params.size() == 2
+                                        && params.stream()
+                                                .anyMatch(p -> p.getProperty()
+                                                                .toString()
+                                                                .equals(RDF.TYPE)
+                                                        && p.getMatchType() == MatchType.IRI
+                                                        && p.getValue().equals(Set.of(SKOS.CONCEPT)))
+                                        && params.stream()
+                                                .anyMatch(p -> p.getProperty()
+                                                                .toString()
+                                                                .equals(SKOS.IN_SCHEME)
+                                                        && p.getMatchType() == MatchType.IRI
+                                                        && p.getValue().equals(Set.of(vocabulary.toString())))),
+                        argThat(pageable -> !pageable.isPaged()), eq(allowedVocabularyUris));
     }
 
     @Test
@@ -170,21 +180,22 @@ class SearchServiceTest {
                 "test",
                 "test",
                 1.0);
-        when(searchDao.advancedSearch(any(), anyCollection(), any(Pageable.class), anyCollection())).thenReturn(
-                new PageImpl<>(List.of(item)));
+        when(searchDao.advancedSearch(any(), anyCollection(), any(Pageable.class), anyCollection()))
+                .thenReturn(new PageImpl<>(List.of(item)));
 
         final List<SearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.emptySet());
 
         assertEquals(List.of(item), result);
-        verify(searchDao).advancedSearch(eq(searchString), argThat(params ->
-                                                                           params.size() == 1
-                                                                                   && params.stream().anyMatch(
-                                                                                   p -> p.getProperty().toString()
-                                                                                         .equals(RDF.TYPE)
-                                                                                           && p.getMatchType() == MatchType.IRI
-                                                                                           && p.getValue()
-                                                                                               .equals(Set.of(
-                                                                                                       SKOS.CONCEPT)))),
-                                         argThat(pageable -> !pageable.isPaged()), eq(allowedVocabularyUris));
+        verify(searchDao)
+                .advancedSearch(
+                        eq(searchString),
+                                argThat(params -> params.size() == 1
+                                        && params.stream()
+                                                .anyMatch(p -> p.getProperty()
+                                                                .toString()
+                                                                .equals(RDF.TYPE)
+                                                        && p.getMatchType() == MatchType.IRI
+                                                        && p.getValue().equals(Set.of(SKOS.CONCEPT)))),
+                        argThat(pageable -> !pageable.isPaged()), eq(allowedVocabularyUris));
     }
 }

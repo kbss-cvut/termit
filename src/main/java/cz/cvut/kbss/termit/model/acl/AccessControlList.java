@@ -35,8 +35,10 @@ import java.util.Set;
 @OWLClass(iri = Vocabulary.s_c_access_control_list)
 public class AccessControlList extends AbstractEntity {
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_access_control_record, fetch = FetchType.EAGER,
-                       cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OWLObjectProperty(
+            iri = Vocabulary.s_p_has_access_control_record,
+            fetch = FetchType.EAGER,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private Set<AccessControlRecord<?>> records;
 
     public Set<AccessControlRecord<?>> getRecords() {
@@ -57,8 +59,6 @@ public class AccessControlList extends AbstractEntity {
 
     @Override
     public String toString() {
-        return "AccessControlList{" + Utils.uriToString(getUri()) +
-                " records=" + records +
-                '}';
+        return "AccessControlList{" + Utils.uriToString(getUri()) + " records=" + records + '}';
     }
 }

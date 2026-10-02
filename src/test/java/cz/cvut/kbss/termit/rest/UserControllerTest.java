@@ -102,14 +102,15 @@ class UserControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllReturnsAllUsers() throws Exception {
-        final List<UserAccount> users = IntStream.range(0, 5).mapToObj(_ -> Generator.generateUserAccount())
-                                                 .collect(Collectors.toList());
+        final List<UserAccount> users = IntStream.range(0, 5)
+                .mapToObj(_ -> Generator.generateUserAccount())
+                .collect(Collectors.toList());
         when(userService.findAll()).thenReturn(users);
 
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON_VALUE))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<UserAccount> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<UserAccount> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(users, result);
     }
 
@@ -118,9 +119,8 @@ class UserControllerTest extends BaseControllerTestRunner {
         final UserUpdateDto dto = dtoForUpdate();
         when(securityUtils.getCurrentUser()).thenReturn(user);
 
-        mockMvc.perform(
-                       put(BASE_URL + "/current").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isNoContent());
+        mockMvc.perform(put(BASE_URL + "/current").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isNoContent());
         verify(userService).updateCurrent(dto);
     }
 
@@ -136,14 +136,17 @@ class UserControllerTest extends BaseControllerTestRunner {
         final String newToken = "newJwtToken";
         when(jwtUtils.generateToken(eq(result), any())).thenReturn(newToken);
 
-        final MvcResult mvcResult = mockMvc.perform(
-                       put(BASE_URL + "/current").principal(authentication).content(toJson(dto))
-                                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isNoContent()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(put(BASE_URL + "/current")
+                        .principal(authentication)
+                        .content(toJson(dto))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isNoContent())
+                .andReturn();
         verify(userService).updateCurrent(dto);
         verify(jwtUtils).generateToken(eq(result), any());
-        assertEquals(SecurityConstants.JWT_TOKEN_PREFIX + newToken,
-                     mvcResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION));
+        assertEquals(
+                SecurityConstants.JWT_TOKEN_PREFIX + newToken,
+                mvcResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION));
     }
 
     @Test
@@ -152,10 +155,12 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(userService.updateCurrent(dto)).thenReturn(user);
 
-        final MvcResult mvcResult = mockMvc.perform(
-                       put(BASE_URL + "/current").principal(authentication).content(toJson(dto))
-                                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isNoContent()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(put(BASE_URL + "/current")
+                        .principal(authentication)
+                        .content(toJson(dto))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isNoContent())
+                .andReturn();
         verify(userService).updateCurrent(dto);
         verify(jwtUtils, never()).generateToken(any(), any());
         assertNull(mvcResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION));
@@ -174,21 +179,21 @@ class UserControllerTest extends BaseControllerTestRunner {
 
     @Test
     void enableEnablesUser() throws Exception {
-        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
-                user.getUri());
+        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any()))
+                .thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(post(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/status"))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).enable(user);
     }
 
     @Test
     void disableDisablesUser() throws Exception {
-        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
-                user.getUri());
+        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any()))
+                .thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/status"))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).disable(user);
     }
 
@@ -196,7 +201,7 @@ class UserControllerTest extends BaseControllerTestRunner {
     void existsChecksForUsernameExistence() throws Exception {
         when(userService.exists(user.getUsername())).thenReturn(true);
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL + "/username").param("username", user.getUsername()))
-                                           .andReturn();
+                .andReturn();
         final Boolean result = readValue(mvcResult, Boolean.class);
         assertTrue(result);
     }
@@ -207,9 +212,10 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(put(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/role")
-                                .queryParam(Constants.QueryParams.NAMESPACE, namespace)
-                                .content(Vocabulary.s_c_reader).contentType(MediaType.TEXT_PLAIN))
-               .andExpect(status().isNoContent());
+                        .queryParam(Constants.QueryParams.NAMESPACE, namespace)
+                        .content(Vocabulary.s_c_reader)
+                        .contentType(MediaType.TEXT_PLAIN))
+                .andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
         verify(userService).changeRole(user, Vocabulary.s_c_reader);
     }
@@ -219,16 +225,17 @@ class UserControllerTest extends BaseControllerTestRunner {
         final String namespace = User_.entityClassIRI + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
         when(userService.getReference(user.getUri())).thenReturn(user);
-        final List<RdfsResource> resources = Collections.singletonList(
-                new RdfsResource(Generator.generateUri(), MultilingualString.create("Test term", Environment.LANGUAGE),
-                                 null,
-                                 SKOS.CONCEPT));
+        final List<RdfsResource> resources = Collections.singletonList(new RdfsResource(
+                Generator.generateUri(),
+                MultilingualString.create("Test term", Environment.LANGUAGE),
+                null,
+                SKOS.CONCEPT));
         when(userService.getManagedAssets(user)).thenReturn(resources);
         final MvcResult mvcResult = mockMvc.perform(
-                get(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/managed-assets")
-                        .queryParam(Constants.QueryParams.NAMESPACE, namespace)).andReturn();
-        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                        get(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/managed-assets")
+                                .queryParam(Constants.QueryParams.NAMESPACE, namespace))
+                .andReturn();
+        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(resources, result);
         verify(userService).getManagedAssets(user);
     }

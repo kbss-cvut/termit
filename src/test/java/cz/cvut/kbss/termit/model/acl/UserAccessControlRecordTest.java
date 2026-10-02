@@ -41,8 +41,8 @@ class UserAccessControlRecordTest {
 
     @Test
     void getAccessLevelForReturnsEmptyOptionalWhenSpecifiedUserDoesNotMatchRecordUser() {
-        final UserAccessControlRecord sut = new UserAccessControlRecord(AccessLevel.WRITE,
-                                                                        Generator.generateUserWithId());
+        final UserAccessControlRecord sut =
+                new UserAccessControlRecord(AccessLevel.WRITE, Generator.generateUserWithId());
         final Optional<AccessLevel> result = sut.getAccessLevelFor(account);
         assertFalse(result.isPresent());
     }

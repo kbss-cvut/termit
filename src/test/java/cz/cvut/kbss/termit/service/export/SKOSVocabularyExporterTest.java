@@ -120,11 +120,18 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final Model model = loadAsModel(result);
         assertThat(model, hasItem(vf.createStatement(vocabularyIri(vocabulary), RDF.TYPE, SKOS.CONCEPT_SCHEME)));
         assertThat(model, hasItem(vf.createStatement(vocabularyIri(vocabulary), RDF.TYPE, OWL.ONTOLOGY)));
-        assertThat(model, hasItem(vf.createStatement(vocabularyIri(vocabulary), DCTERMS.TITLE,
-                                                     vf.createLiteral(getPrimaryLabel(vocabulary), lang()))));
-        assertThat(model, hasItem(vf.createStatement(vocabularyIri(vocabulary), DCTERMS.DESCRIPTION,
-                                                     vf.createLiteral(vocabulary.getDescription().get(lang()),
-                                                                      lang()))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vocabularyIri(vocabulary),
+                        DCTERMS.TITLE,
+                        vf.createLiteral(getPrimaryLabel(vocabulary), lang()))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vocabularyIri(vocabulary),
+                        DCTERMS.DESCRIPTION,
+                        vf.createLiteral(vocabulary.getDescription().get(lang()), lang()))));
     }
 
     private static ExportConfig exportConfig() {
@@ -158,9 +165,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   hasItem(vf.createStatement(vocabularyIri(vocabulary), OWL.IMPORTS,
-                                              vocabularyIri(anotherVocabulary))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(vocabularyIri(vocabulary), OWL.IMPORTS, vocabularyIri(anotherVocabulary))));
     }
 
     @Test
@@ -173,10 +180,10 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         assertTrue(model.contains(vocabularyIri(vocabulary), DCTERMS.CREATOR, null));
         assertTrue(model.contains(vocabularyIri(vocabulary), DCTERMS.CREATED, null));
         assertTrue(model.contains(vocabularyIri(vocabulary), DCTERMS.RIGHTS, null));
-        assertTrue(model.contains(vocabularyIri(vocabulary),
-                                  vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"), null));
-        assertTrue(model.contains(vocabularyIri(vocabulary),
-                                  vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"), null));
+        assertTrue(model.contains(
+                vocabularyIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"), null));
+        assertTrue(model.contains(
+                vocabularyIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"), null));
         assertTrue(
                 model.contains(vocabularyIri(vocabulary), vf.createIRI("http://purl.org/ontology/bibo/status"), null));
     }
@@ -186,18 +193,29 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 conn.begin();
-                conn.add(vocabularyIri(vocabulary), OWL.VERSIONIRI, vocabularyIri(vocabulary),
-                         vf.createIRI(vocabulary.getUri().toString()));
-                conn.add(vocabularyIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"),
-                         vf.createLiteral("termit:"), vf.createIRI(vocabulary.getUri().toString()));
-                conn.add(vocabularyIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"),
-                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT),
-                         vf.createIRI(vocabulary.getUri().toString()));
-                conn.add(vocabularyIri(vocabulary), DCTERMS.RIGHTS,
-                         vf.createIRI("https://creativecommons.org/licenses/by-nc-nd/4.0"),
-                         vf.createIRI(vocabulary.getUri().toString()));
-                conn.add(vocabularyIri(vocabulary), vf.createIRI("http://purl.org/ontology/bibo/status"),
-                         vf.createLiteral("Specifikace", "cs"), vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        vocabularyIri(vocabulary),
+                        OWL.VERSIONIRI,
+                        vocabularyIri(vocabulary),
+                        vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        vocabularyIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"),
+                        vf.createLiteral("termit:"),
+                                vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        vocabularyIri(vocabulary),
+                        vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"),
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT),
+                        vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        vocabularyIri(vocabulary),
+                        DCTERMS.RIGHTS,
+                        vf.createIRI("https://creativecommons.org/licenses/by-nc-nd/4.0"),
+                        vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        vocabularyIri(vocabulary), vf.createIRI("http://purl.org/ontology/bibo/status"),
+                        vf.createLiteral("Specifikace", "cs"),
+                                vf.createIRI(vocabulary.getUri().toString()));
                 conn.commit();
             }
         });
@@ -209,11 +227,11 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
         for (Term t : terms) {
-            assertThat(model,
-                       hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), RDF.TYPE, SKOS.CONCEPT)));
-            assertThat(model, hasItem(
-                    vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.IN_SCHEME,
-                                       vocabularyIri(vocabulary))));
+            assertThat(model, hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), RDF.TYPE, SKOS.CONCEPT)));
+            assertThat(
+                    model,
+                    hasItem(vf.createStatement(
+                            vf.createIRI(t.getUri().toString()), SKOS.IN_SCHEME, vocabularyIri(vocabulary))));
         }
     }
 
@@ -239,46 +257,48 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
         for (Term t : terms) {
-            t.getLabel().getValue().forEach((lang, val) -> assertThat(model,
-                                                                      hasItem(vf.createStatement(
-                                                                              vf.createIRI(t.getUri().toString()),
-                                                                              SKOS.PREF_LABEL,
-                                                                              vf.createLiteral(val, lang)))));
+            t.getLabel()
+                    .getValue()
+                    .forEach((lang, val) -> assertThat(
+                            model,
+                            hasItem(vf.createStatement(
+                                    vf.createIRI(t.getUri().toString()),
+                                    SKOS.PREF_LABEL,
+                                    vf.createLiteral(val, lang)))));
             if (t.getAltLabels() != null && !t.getAltLabels().isEmpty()) {
-                t.getAltLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
-                                                                                                 hasItem(vf.createStatement(
-                                                                                                         vf.createIRI(
-                                                                                                                 t.getUri()
-                                                                                                                  .toString()),
-                                                                                                         SKOS.ALT_LABEL,
-                                                                                                         vf.createLiteral(
-                                                                                                                 val,
-                                                                                                                 lang))))));
-
+                t.getAltLabels()
+                        .forEach(src -> src.getValue()
+                                .forEach((lang, val) -> assertThat(
+                                        model,
+                                        hasItem(vf.createStatement(
+                                                vf.createIRI(t.getUri().toString()),
+                                                SKOS.ALT_LABEL,
+                                                vf.createLiteral(val, lang))))));
             }
             if (t.getHiddenLabels() != null && !t.getHiddenLabels().isEmpty()) {
-                t.getHiddenLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
-                                                                                                    hasItem(vf.createStatement(
-                                                                                                            vf.createIRI(
-                                                                                                                    t.getUri()
-                                                                                                                     .toString()),
-                                                                                                            SKOS.HIDDEN_LABEL,
-                                                                                                            vf.createLiteral(
-                                                                                                                    val,
-                                                                                                                    lang))))));
-
+                t.getHiddenLabels()
+                        .forEach(src -> src.getValue()
+                                .forEach((lang, val) -> assertThat(
+                                        model,
+                                        hasItem(vf.createStatement(
+                                                vf.createIRI(t.getUri().toString()),
+                                                SKOS.HIDDEN_LABEL,
+                                                vf.createLiteral(val, lang))))));
             }
-            t.getDefinition().getValue().forEach((lang, val) -> assertThat(model,
-                                                                           hasItem(vf.createStatement(
-                                                                                   vf.createIRI(t.getUri().toString()),
-                                                                                   SKOS.DEFINITION,
-                                                                                   vf.createLiteral(val, lang)))));
+            t.getDefinition()
+                    .getValue()
+                    .forEach((lang, val) -> assertThat(
+                            model,
+                            hasItem(vf.createStatement(
+                                    vf.createIRI(t.getUri().toString()),
+                                    SKOS.DEFINITION,
+                                    vf.createLiteral(val, lang)))));
             if (t.getSources() != null && !t.getSources().isEmpty()) {
-                t.getSources().forEach(src -> assertThat(model,
-                                                         hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()),
-                                                                                    DCTERMS.SOURCE,
-                                                                                    vf.createLiteral(src)))));
-
+                t.getSources()
+                        .forEach(src -> assertThat(
+                                model,
+                                hasItem(vf.createStatement(
+                                        vf.createIRI(t.getUri().toString()), DCTERMS.SOURCE, vf.createLiteral(src)))));
             }
         }
         assertThat(model.filter(vf.createIRI(withAltLabels.getUri().toString()), SKOS.ALT_LABEL, null), not(empty()));
@@ -290,10 +310,16 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
             try (final RepositoryConnection conn = repo.getConnection()) {
                 conn.begin();
                 final IRI iri = vf.createIRI(t.getUri().toString());
-                conn.add(iri, SKOS.ALT_LABEL, vf.createLiteral("alternativní název", "cs"),
-                         vf.createIRI(vocabulary.getUri().toString()));
-                conn.add(iri, SKOS.ALT_LABEL, vf.createLiteral("alternativer Name", "de"),
-                         vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        iri,
+                        SKOS.ALT_LABEL,
+                        vf.createLiteral("alternativní název", "cs"),
+                        vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        iri,
+                        SKOS.ALT_LABEL,
+                        vf.createLiteral("alternativer Name", "de"),
+                        vf.createIRI(vocabulary.getUri().toString()));
                 conn.commit();
             }
         });
@@ -312,15 +338,20 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final Model model = loadAsModel(result);
         for (Term t : terms) {
             if (t.equals(withParent)) {
-                withParent.getParentTerms()
-                          .forEach(pt -> assertThat(model,
-                                                    hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()),
-                                                                               SKOS.BROADER,
-                                                                               vf.createIRI(pt.getUri().toString())))));
+                withParent
+                        .getParentTerms()
+                        .forEach(pt -> assertThat(
+                                model,
+                                hasItem(vf.createStatement(
+                                        vf.createIRI(t.getUri().toString()),
+                                        SKOS.BROADER,
+                                        vf.createIRI(pt.getUri().toString())))));
 
             } else {
-                assertThat(model, hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.TOP_CONCEPT_OF,
-                                                             vocabularyIri(vocabulary))));
+                assertThat(
+                        model,
+                        hasItem(vf.createStatement(
+                                vf.createIRI(t.getUri().toString()), SKOS.TOP_CONCEPT_OF, vocabularyIri(vocabulary))));
             }
         }
     }
@@ -337,8 +368,12 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model, hasItem(vf.createStatement(vf.createIRI(withRelated.getUri().toString()), SKOS.RELATED,
-                                                     vf.createIRI(related.getUri().toString()))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vf.createIRI(withRelated.getUri().toString()),
+                        SKOS.RELATED,
+                        vf.createIRI(related.getUri().toString()))));
     }
 
     @Test
@@ -360,9 +395,12 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   hasItem(vf.createStatement(vf.createIRI(affectedTerm.getUri().toString()), SKOS.TOP_CONCEPT_OF,
-                                              vocabularyIri(vocabulary))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vf.createIRI(affectedTerm.getUri().toString()),
+                        SKOS.TOP_CONCEPT_OF,
+                        vocabularyIri(vocabulary))));
     }
 
     @Test
@@ -377,9 +415,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   hasItem(vf.createStatement(vf.createIRI(typed.getUri().toString()), RDF.TYPE,
-                                              vf.createIRI(type))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(vf.createIRI(typed.getUri().toString()), RDF.TYPE, vf.createIRI(type))));
     }
 
     @Test
@@ -394,17 +432,21 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   hasItem(vf.createStatement(vf.createIRI(rdfsSubclass.getUri().toString()), SKOS.BROADER,
-                                              vf.createIRI(supertype))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vf.createIRI(rdfsSubclass.getUri().toString()), SKOS.BROADER, vf.createIRI(supertype))));
     }
 
     private void insertPropertyAssertion(Term subject, String property, String value) {
         final Repository repo = em.unwrap(Repository.class);
         final ValueFactory vf = repo.getValueFactory();
         try (final RepositoryConnection conn = repo.getConnection()) {
-            conn.add(vf.createIRI(subject.getUri().toString()), vf.createIRI(property), vf.createIRI(value),
-                     vf.createIRI(vocabulary.getUri().toString()));
+            conn.add(
+                    vf.createIRI(subject.getUri().toString()),
+                    vf.createIRI(property),
+                    vf.createIRI(value),
+                    vf.createIRI(vocabulary.getUri().toString()));
         }
     }
 
@@ -414,16 +456,21 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final Term partOf = terms.get(0);
         final Term hasPart = terms.get(1);
         transactional(() -> {
-            insertPropertyAssertion(hasPart, "http://onto.fel.cvut.cz/ontologies/ufo/has-part",
-                                    partOf.getUri().toString());
+            insertPropertyAssertion(
+                    hasPart,
+                    "http://onto.fel.cvut.cz/ontologies/ufo/has-part",
+                    partOf.getUri().toString());
             // Simulate inference
         });
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   hasItem(vf.createStatement(vf.createIRI(partOf.getUri().toString()), SKOS.BROADER,
-                                              vf.createIRI(hasPart.getUri().toString()))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vf.createIRI(partOf.getUri().toString()),
+                        SKOS.BROADER,
+                        vf.createIRI(hasPart.getUri().toString()))));
     }
 
     @Test
@@ -432,16 +479,21 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final Term participant = terms.get(0);
         final Term parent = terms.get(1);
         transactional(() -> {
-            insertPropertyAssertion(parent, "http://onto.fel.cvut.cz/ontologies/ufo/has-participant",
-                                    participant.getUri().toString());
+            insertPropertyAssertion(
+                    parent,
+                    "http://onto.fel.cvut.cz/ontologies/ufo/has-participant",
+                    participant.getUri().toString());
             // Simulate inference
         });
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   hasItem(vf.createStatement(vf.createIRI(participant.getUri().toString()), SKOS.BROADER,
-                                              vf.createIRI(parent.getUri().toString()))));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vf.createIRI(participant.getUri().toString()),
+                        SKOS.BROADER,
+                        vf.createIRI(parent.getUri().toString()))));
     }
 
     @Test
@@ -455,9 +507,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   not(hasItem(
-                           vf.createStatement(vf.createIRI(withOwl.getUri().toString()), SKOS.BROADER, OWL.CLASS))));
+        assertThat(
+                model,
+                not(hasItem(vf.createStatement(vf.createIRI(withOwl.getUri().toString()), SKOS.BROADER, OWL.CLASS))));
     }
 
     @Test
@@ -471,9 +523,10 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
-        assertThat(model,
-                   not(hasItem(vf.createStatement(vf.createIRI(withOwl.getUri().toString()), SKOS.BROADER,
-                                                  OWL.OBJECTPROPERTY))));
+        assertThat(
+                model,
+                not(hasItem(vf.createStatement(
+                        vf.createIRI(withOwl.getUri().toString()), SKOS.BROADER, OWL.OBJECTPROPERTY))));
     }
 
     @Test
@@ -485,14 +538,14 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final IRI property = REFERENCING_PROPERTIES[Generator.randomIndex(REFERENCING_PROPERTIES)];
         final Set<Term> referencedExternal = generateReferences(terms, externalTerms, property);
 
-        final ExportConfig config = new ExportConfig(ExportType.SKOS_WITH_REFERENCES,
-                                                     ExportFormat.TURTLE.getMediaType(),
-                                                     Collections.singleton(property.stringValue()));
+        final ExportConfig config = new ExportConfig(
+                ExportType.SKOS_WITH_REFERENCES,
+                ExportFormat.TURTLE.getMediaType(),
+                Collections.singleton(property.stringValue()));
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, config);
         final Model model = loadAsModel(result);
-        referencedExternal.forEach(rt -> assertThat(model,
-                                                    hasItem(vf.createStatement(vf.createIRI(rt.getUri().toString()),
-                                                                               RDF.TYPE, SKOS.CONCEPT))));
+        referencedExternal.forEach(rt -> assertThat(
+                model, hasItem(vf.createStatement(vf.createIRI(rt.getUri().toString()), RDF.TYPE, SKOS.CONCEPT))));
     }
 
     private Set<Term> generateReferences(List<Term> terms, List<Term> externalTerms, IRI property) {
@@ -504,8 +557,11 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
                 final IRI ctx = vf.createIRI(vocabulary.getUri().toString());
                 terms.forEach(t -> {
                     final Term referenced = externalTerms.get(Generator.randomIndex(externalTerms));
-                    con.add(vf.createIRI(t.getUri().toString()), property, vf.createIRI(referenced.getUri()
-                                                                                                  .toString()), ctx);
+                    con.add(
+                            vf.createIRI(t.getUri().toString()),
+                            property,
+                            vf.createIRI(referenced.getUri().toString()),
+                            ctx);
                     referencedTerms.add(referenced);
                 });
                 con.commit();
@@ -523,12 +579,15 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final IRI property = REFERENCING_PROPERTIES[Generator.randomIndex(REFERENCING_PROPERTIES)];
         generateReferences(terms, externalTerms, property);
 
-        final ExportConfig config = new ExportConfig(ExportType.SKOS_WITH_REFERENCES,
-                                                     ExportFormat.TURTLE.getMediaType(),
-                                                     Collections.singleton(property.stringValue()));
+        final ExportConfig config = new ExportConfig(
+                ExportType.SKOS_WITH_REFERENCES,
+                ExportFormat.TURTLE.getMediaType(),
+                Collections.singleton(property.stringValue()));
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, config);
         final Model model = loadAsModel(result);
-        assertThat(model, hasItem(vf.createStatement(vf.createIRI(anotherVocabulary.getUri().toString()), RDF.TYPE,
-                                                     SKOS.CONCEPT_SCHEME)));
+        assertThat(
+                model,
+                hasItem(vf.createStatement(
+                        vf.createIRI(anotherVocabulary.getUri().toString()), RDF.TYPE, SKOS.CONCEPT_SCHEME)));
     }
 }

@@ -34,12 +34,16 @@ import java.util.Set;
 /**
  * Aggregated information about change records on a specific date.
  */
-@SparqlResultSetMapping(name = "AggregatedChangeInfo",
-                        classes = {@ConstructorResult(targetClass = AggregatedChangeInfo.class,
-                                                      variables = {
-                                                              @VariableResult(name = "date", type = String.class),
-                                                              @VariableResult(name = "cnt", type = BigInteger.class)
-                                                      })})
+@SparqlResultSetMapping(
+        name = "AggregatedChangeInfo",
+        classes = {
+            @ConstructorResult(
+                    targetClass = AggregatedChangeInfo.class,
+                    variables = {
+                        @VariableResult(name = "date", type = String.class),
+                        @VariableResult(name = "cnt", type = BigInteger.class)
+                    })
+        })
 public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChangeInfo> {
 
     @OWLDataProperty(iri = DC.Terms.MODIFIED)
@@ -54,8 +58,7 @@ public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChan
     @Types
     private Set<String> types;
 
-    public AggregatedChangeInfo() {
-    }
+    public AggregatedChangeInfo() {}
 
     public AggregatedChangeInfo(String date, BigInteger count) {
         this.date = LocalDate.parse(date);
@@ -95,7 +98,9 @@ public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChan
             return false;
         }
         AggregatedChangeInfo that = (AggregatedChangeInfo) o;
-        return Objects.equals(date, that.date) && Objects.equals(count, that.count) && Objects.equals(types, that.types);
+        return Objects.equals(date, that.date)
+                && Objects.equals(count, that.count)
+                && Objects.equals(types, that.types);
     }
 
     @Override
@@ -105,11 +110,7 @@ public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChan
 
     @Override
     public String toString() {
-        return "AggregatedChangeInfo{" +
-                "count=" + count +
-                ", date=" + date +
-                ", types='" + types + '\'' +
-                '}';
+        return "AggregatedChangeInfo{" + "count=" + count + ", date=" + date + ", types='" + types + '\'' + '}';
     }
 
     @Override

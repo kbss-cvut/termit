@@ -67,17 +67,16 @@ public class ServiceConfig {
         // HttpClient 5 default redirect strategy automatically follows POST redirects as well
         final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
         final HttpClient httpClient = HttpClientBuilder.create()
-                                                       .setRedirectStrategy(new DefaultRedirectStrategy())
-                                                       .build();
+                .setRedirectStrategy(new DefaultRedirectStrategy())
+                .build();
         factory.setHttpClient(httpClient);
         factory.setReadTimeout(Duration.ofMinutes(10L));
         restTemplate.setRequestFactory(factory);
 
         final JacksonJsonHttpMessageConverter jacksonConverter = new JacksonJsonHttpMessageConverter(jsonMapper);
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
-        restTemplate.setMessageConverters(
-                Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter(),
-                              new FormHttpMessageConverter()));
+        restTemplate.setMessageConverters(Arrays.asList(
+                jacksonConverter, stringConverter, new ResourceHttpMessageConverter(), new FormHttpMessageConverter()));
         return restTemplate;
     }
 

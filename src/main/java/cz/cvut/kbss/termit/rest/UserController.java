@@ -81,16 +81,21 @@ public class UserController extends BaseController {
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public UserController(UserService userService, IdentifierResolver idResolver, Configuration config,
-                          JwtUtils jwtUtils, SecurityUtils securityUtils) {
+    public UserController(
+            UserService userService,
+            IdentifierResolver idResolver,
+            Configuration config,
+            JwtUtils jwtUtils,
+            SecurityUtils securityUtils) {
         super(idResolver, config);
         this.userService = userService;
         this.jwtUtils = jwtUtils;
         this.securityUtils = securityUtils;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets all users of the system.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets all users of the system.")
     @ApiResponse(responseCode = "200", description = "List of users ordered by name.")
     @PreAuthorize("hasAnyRole('" + SecurityConstants.ROLE_ADMIN + "', '" + SecurityConstants.ROLE_FULL_USER + "')")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -98,26 +103,32 @@ public class UserController extends BaseController {
         return userService.findAll();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the currently logged-in user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets the currently logged-in user.")
     @ApiResponse(responseCode = "200", description = "Metadata of the current user's account.")
-    @GetMapping(value = CURRENT_USER_PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = CURRENT_USER_PATH,
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates the current user's account.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates the current user's account.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Update successful."),
-            @ApiResponse(responseCode = "409", description = "Update data are invalid.")
+        @ApiResponse(responseCode = "204", description = "Update successful."),
+        @ApiResponse(responseCode = "409", description = "Update data are invalid.")
     })
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping(value = CURRENT_USER_PATH, consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public void updateCurrent(@Parameter(description = "Updated user account metadata")
-                              @RequestBody UserUpdateDto update,
-                              Authentication authentication,
-                              HttpServletResponse response) {
+    @PutMapping(
+            value = CURRENT_USER_PATH,
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public void updateCurrent(
+            @Parameter(description = "Updated user account metadata") @RequestBody UserUpdateDto update,
+            Authentication authentication,
+            HttpServletResponse response) {
         final UserAccount currentUser = securityUtils.getCurrentUser();
         final UserAccount result = userService.updateCurrent(update);
         LOG.debug("User {} successfully updated.", result);
@@ -129,48 +140,58 @@ public class UserController extends BaseController {
     }
 
     private UserAccount getUserAccountForUpdate(Optional<String> namespace, String identifierFragment) {
-        final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()),
-                                                    identifierFragment);
+        final URI id = idResolver.resolveIdentifier(
+                namespace.orElse(config.getNamespace().getUser()), identifierFragment);
         return userService.findRequired(id);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Enables a previously disabled user account.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Enables a previously disabled user account.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User account enabled."),
-            @ApiResponse(responseCode = "404", description = "Account not found.")
+        @ApiResponse(responseCode = "204", description = "User account enabled."),
+        @ApiResponse(responseCode = "404", description = "Account not found.")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(value = "/{localName}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void enable(@Parameter(description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                  example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                       @PathVariable String localName,
-                       @Parameter(description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                  example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-                       @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                     required = false) Optional<String> namespace) {
+    public void enable(
+            @Parameter(
+                            description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final UserAccount user = getUserAccountForUpdate(namespace, localName);
         userService.enable(user);
         LOG.debug("User {} successfully enabled.", user);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Disables a user account, preventing the user from logging in.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Disables a user account, preventing the user from logging in.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User account disabled."),
-            @ApiResponse(responseCode = "404", description = "Account not found.")
+        @ApiResponse(responseCode = "204", description = "User account disabled."),
+        @ApiResponse(responseCode = "404", description = "Account not found.")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{localName}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disable(@Parameter(description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                   example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                        @PathVariable String localName,
-                        @Parameter(description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                   example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-                        @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                      required = false) Optional<String> namespace) {
+    public void disable(
+            @Parameter(
+                            description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final UserAccount user = getUserAccountForUpdate(namespace, localName);
         userService.disable(user);
         LOG.debug("User {} successfully disabled.", user);
@@ -180,50 +201,66 @@ public class UserController extends BaseController {
     @ApiResponse(responseCode = "200", description = "Account existence status.")
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/username")
-    public Boolean exists(@Parameter(description = "Username whose existence to check.")
-                          @RequestParam(name = "username") String username) {
+    public Boolean exists(
+            @Parameter(description = "Username whose existence to check.") @RequestParam(name = "username")
+                    String username) {
         return userService.exists(username);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates the role of the specified user account.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates the role of the specified user account.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User account role updated."),
-            @ApiResponse(responseCode = "404", description = "Account not found.")
+        @ApiResponse(responseCode = "204", description = "User account role updated."),
+        @ApiResponse(responseCode = "404", description = "Account not found.")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @PutMapping(value = "/{localName}/role", consumes = {MediaType.TEXT_PLAIN_VALUE})
+    @PutMapping(
+            value = "/{localName}/role",
+            consumes = {MediaType.TEXT_PLAIN_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changeRole(@Parameter(description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                      example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                           @PathVariable String localName,
-                           @Parameter(description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                      example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-                           @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                         required = false) Optional<String> namespace,
-                           @Parameter(description = "Role to set to the target user account.")
-                           @RequestBody String role) {
+    public void changeRole(
+            @Parameter(
+                            description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = "Role to set to the target user account.") @RequestBody String role) {
         final UserAccount user = getUserAccountForUpdate(namespace, localName);
         userService.changeRole(user, role);
         LOG.debug("Role of user {} successfully changed to {}.", user, role);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets assets that the user with the specified identifier can manage, i.e., has security-level access to them.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Gets assets that the user with the specified identifier can manage, i.e., has security-level access to them.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of managed assets."),
-            @ApiResponse(responseCode = "404", description = "Account not found.")
+        @ApiResponse(responseCode = "200", description = "List of managed assets."),
+        @ApiResponse(responseCode = "404", description = "Account not found.")
     })
-    @GetMapping(value = "/{localName}/managed-assets", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/managed-assets",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    public List<RdfsResource> getManagedAssets(@Parameter(description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                          example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                               @PathVariable String localName,
-                                               @Parameter(description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                          example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                               @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                                             required = false) Optional<String> namespace) {
-        final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()), localName);
+    public List<RdfsResource> getManagedAssets(
+            @Parameter(
+                            description = UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = UserControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
+        final URI id = idResolver.resolveIdentifier(
+                namespace.orElse(config.getNamespace().getUser()), localName);
         return userService.getManagedAssets(userService.getReference(id));
     }
 
@@ -231,9 +268,11 @@ public class UserController extends BaseController {
      * A couple of constants for the {@link UserController} API documentation.
      */
     static final class UserControllerDoc {
-        static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default user namespace) unique part of the user account identifier.";
+        static final String ID_LOCAL_NAME_DESCRIPTION =
+                "Locally (in the context of the specified namespace/default user namespace) unique part of the user account identifier.";
         static final String ID_LOCAL_NAME_EXAMPLE = "system-administrator";
-        static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default user identifier namespace.";
+        static final String ID_NAMESPACE_DESCRIPTION =
+                "Identifier namespace. Allows to override the default user identifier namespace.";
         static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/uzivatel/";
     }
 }

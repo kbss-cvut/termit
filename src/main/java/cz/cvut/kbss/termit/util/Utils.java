@@ -69,7 +69,8 @@ public class Utils {
     /**
      * Email validation regexp by OWASP.
      */
-    private static final String EMAIL_REGEXP = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
+    private static final String EMAIL_REGEXP =
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
 
     private Utils() {
         throw new AssertionError();
@@ -135,14 +136,11 @@ public class Utils {
      * @param newNamespace      the new, changed, IRI
      * @param model             model to change the IRI in
      */
-    public static void changeNamespace(final String originalNamespace,
-                                       final String newNamespace,
-                                       final Model model) {
+    public static void changeNamespace(final String originalNamespace, final String newNamespace, final Model model) {
         changeIrisByFunction(
                 oIri -> oIri.startsWith(originalNamespace),
                 oIri -> oIri.replaceFirst("^" + originalNamespace, newNamespace),
-                model
-        );
+                model);
     }
 
     /**
@@ -152,9 +150,10 @@ public class Utils {
      * @param transformIri     transforms the original IRI to the new IRI
      * @param model            model to change the IRI in
      */
-    private static void changeIrisByFunction(final Function<String, Boolean> checkOriginalIri,
-                                             final Function<String, String> transformIri,
-                                             final Model model) {
+    private static void changeIrisByFunction(
+            final Function<String, Boolean> checkOriginalIri,
+            final Function<String, String> transformIri,
+            final Model model) {
         final Collection<Statement> statementsToAdd = new HashSet<>();
         final Collection<Statement> statementsToRemove = new HashSet<>();
         model.getStatements(null, null, null).forEach(s -> {
@@ -180,8 +179,8 @@ public class Utils {
 
             if (changed) {
                 statementsToAdd.add(Statements.statement(subject, predicate, object, s.getContext()));
-                statementsToRemove
-                        .add(Statements.statement(s.getSubject(), s.getPredicate(), s.getObject(), s.getContext()));
+                statementsToRemove.add(
+                        Statements.statement(s.getSubject(), s.getPredicate(), s.getObject(), s.getContext()));
             }
         });
         model.removeAll(statementsToRemove);
@@ -280,8 +279,9 @@ public class Utils {
         final MultilingualString s = new MultilingualString();
         model.filter(subject, property, null).forEach(st -> {
             if (st.getObject().isLiteral()) {
-                ((Literal) st.getObject()).getLanguage()
-                                          .ifPresent(lang -> s.set(lang, ((Literal) st.getObject()).getLabel()));
+                ((Literal) st.getObject())
+                        .getLanguage()
+                        .ifPresent(lang -> s.set(lang, ((Literal) st.getObject()).getLabel()));
             }
         });
         return s;
@@ -400,9 +400,10 @@ public class Utils {
         if (str == null) {
             return;
         }
-        str.getValue().keySet().forEach(k -> str.getValue().computeIfPresent(k,
-                                                                             (key, value) -> IdentifierResolver.normalizeUnicodeCharacters(
-                                                                                     value)));
+        str.getValue()
+                .keySet()
+                .forEach(k -> str.getValue()
+                        .computeIfPresent(k, (key, value) -> IdentifierResolver.normalizeUnicodeCharacters(value)));
     }
 
     /**
@@ -414,9 +415,7 @@ public class Utils {
         if (map == null) {
             return "";
         }
-        return map.keySet().stream()
-                  .map(key -> key + "=" + map.get(key))
-                  .collect(Collectors.joining(", ", "{", "}"));
+        return map.keySet().stream().map(key -> key + "=" + map.get(key)).collect(Collectors.joining(", ", "{", "}"));
     }
 
     /**

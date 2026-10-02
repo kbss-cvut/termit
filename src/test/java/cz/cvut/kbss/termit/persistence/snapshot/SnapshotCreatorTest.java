@@ -55,7 +55,7 @@ class SnapshotCreatorTest {
     void getSnapshotSuffixUsesConfiguredSeparatorAndCurrentTimestampToGenerateSnapshotIdentifier() {
         final String result = sut.getSnapshotSuffix();
         assertThat(result, startsWith(SNAPSHOT_SEPARATOR + "/"));
-        assertThat(result, containsString(sut.timestamp.toString().replace("-", "")
-                                                       .replace(":", "")));
+        assertThat(
+                result, containsString(sut.timestamp.toString().replace("-", "").replace(":", "")));
     }
 }

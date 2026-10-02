@@ -17,8 +17,8 @@
  */
 package cz.cvut.kbss.termit.service.language;
 
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
@@ -74,18 +74,20 @@ public class TermStateLanguageService {
         try {
             final ValueFactory vf = SimpleValueFactory.getInstance();
             final Model model = Rio.parse(termStatesLanguageTtl.getInputStream(), RDFFormat.TURTLE);
-            return model.filter(null, RDF.TYPE, vf.createIRI(Vocabulary.s_c_term_state))
-                        .stream().map(s -> {
+            return model.filter(null, RDF.TYPE, vf.createIRI(Vocabulary.s_c_term_state)).stream()
+                    .map(s -> {
                         final org.eclipse.rdf4j.model.Resource state = s.getSubject();
                         final RdfsResource res = new RdfsResource();
                         res.setUri(URI.create(state.stringValue()));
                         final Model statements = model.filter(state, null, null);
                         res.setTypes(statements.filter(state, RDF.TYPE, null).stream()
-                                               .map(ts -> ts.getObject().stringValue()).collect(Collectors.toSet()));
+                                .map(ts -> ts.getObject().stringValue())
+                                .collect(Collectors.toSet()));
                         res.setLabel(Utils.resolveTranslations(state, SKOS.PREF_LABEL, statements));
                         res.setComment(Utils.resolveTranslations(state, SKOS.SCOPE_NOTE, statements));
                         return res;
-                    }).collect(Collectors.toList());
+                    })
+                    .collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
             throw new LanguageRetrievalException(
                     "Unable to load term states language from file " + termStatesLanguageTtl.getFilename(), e);
@@ -101,7 +103,8 @@ public class TermStateLanguageService {
      * @return Optional initial term state
      */
     public Optional<RdfsResource> getInitialState() {
-        return getTermStates().stream().filter(s -> s.getTypes().contains(Vocabulary.s_c_initial_term_state))
-                              .findFirst();
+        return getTermStates().stream()
+                .filter(s -> s.getTypes().contains(Vocabulary.s_c_initial_term_state))
+                .findFirst();
     }
 }

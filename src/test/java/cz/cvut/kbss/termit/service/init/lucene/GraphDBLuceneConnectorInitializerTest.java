@@ -38,14 +38,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(Configuration.class)
-@ContextConfiguration(classes = {TestPersistenceConfig.class},
-                      initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestPersistenceConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
 class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
 
     @Autowired
     private EntityManager em;
+
     private GraphDBLuceneConnectorInitializer sut;
 
     @BeforeEach
@@ -66,9 +68,9 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
                     }
                 }
                 """, URI.class)
-                 .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
-                 .setParameter("dropConnector", GraphDBLuceneConnectorInitializer.LUCENE_DROP_CONNECTOR)
-                 .getResultList();
+                .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
+                .setParameter("dropConnector", GraphDBLuceneConnectorInitializer.LUCENE_DROP_CONNECTOR)
+                .getResultList();
     }
 
     private void assertConnectorsExist(Collection<String> languages) {
@@ -80,7 +82,7 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
         // +1 for universal connector indexing all languages
         // *2 one label index, one defcom index
         assertEquals((languages.size() + 1) * 2, connectors.size());
-        for(String lang : languagesSet) {
+        for (String lang : languagesSet) {
             assertTrue(connectors.contains(URI.create(labelIndexPrefix + lang)));
             assertTrue(connectors.contains(URI.create(defcomIndexPrefix + lang)));
         }
@@ -95,12 +97,13 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
     @Test
     void initializeCreatesConnectorsForAllLanguages() {
         final List<String> languages = List.of("cs", "en", "pl", "as", "aa");
-        final List<URI> predicates = Stream.of(SKOS.PREF_LABEL,
-                                               SKOS.ALT_LABEL, DC.Terms.TITLE, DC.Terms.DESCRIPTION, SKOS.DEFINITION)
-                .map(URI::create).toList();
+        final List<URI> predicates = Stream.of(
+                        SKOS.PREF_LABEL, SKOS.ALT_LABEL, DC.Terms.TITLE, DC.Terms.DESCRIPTION, SKOS.DEFINITION)
+                .map(URI::create)
+                .toList();
         assertEquals(languages.size(), predicates.size());
         transactional(() -> {
-            for(int i = 0; i < languages.size(); i++) {
+            for (int i = 0; i < languages.size(); i++) {
                 em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }")
                         .setParameter("uri", Generator.generateUri())
                         .setParameter("pred", predicates.get(i))
@@ -117,6 +120,7 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
                 .setParameter("pred", URI.create(SKOS.ALT_LABEL))
                 .setParameter("value", "stringValue", language);
     }
+
     private Query bindUriPredAndValue(Query q, URI uri) {
         return bindUriPredAndValue(q, uri, "pl");
     }
@@ -137,25 +141,25 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
     void initializeWontDropNonPrefixedConnectors() {
         final URI connectorUri = URI.create(Constants.LUCENE_INSTANCE_NS + "myCustomPrefix");
         transactional(() -> em.createNativeQuery("INSERT DATA {?connectorUri ?createConnector [].}")
-                          .setParameter("connectorUri", connectorUri)
-                          .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
-                          .executeUpdate());
+                .setParameter("connectorUri", connectorUri)
+                .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
+                .executeUpdate());
         sut.initialize();
         transactional(() -> {
-            final int removedConnectorsCount =
-                    em.createNativeQuery("SELECT ?connectorUri WHERE { ?connectorUri ?dropConnector ?value }")
-                      .setParameter("dropConnector", GraphDBLuceneConnectorInitializer.LUCENE_DROP_CONNECTOR)
-                      .getResultList().size();
+            final int removedConnectorsCount = em.createNativeQuery(
+                            "SELECT ?connectorUri WHERE { ?connectorUri ?dropConnector ?value }")
+                    .setParameter("dropConnector", GraphDBLuceneConnectorInitializer.LUCENE_DROP_CONNECTOR)
+                    .getResultList()
+                    .size();
             assertEquals(0, removedConnectorsCount);
         });
     }
 
     @ParameterizedTest
-    @CsvSource({"cs,org.apache.lucene.analysis.cz.CzechAnalyzer",
-                "cz,org.apache.lucene.analysis.cz.CzechAnalyzer"
-    })
+    @CsvSource({"cs,org.apache.lucene.analysis.cz.CzechAnalyzer", "cz,org.apache.lucene.analysis.cz.CzechAnalyzer"})
     void initializeSetsCorrectAnalyzerForCzech(String lang, String analyzer) {
-        transactional(() -> bindUriPredAndValue(em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }"), Generator.generateUri(), lang)
+        transactional(() -> bindUriPredAndValue(
+                        em.createNativeQuery("INSERT DATA { ?uri ?pred ?value }"), Generator.generateUri(), lang)
                 .executeUpdate());
         sut.initialize();
         transactional(() -> {
@@ -165,13 +169,14 @@ class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
                         FILTER(REGEX(str(?uri), STR(?lang))) .
                     }
                 """, String.class)
-                                       .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
-                                       .setParameter("lang", ".*" + lang + "$")
-                                       .getResultStream()
-                                       .map(options -> Environment.getObjectMapper()
-                                                          .readTree(options)
-                                                          .get("analyzer")
-                                                          .stringValue()).toList();
+                    .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
+                    .setParameter("lang", ".*" + lang + "$")
+                    .getResultStream()
+                    .map(options -> Environment.getObjectMapper()
+                            .readTree(options)
+                            .get("analyzer")
+                            .stringValue())
+                    .toList();
             assertEquals(2, analyzers.size());
             analyzers.forEach(value -> assertEquals(analyzer, value));
         });

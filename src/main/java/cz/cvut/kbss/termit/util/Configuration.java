@@ -103,40 +103,58 @@ public class Configuration {
 
     @Valid
     private Persistence persistence = new Persistence();
+
     @Valid
     private Repository repository = new Repository();
+
     @Valid
     private ChangeTracking changetracking = new ChangeTracking();
+
     @Valid
     private Comments comments = new Comments();
+
     @Valid
     private Namespace namespace = new Namespace();
+
     @Valid
     private Admin admin = new Admin();
+
     @Valid
     private File file = new File();
+
     @Valid
     private Jwt jwt = new Jwt();
+
     @Valid
     private TextAnalysis textAnalysis = new TextAnalysis();
+
     @Valid
     private Glossary glossary = new Glossary();
+
     @Valid
     private PublicView publicView = new PublicView();
+
     @Valid
     private External external = new External();
+
     @Valid
     private Cors cors = new Cors();
+
     @Valid
     private Schedule schedule = new Schedule();
+
     @Valid
     private ACL acl = new ACL();
+
     @Valid
     private Mail mail = new Mail();
+
     @Valid
     private Security security = new Security();
+
     @Valid
     private Language language = new Language();
+
     @Valid
     private Template template = new Template();
 
@@ -919,7 +937,8 @@ public class Configuration {
     public static class Security {
 
         public enum ProviderType {
-            INTERNAL, OIDC
+            INTERNAL,
+            OIDC
         }
 
         /**
@@ -1045,14 +1064,13 @@ public class Configuration {
 
     @Validated
     public static class External {
-        
-                
+
         /**
          * CRON value that determines how often will the external vocabularies be updated.
          */
         @NotNull
         private String reloadCron = "";
-        
+
         /**
          * Address for the external resource
          */

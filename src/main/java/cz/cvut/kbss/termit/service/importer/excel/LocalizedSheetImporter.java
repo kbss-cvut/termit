@@ -85,8 +85,11 @@ class LocalizedSheetImporter {
     private final Set<URI> sheetIdentifiers = new HashSet<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms,
-                           cz.cvut.kbss.termit.model.Vocabulary targetVocabulary) {
+    LocalizedSheetImporter(
+            Services services,
+            PrefixMap prefixMap,
+            List<Term> existingTerms,
+            cz.cvut.kbss.termit.model.Vocabulary targetVocabulary) {
         this.termRepositoryService = services.termRepositoryService();
         this.languageService = services.languageService();
         this.prefixMap = prefixMap;
@@ -141,7 +144,9 @@ class LocalizedSheetImporter {
             LOG.trace("Loading attribute mapping for language tag '{}'.", langTag);
             return getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties");
         } else {
-            LOG.trace("No attribute mapping found for language tag '{}', falling back to '{}'.", langTag,
+            LOG.trace(
+                    "No attribute mapping found for language tag '{}', falling back to '{}'.",
+                    langTag,
                     FALLBACK_LANGUAGE);
             return getClass().getClassLoader().getResourceAsStream("attributes/" + FALLBACK_LANGUAGE + ".properties");
         }
@@ -164,7 +169,8 @@ class LocalizedSheetImporter {
                 term.setUri(URI.create(prefixMap.resolvePrefixed(id)));
                 if (sheetIdentifiers.contains(term.getUri())) {
                     throw new VocabularyImportException(
-                            "Sheet " + sheet.getSheetName() + " contains multiple terms with the same identifier: " + id,
+                            "Sheet " + sheet.getSheetName() + " contains multiple terms with the same identifier: "
+                                    + id,
                             "error.vocabulary.import.excel.duplicateIdentifier");
                 }
                 idToTerm.put(term.getUri(), term);
@@ -175,8 +181,10 @@ class LocalizedSheetImporter {
                 initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
                 if (labelToTerm.containsKey(label.get())) {
                     throw new VocabularyImportException(
-                            "Sheet " + sheet.getSheetName() + " contains multiple terms with the same label: " + label.get(),
-                            "error.vocabulary.import.excel.duplicateLabel").addParameter("label", label.get());
+                                    "Sheet " + sheet.getSheetName() + " contains multiple terms with the same label: "
+                                            + label.get(),
+                                    "error.vocabulary.import.excel.duplicateLabel")
+                            .addParameter("label", label.get());
                 }
                 labelToTerm.put(label.get(), term);
             } else {
@@ -196,40 +204,44 @@ class LocalizedSheetImporter {
     }
 
     private void mapRowToTermAttributes(Term term, Row termRow) {
-        getAttributeValue(termRow, SKOS.DEFINITION).ifPresent(
-                d -> initSingularMultilingualString(term::getDefinition, term::setDefinition).set(langTag, d));
-        getAttributeValue(termRow, SKOS.SCOPE_NOTE).ifPresent(
-                sn -> initSingularMultilingualString(term::getDescription, term::setDescription).set(langTag, sn));
-        getAttributeValue(termRow, SKOS.ALT_LABEL).ifPresent(
-                al -> populatePluralMultilingualString(term::getAltLabels, term::setAltLabels,
-                        splitIntoMultipleValues(al)));
-        getAttributeValue(termRow, SKOS.HIDDEN_LABEL).ifPresent(
-                hl -> populatePluralMultilingualString(term::getHiddenLabels, term::setHiddenLabels,
-                        splitIntoMultipleValues(hl)));
-        getAttributeValue(termRow, SKOS.EXAMPLE).ifPresent(
-                ex -> populatePluralMultilingualString(term::getExamples, term::setExamples,
-                        splitIntoMultipleValues(ex)));
+        getAttributeValue(termRow, SKOS.DEFINITION)
+                .ifPresent(d -> initSingularMultilingualString(term::getDefinition, term::setDefinition)
+                        .set(langTag, d));
+        getAttributeValue(termRow, SKOS.SCOPE_NOTE)
+                .ifPresent(sn -> initSingularMultilingualString(term::getDescription, term::setDescription)
+                        .set(langTag, sn));
+        getAttributeValue(termRow, SKOS.ALT_LABEL)
+                .ifPresent(al -> populatePluralMultilingualString(
+                        term::getAltLabels, term::setAltLabels, splitIntoMultipleValues(al)));
+        getAttributeValue(termRow, SKOS.HIDDEN_LABEL)
+                .ifPresent(hl -> populatePluralMultilingualString(
+                        term::getHiddenLabels, term::setHiddenLabels, splitIntoMultipleValues(hl)));
+        getAttributeValue(termRow, SKOS.EXAMPLE)
+                .ifPresent(ex -> populatePluralMultilingualString(
+                        term::getExamples, term::setExamples, splitIntoMultipleValues(ex)));
         getAttributeValue(termRow, DC.Terms.SOURCE).ifPresent(src -> term.setSources(splitIntoMultipleValues(src)));
         getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
-        getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
-                nt -> term.setProperties(
+        getAttributeValue(termRow, DC.Terms.REFERENCES)
+                .ifPresent(nt -> term.setProperties(
                         Collections.singletonMap(DC.Terms.REFERENCES, new HashSet<>(splitIntoMultipleValues(nt)))));
-        getAttributeValue(termRow, SKOS.RELATED).ifPresent(
-                rt -> mapSkosRelated(term, splitIntoMultipleValues(rt)));
-        getAttributeValue(termRow, SKOS.RELATED_MATCH).ifPresent(
-                rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
-        getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
-                exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
-        getAttributeValue(termRow, JsonLd.TYPE).map(str -> resolveTermTypes(splitIntoMultipleValues(str), term))
-                                               .ifPresent(term::setTypes);
-        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_has_state_of_term).orElse(null), term).ifPresent(
-                term::setState);
-
+        getAttributeValue(termRow, SKOS.RELATED).ifPresent(rt -> mapSkosRelated(term, splitIntoMultipleValues(rt)));
+        getAttributeValue(termRow, SKOS.RELATED_MATCH)
+                .ifPresent(rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
+        getAttributeValue(termRow, SKOS.EXACT_MATCH)
+                .ifPresent(exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
+        getAttributeValue(termRow, JsonLd.TYPE)
+                .map(str -> resolveTermTypes(splitIntoMultipleValues(str), term))
+                .ifPresent(term::setTypes);
+        resolveTermState(
+                        getAttributeValue(termRow, Vocabulary.s_p_has_state_of_term)
+                                .orElse(null),
+                        term)
+                .ifPresent(term::setState);
     }
 
-    private MultilingualString initSingularMultilingualString(Supplier<MultilingualString> getter,
-                                                              Consumer<MultilingualString> setter) {
+    private MultilingualString initSingularMultilingualString(
+            Supplier<MultilingualString> getter, Consumer<MultilingualString> setter) {
         if (getter.get() == null) {
             setter.accept(new MultilingualString());
         }
@@ -244,7 +256,8 @@ class LocalizedSheetImporter {
             attValue = getter.get();
         }
         for (String s : values) {
-            final Optional<MultilingualString> mls = attValue.stream().filter(m -> !m.contains(langTag)).findFirst();
+            final Optional<MultilingualString> mls =
+                    attValue.stream().filter(m -> !m.contains(langTag)).findFirst();
             if (mls.isPresent()) {
                 mls.get().set(langTag, s);
             } else {
@@ -255,23 +268,27 @@ class LocalizedSheetImporter {
     }
 
     private void setParentTerms(Term term, Set<String> parents) {
-        parents.forEach(
-                parentIdentification -> getReferencedTerm(parentIdentification, SKOS.BROADER, term, true).ifPresent(
-                        term::addParentTerm));
+        parents.forEach(parentIdentification -> getReferencedTerm(parentIdentification, SKOS.BROADER, term, true)
+                .ifPresent(term::addParentTerm));
     }
 
-    private Optional<Term> getReferencedTerm(String identification, String relationship, Term subject,
-                                             boolean allowExternal) {
+    private Optional<Term> getReferencedTerm(
+            String identification, String relationship, Term subject, boolean allowExternal) {
         final Term referenced = getTerm(identification, allowExternal);
         if (referenced == null) {
-            LOG.warn("No term identified by '{}' found for term '{}' and relationship <{}>.", identification,
-                    subject.getLabel().get(langTag), relationship);
+            LOG.warn(
+                    "No term identified by '{}' found for term '{}' and relationship <{}>.",
+                    identification,
+                    subject.getLabel().get(langTag),
+                    relationship);
             return Optional.empty();
         }
         verifyReferencedTermFromThisOrImportedVocabulary(referenced, subject, relationship);
         if ((subject.getUri() != null && Objects.equals(referenced.getUri(), subject.getUri()))
                 || sameLabelSameVocabulary(subject, referenced)) {
-            LOG.trace("Skipping self-reference for term '{}' and relationship <{}>.", subject.getLabel().get(langTag),
+            LOG.trace(
+                    "Skipping self-reference for term '{}' and relationship <{}>.",
+                    subject.getLabel().get(langTag),
                     relationship);
             return Optional.empty();
         }
@@ -280,18 +297,19 @@ class LocalizedSheetImporter {
 
     private boolean sameLabelSameVocabulary(Term subject, Term referenced) {
         return Objects.equals(subject.getLabel(langTag), referenced.getLabel(langTag))
-                && (Objects.equals(targetVocabulary.getUri(),
-                referenced.getVocabulary()) || referenced.getVocabulary() == null);
+                && (Objects.equals(targetVocabulary.getUri(), referenced.getVocabulary())
+                        || referenced.getVocabulary() == null);
     }
 
     private void verifyReferencedTermFromThisOrImportedVocabulary(Term referenced, Term subject, String relationship) {
-        if (referenced.getVocabulary() != null && !Objects.equals(targetVocabulary.getUri(),
-                referenced.getVocabulary()) && Utils.emptyIfNull(
-                targetVocabulary.getImportedVocabularies()).stream().noneMatch(
-                u -> Objects.equals(referenced.getVocabulary(), u))) {
+        if (referenced.getVocabulary() != null
+                && !Objects.equals(targetVocabulary.getUri(), referenced.getVocabulary())
+                && Utils.emptyIfNull(targetVocabulary.getImportedVocabularies()).stream()
+                        .noneMatch(u -> Objects.equals(referenced.getVocabulary(), u))) {
             throw new ReferencedTermInUnrelatedVocabularyException(
-                    "Term " + referenced + " referenced by " + subject + " via <" + relationship + "> belongs to a vocabulary not related to the target vocabulary.",
-                    "error.vocabulary.import.excel.externalParentUnrelatedVocabulary")
+                            "Term " + referenced + " referenced by " + subject + " via <" + relationship
+                                    + "> belongs to a vocabulary not related to the target vocabulary.",
+                            "error.vocabulary.import.excel.externalParentUnrelatedVocabulary")
                     .addParameter("referencedIri", referenced.getUri().toString())
                     .addParameter("label", subject.getLabel(langTag));
         }
@@ -305,7 +323,8 @@ class LocalizedSheetImporter {
                         .ifPresent(objectTerm -> rawDataToInsert.add(
                                 new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm)));
             } catch (IllegalArgumentException e) {
-                LOG.warn("Could not create URI for value '{}' and it does not reference another term by label either",
+                LOG.warn(
+                        "Could not create URI for value '{}' and it does not reference another term by label either",
                         object);
             }
         });
@@ -333,11 +352,12 @@ class LocalizedSheetImporter {
 
     private void mapSkosMatchProperties(Term subject, String property, Set<String> objects) {
         final URI propertyUri = URI.create(property);
-        objects.stream().map(id -> URI.create(prefixMap.resolvePrefixed(id)))
-               .filter(uri -> !Objects.equals(uri, subject.getUri()))    // Prevent self-referencing
-               .filter(termRepositoryService::exists)
-               .forEach(uri -> rawDataToInsert.add(
-                       new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
+        objects.stream()
+                .map(id -> URI.create(prefixMap.resolvePrefixed(id)))
+                .filter(uri -> !Objects.equals(uri, subject.getUri())) // Prevent self-referencing
+                .filter(termRepositoryService::exists)
+                .forEach(uri ->
+                        rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }
 
     private Set<String> resolveTermTypes(Set<String> values, Term term) {
@@ -346,13 +366,14 @@ class LocalizedSheetImporter {
             return term.getTypes();
         }
         final List<Term> availableTypes = languageService.getTermTypes();
-        return values.stream().map(str -> availableTypes.stream()
-                                                        .filter(t -> str.equals(
-                                                                t.getLabel().get(langTag)) || str.equals(
-                                                                t.getUri().toString())).findFirst()
-                                                        .map(t -> t.getUri().toString())
-                                                        .orElse(str))
-                     .collect(Collectors.toSet());
+        return values.stream()
+                .map(str -> availableTypes.stream()
+                        .filter(t -> str.equals(t.getLabel().get(langTag))
+                                || str.equals(t.getUri().toString()))
+                        .findFirst()
+                        .map(t -> t.getUri().toString())
+                        .orElse(str))
+                .collect(Collectors.toSet());
     }
 
     private Optional<URI> resolveTermState(String value, Term term) {
@@ -364,9 +385,10 @@ class LocalizedSheetImporter {
             return languageService.getInitialTermState().map(RdfsResource::getUri);
         }
         final Optional<URI> state = languageService.getTermStates().stream()
-                                                   .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
-                                                           t.getUri().toString())).findFirst()
-                                                   .map(RdfsResource::getUri);
+                .filter(t -> value.equals(t.getLabel().get(langTag))
+                        || value.equals(t.getUri().toString()))
+                .findFirst()
+                .map(RdfsResource::getUri);
         if (state.isPresent()) {
             return state;
         }
@@ -394,8 +416,9 @@ class LocalizedSheetImporter {
             final String columnLabel = cell.getStringCellValue().trim();
             for (Map.Entry<Object, Object> e : attributeMapping.entrySet()) {
                 if (e.getValue().equals(columnLabel)) {
-                    attributesToColumn.computeIfAbsent(e.getKey().toString(), k -> new ArrayList<>())
-                                      .add(cell.getColumnIndex());
+                    attributesToColumn
+                            .computeIfAbsent(e.getKey().toString(), k -> new ArrayList<>())
+                            .add(cell.getColumnIndex());
                     break;
                 }
             }
@@ -409,10 +432,12 @@ class LocalizedSheetImporter {
             return Optional.empty();
         }
         // Cell may be null, so ensure to filter such values out
-        String cellValue = attributeToColumn.get(attributeIri).stream().map(row::getCell).filter(Objects::nonNull)
-                                            .map(c -> normalizeExcelString(c.getStringCellValue()))
-                                            .filter(s -> !s.isBlank())
-                                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER));
+        String cellValue = attributeToColumn.get(attributeIri).stream()
+                .map(row::getCell)
+                .filter(Objects::nonNull)
+                .map(c -> normalizeExcelString(c.getStringCellValue()))
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER));
         return cellValue.isBlank() ? Optional.empty() : Optional.of(cellValue.trim());
     }
 
@@ -424,10 +449,10 @@ class LocalizedSheetImporter {
     }
 
     private static Set<String> splitIntoMultipleValues(String value) {
-        return Stream.of(value.split(TabularTermExportUtils.STRING_DELIMITER)).map(String::trim)
-                     .collect(Collectors.toSet());
+        return Stream.of(value.split(TabularTermExportUtils.STRING_DELIMITER))
+                .map(String::trim)
+                .collect(Collectors.toSet());
     }
 
-    record Services(TermRepositoryService termRepositoryService, LanguageService languageService) {
-    }
+    record Services(TermRepositoryService termRepositoryService, LanguageService languageService) {}
 }

@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.service.export;
 import cz.cvut.kbss.termit.util.Constants;
 
 public enum ExportFormat {
-
     EXCEL(Constants.MediaType.EXCEL, ".xlsx"),
     TURTLE(Constants.MediaType.TURTLE, ".ttl"),
     RDF_XML(Constants.MediaType.RDF_XML, ".rdf");

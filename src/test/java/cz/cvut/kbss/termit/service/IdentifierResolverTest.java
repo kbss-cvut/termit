@@ -117,7 +117,8 @@ class IdentifierResolverTest {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/";
         final String compOne = "Catherine";
         final String compTwo = "Halsey";
-        final String result = sut.generateIdentifier(namespace, compOne, compTwo).toString();
+        final String result =
+                sut.generateIdentifier(namespace, compOne, compTwo).toString();
         assertEquals(namespace + "catherine-halsey", result);
     }
 
@@ -126,7 +127,8 @@ class IdentifierResolverTest {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit";
         final String compOne = "Catherine";
         final String compTwo = "Halsey";
-        final String result = sut.generateIdentifier(namespace, compOne, compTwo).toString();
+        final String result =
+                sut.generateIdentifier(namespace, compOne, compTwo).toString();
         assertEquals(namespace + "/catherine-halsey", result);
     }
 
@@ -135,14 +137,15 @@ class IdentifierResolverTest {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit#";
         final String compOne = "Catherine";
         final String compTwo = "Halsey";
-        final String result = sut.generateIdentifier(namespace, compOne, compTwo).toString();
+        final String result =
+                sut.generateIdentifier(namespace, compOne, compTwo).toString();
         assertEquals(namespace + "catherine-halsey", result);
     }
 
     @Test
     void generateIdentifierThrowsIllegalArgumentWhenNoComponentsAreProvided() {
-        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                                                         () -> sut.generateIdentifier(Environment.BASE_URI));
+        final IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> sut.generateIdentifier(Environment.BASE_URI));
         assertEquals("Must provide at least one component for identifier generation.", ex.getMessage());
     }
 
@@ -158,29 +161,33 @@ class IdentifierResolverTest {
     void resolveIdentifierAppendsFragmentToSpecifiedNamespace() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/";
         final String fragment = "metropolitan-plan";
-        assertEquals(namespace + fragment, sut.resolveIdentifier(namespace, fragment).toString());
+        assertEquals(
+                namespace + fragment, sut.resolveIdentifier(namespace, fragment).toString());
     }
 
     @Test
     void resolveIdentifierAppendsSlashAndFragmentIfNamespaceDoesNotEndWithOne() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary";
         final String fragment = "metropolitan-plan";
-        assertEquals(namespace + "/" + fragment, sut.resolveIdentifier(namespace, fragment).toString());
+        assertEquals(
+                namespace + "/" + fragment,
+                sut.resolveIdentifier(namespace, fragment).toString());
     }
 
     @Test
     void resolveIdentifierDoesNotAppendSlashIfNamespaceEndsWithHashTag() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary#";
         final String fragment = "metropolitan-plan";
-        assertEquals(namespace + fragment, sut.resolveIdentifier(namespace, fragment).toString());
+        assertEquals(
+                namespace + fragment, sut.resolveIdentifier(namespace, fragment).toString());
     }
 
     @Test
     void resolveIdentifierAppendsFragmentToNamespaceLoadedFromConfiguration() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/";
         final String fragment = "metropolitan-plan";
-        assertEquals(namespace + fragment,
-                     sut.resolveIdentifier(namespace, fragment).toString());
+        assertEquals(
+                namespace + fragment, sut.resolveIdentifier(namespace, fragment).toString());
     }
 
     @Test
@@ -216,8 +223,7 @@ class IdentifierResolverTest {
     void resolveIdentifierWithNamespaceConstruction() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/metropolitan-plan";
         final String fragment = "locality";
-        final URI result = sut
-                .resolveIdentifier(sut.buildNamespace(namespace, "/pojem"), fragment);
+        final URI result = sut.resolveIdentifier(sut.buildNamespace(namespace, "/pojem"), fragment);
         assertEquals(namespace + "/pojem/" + fragment, result.toString());
     }
 
@@ -277,8 +283,9 @@ class IdentifierResolverTest {
     void generateIdentifierReturnsSpecifiedValueWithoutQueryParametersWhenItIsUri() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/resource/";
         final String label = "http://onto.fel.cvut.cz/ontologies/termit/resourceOne?test=one&test=two";
-        assertEquals(URI.create("http://onto.fel.cvut.cz/ontologies/termit/resourceOne"),
-                     sut.generateIdentifier(namespace, label));
+        assertEquals(
+                URI.create("http://onto.fel.cvut.cz/ontologies/termit/resourceOne"),
+                sut.generateIdentifier(namespace, label));
     }
 
     @Test
@@ -301,7 +308,8 @@ class IdentifierResolverTest {
         final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
         assertThat(result.toString(), containsString(base));
         assertThat(result.toString().length(), greaterThan(base.length()));
-        assertThat(result.toString().lastIndexOf('/'), lessThan(result.toString().lastIndexOf('#')));
+        assertThat(
+                result.toString().lastIndexOf('/'), lessThan(result.toString().lastIndexOf('#')));
     }
 
     @Test
@@ -361,10 +369,7 @@ class IdentifierResolverTest {
     }
 
     private static Stream<Arguments> validAbsoluteUris() {
-        return Stream.of(
-                Arguments.of(Vocabulary.s_c_foaf_Person),
-                Arguments.of("file:///test")
-        );
+        return Stream.of(Arguments.of(Vocabulary.s_c_foaf_Person), Arguments.of("file:///test"));
     }
 
     @ParameterizedTest
@@ -374,15 +379,12 @@ class IdentifierResolverTest {
     }
 
     private static Stream<Arguments> nonAbsoluteUris() {
-        return Stream.of(
-                Arguments.of("test"),
-                Arguments.of("./home/test")
-        );
+        return Stream.of(Arguments.of("test"), Arguments.of("./home/test"));
     }
 
     @Test
     void normalizeUnicodeCharactersNormalizesAccentedLettersToSingleUnicodeCharacter() {
-        final String input = "s omezeným vývinem tepla";  // This string represents ý by two characters
+        final String input = "s omezeným vývinem tepla"; // This string represents ý by two characters
         final String expected = "s omezeným vývinem tepla"; // This string represents ý by one character
         assertEquals(expected, IdentifierResolver.normalizeUnicodeCharacters(input));
     }

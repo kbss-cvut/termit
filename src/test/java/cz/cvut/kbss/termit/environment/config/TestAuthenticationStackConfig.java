@@ -18,7 +18,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 @Import({TermItApplication.class, JwtConfig.class})
 @EnableAutoConfiguration
 @TestConfiguration

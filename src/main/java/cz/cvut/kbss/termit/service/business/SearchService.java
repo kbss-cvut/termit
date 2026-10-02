@@ -52,7 +52,6 @@ public class SearchService {
         this.authService = authService;
     }
 
-
     /**
      * Executes full text search in terms, possibly filtered by vocabularies.
      * <p>
@@ -66,16 +65,12 @@ public class SearchService {
         Objects.requireNonNull(vocabularies);
 
         Collection<SearchParam> searchParams = new ArrayList<>();
-        searchParams.add(new SearchParam(
-                URI.create(RDF.TYPE),
-                Set.of(SKOS.CONCEPT),
-                MatchType.IRI
-        ));
+        searchParams.add(new SearchParam(URI.create(RDF.TYPE), Set.of(SKOS.CONCEPT), MatchType.IRI));
         if (!vocabularies.isEmpty()) {
-            searchParams.add(new SearchParam(URI.create(SKOS.IN_SCHEME),
+            searchParams.add(new SearchParam(
+                    URI.create(SKOS.IN_SCHEME),
                     vocabularies.stream().map(URI::toString).collect(Collectors.toSet()),
-                    MatchType.IRI
-            ));
+                    MatchType.IRI));
         }
 
         // advancedSearch with unpaged results to maintain backwards compatibility
@@ -90,14 +85,16 @@ public class SearchService {
      * @param pageSpec     Specification of the page of results to return
      * @return Matching results
      */
-    public Page<SearchResult> advancedSearch(SearchString searchString,
-                                             Collection<SearchParam> searchParams,
-                                             Pageable pageSpec) {
+    public Page<SearchResult> advancedSearch(
+            SearchString searchString, Collection<SearchParam> searchParams, Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
         searchParams.forEach(SearchParam::validate);
-        return searchDao.advancedSearch(searchString, searchParams, pageSpec,
-                                        authService.getReadableVocabularies().stream()
-                                                   .map(AbstractEntity::getUri)
-                                                   .toList());
+        return searchDao.advancedSearch(
+                searchString,
+                searchParams,
+                pageSpec,
+                authService.getReadableVocabularies().stream()
+                        .map(AbstractEntity::getUri)
+                        .toList());
     }
 }

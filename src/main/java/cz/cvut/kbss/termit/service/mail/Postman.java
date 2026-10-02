@@ -92,9 +92,9 @@ public class Postman {
 
             final MimeMessage mail = mailSender.createMimeMessage();
             final MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-            helper.setFrom(new InternetAddress(sender != null ? sender : senderUsername, FROM_NICKNAME,
-                                               StandardCharsets.UTF_8.toString()));
-            helper.setTo(message.getRecipients().toArray(new String[]{}));
+            helper.setFrom(new InternetAddress(
+                    sender != null ? sender : senderUsername, FROM_NICKNAME, StandardCharsets.UTF_8.toString()));
+            helper.setTo(message.getRecipients().toArray(new String[] {}));
             helper.setSubject(message.getSubject());
             helper.setText(message.getContent(), true);
 

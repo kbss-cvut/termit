@@ -59,8 +59,8 @@ public class ReadOnlyVocabularyController extends BaseController {
 
     private final ReadOnlyVocabularyService vocabularyService;
 
-    public ReadOnlyVocabularyController(IdentifierResolver idResolver, Configuration config,
-                                        ReadOnlyVocabularyService vocabularyService) {
+    public ReadOnlyVocabularyController(
+            IdentifierResolver idResolver, Configuration config, ReadOnlyVocabularyService vocabularyService) {
         super(idResolver, config);
         this.vocabularyService = vocabularyService;
     }
@@ -74,17 +74,23 @@ public class ReadOnlyVocabularyController extends BaseController {
 
     @Operation(description = "Gets detail of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
-            @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
+        @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyVocabulary getById(
-            @Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         return vocabularyService.findRequired(
                 resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName));
     }
@@ -93,42 +99,57 @@ public class ReadOnlyVocabularyController extends BaseController {
      * Gets imports (including transitive) of vocabulary with the specified identification
      */
     @Operation(
-            description = "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
+            description =
+                    "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
-            @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
+        @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{localName}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/imports",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getTransitiveImports(
-            @Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace) {
         final ReadOnlyVocabulary vocabulary = getById(localName, namespace);
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
 
     @Operation(description = "Gets a list of snapshots of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200",
-                         description = "A list of snapshots or a snapshot valid at the requested datetime."),
-            @ApiResponse(responseCode = "400", description = "Provided timestamp is invalid."),
-            @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(
+                responseCode = "200",
+                description = "A list of snapshots or a snapshot valid at the requested datetime."),
+        @ApiResponse(responseCode = "400", description = "Provided timestamp is invalid."),
+        @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{localName}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/{localName}/versions",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(
-            @Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
             @Parameter(
-                    description = "Timestamp at which the returned valid was valid. ISO-formatted datetime.",
-                    example = ApiDocConstants.DATETIME_EXAMPLE)
-            @RequestParam(name = "at", required = false) Optional<String> at) {
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description = "Timestamp at which the returned valid was valid. ISO-formatted datetime.",
+                            example = ApiDocConstants.DATETIME_EXAMPLE)
+                    @RequestParam(name = "at", required = false)
+                    Optional<String> at) {
         final ReadOnlyVocabulary vocabulary = getById(localName, namespace);
         if (at.isPresent()) {
             final Instant instant = RestUtils.parseTimestamp(at.get());

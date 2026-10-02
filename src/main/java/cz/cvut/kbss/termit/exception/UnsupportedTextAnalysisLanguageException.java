@@ -26,6 +26,10 @@ import cz.cvut.kbss.termit.model.resource.File;
 public class UnsupportedTextAnalysisLanguageException extends TermItException {
 
     public UnsupportedTextAnalysisLanguageException(String message, Asset<?> asset) {
-        super(message, asset instanceof File ? "error.annotation.file.unsupportedLanguage" : "error.annotation.term.unsupportedLanguage");
+        super(
+                message,
+                asset instanceof File
+                        ? "error.annotation.file.unsupportedLanguage"
+                        : "error.annotation.term.unsupportedLanguage");
     }
 }

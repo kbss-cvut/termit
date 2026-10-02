@@ -46,7 +46,8 @@ class UserAccountTest {
         ua.setTypes(Collections.singleton(Vocabulary.s_c_administrator));
 
         final User result = ua.toUser();
-        assertAll(() -> assertEquals(ua.getUri(), result.getUri()),
+        assertAll(
+                () -> assertEquals(ua.getUri(), result.getUri()),
                 () -> assertEquals(ua.getFirstName(), result.getFirstName()),
                 () -> assertEquals(ua.getLastName(), result.getLastName()),
                 () -> assertEquals(ua.getUsername(), result.getUsername()),

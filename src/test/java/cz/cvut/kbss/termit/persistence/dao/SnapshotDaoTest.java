@@ -56,12 +56,13 @@ class SnapshotDaoTest extends BaseDaoTestRunner {
         final Instant timestamp = Utils.timestamp();
         final String suffix = "/test-snapshot";
         transactional(() -> em.createNativeQuery(Utils.loadQuery("snapshot/vocabulary.ru"))
-                              .setParameter("vocabulary", vocabulary)
-                              .setParameter("suffix", suffix)
-                              .setParameter("created", timestamp)
-                              .executeUpdate());
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("suffix", suffix)
+                .setParameter("created", timestamp)
+                .executeUpdate());
 
-        final Optional<Snapshot> result = sut.find(URI.create(vocabulary.getUri().toString() + suffix));
+        final Optional<Snapshot> result =
+                sut.find(URI.create(vocabulary.getUri().toString() + suffix));
         assertTrue(result.isPresent());
         assertEquals(vocabulary.getUri(), result.get().getVersionOf());
         assertThat(result.get().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
@@ -81,10 +82,10 @@ class SnapshotDaoTest extends BaseDaoTestRunner {
         final Instant timestamp = Utils.timestamp();
         final String suffix = "/test-snapshot";
         transactional(() -> em.createNativeQuery(Utils.loadQuery("snapshot/term.ru"))
-                              .setParameter("vocabulary", vocabulary)
-                              .setParameter("suffix", suffix)
-                              .setParameter("created", timestamp)
-                              .executeUpdate());
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("suffix", suffix)
+                .setParameter("created", timestamp)
+                .executeUpdate());
 
         final Optional<Snapshot> result = sut.find(URI.create(term.getUri().toString() + suffix));
         assertTrue(result.isPresent());

@@ -45,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
 
     @MockitoBean
@@ -65,8 +64,12 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
     @BeforeEach
     public void setup() {
         vocabulary = Generator.generateVocabularyWithId();
-        fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()).substring(1);
-        namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/'));
+        fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri())
+                .substring(1);
+        namespace = vocabulary
+                .getUri()
+                .toString()
+                .substring(0, vocabulary.getUri().toString().lastIndexOf('/'));
         when(identifierResolver.resolveIdentifier(namespace, fragment)).thenReturn(vocabulary.getUri());
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyService.validateContents(vocabulary.getUri())).thenReturn(ThrottledFuture.done(List.of()));
@@ -85,7 +88,8 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         messageHeaders.setHeader("namespace", namespace);
         messageHeaders.setDestination("/vocabularies/" + fragment + "/validate");
 
-        this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
+        this.serverInboundChannel.send(
+                MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
 
         verify(vocabularyService).validateContents(vocabulary.getUri());
     }
@@ -96,15 +100,18 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         messageHeaders.setHeader("namespace", namespace);
         messageHeaders.setDestination("/vocabularies/" + fragment + "/validate");
 
-        final ValidationResult validationResult = new ValidationResult().setTermUri(Generator.generateUri())
-                                                                        .setResultPath(Generator.generateUri())
-                                                                        .setMessage(MultilingualString.create("message", "en"))
-                                                                        .setSeverity(Generator.generateUri())
-                                                                        .setIssueCauseUri(Generator.generateUri());
+        final ValidationResult validationResult = new ValidationResult()
+                .setTermUri(Generator.generateUri())
+                .setResultPath(Generator.generateUri())
+                .setMessage(MultilingualString.create("message", "en"))
+                .setSeverity(Generator.generateUri())
+                .setIssueCauseUri(Generator.generateUri());
         final List<ValidationResult> validationResults = List.of(validationResult);
-        when(vocabularyService.validateContents(vocabulary.getUri())).thenReturn(ThrottledFuture.done(validationResults));
+        when(vocabularyService.validateContents(vocabulary.getUri()))
+                .thenReturn(ThrottledFuture.done(validationResults));
 
-        this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
+        this.serverInboundChannel.send(
+                MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
 
         assertEquals(1, this.brokerChannelInterceptor.getMessages().size());
         Message<?> reply = this.brokerChannelInterceptor.getMessages().get(0);
@@ -112,7 +119,10 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         assertNotNull(reply);
         StompHeaderAccessor replyHeaders = StompHeaderAccessor.wrap(reply);
         // as reply is sent to a common channel for all vocabularies, there must be header with vocabulary uri
-        assertEquals(vocabulary.getUri().toString(), replyHeaders.getFirstNativeHeader("vocabulary"), "Invalid or missing vocabulary header in the reply");
+        assertEquals(
+                vocabulary.getUri().toString(),
+                replyHeaders.getFirstNativeHeader("vocabulary"),
+                "Invalid or missing vocabulary header in the reply");
 
         Optional<List<ValidationResult>> payload = readPayload(reply);
         assertTrue(payload.isPresent());

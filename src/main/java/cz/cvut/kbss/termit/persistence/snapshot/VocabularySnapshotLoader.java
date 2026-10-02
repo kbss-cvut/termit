@@ -2,10 +2,10 @@ package cz.cvut.kbss.termit.persistence.snapshot;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -14,8 +14,10 @@ import java.util.Objects;
 public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
 
     public VocabularySnapshotLoader(EntityManager em) {
-        super(em, URI.create(SKOS.CONCEPT_SCHEME), URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
+        super(
+                em,
+                URI.create(SKOS.CONCEPT_SCHEME),
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
     }
 
     @Override
@@ -36,21 +38,19 @@ public class VocabularySnapshotLoader extends AssetSnapshotLoader<Vocabulary> {
                                                 BIND (?source as ?asset) .
                                                 BIND (?snapshotType as ?type) .
                                                 } ORDER BY DESC(?created)
-                                                """,
-                                        "Snapshot")
-                     .setParameter("snapshotType", snapshotType)
-                     .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version))
-                     .setParameter("hasAuthor",
-                                   URI.create(DC.Terms.CREATOR))
-                     .setParameter("firstName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_first_name))
-                     .setParameter("lastName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_surname))
-                     .setParameter("accountName",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_username))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of))
-                     .setParameter("source", asset).getResultList();
+                                                """, "Snapshot")
+                    .setParameter("snapshotType", snapshotType)
+                    .setParameter(
+                            "hasCreated",
+                            URI.create(
+                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version))
+                    .setParameter("hasAuthor", URI.create(DC.Terms.CREATOR))
+                    .setParameter("firstName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_first_name))
+                    .setParameter("lastName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_surname))
+                    .setParameter("accountName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_username))
+                    .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of))
+                    .setParameter("source", asset)
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

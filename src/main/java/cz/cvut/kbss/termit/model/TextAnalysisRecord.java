@@ -50,8 +50,7 @@ public class TextAnalysisRecord extends AbstractEntity {
     @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String language;
 
-    public TextAnalysisRecord() {
-    }
+    public TextAnalysisRecord() {}
 
     public TextAnalysisRecord(Instant date, Resource analyzedResource, String language) {
         this.date = date;
@@ -99,10 +98,10 @@ public class TextAnalysisRecord extends AbstractEntity {
         if (!(o instanceof TextAnalysisRecord that)) {
             return false;
         }
-        return Objects.equals(date, that.date) &&
-                Objects.equals(analyzedResource, that.analyzedResource) &&
-                Objects.equals(vocabularies, that.vocabularies) &&
-                Objects.equals(language, that.language);
+        return Objects.equals(date, that.date)
+                && Objects.equals(analyzedResource, that.analyzedResource)
+                && Objects.equals(vocabularies, that.vocabularies)
+                && Objects.equals(language, that.language);
     }
 
     @Override
@@ -112,11 +111,10 @@ public class TextAnalysisRecord extends AbstractEntity {
 
     @Override
     public String toString() {
-        return "TextAnalysisRecord{" +
-                "date=" + date +
-                ",analyzedResource=" + analyzedResource +
-                ",vocabularies=" + vocabularies +
-                ", language=" + language +
-                "}";
+        return "TextAnalysisRecord{" + "date="
+                + date + ",analyzedResource="
+                + analyzedResource + ",vocabularies="
+                + vocabularies + ", language="
+                + language + "}";
     }
 }

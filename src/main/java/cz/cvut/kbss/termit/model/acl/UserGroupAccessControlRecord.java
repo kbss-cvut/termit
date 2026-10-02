@@ -29,8 +29,7 @@ import java.util.Optional;
 @OWLClass(iri = Vocabulary.s_c_user_group_access_control_record)
 public class UserGroupAccessControlRecord extends AccessControlRecord<UserGroup> {
 
-    public UserGroupAccessControlRecord() {
-    }
+    public UserGroupAccessControlRecord() {}
 
     public UserGroupAccessControlRecord(AccessLevel accessLevel, UserGroup holder) {
         super(accessLevel, holder);
@@ -41,8 +40,10 @@ public class UserGroupAccessControlRecord extends AccessControlRecord<UserGroup>
         Objects.requireNonNull(user);
         assert getHolder() != null;
 
-        return Utils.emptyIfNull(getHolder().getMembers()).stream().anyMatch(u -> u.getUri().equals(user.getUri())) ?
-               Optional.of(getAccessLevel()) : Optional.empty();
+        return Utils.emptyIfNull(getHolder().getMembers()).stream()
+                        .anyMatch(u -> u.getUri().equals(user.getUri()))
+                ? Optional.of(getAccessLevel())
+                : Optional.empty();
     }
 
     @Override

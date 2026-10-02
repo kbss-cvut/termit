@@ -115,14 +115,14 @@ public class CommentService {
     @Transactional
     public void update(Comment comment) {
         Objects.requireNonNull(comment);
-        final Comment existing = dao.find(comment.getUri()).orElseThrow(
-                () -> NotFoundException.create(Comment.class.getSimpleName(), comment.getUri()));
+        final Comment existing = dao.find(comment.getUri())
+                .orElseThrow(() -> NotFoundException.create(Comment.class.getSimpleName(), comment.getUri()));
         if (!Objects.equals(existing.getAuthor(), currentUser())) {
             throw new AuthorizationException("Cannot update someone else's comment.");
         }
-        if (!Objects.equals(existing.getAsset(), comment.getAsset()) ||
-                !Objects.equals(existing.getAuthor(), comment.getAuthor()) ||
-                !Objects.equals(existing.getCreated(), comment.getCreated())) {
+        if (!Objects.equals(existing.getAsset(), comment.getAsset())
+                || !Objects.equals(existing.getAuthor(), comment.getAuthor())
+                || !Objects.equals(existing.getCreated(), comment.getCreated())) {
             throw new UnsupportedOperationException(
                     "Cannot modify commented asset, author or date of creation of a comment!");
         }
@@ -136,7 +136,8 @@ public class CommentService {
      */
     @Transactional
     // currentUser is UserAccount, comment.author is User, so we have to compare their identifiers
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.getCurrentUser().uri == #comment.author.uri")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN
+            + "') || @securityUtils.getCurrentUser().uri == #comment.author.uri")
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         dao.remove(comment);

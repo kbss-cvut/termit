@@ -36,10 +36,8 @@ public class SnapshotDao {
     /**
      * Supported snapshot types.
      */
-    private static final List<URI> SNAPSHOT_TYPES = List.of(
-            URI.create(Vocabulary.s_c_version_of_vocabulary),
-            URI.create(Vocabulary.s_c_version_of_term)
-    );
+    private static final List<URI> SNAPSHOT_TYPES =
+            List.of(URI.create(Vocabulary.s_c_version_of_vocabulary), URI.create(Vocabulary.s_c_version_of_term));
 
     private final EntityManager em;
 
@@ -50,35 +48,32 @@ public class SnapshotDao {
     public Optional<Snapshot> find(URI uri) {
         Objects.requireNonNull(uri);
         try {
-            return Optional.of((Snapshot) em.createNativeQuery("SELECT DISTINCT ?s ?created ?asset ?type ?author ?authorFirstName ?authorLastName ?authorUsername WHERE { " +
-                                                                       "?id a ?snapshotType ; " +
-                                                                       "a ?type ; " +
-                                                                       "?versionOf ?asset ; " +
-                                                                       "?hasCreated ?created . " +
-                                                                       "OPTIONAL { " +
-                                                                       "  ?id ?creator ?author . " +
-                                                                       "  ?author ?firstName ?authorFirstName ; " +
-                                                                       "          ?lastName ?authorLastName ; " +
-                                                                       "          ?accountName ?authorUsername . " +
-                                                                       "} " +
-                                                                       "FILTER (?type in (?supportedTypes)) " +
-                                                                       "BIND (?id as ?s)" +
-                                                                       "}", "Snapshot")
-                                            .setParameter("id", uri)
-                                            .setParameter("snapshotType", URI.create(Vocabulary.s_c_version_of_object))
-                                            .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
-                                            .setParameter("hasCreated",
-                                                          URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
-                                            .setParameter("creator",
-                                                          URI.create(DC.Terms.CREATOR))
-                                            .setParameter("firstName",
-                                                          URI.create(Vocabulary.s_p_has_first_name))
-                                            .setParameter("lastName",
-                                                          URI.create(Vocabulary.s_p_has_surname))
-                                            .setParameter("accountName",
-                                                          URI.create(Vocabulary.s_p_has_username))
-                                            .setParameter("supportedTypes", SNAPSHOT_TYPES)
-                                            .getSingleResult());
+            return Optional.of((Snapshot) em.createNativeQuery(
+                            "SELECT DISTINCT ?s ?created ?asset ?type ?author ?authorFirstName ?authorLastName ?authorUsername WHERE { "
+                                    + "?id a ?snapshotType ; "
+                                    + "a ?type ; "
+                                    + "?versionOf ?asset ; "
+                                    + "?hasCreated ?created . "
+                                    + "OPTIONAL { "
+                                    + "  ?id ?creator ?author . "
+                                    + "  ?author ?firstName ?authorFirstName ; "
+                                    + "          ?lastName ?authorLastName ; "
+                                    + "          ?accountName ?authorUsername . "
+                                    + "} "
+                                    + "FILTER (?type in (?supportedTypes)) "
+                                    + "BIND (?id as ?s)"
+                                    + "}",
+                            "Snapshot")
+                    .setParameter("id", uri)
+                    .setParameter("snapshotType", URI.create(Vocabulary.s_c_version_of_object))
+                    .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
+                    .setParameter("hasCreated", URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
+                    .setParameter("creator", URI.create(DC.Terms.CREATOR))
+                    .setParameter("firstName", URI.create(Vocabulary.s_p_has_first_name))
+                    .setParameter("lastName", URI.create(Vocabulary.s_p_has_surname))
+                    .setParameter("accountName", URI.create(Vocabulary.s_p_has_username))
+                    .setParameter("supportedTypes", SNAPSHOT_TYPES)
+                    .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (RuntimeException e) {

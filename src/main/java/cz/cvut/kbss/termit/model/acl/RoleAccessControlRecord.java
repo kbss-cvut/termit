@@ -28,8 +28,7 @@ import java.util.Optional;
 @OWLClass(iri = Vocabulary.s_c_user_role_access_control_record)
 public class RoleAccessControlRecord extends AccessControlRecord<UserRole> {
 
-    public RoleAccessControlRecord() {
-    }
+    public RoleAccessControlRecord() {}
 
     public RoleAccessControlRecord(AccessLevel accessLevel, UserRole holder) {
         super(accessLevel, holder);

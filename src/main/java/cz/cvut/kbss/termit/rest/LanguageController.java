@@ -56,15 +56,20 @@ public class LanguageController extends BaseController {
     @Operation(description = "Gets ontological types that can be used to classify terms.")
     @ApiResponse(responseCode = "200", description = "Ontological types collection.")
     @PreAuthorize("permitAll()")
-    @GetMapping(value = "/types", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/types",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getTermTypes() {
         return service.getTermTypes();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets access levels that can be used to authorize user actions.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets access levels that can be used to authorize user actions.")
     @ApiResponse(responseCode = "200", description = "List of available access levels.")
-    @GetMapping(value = "/accessLevels", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/accessLevels",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getAccessLevels() {
         return service.getAccessLevels();
     }
@@ -72,7 +77,9 @@ public class LanguageController extends BaseController {
     @Operation(description = "Gets available term state options.")
     @ApiResponse(responseCode = "200", description = "Term state options.")
     @PreAuthorize("permitAll()")
-    @GetMapping(value = "/states", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/states",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getTermStates() {
         return service.getTermStates();
     }

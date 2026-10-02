@@ -33,10 +33,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(Configuration.class)
-@ContextConfiguration(classes = {TestPersistenceConfig.class},
-                      initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestPersistenceConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
-public abstract class BaseDaoTestRunner extends TransactionalTestRunner {
-
-}
+public abstract class BaseDaoTestRunner extends TransactionalTestRunner {}

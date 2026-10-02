@@ -56,15 +56,20 @@ public class AppAdminBean implements SelfNaming {
     private final GraphDBLuceneConnectorInitializer luceneConnectorInitializer;
 
     @Autowired
-    public AppAdminBean(ApplicationEventPublisher eventPublisher, Postman postman, Configuration config,
-                        GraphDBLuceneConnectorInitializer luceneConnectorInitializer) {
+    public AppAdminBean(
+            ApplicationEventPublisher eventPublisher,
+            Postman postman,
+            Configuration config,
+            GraphDBLuceneConnectorInitializer luceneConnectorInitializer) {
         this.eventPublisher = eventPublisher;
         this.postman = postman;
         this.beanName = config.getJmxBeanName();
         this.luceneConnectorInitializer = luceneConnectorInitializer;
     }
 
-    @CacheEvict(allEntries = true, cacheNames = {"vocabularies", "vocabularyNamespace", "acls"})
+    @CacheEvict(
+            allEntries = true,
+            cacheNames = {"vocabularies", "vocabularyNamespace", "acls"})
     @ManagedOperation(description = "Invalidates the application caches.")
     public void invalidateCaches() {
         LOG.info("Invalidating application caches...");
@@ -81,8 +86,10 @@ public class AppAdminBean implements SelfNaming {
 
     @ManagedOperation(description = "Sends test email to the specified address.")
     public void sendTestEmail(String address) {
-        final Message message = Message.to(address).subject("TermIt Test Email")
-                                       .content("This is a test message from TermIt.").build();
+        final Message message = Message.to(address)
+                .subject("TermIt Test Email")
+                .content("This is a test message from TermIt.")
+                .build();
         postman.sendMessage(message);
     }
 

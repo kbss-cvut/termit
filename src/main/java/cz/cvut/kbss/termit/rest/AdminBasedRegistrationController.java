@@ -59,17 +59,22 @@ public class AdminBasedRegistrationController {
         this.userService = userService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new user account. If the password is blank, the account is locked, and an email will be sent to the new user with a link to create a password.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Creates a new user account. If the password is blank, the account is locked, and an email will be sent to the new user with a link to create a password.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User created"),
-            @ApiResponse(responseCode = "409", description = "User data are invalid")
+        @ApiResponse(responseCode = "201", description = "User created"),
+        @ApiResponse(responseCode = "409", description = "User data are invalid")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createUser(@RequestBody UserAccount user) {
         userService.adminCreateUser(user);
-        LOG.info("User {} successfully registered by {}.", user, userService.getCurrent().getUsername());
+        LOG.info(
+                "User {} successfully registered by {}.",
+                user,
+                userService.getCurrent().getUsername());
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 }

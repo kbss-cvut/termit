@@ -44,9 +44,10 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     private final SecurityUtils securityUtils;
 
-    public VocabularyAuthorizationService(AccessControlListBasedAuthorizationService aclAuthorizationService,
-                                          VocabularyRepositoryService vocabularyRepositoryService,
-                                          SecurityUtils securityUtils) {
+    public VocabularyAuthorizationService(
+            AccessControlListBasedAuthorizationService aclAuthorizationService,
+            VocabularyRepositoryService vocabularyRepositoryService,
+            SecurityUtils securityUtils) {
         this.aclAuthorizationService = aclAuthorizationService;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.securityUtils = securityUtils;
@@ -203,6 +204,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     @Transactional(readOnly = true)
     public List<VocabularyDto> getReadableVocabularies() {
         return vocabularyRepositoryService.findAll().stream()
-                                          .filter(this::canRead).toList();
+                .filter(this::canRead)
+                .toList();
     }
 }

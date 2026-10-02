@@ -42,8 +42,7 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
     @OWLObjectProperty(iri = Vocabulary.s_p_has_access_level_holder, fetch = FetchType.EAGER)
     private T holder;
 
-    public AccessControlRecord() {
-    }
+    public AccessControlRecord() {}
 
     public AccessControlRecord(AccessLevel accessLevel, T holder) {
         this.accessLevel = accessLevel;
@@ -104,8 +103,6 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" +
-                holder + " -> " + getAccessLevel() +
-                '}';
+        return getClass().getSimpleName() + "{" + holder + " -> " + getAccessLevel() + '}';
     }
 }

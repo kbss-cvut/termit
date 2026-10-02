@@ -57,7 +57,8 @@ public class DocumentBackupManager {
      * @return backup file created at the timestamp or the oldest backup created after the timestamp.
      */
     public BackupFile getBackup(File file, Instant at) {
-        final java.io.File directory = storageDirectory.resolve(file.getDirectoryName()).toFile();
+        final java.io.File directory =
+                storageDirectory.resolve(file.getDirectoryName()).toFile();
         if (!directory.isDirectory()) {
             LOG.error("Document directory not found for file {} at location {}.", file, directory.getPath());
             throw new NotFoundException("File " + file + " not found on file system.");
@@ -80,9 +81,10 @@ public class DocumentBackupManager {
         Objects.requireNonNull(reason);
         try {
             final java.io.File toBackup = DocumentFileUtils.resolveTermitFile(storageDirectory, file, true);
-            final java.io.File backupFile = toBackup.toPath().getParent()
-                                                    .resolve(DocumentFileUtils.generateBackupFileName(file, reason, Utils.timestamp()))
-                                                    .toFile();
+            final java.io.File backupFile = toBackup.toPath()
+                    .getParent()
+                    .resolve(DocumentFileUtils.generateBackupFileName(file, reason, Utils.timestamp()))
+                    .toFile();
             LOG.debug("Backing up file {} to {}.", toBackup, backupFile);
             Files.copy(toBackup.toPath(), backupFile.toPath());
             // compress the created copy
@@ -135,11 +137,11 @@ public class DocumentBackupManager {
             Path tempFile = Files.createTempFile(null, "_" + BZip2Utils.getUncompressedFileName(file.getName()));
             LOG.trace("Decompressing file {} to temporary file {}", file, tempFile);
             try (
-                    // Compressed file
-                    InputStream is = Files.newInputStream(file.toPath());
+            // Compressed file
+            InputStream is = Files.newInputStream(file.toPath());
                     // bzip2 reads from ↑
-                    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, is)
-            ) {
+                    CompressorInputStream cis = new CompressorStreamFactory()
+                            .createCompressorInputStream(CompressorStreamFactory.BZIP2, is)) {
                 Files.copy(cis, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile.toFile();
@@ -162,11 +164,11 @@ public class DocumentBackupManager {
         String compressedFileName = BZip2Utils.getCompressedFileName(file.getName());
         Path compressedFilePath = file.toPath().getParent().resolve(compressedFileName);
         try (
-                // final bzip2 compressed file
-                OutputStream fos = Files.newOutputStream(compressedFilePath);
+        // final bzip2 compressed file
+        OutputStream fos = Files.newOutputStream(compressedFilePath);
                 // bzip2 writes to ↑
-                CompressorOutputStream<?> cos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos)
-        ) {
+                CompressorOutputStream<?> cos = new CompressorStreamFactory()
+                        .createCompressorOutputStream(CompressorStreamFactory.BZIP2, fos)) {
             Files.copy(file.toPath(), cos);
         } catch (IOException | NullPointerException e) {
             throw new BackupManagerException("Unable to compress file.", e);
@@ -181,7 +183,8 @@ public class DocumentBackupManager {
      * @return List of available backups sorted descending (the newest first)
      */
     public List<BackupFile> getBackups(File file, BackupReason reason) {
-        java.io.File directory = storageDirectory.resolve(file.getDirectoryName()).toFile();
+        java.io.File directory =
+                storageDirectory.resolve(file.getDirectoryName()).toFile();
         if (!directory.isDirectory()) {
             return List.of();
         }
@@ -190,11 +193,14 @@ public class DocumentBackupManager {
         if (files == null) {
             return List.of();
         }
-        Stream<BackupFile> filesStream = Arrays.stream(files).map(this::parseBackupFileName).filter(Objects::nonNull);
+        Stream<BackupFile> filesStream =
+                Arrays.stream(files).map(this::parseBackupFileName).filter(Objects::nonNull);
         if (reason != null) {
             filesStream = filesStream.filter(b -> reason.equals(b.backupReason()));
         }
-        return filesStream.sorted(Comparator.comparing(BackupFile::timestamp).reversed()).toList();
+        return filesStream
+                .sorted(Comparator.comparing(BackupFile::timestamp).reversed())
+                .toList();
     }
 
     /**
@@ -212,15 +218,17 @@ public class DocumentBackupManager {
         if (!file.getName().contains(DocumentFileUtils.BACKUP_NAME_SEPARATOR)) {
             return null;
         }
-        String strTimestamp = file.getName()
-                                  .substring(file.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1);
+        String strTimestamp =
+                file.getName().substring(file.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1);
         // Cut off possibly legacy extra millis places
-        strTimestamp = strTimestamp.substring(0, Math.min(DocumentFileUtils.BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
+        strTimestamp =
+                strTimestamp.substring(0, Math.min(DocumentFileUtils.BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
 
         String uncompressedFileName = BZip2Utils.getUncompressedFileName(file.getName());
         String strReason = file.getName()
-                               .substring(file.getName().lastIndexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1,
-                                       uncompressedFileName.length());
+                .substring(
+                        file.getName().lastIndexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1,
+                        uncompressedFileName.length());
         try {
             final TemporalAccessor backupTimestamp = DocumentFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
             return new BackupFile(Instant.from(backupTimestamp), file, BackupReason.from(strReason));
@@ -265,7 +273,9 @@ public class DocumentBackupManager {
         if (fileResource.getModified().isAfter(fileResource.getLastBackup())) {
             createBackup(fileResource, BackupReason.BACKUP_RESTORE);
         } else {
-            LOG.debug("Skipping backup creation when restoring a backup, no changes have been made since the last backup of file {}", fileResource.getUri());
+            LOG.debug(
+                    "Skipping backup creation when restoring a backup, no changes have been made since the last backup of file {}",
+                    fileResource.getUri());
         }
 
         // resolve the physical file which will be replaced

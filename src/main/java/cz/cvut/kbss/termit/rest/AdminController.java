@@ -53,8 +53,10 @@ public class AdminController {
         this.adminBean = adminBean;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Evicts all application caches. Useful, for example, when data were modified manually in the repository.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Evicts all application caches. Useful, for example, when data were modified manually in the repository.")
     @ApiResponse(responseCode = "204", description = "Caches evicted.")
     @DeleteMapping("/cache")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -63,8 +65,9 @@ public class AdminController {
         adminBean.invalidateCaches();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Clears the queue of long-running tasks.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Clears the queue of long-running tasks.")
     @ApiResponse(responseCode = "204", description = "Long-running tasks queue cleared.")
     @DeleteMapping("/long-running-tasks")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -73,18 +76,20 @@ public class AdminController {
         adminBean.clearLongRunningTasksQueue();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Sends a test email to the specified recipient")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Sends a test email to the specified recipient")
     @ApiResponse(responseCode = "204", description = "Test email sent.")
     @PostMapping("/test-email")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void sendTestEmail(@RequestBody
-                              @Parameter(description = "Email address of the recipient") String recipient) {
+    public void sendTestEmail(
+            @RequestBody @Parameter(description = "Email address of the recipient") String recipient) {
         adminBean.sendTestEmail(recipient);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Reinitializes Lucene connectors in the database if it is needed.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Reinitializes Lucene connectors in the database if it is needed.")
     @ApiResponse(responseCode = "204", description = "Reinitialization completed")
     @PostMapping("/reload-fts")
     @ResponseStatus(HttpStatus.NO_CONTENT)

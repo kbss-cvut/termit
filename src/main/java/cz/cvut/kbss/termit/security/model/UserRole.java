@@ -130,7 +130,6 @@ public enum UserRole {
         return false;
     }
 
-
     /**
      * Gets role for the specified role name.
      *

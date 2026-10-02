@@ -54,11 +54,11 @@ class DtoMapperTest {
     }
 
     static Stream<Arguments> recordsGenerator() {
-        final UserAccessControlRecord rOne = new UserAccessControlRecord(AccessLevel.SECURITY,
-                                                                         Generator.generateUserWithId());
+        final UserAccessControlRecord rOne =
+                new UserAccessControlRecord(AccessLevel.SECURITY, Generator.generateUserWithId());
         rOne.setUri(Generator.generateUri());
-        final UserGroupAccessControlRecord rTwo = new UserGroupAccessControlRecord(AccessLevel.READ,
-                                                                                   Generator.generateUserGroup());
+        final UserGroupAccessControlRecord rTwo =
+                new UserGroupAccessControlRecord(AccessLevel.READ, Generator.generateUserGroup());
         rTwo.setUri(Generator.generateUri());
         final UserRole role = new UserRole(URI.create(Vocabulary.s_c_reader));
         role.setLabel(MultilingualString.create("Reader", Environment.LANGUAGE));
@@ -67,8 +67,7 @@ class DtoMapperTest {
         return Stream.of(
                 Arguments.of(rOne, Vocabulary.s_c_user_access_control_record),
                 Arguments.of(rTwo, Vocabulary.s_c_user_group_access_control_record),
-                Arguments.of(rThree, Vocabulary.s_c_user_role_access_control_record)
-        );
+                Arguments.of(rThree, Vocabulary.s_c_user_role_access_control_record));
     }
 
     @ParameterizedTest
@@ -81,11 +80,11 @@ class DtoMapperTest {
     }
 
     static Stream<Arguments> holdersGenerator() {
-        final UserAccessControlRecord rOne = new UserAccessControlRecord(AccessLevel.SECURITY,
-                                                                         Generator.generateUserWithId());
+        final UserAccessControlRecord rOne =
+                new UserAccessControlRecord(AccessLevel.SECURITY, Generator.generateUserWithId());
         rOne.setUri(Generator.generateUri());
-        final UserGroupAccessControlRecord rTwo = new UserGroupAccessControlRecord(AccessLevel.READ,
-                                                                                   Generator.generateUserGroup());
+        final UserGroupAccessControlRecord rTwo =
+                new UserGroupAccessControlRecord(AccessLevel.READ, Generator.generateUserGroup());
         rTwo.setUri(Generator.generateUri());
         final UserRole role = new UserRole(URI.create(Vocabulary.s_c_reader));
         role.setLabel(MultilingualString.create("Reader", Environment.LANGUAGE));
@@ -94,16 +93,17 @@ class DtoMapperTest {
         return Stream.of(
                 Arguments.of(rOne, Vocabulary.s_c_user),
                 Arguments.of(rTwo, Vocabulary.s_c_Usergroup),
-                Arguments.of(rThree, Vocabulary.s_c_user_role)
-        );
+                Arguments.of(rThree, Vocabulary.s_c_user_role));
     }
 
     @Test
     void accessControlRecordToDtoCopiesTypesOfUserHolder() {
-        final UserAccessControlRecord record = new UserAccessControlRecord(AccessLevel.SECURITY,
-                                                                           Generator.generateUserWithId());
+        final UserAccessControlRecord record =
+                new UserAccessControlRecord(AccessLevel.SECURITY, Generator.generateUserWithId());
         record.getHolder().addType(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType());
         final AccessControlRecordDto result = sut.accessControlRecordToDto(record);
-        assertThat(result.getHolder().getTypes(), hasItems(record.getHolder().getTypes().toArray(new String[]{})));
+        assertThat(
+                result.getHolder().getTypes(),
+                hasItems(record.getHolder().getTypes().toArray(new String[] {})));
     }
 }

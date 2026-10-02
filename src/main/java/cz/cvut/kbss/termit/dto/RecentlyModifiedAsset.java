@@ -41,16 +41,21 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@SparqlResultSetMapping(name = "RecentlyModifiedAsset", classes = {@ConstructorResult(targetClass = RecentlyModifiedAsset.class,
-        variables = {
-                @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "modified", type = Instant.class),
-                @VariableResult(name = "modifiedBy", type = URI.class),
-                @VariableResult(name = "vocabulary", type = URI.class),
-                @VariableResult(name = "type", type = String.class),
-                @VariableResult(name = "changeType", type = String.class),
-        })})
+@SparqlResultSetMapping(
+        name = "RecentlyModifiedAsset",
+        classes = {
+            @ConstructorResult(
+                    targetClass = RecentlyModifiedAsset.class,
+                    variables = {
+                        @VariableResult(name = "entity", type = URI.class),
+                        @VariableResult(name = "label", type = String.class),
+                        @VariableResult(name = "modified", type = Instant.class),
+                        @VariableResult(name = "modifiedBy", type = URI.class),
+                        @VariableResult(name = "vocabulary", type = URI.class),
+                        @VariableResult(name = "type", type = String.class),
+                        @VariableResult(name = "changeType", type = String.class),
+                    })
+        })
 public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializable {
 
     @Id
@@ -75,10 +80,16 @@ public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializa
     @Types
     private Set<String> types;
 
-    public RecentlyModifiedAsset() {
-    }
+    public RecentlyModifiedAsset() {}
 
-    public RecentlyModifiedAsset(URI entity, String label, Instant modified, URI modifiedBy, URI vocabulary, String type, String changeType) {
+    public RecentlyModifiedAsset(
+            URI entity,
+            String label,
+            Instant modified,
+            URI modifiedBy,
+            URI vocabulary,
+            String type,
+            String changeType) {
         this.uri = entity;
         this.label = label;
         this.modified = modified;
@@ -149,12 +160,11 @@ public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializa
 
     @Override
     public String toString() {
-        return "RecentlyModifiedAsset{" +
-                "uri=" + uri +
-                ", label='" + label + '\'' +
-                ", modified=" + modified +
-                ", types=" + types +
-                '}';
+        return "RecentlyModifiedAsset{" + "uri="
+                + uri + ", label='"
+                + label + '\'' + ", modified="
+                + modified + ", types="
+                + types + '}';
     }
 
     @Override
@@ -165,11 +175,11 @@ public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializa
         if (!(o instanceof RecentlyModifiedAsset that)) {
             return false;
         }
-        return Objects.equals(uri, that.uri) &&
-                Objects.equals(label, that.label) &&
-                Objects.equals(modified, that.modified) &&
-                Objects.equals(vocabulary, that.vocabulary) &&
-                Objects.equals(types, that.types);
+        return Objects.equals(uri, that.uri)
+                && Objects.equals(label, that.label)
+                && Objects.equals(modified, that.modified)
+                && Objects.equals(vocabulary, that.vocabulary)
+                && Objects.equals(types, that.types);
     }
 
     @Override

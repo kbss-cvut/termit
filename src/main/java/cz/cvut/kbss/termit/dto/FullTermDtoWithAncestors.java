@@ -21,7 +21,10 @@ public class FullTermDtoWithAncestors extends Term {
      * Ancestors from the same vocabulary.
      */
     @JsonProperty("parentTerms")
-    @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
+    @OWLObjectProperty(
+            iri = SKOS.BROADER,
+            fetch = FetchType.EAGER,
+            cascade = {CascadeType.DETACH})
     private Set<TermInfoWithParents> ancestorTerms;
 
     /**
@@ -32,7 +35,8 @@ public class FullTermDtoWithAncestors extends Term {
     @JsonIgnore
     @Override
     public Set<TermInfo> getParentTerms() {
-        throw new UnsupportedOperationException("FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
+        throw new UnsupportedOperationException(
+                "FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
     }
 
     /**
@@ -42,7 +46,8 @@ public class FullTermDtoWithAncestors extends Term {
      */
     @Override
     public void setParentTerms(Set<TermInfo> parentTerms) {
-        throw new UnsupportedOperationException("FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
+        throw new UnsupportedOperationException(
+                "FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
     }
 
     /**
@@ -52,7 +57,8 @@ public class FullTermDtoWithAncestors extends Term {
     @JsonIgnore
     @Override
     public Set<TermInfo> getExternalParentTerms() {
-        throw new UnsupportedOperationException("FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
+        throw new UnsupportedOperationException(
+                "FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
     }
 
     /**
@@ -61,9 +67,9 @@ public class FullTermDtoWithAncestors extends Term {
      */
     @Override
     public void setExternalParentTerms(Set<TermInfo> externalParentTerms) {
-        throw new UnsupportedOperationException("FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
+        throw new UnsupportedOperationException(
+                "FullTermDtoWithAncestors must not contain simple TermInfo parent terms");
     }
-
 
     /**
      * Unsupported operation
@@ -82,7 +88,8 @@ public class FullTermDtoWithAncestors extends Term {
      */
     @Override
     public boolean hasParentInSameVocabulary() {
-        return ancestorTerms != null && ancestorTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
+        return ancestorTerms != null
+                && ancestorTerms.stream().anyMatch(p -> p.getVocabulary().equals(getVocabulary()));
     }
 
     /**

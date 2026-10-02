@@ -100,11 +100,15 @@ public class ResourceService
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
-                           DocumentBackupManager documentBackupManager,
-                           TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
-                           ChangeRecordService changeRecordService, Configuration config,
-                           AnnotationGenerator annotationGenerator) {
+    public ResourceService(
+            ResourceRepositoryService repositoryService,
+            DocumentManager documentManager,
+            DocumentBackupManager documentBackupManager,
+            TextAnalysisService textAnalysisService,
+            VocabularyService vocabularyService,
+            ChangeRecordService changeRecordService,
+            Configuration config,
+            AnnotationGenerator annotationGenerator) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
         this.documentBackupManager = documentBackupManager;
@@ -187,9 +191,10 @@ public class ResourceService
         Objects.requireNonNull(resource);
         verifyFileOperationPossible(resource, "Content retrieval");
         final File file = (File) resource;
-        TypeAwareResource result = retrievalSpecification.at()
-                                                         .map(instant -> documentManager.getAsResource(file, instant))
-                                                         .orElseGet(() -> documentManager.getAsResource(file));
+        TypeAwareResource result = retrievalSpecification
+                .at()
+                .map(instant -> documentManager.getAsResource(file, instant))
+                .orElseGet(() -> documentManager.getAsResource(file));
         if (retrievalSpecification.withoutUnconfirmedOccurrences()) {
             result = new UnconfirmedTermOccurrenceRemover().removeUnconfirmedOccurrences(result);
         }
@@ -317,9 +322,10 @@ public class ResourceService
                 throw new UnsupportedAssetOperationException(
                         "Cannot analyze file without specifying vocabulary context.");
             }
-            textAnalysisService.analyzeFile(file,
-                                            includeImportedVocabularies(
-                                                    Collections.singleton(file.getDocument().getVocabulary())));
+            textAnalysisService.analyzeFile(
+                    file,
+                    includeImportedVocabularies(
+                            Collections.singleton(file.getDocument().getVocabulary())));
         } else {
             textAnalysisService.analyzeFile(file, includeImportedVocabularies(vocabularies));
         }
@@ -349,8 +355,9 @@ public class ResourceService
      * @throws NotFoundException When no text analysis record exists for the specified resource
      */
     public TextAnalysisRecord findLatestTextAnalysisRecord(Resource resource) {
-        return textAnalysisService.findLatestAnalysisRecord(resource).orElseThrow(
-                () -> new NotFoundException("No text analysis record exists for " + resource));
+        return textAnalysisService
+                .findLatestAnalysisRecord(resource)
+                .orElseThrow(() -> new NotFoundException("No text analysis record exists for " + resource));
     }
 
     public Resource findRequired(URI id) {
@@ -414,7 +421,9 @@ public class ResourceService
     public List<FileBackupDto> getBackupFiles(Resource asset) {
         verifyFileOperationPossible(asset, "Listing file backups");
         final File file = (File) asset;
-        return documentBackupManager.getBackups(file, null).stream().map(FileBackupDto::new).toList();
+        return documentBackupManager.getBackups(file, null).stream()
+                .map(FileBackupDto::new)
+                .toList();
     }
 
     /**

@@ -59,8 +59,10 @@ public class NotificationService {
     public void notifyOfCommentChanges() {
         LOG.debug("Running comment change notification.");
         final Instant now = Utils.timestamp();
-        final Instant previous = resolvePreviousRun(now, scheduleConfig.getCron().getNotification().getComments());
-        final Optional<Message> changeNotificationMessage = commentChangeNotifier.createCommentChangesMessage(previous, now);
+        final Instant previous = resolvePreviousRun(
+                now, scheduleConfig.getCron().getNotification().getComments());
+        final Optional<Message> changeNotificationMessage =
+                commentChangeNotifier.createCommentChangesMessage(previous, now);
         changeNotificationMessage.ifPresent(postman::sendMessage);
     }
 

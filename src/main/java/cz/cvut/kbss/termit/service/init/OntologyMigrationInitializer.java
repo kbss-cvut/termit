@@ -22,9 +22,11 @@ public class OntologyMigrationInitializer implements ApplicationContextInitializ
         final String repoUsername = applicationContext.getEnvironment().getProperty("termit.repository.username");
         final String repoPassword = applicationContext.getEnvironment().getProperty("termit.repository.password");
 
-        final MigrationRunner runner = MigrationRunner.repository(repoUrl).username(repoUsername).password(repoPassword)
-                                                      .changelogFile("migration/changelog.yaml")
-                                                      .build();
+        final MigrationRunner runner = MigrationRunner.repository(repoUrl)
+                .username(repoUsername)
+                .password(repoPassword)
+                .changelogFile("migration/changelog.yaml")
+                .build();
         runner.run();
     }
 }

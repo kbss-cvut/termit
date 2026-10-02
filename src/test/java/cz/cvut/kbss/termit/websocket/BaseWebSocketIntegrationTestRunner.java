@@ -79,12 +79,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @EnableAspectJAutoProxy
 @EnableConfigurationProperties({Configuration.class})
 @ContextConfiguration(
-        classes = {TestConfig.class, TestPersistenceConfig.class, TestServiceConfig.class, AppConfig.class,
-                   SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class,
-                   JwtConfig.class},
+        classes = {
+            TestConfig.class, TestPersistenceConfig.class, TestServiceConfig.class, AppConfig.class,
+            SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class,
+            JwtConfig.class
+        },
         initializers = {ConfigDataApplicationContextInitializer.class})
-@ComponentScan(
-        {"cz.cvut.kbss.termit.security", "cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"})
+@ComponentScan({"cz.cvut.kbss.termit.security", "cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"
+})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class BaseWebSocketIntegrationTestRunner {
@@ -173,8 +175,12 @@ public abstract class BaseWebSocketIntegrationTestRunner {
         }
 
         @Override
-        public void handleException(@Nonnull StompSession session, StompCommand command, @Nonnull StompHeaders headers,
-                                    @Nonnull byte[] payload, @Nonnull Throwable exception) {
+        public void handleException(
+                @Nonnull StompSession session,
+                StompCommand command,
+                @Nonnull StompHeaders headers,
+                @Nonnull byte[] payload,
+                @Nonnull Throwable exception) {
             super.handleException(session, command, headers, payload, exception);
             this.exception.set(exception);
             LOG.error("STOMP exception", exception);

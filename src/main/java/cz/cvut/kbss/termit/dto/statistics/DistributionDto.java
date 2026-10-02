@@ -38,8 +38,7 @@ public class DistributionDto {
     @OWLDataProperty(iri = Vocabulary.s_p_totalItems)
     private Integer count;
 
-    public DistributionDto() {
-    }
+    public DistributionDto() {}
 
     public DistributionDto(RdfsResource resource, Integer count) {
         this.resource = resource;

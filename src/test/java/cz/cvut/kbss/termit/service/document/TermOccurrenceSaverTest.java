@@ -47,9 +47,7 @@ class TermOccurrenceSaverTest {
         final Term t = Generator.generateTermWithId();
         final File asset = Generator.generateFileWithId("test.html");
         final List<TermOccurrence> occurrences = List.of(
-                Generator.generateTermOccurrence(t, asset, true),
-                Generator.generateTermOccurrence(t, asset, true)
-        );
+                Generator.generateTermOccurrence(t, asset, true), Generator.generateTermOccurrence(t, asset, true));
         sut.saveOccurrences(occurrences, asset);
 
         final InOrder inOrder = inOrder(occurrenceDao);

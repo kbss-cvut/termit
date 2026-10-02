@@ -85,15 +85,18 @@ class CommentServiceTest extends BaseServiceTestRunner {
     @Test
     void findAllByAssetRetrievesCommentsForSpecifiedAsset() {
         final Term asset = Generator.generateTermWithId();
-        final List<Comment> comments = IntStream.range(0, 5).mapToObj(i -> {
-            final Comment c = new Comment();
-            c.setContent("test " + i);
-            c.setAsset(asset.getUri());
-            c.setAuthor(author);
-            return c;
-        }).toList();
+        final List<Comment> comments = IntStream.range(0, 5)
+                .mapToObj(i -> {
+                    final Comment c = new Comment();
+                    c.setContent("test " + i);
+                    c.setAsset(asset.getUri());
+                    c.setAuthor(author);
+                    return c;
+                })
+                .toList();
         transactional(() -> {
-            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+            final EntityDescriptor descriptor =
+                    new EntityDescriptor(URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(Comment_.author, null);
             comments.forEach(c -> {
                 em.persist(c, descriptor);
@@ -126,7 +129,8 @@ class CommentServiceTest extends BaseServiceTestRunner {
         comment.setAsset(asset.getUri());
         comment.setAuthor(author);
         transactional(() -> {
-            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+            final EntityDescriptor descriptor =
+                    new EntityDescriptor(URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(Comment_.author, null);
             em.persist(comment, descriptor);
         });
@@ -166,7 +170,8 @@ class CommentServiceTest extends BaseServiceTestRunner {
         comment.setAuthor(differentUser);
         transactional(() -> {
             em.persist(differentUser);
-            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+            final EntityDescriptor descriptor =
+                    new EntityDescriptor(URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(Comment_.author, null);
             em.persist(comment, descriptor);
         });
@@ -208,15 +213,15 @@ class CommentServiceTest extends BaseServiceTestRunner {
     }
 
     private boolean doesReactionExist(Comment comment, URI type) {
-        return em.createNativeQuery("ASK WHERE {" +
-                "?x a ?type ;" +
-                "?hasAuthor ?author ;" +
-                "?reactsTo ?comment .}", Boolean.class)
+        return em.createNativeQuery(
+                        "ASK WHERE {" + "?x a ?type ;" + "?hasAuthor ?author ;" + "?reactsTo ?comment .}",
+                        Boolean.class)
                 .setParameter("type", type)
                 .setParameter("hasAuthor", URI.create(Vocabulary.s_p_actor))
                 .setParameter("author", author)
                 .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
-                .setParameter("comment", comment).getSingleResult();
+                .setParameter("comment", comment)
+                .getSingleResult();
     }
 
     @Test
@@ -233,8 +238,8 @@ class CommentServiceTest extends BaseServiceTestRunner {
     private CommentReaction persistReaction(Comment toComment) {
         final CommentReaction reaction = new CommentReaction(author, toComment);
         reaction.addType(Vocabulary.s_c_Dislike);
-        transactional(
-                () -> em.persist(reaction, new EntityDescriptor(URI.create(config.getComments().getContext()))));
+        transactional(() -> em.persist(
+                reaction, new EntityDescriptor(URI.create(config.getComments().getContext()))));
         return reaction;
     }
 
@@ -245,6 +250,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
         sut.removeMyReactionTo(comment);
         assertNull(em.find(CommentReaction.class, existingReaction.getUri()));
-        assertFalse(doesReactionExist(comment, URI.create(existingReaction.getTypes().iterator().next())));
+        assertFalse(doesReactionExist(
+                comment, URI.create(existingReaction.getTypes().iterator().next())));
     }
 }

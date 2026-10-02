@@ -18,7 +18,7 @@ class VocabularyNamespaceResolverTest {
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
 
         sut.setVocabularyPreferredNamespace(vocabulary);
-        assertEquals(vocabulary.getUri() + "/term/",vocabulary.getPreferredNamespaceUri());
+        assertEquals(vocabulary.getUri() + "/term/", vocabulary.getPreferredNamespaceUri());
     }
 
     @Test
@@ -30,7 +30,7 @@ class VocabularyNamespaceResolverTest {
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
 
         sut.setVocabularyPreferredNamespace(vocabulary);
-        assertEquals(vocabulary.getUri() + "/",vocabulary.getPreferredNamespaceUri());
+        assertEquals(vocabulary.getUri() + "/", vocabulary.getPreferredNamespaceUri());
     }
 
     @Test

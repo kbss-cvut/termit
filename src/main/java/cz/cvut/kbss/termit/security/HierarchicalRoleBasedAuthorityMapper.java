@@ -43,7 +43,8 @@ public class HierarchicalRoleBasedAuthorityMapper implements GrantedAuthoritiesM
     }
 
     public static Stream<UserRole> resolveUserRolesFromAuthorities(Collection<? extends GrantedAuthority> authorities) {
-        return authorities.stream().filter(a -> UserRole.doesRoleExist(a.getAuthority()))
-                          .map(a -> UserRole.fromRoleName(a.getAuthority()));
+        return authorities.stream()
+                .filter(a -> UserRole.doesRoleExist(a.getAuthority()))
+                .map(a -> UserRole.fromRoleName(a.getAuthority()));
     }
 }

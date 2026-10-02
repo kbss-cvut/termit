@@ -51,5 +51,4 @@ public interface CrudService<T, DTO> extends RudService<T> {
      * @param instance Item to save
      */
     void persist(T instance);
-
 }

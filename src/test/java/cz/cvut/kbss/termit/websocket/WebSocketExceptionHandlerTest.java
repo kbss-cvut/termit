@@ -57,7 +57,8 @@ class WebSocketExceptionHandlerTest extends BaseWebSocketControllerTestRunner {
     }
 
     void sendMessage() {
-        this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
+        this.serverInboundChannel.send(
+                MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
     }
 
     @Test
@@ -67,5 +68,4 @@ class WebSocketExceptionHandlerTest extends BaseWebSocketControllerTestRunner {
         sendMessage();
         verify(webSocketExceptionHandler).persistenceException(notNull(), eq(e));
     }
-
 }

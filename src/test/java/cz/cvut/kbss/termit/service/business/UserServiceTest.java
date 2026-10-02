@@ -335,8 +335,7 @@ class UserServiceTest {
         when(securityUtilsMock.isAuthenticated()).thenReturn(true);
         when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
 
-        assertThrows(UnsupportedOperationException.class,
-                     () -> sut.changeRole(ua, Vocabulary.s_c_administrator));
+        assertThrows(UnsupportedOperationException.class, () -> sut.changeRole(ua, Vocabulary.s_c_administrator));
     }
 
     @Test
@@ -362,15 +361,14 @@ class UserServiceTest {
     @Test
     void getManagedAssetsRetrievesManagedAssetsForSpecifiedUserAndReturnsThemAsRdfsResources() {
         final UserAccount ua = Generator.generateUserAccount();
-        final List<cz.cvut.kbss.termit.model.Vocabulary> assets = List.of(Generator.generateVocabularyWithId(),
-                                                                          Generator.generateVocabularyWithId());
+        final List<cz.cvut.kbss.termit.model.Vocabulary> assets =
+                List.of(Generator.generateVocabularyWithId(), Generator.generateVocabularyWithId());
         when(aclService.findAssetsByAgentWithSecurityAccess(any(User.class))).thenReturn((List) assets);
 
         final List<RdfsResource> result = sut.getManagedAssets(ua);
         verify(aclService).findAssetsByAgentWithSecurityAccess(ua.toUser());
         assertThat(result, containsSameEntities(assets));
     }
-
 
     @Test
     void requestPasswordResetRequestCreatedAndEmailSent() {
@@ -379,10 +377,8 @@ class UserServiceTest {
 
         when(passwordChangeRequestRepositoryService.findAllByUserAccount(userAccount))
                 .thenReturn(List.of());
-        when(repositoryServiceMock.findByUsername(userAccount.getUsername()))
-                .thenReturn(Optional.of(userAccount));
+        when(repositoryServiceMock.findByUsername(userAccount.getUsername())).thenReturn(Optional.of(userAccount));
         when(passwordChangeRequestRepositoryService.create(userAccount)).thenReturn(request);
-
 
         sut.requestPasswordReset(userAccount.getUsername());
 
@@ -398,8 +394,7 @@ class UserServiceTest {
 
         when(passwordChangeRequestRepositoryService.findAllByUserAccount(userAccount))
                 .thenReturn(List.of(oldRequest));
-        when(repositoryServiceMock.findByUsername(userAccount.getUsername()))
-                .thenReturn(Optional.of(userAccount));
+        when(repositoryServiceMock.findByUsername(userAccount.getUsername())).thenReturn(Optional.of(userAccount));
         when(passwordChangeRequestRepositoryService.create(userAccount)).thenReturn(request);
 
         sut.requestPasswordReset(userAccount.getUsername());
@@ -417,8 +412,7 @@ class UserServiceTest {
 
         when(passwordChangeRequestRepositoryService.findAllByUserAccount(userAccount))
                 .thenReturn(List.of(oldRequest_A, oldRequest_B, oldRequest_C));
-        when(repositoryServiceMock.findByUsername(userAccount.getUsername()))
-                .thenReturn(Optional.of(userAccount));
+        when(repositoryServiceMock.findByUsername(userAccount.getUsername())).thenReturn(Optional.of(userAccount));
         when(passwordChangeRequestRepositoryService.create(userAccount)).thenReturn(request);
 
         sut.requestPasswordReset(userAccount.getUsername());
@@ -431,12 +425,9 @@ class UserServiceTest {
     @Test
     void requestPasswordResetInvalidUsernameExceptionThrown() {
         final String username = Generator.generateUserAccount().getUsername();
-        when(repositoryServiceMock.findByUsername(username))
-                .thenReturn(Optional.empty());
+        when(repositoryServiceMock.findByUsername(username)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () ->
-                sut.requestPasswordReset(username)
-        );
+        assertThrows(NotFoundException.class, () -> sut.requestPasswordReset(username));
 
         verify(repositoryServiceMock).findByUsername(username);
     }
@@ -456,10 +447,8 @@ class UserServiceTest {
         dto.setNewPassword(UUID.randomUUID().toString());
         dto.setUri(Generator.generateUri());
 
-        when(passwordChangeRequestRepositoryService.find(dto.getUri()))
-                .thenReturn(Optional.of(request));
-        when(repositoryServiceMock.find(account.getUri()))
-                .thenReturn(Optional.of(account));
+        when(passwordChangeRequestRepositoryService.find(dto.getUri())).thenReturn(Optional.of(request));
+        when(repositoryServiceMock.find(account.getUri())).thenReturn(Optional.of(account));
 
         sut.changePassword(dto);
 
@@ -474,21 +463,18 @@ class UserServiceTest {
         final PasswordChangeDto dto = new PasswordChangeDto();
         dto.setUri(Generator.generateUri());
 
-        when(passwordChangeRequestRepositoryService.find(dto.getUri()))
-                .thenReturn(Optional.empty());
+        when(passwordChangeRequestRepositoryService.find(dto.getUri())).thenReturn(Optional.empty());
 
-        assertThrows(InvalidPasswordChangeRequestException.class, () ->
-                sut.changePassword(dto)
-        );
+        assertThrows(InvalidPasswordChangeRequestException.class, () -> sut.changePassword(dto));
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());
     }
 
     @Test
     void changePasswordExpiredRequestExceptionThrown() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
-        request.setCreatedAt(Utils.timestamp().minus(configuration.getSecurity()
-                                                              .getPasswordChangeRequestValidity())
-                                    .minusNanos(1));
+        request.setCreatedAt(Utils.timestamp()
+                .minus(configuration.getSecurity().getPasswordChangeRequestValidity())
+                .minusNanos(1));
         request.setUri(Generator.generateUri());
         request.setToken(UUID.randomUUID().toString());
 
@@ -496,12 +482,9 @@ class UserServiceTest {
         dto.setToken(request.getToken());
         dto.setUri(request.getUri());
 
-        when(passwordChangeRequestRepositoryService.find(dto.getUri()))
-                .thenReturn(Optional.of(request));
+        when(passwordChangeRequestRepositoryService.find(dto.getUri())).thenReturn(Optional.of(request));
 
-        assertThrows(InvalidPasswordChangeRequestException.class, () ->
-                sut.changePassword(dto)
-        );
+        assertThrows(InvalidPasswordChangeRequestException.class, () -> sut.changePassword(dto));
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());
     }
 
@@ -516,12 +499,9 @@ class UserServiceTest {
         dto.setToken("non-existing-token");
         dto.setUri(request.getUri());
 
-        when(passwordChangeRequestRepositoryService.find(dto.getUri()))
-                .thenReturn(Optional.of(request));
+        when(passwordChangeRequestRepositoryService.find(dto.getUri())).thenReturn(Optional.of(request));
 
-        assertThrows(InvalidPasswordChangeRequestException.class, () ->
-                sut.changePassword(dto)
-        );
+        assertThrows(InvalidPasswordChangeRequestException.class, () -> sut.changePassword(dto));
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());
     }
 
@@ -541,8 +521,7 @@ class UserServiceTest {
         dto.setNewPassword(UUID.randomUUID().toString());
         dto.setUri(request.getUri());
 
-        when(passwordChangeRequestRepositoryService.find(dto.getUri()))
-                .thenReturn(Optional.of(request));
+        when(passwordChangeRequestRepositoryService.find(dto.getUri())).thenReturn(Optional.of(request));
         when(repositoryServiceMock.find(user.getUri())).thenReturn(Optional.of(user));
 
         assertTrue(user.isLocked());
@@ -553,7 +532,6 @@ class UserServiceTest {
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());
         verify(repositoryServiceMock).update(user);
     }
-
 
     @Test
     void adminCreateUserCreatesUserWithPassword() {
@@ -618,5 +596,4 @@ class UserServiceTest {
 
         assertFalse(user.isLocked());
     }
-
 }

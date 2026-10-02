@@ -71,10 +71,9 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
     @Test
     void approveOccurrenceApprovesTermOccurrenceViaService() throws Exception {
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
-        mockMvc.perform(
-                       put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
-                                                                                        NAMESPACE))
-               .andExpect(status().is2xxSuccessful());
+        mockMvc.perform(put(TermOccurrenceController.PATH + "/" + LOCAL_NAME)
+                        .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+                .andExpect(status().is2xxSuccessful());
         verify(occurrenceService).approve(OCCURRENCE_URI);
     }
 
@@ -89,10 +88,9 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
     @Test
     void removeOccurrenceRemovesTermOccurrenceViaService() throws Exception {
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
-        mockMvc.perform(
-                       delete(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
-                                                                                           NAMESPACE))
-               .andExpect(status().isNoContent());
+        mockMvc.perform(delete(TermOccurrenceController.PATH + "/" + LOCAL_NAME)
+                        .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+                .andExpect(status().isNoContent());
         verify(occurrenceService).remove(OCCURRENCE_URI);
     }
 
@@ -100,7 +98,7 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
     void saveOccurrenceSavesSpecifiedTermOccurrence() throws Exception {
         final TermOccurrence to = generateTermOccurrence();
         mockMvc.perform(put(TermOccurrenceController.PATH).content(toJson(to)).contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         final ArgumentCaptor<TermOccurrence> captor = ArgumentCaptor.forClass(TermOccurrence.class);
         verify(occurrenceService).persistOrUpdate(captor.capture());
         assertEquals(to.getUri(), captor.getValue().getUri());

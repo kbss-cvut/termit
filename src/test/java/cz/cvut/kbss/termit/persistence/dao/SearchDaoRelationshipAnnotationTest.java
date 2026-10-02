@@ -105,18 +105,21 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
                 termA.addRelatedTerm(new TermInfo(termB));
                 em.merge(termA, descriptorFactory.termDescriptor(termA));
 
-                addRelationshipAnnotation(termA.getUri(), URI.create(SKOS.RELATED), termB.getUri(),
-                                          customAttribute.getUri(), annotatingTerm.getUri(),
-                                          vocabulary.getUri());
+                addRelationshipAnnotation(
+                        termA.getUri(),
+                        URI.create(SKOS.RELATED),
+                        termB.getUri(),
+                        customAttribute.getUri(),
+                        annotatingTerm.getUri(),
+                        vocabulary.getUri());
             });
             initialized = true;
         }
         Environment.setCurrentUser(user);
     }
 
-    private void addRelationshipAnnotation(URI subject, URI predicate, URI object,
-                                           URI annotationProperty, URI annotationValue,
-                                           URI context) {
+    private void addRelationshipAnnotation(
+            URI subject, URI predicate, URI object, URI annotationProperty, URI annotationValue, URI context) {
         final Repository repo = em.unwrap(Repository.class);
         final ValueFactory vf = repo.getValueFactory();
 
@@ -127,11 +130,9 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
                     vf.createTriple(
                             vf.createIRI(subject.toString()),
                             vf.createIRI(predicate.toString()),
-                            vf.createIRI(object.toString())
-                    ),
+                            vf.createIRI(object.toString())),
                     vf.createIRI(annotationProperty.toString()),
-                    vf.createIRI(annotationValue.toString())
-            );
+                    vf.createIRI(annotationValue.toString()));
 
             conn.add(stmt, vf.createIRI(context.toString()));
             conn.commit();
@@ -143,11 +144,10 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         final SearchParam param = new SearchParam(
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(annotatingTerm.getUri().toString()),
-                MatchType.IRI
-        );
+                MatchType.IRI);
 
-        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
-                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        final Page<SearchResult> result = sut.advancedSearch(
+                new SearchString("", null), Set.of(param), Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
 
         assertFalse(result.isEmpty());
         // Both termA (subject) and termB (object) should be in the results
@@ -161,11 +161,10 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         final SearchParam param = new SearchParam(
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(annotatingTerm.getUri().toString()),
-                MatchType.IRI
-        );
+                MatchType.IRI);
 
-        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
-                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        final Page<SearchResult> result = sut.advancedSearch(
+                new SearchString("", null), Set.of(param), Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
 
         final Set<URI> resultUris = result.stream().map(SearchResult::getUri).collect(Collectors.toSet());
         assertThat(resultUris, org.hamcrest.Matchers.not(hasItem(termC.getUri())));
@@ -176,20 +175,16 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         final SearchParam relationshipParam = new SearchParam(
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(annotatingTerm.getUri().toString()),
-                MatchType.IRI
-        );
+                MatchType.IRI);
 
         final SearchParam vocabularyParam = new SearchParam(
-            URI.create(SKOS.IN_SCHEME),
-            Set.of(vocabulary.getUri().toString()),
-            MatchType.IRI
-        );
+                URI.create(SKOS.IN_SCHEME), Set.of(vocabulary.getUri().toString()), MatchType.IRI);
 
         final Page<SearchResult> result = sut.advancedSearch(
                 new SearchString("", null),
                 Set.of(relationshipParam, vocabularyParam),
-                Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri())
-        );
+                Constants.DEFAULT_PAGE_SPEC,
+                Set.of(vocabulary.getUri()));
 
         assertFalse(result.isEmpty());
         result.forEach(r -> assertEquals(vocabulary.getUri(), r.getVocabulary()));
@@ -205,13 +200,11 @@ class SearchDaoRelationshipAnnotationTest extends BaseDaoTestRunner {
         final SearchParam param = new SearchParam(
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_relationship),
                 Set.of(otherTerm.getUri().toString()),
-                MatchType.IRI
-        );
+                MatchType.IRI);
 
-        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(param),
-                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        final Page<SearchResult> result = sut.advancedSearch(
+                new SearchString("", null), Set.of(param), Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
 
         assertEquals(0, result.getNumberOfElements());
     }
 }
-

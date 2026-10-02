@@ -38,10 +38,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties({Configuration.class})
-@ContextConfiguration(classes = {
-        TestPersistenceConfig.class,
-        TestServiceConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestPersistenceConfig.class, TestServiceConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public abstract class BaseServiceTestRunner extends TransactionalTestRunner {
-}
+public abstract class BaseServiceTestRunner extends TransactionalTestRunner {}

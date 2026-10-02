@@ -70,14 +70,16 @@ class OntoGrapherVocabularyRelationshipResolver implements VocabularyRelationshi
                                                                         ?inVocabulary ?targetVocabulary .
                                                                     FILTER (?linkVocabulary = ?vocabulary || ?sourceVocabulary = ?vocabulary || ?targetVocabulary = ?vocabulary)
                                                                  }
-                                                                 """).setParameter("vocabulary", vocabulary)
-                                      .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-                                      .setParameter("term", URI.create(SKOS.CONCEPT))
-                                      .getResultList();
+                                                                 """)
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
+                .setParameter("term", URI.create(SKOS.CONCEPT))
+                .getResultList();
         final Set<URI> result = new HashSet<>(vocabularyList.size());
         vocabularyList.forEach(elem -> {
             final Object[] row = (Object[]) elem;
-            result.addAll(Stream.of(row).filter(Objects::nonNull).map(URI.class::cast).collect(Collectors.toSet()));
+            result.addAll(
+                    Stream.of(row).filter(Objects::nonNull).map(URI.class::cast).collect(Collectors.toSet()));
         });
         result.remove(vocabulary);
         return result;

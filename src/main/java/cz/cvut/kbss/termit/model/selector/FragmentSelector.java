@@ -34,8 +34,7 @@ public class FragmentSelector extends Selector {
     @OWLDataProperty(iri = RDF.VALUE, simpleLiteral = true)
     private String value;
 
-    public FragmentSelector() {
-    }
+    public FragmentSelector() {}
 
     public FragmentSelector(@NotBlank String value) {
         this.value = value;
@@ -72,8 +71,6 @@ public class FragmentSelector extends Selector {
 
     @Override
     public String toString() {
-        return "FragmentSelector{" +
-                "value='" + value + '\'' +
-                "} " + super.toString();
+        return "FragmentSelector{" + "value='" + value + '\'' + "} " + super.toString();
     }
 }

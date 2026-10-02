@@ -77,11 +77,8 @@ public class AccessControlListBasedAuthorizationService {
             LOG.warn("Asset {} is missing an ACL.", resource);
         }
         final Optional<AccessControlRecord<?>> record = optionalAcl.flatMap(acl -> acl.getRecords().stream()
-                                                                                      .filter(r -> r.getHolder()
-                                                                                                    .getUri()
-                                                                                                    .toString()
-                                                                                                    .equals(UserRole.ANONYMOUS_USER.getType()))
-                                                                                      .findAny());
+                .filter(r -> r.getHolder().getUri().toString().equals(UserRole.ANONYMOUS_USER.getType()))
+                .findAny());
         return record.map(r -> r.getAccessLevel().includes(AccessLevel.READ)).orElse(false);
     }
 
@@ -116,12 +113,13 @@ public class AccessControlListBasedAuthorizationService {
             return AccessLevel.SECURITY;
         }
         final Optional<AccessControlList> optionalAcl = aclService.findFor(resource);
-        return optionalAcl.map(accessControlList -> accessControlList.getRecords().stream()
-                                                                     .map(r -> r.getAccessLevelFor(user))
-                                                                     .flatMap(Optional::stream)
-                                                                     .max(Comparator.comparing(AccessLevel::ordinal))
-                                                                     .orElse(AccessLevel.NONE))
-                          .orElse(AccessLevel.NONE);
+        return optionalAcl
+                .map(accessControlList -> accessControlList.getRecords().stream()
+                        .map(r -> r.getAccessLevelFor(user))
+                        .flatMap(Optional::stream)
+                        .max(Comparator.comparing(AccessLevel::ordinal))
+                        .orElse(AccessLevel.NONE))
+                .orElse(AccessLevel.NONE);
     }
 
     /**

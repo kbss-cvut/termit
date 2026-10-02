@@ -64,7 +64,8 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
     protected abstract GenericDao<T> getPrimaryDao();
 
     // Read methods are intentionally not transactional because, for example, when postLoad manipulates the resulting
-    // entity in any way, transaction commit would attempt to insert the change into the repository, which is not desired
+    // entity in any way, transaction commit would attempt to insert the change into the repository, which is not
+    // desired
 
     /**
      * Loads all instances of the type managed by this service from the repository.
@@ -131,7 +132,8 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      */
     @Transactional(readOnly = true)
     public T findRequired(URI id) {
-        return find(id).orElseThrow(() -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
+        return find(id).orElseThrow(
+                        () -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
     }
 
     /**
@@ -312,8 +314,8 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      */
     protected void validateUri(URI uri) throws InvalidIdentifierException {
         if (uri != null && !IdentifierResolver.isAbsoluteUri(uri.toString())) {
-            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter(
-                    "uri", uri.toString());
+            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier")
+                    .addParameter("uri", uri.toString());
         }
     }
 }

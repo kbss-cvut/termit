@@ -114,15 +114,16 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         assertEquals(2, result.size());
         assertFalse(result.contains(file));
         assertTrue(result.contains(doc));
-        final Optional<Resource> docResult = result.stream().filter(r -> r.getUri().equals(doc.getUri())).findAny();
+        final Optional<Resource> docResult =
+                result.stream().filter(r -> r.getUri().equals(doc.getUri())).findAny();
         assertTrue(docResult.isPresent());
         assertTrue(((Document) docResult.get()).getFile(file.getLabel()).isPresent());
     }
 
     @Test
     void findAllReturnsResourcesOrderedByLabel() {
-        final List<Resource> resources = IntStream.range(0, 10).mapToObj(i -> generateResource())
-                                                  .collect(Collectors.toList());
+        final List<Resource> resources =
+                IntStream.range(0, 10).mapToObj(i -> generateResource()).collect(Collectors.toList());
 
         final List<Resource> result = sut.findAll();
         resources.sort(Comparator.comparing(Resource::getLabel));
@@ -135,8 +136,8 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         final Document doc = Generator.generateDocumentWithId();
 
         transactional(() -> sut.persist(doc, vocabulary));
-        final Document result = em
-                .find(Document.class, doc.getUri(), descriptorFactory.documentDescriptor(vocabulary.getUri()));
+        final Document result =
+                em.find(Document.class, doc.getUri(), descriptorFactory.documentDescriptor(vocabulary.getUri()));
         assertNotNull(result);
         assertEquals(doc, result);
     }
@@ -178,8 +179,8 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         doc.setLabel(newLabel);
 
         transactional(() -> sut.update(doc));
-        final Document result = em
-                .find(Document.class, doc.getUri(), descriptorFactory.documentDescriptor(vocabulary.getUri()));
+        final Document result =
+                em.find(Document.class, doc.getUri(), descriptorFactory.documentDescriptor(vocabulary.getUri()));
         assertNotNull(result);
         assertEquals(newLabel, result.getLabel());
     }
@@ -234,8 +235,8 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         });
 
         transactional(() -> {
-            final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
-                                              descriptorFactory.vocabularyDescriptor(vocabulary));
+            final Vocabulary result =
+                    em.find(Vocabulary.class, vocabulary.getUri(), descriptorFactory.vocabularyDescriptor(vocabulary));
             assertThat(result.getDocument().getFiles(), anyOf(nullValue(), empty()));
         });
     }
@@ -303,7 +304,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     @Test
     void refreshLastModifiedUpdatesLastModifiedTimestampToCurrentDateTime() throws Exception {
         final long before = sut.getLastModified();
-        Thread.sleep(100);  // force time to move on
+        Thread.sleep(100); // force time to move on
         sut.refreshLastModified(new RefreshLastModifiedEvent(this));
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
@@ -351,8 +352,9 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
-                                                      .filter(AssetUpdateEvent.class::isInstance)
-                                                      .map(AssetUpdateEvent.class::cast).findFirst();
+                .filter(AssetUpdateEvent.class::isInstance)
+                .map(AssetUpdateEvent.class::cast)
+                .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(resource, evt.get().getAsset());
     }
@@ -384,9 +386,10 @@ class ResourceDaoTest extends BaseDaoTestRunner {
             sut.remove(toRemove);
         });
 
-        final cz.cvut.kbss.termit.model.Vocabulary
-                result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
-                                 descriptorFactory.vocabularyDescriptor(vocabulary));
+        final cz.cvut.kbss.termit.model.Vocabulary result = em.find(
+                cz.cvut.kbss.termit.model.Vocabulary.class,
+                vocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary));
         assertEquals(1, result.getDocument().getFiles().size());
         assertTrue(result.getDocument().getFiles().contains(fileTwo));
     }
@@ -402,8 +405,10 @@ class ResourceDaoTest extends BaseDaoTestRunner {
             final Repository repository = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repository.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
-                conn.add(vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_document), RDFS.SUBCLASSOF, vf.createIRI(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_c_resource));
+                conn.add(
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_document),
+                        RDFS.SUBCLASSOF,
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_resource));
             }
             em.persist(doc);
             em.persist(fileOne);
@@ -428,13 +433,12 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         final List<File> modifiedAfterBackup = new ArrayList<>();
         final Document document = Generator.generateDocumentWithId();
         transactional(() -> em.persist(document));
-        Generator.generateDocumentFilesWithBackupTimestamps(document)
-                 .forEach(file -> {
-                     transactional(() -> em.persist(file));
-                     if (file.getModified().isAfter(file.getLastBackup())) {
-                         modifiedAfterBackup.add(file);
-                     }
-                 });
+        Generator.generateDocumentFilesWithBackupTimestamps(document).forEach(file -> {
+            transactional(() -> em.persist(file));
+            if (file.getModified().isAfter(file.getLastBackup())) {
+                modifiedAfterBackup.add(file);
+            }
+        });
 
         List<File> files = sut.findModifiedFilesAfterLastBackup();
 

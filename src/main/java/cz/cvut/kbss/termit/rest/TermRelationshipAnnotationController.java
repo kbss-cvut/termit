@@ -28,8 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.util.List;
 
-@Tag(name = "Term relationship annotations",
-     description = "Annotations of (assigning data to) relationships between terms")
+@Tag(
+        name = "Term relationship annotations",
+        description = "Annotations of (assigning data to) relationships between terms")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 @RestController
 public class TermRelationshipAnnotationController extends BaseController {
@@ -38,62 +39,80 @@ public class TermRelationshipAnnotationController extends BaseController {
 
     private final TermRelationshipAnnotationService service;
 
-    public TermRelationshipAnnotationController(IdentifierResolver idResolver, Configuration config,
-                                                TermRelationshipAnnotationService service) {
+    public TermRelationshipAnnotationController(
+            IdentifierResolver idResolver, Configuration config, TermRelationshipAnnotationService service) {
         super(idResolver, config);
         this.service = service;
     }
 
-    @Operation(security = @SecurityRequirement(name = "bearer-key"),
-               description = "Gets annotations of relationships of the specified term")
+    @Operation(
+            security = @SecurityRequirement(name = "bearer-key"),
+            description = "Gets annotations of relationships of the specified term")
     @ApiResponse(responseCode = "200", description = "List of term relationship annotations.")
     @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
-    @GetMapping(value = "/terms/{localName}/relationship-annotations",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/terms/{localName}/relationship-annotations",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermRelationshipAnnotation> getRelationshipAnnotations(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam String namespace) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam
+                    String namespace) {
         final URI termUri = resolveIdentifier(namespace, localName);
         return service.findAllForSubject(termUri);
     }
 
-    @Operation(security = @SecurityRequirement(name = "bearer-key"),
-               description = "Gets info about term relationships that are annotated by the specified term.")
+    @Operation(
+            security = @SecurityRequirement(name = "bearer-key"),
+            description = "Gets info about term relationships that are annotated by the specified term.")
     @ApiResponse(responseCode = "200", description = "List of annotated term relationships.")
     @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
-    @GetMapping(value = "/terms/{localName}/annotated-relationships",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/terms/{localName}/annotated-relationships",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AnnotatedTermRelationship> getAnnotatedRelationships(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam String namespace) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam
+                    String namespace) {
         final URI termUri = resolveIdentifier(namespace, localName);
         return service.findAnnotatedRelationships(termUri);
     }
 
-    @Operation(security = @SecurityRequirement(name = "bearer-key"),
-               description = "Updates annotations of a single relationship of the specified term. " +
-                       "Other existing term relationship annotations are preserved. " +
-                       "To remove all annotations of the specified relationship, send the annotation with empty values.")
-    @PatchMapping(value = "/terms/{localName}/relationship-annotations",
-                  consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @Operation(
+            security = @SecurityRequirement(name = "bearer-key"),
+            description = "Updates annotations of a single relationship of the specified term. "
+                    + "Other existing term relationship annotations are preserved. "
+                    + "To remove all annotations of the specified relationship, send the annotation with empty values.")
+    @PatchMapping(
+            value = "/terms/{localName}/relationship-annotations",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateRelationshipAnnotation(
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
-                       example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-            @RequestParam String namespace,
-            @Parameter(description = "Term relationship annotation")
-            @RequestBody TermRelationshipAnnotation annotation) {
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam
+                    String namespace,
+            @Parameter(description = "Term relationship annotation") @RequestBody
+                    TermRelationshipAnnotation annotation) {
         final URI termUri = resolveIdentifier(namespace, localName);
         service.updateAnnotation(termUri, annotation);
         LOG.debug("Successfully updated annotation of term relationship {}.", annotation.getRelationship());

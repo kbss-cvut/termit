@@ -34,7 +34,8 @@ class EntityToOwlClassMapperTest {
 
     @Test
     void getOwlClassForEntityThrowsIllegalArgumentForClassNotAnnotatedWithOwlClass() {
-        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        final IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
                 () -> EntityToOwlClassMapper.getOwlClassForEntity(EntityToOwlClassMapper.class));
         assertEquals("Class " + EntityToOwlClassMapper.class + " is not an OWL entity.", ex.getMessage());
     }

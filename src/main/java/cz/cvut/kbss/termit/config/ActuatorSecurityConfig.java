@@ -55,12 +55,15 @@ public class ActuatorSecurityConfig {
     @Bean(name = "actuatorSecurityFilterChain")
     public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/actuator/**")
-            .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health").permitAll()
-                                               .requestMatchers("/actuator/sbom/**").permitAll()
-                                               .requestMatchers("/actuator/**").authenticated())
-            .userDetailsService(actuatorUserDetailsService())
-            .httpBasic(withDefaults())
-            .csrf(AbstractHttpConfigurer::disable);
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health")
+                        .permitAll()
+                        .requestMatchers("/actuator/sbom/**")
+                        .permitAll()
+                        .requestMatchers("/actuator/**")
+                        .authenticated())
+                .userDetailsService(actuatorUserDetailsService())
+                .httpBasic(withDefaults())
+                .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
@@ -75,8 +78,7 @@ public class ActuatorSecurityConfig {
         }
         // The builder will ensure the passwords are encoded before saving in memory
         UserBuilder users = User.builder();
-        UserDetails actuatorUser = users
-                .username(username)
+        UserDetails actuatorUser = users.username(username)
                 .password(passwordEncoder.encode(password))
                 .roles("USER")
                 .build();

@@ -50,12 +50,15 @@ public class BaseControllerTestRunner {
     }
 
     public void setUp(Object controller) {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new RestExceptionHandler())
-                                      .setMessageConverters(createJsonLdMessageConverter(),
-                                              createDefaultMessageConverter(), createStringEncodingMessageConverter(),
-                                              createResourceMessageConverter())
-                                      .setContentNegotiationManager(new ContentNegotiationManager())
-                                      .build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new RestExceptionHandler())
+                .setMessageConverters(
+                        createJsonLdMessageConverter(),
+                        createDefaultMessageConverter(),
+                        createStringEncodingMessageConverter(),
+                        createResourceMessageConverter())
+                .setContentNegotiationManager(new ContentNegotiationManager())
+                .build();
     }
 
     protected void setupObjectMappers() {
@@ -82,8 +85,8 @@ public class BaseControllerTestRunner {
     void verifyLocationEquals(String expectedPath, MvcResult result) {
         final String locationHeader = result.getResponse().getHeader(HttpHeaders.LOCATION);
         assertNotNull(locationHeader);
-        final String path = locationHeader.substring(0,
-                locationHeader.indexOf('?') != -1 ? locationHeader.indexOf('?') : locationHeader.length());
+        final String path = locationHeader.substring(
+                0, locationHeader.indexOf('?') != -1 ? locationHeader.indexOf('?') : locationHeader.length());
         assertEquals("http://localhost" + expectedPath, path);
     }
 }

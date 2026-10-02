@@ -46,8 +46,7 @@ public class TextQuoteSelector extends Selector {
     @OWLDataProperty(iri = Vocabulary.s_p_has_text_quote_suffix, simpleLiteral = true)
     private String suffix;
 
-    public TextQuoteSelector() {
-    }
+    public TextQuoteSelector() {}
 
     public TextQuoteSelector(@NotBlank String exactMatch) {
         this.exactMatch = exactMatch;
@@ -96,9 +95,9 @@ public class TextQuoteSelector extends Selector {
         if (!(o instanceof TextQuoteSelector selector)) {
             return false;
         }
-        return Objects.equals(exactMatch, selector.exactMatch) &&
-                Objects.equals(prefix, selector.prefix) &&
-                Objects.equals(suffix, selector.suffix);
+        return Objects.equals(exactMatch, selector.exactMatch)
+                && Objects.equals(prefix, selector.prefix)
+                && Objects.equals(suffix, selector.suffix);
     }
 
     @Override
@@ -108,10 +107,10 @@ public class TextQuoteSelector extends Selector {
 
     @Override
     public String toString() {
-        return "TextQuoteSelector{" +
-                "exactMatch='" + exactMatch + '\'' +
-                ", prefix='" + trim(prefix) + '\'' +
-                ", suffix='" + trim(suffix) + '\'' +
-                "} " + super.toString();
+        return "TextQuoteSelector{" + "exactMatch='"
+                + exactMatch + '\'' + ", prefix='"
+                + trim(prefix) + '\'' + ", suffix='"
+                + trim(suffix) + '\'' + "} "
+                + super.toString();
     }
 }

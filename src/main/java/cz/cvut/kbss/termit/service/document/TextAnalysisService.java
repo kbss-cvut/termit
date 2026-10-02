@@ -107,13 +107,18 @@ public class TextAnalysisService {
      *     <li>Term definition</li>
      * </ol>
      */
-    private static final Pattern TERM_DEFINITION_PATTERN = Pattern.compile(Pattern.quote(TERM_DEFINITION_PREFIX) + "([^\\\"]+)\" *\\>(.+?)" + Pattern.quote(TERM_DEFINITION_SUFFIX));
+    private static final Pattern TERM_DEFINITION_PATTERN = Pattern.compile(
+            Pattern.quote(TERM_DEFINITION_PREFIX) + "([^\\\"]+)\" *\\>(.+?)" + Pattern.quote(TERM_DEFINITION_SUFFIX));
 
     @Autowired
-    public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
-                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao,
-                               ApplicationEventPublisher eventPublisher,
-                               VocabularyDao vocabularyDao) {
+    public TextAnalysisService(
+            RestTemplate restClient,
+            Configuration config,
+            DocumentManager documentManager,
+            AnnotationGenerator annotationGenerator,
+            TextAnalysisRecordDao recordDao,
+            ApplicationEventPublisher eventPublisher,
+            VocabularyDao vocabularyDao) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
@@ -154,10 +159,12 @@ public class TextAnalysisService {
         input.setContent(documentManager.loadFileContent(file));
         final Optional<String> publicUrl = config.getRepository().getPublicUrl();
         URI repositoryUrl = URI.create(
-                publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
-        );
+                publicUrl.isEmpty() || publicUrl.get().isEmpty()
+                        ? config.getRepository().getUrl()
+                        : publicUrl.get());
         input.setVocabularyRepository(repositoryUrl);
-        String vocabularyLanguage = vocabularyDao.getPrimaryLanguage(file.getDocument().getVocabulary());
+        String vocabularyLanguage =
+                vocabularyDao.getPrimaryLanguage(file.getDocument().getVocabulary());
         input.setLanguage(file.getLanguage() != null ? file.getLanguage() : vocabularyLanguage);
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
@@ -195,8 +202,8 @@ public class TextAnalysisService {
         final HttpHeaders headers = new HttpHeaders();
         headers.addAll(HttpHeaders.ACCEPT, List.of(MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE));
         LOG.debug("Invoking text analysis service at '{}' on input: {}", taUrl, input);
-        final ResponseEntity<Resource> resp = restClient.exchange(taUrl, HttpMethod.POST,
-                                                                  new HttpEntity<>(input, headers), Resource.class);
+        final ResponseEntity<Resource> resp =
+                restClient.exchange(taUrl, HttpMethod.POST, new HttpEntity<>(input, headers), Resource.class);
         if (!resp.hasBody()) {
             throw new WebServiceIntegrationException("Text analysis service returned empty response.");
         }
@@ -217,7 +224,7 @@ public class TextAnalysisService {
         if (ex.getStatusCode() == HttpStatus.CONFLICT) {
             final ErrorInfo errorInfo = ex.getResponseBodyAs(ErrorInfo.class);
             if (errorInfo != null && errorInfo.getMessage().contains("language")) {
-                throw new UnsupportedTextAnalysisLanguageException(errorInfo.getMessage(),asset);
+                throw new UnsupportedTextAnalysisLanguageException(errorInfo.getMessage(), asset);
             }
         }
         throw new WebServiceIntegrationException("Text analysis invocation failed.", ex);
@@ -244,8 +251,10 @@ public class TextAnalysisService {
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext, String language) {
         Objects.requireNonNull(term);
         if (term.getDefinition() != null && term.getDefinition().contains(language)) {
-            final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
-                                                                  URI.create(config.getRepository().getUrl()));
+            final TextAnalysisInput input = new TextAnalysisInput(
+                    term.getDefinition().get(language),
+                    language,
+                    URI.create(config.getRepository().getUrl()));
             input.addVocabularyContext(vocabularyContext);
             input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
             input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
@@ -299,8 +308,7 @@ public class TextAnalysisService {
     private String combineTermDefinitions(List<AbstractTerm> terms, Map<URI, AbstractTerm> termMap, String language) {
         final StringBuilder definitions = new StringBuilder();
         terms.forEach(term -> {
-            if (term.getDefinition() != null && term.getDefinition()
-                                                    .contains(language)) {
+            if (term.getDefinition() != null && term.getDefinition().contains(language)) {
                 definitions.append(TERM_DEFINITION_PREFIX).append(term.getUri()).append("\">");
                 definitions.append(term.getDefinition().get(language));
                 definitions.append(TERM_DEFINITION_SUFFIX);
@@ -333,8 +341,7 @@ public class TextAnalysisService {
 
         // invoke text analysis and generate annotations
         definitionsMap.forEach((context, definitions) ->
-                invokeTextAnalysisOnCombinedDefinitions(context, definitions, termMap, language)
-        );
+                invokeTextAnalysisOnCombinedDefinitions(context, definitions, termMap, language));
     }
 
     /**
@@ -357,7 +364,8 @@ public class TextAnalysisService {
             final String termid = matcher.group(1);
             final String termDefinition = matcher.group(2);
             final var term = termMap.get(URI.create(termid));
-            annotationGenerator.generateAnnotations(new ByteArrayInputStream(termDefinition.getBytes(StandardCharsets.UTF_8)), term);
+            annotationGenerator.generateAnnotations(
+                    new ByteArrayInputStream(termDefinition.getBytes(StandardCharsets.UTF_8)), term);
             eventPublisher.publishEvent(new TermDefinitionTextAnalysisFinishedEvent(this, term));
         }
     }
@@ -373,14 +381,10 @@ public class TextAnalysisService {
      * @param termMap     Map of term URIs to terms.
      * @param language    Language of the term definitions to analyze.
      */
-    private void invokeTextAnalysisOnCombinedDefinitions(URI context, String definitions,
-                                                         Map<URI, AbstractTerm> termMap,
-                                                         String language) {
+    private void invokeTextAnalysisOnCombinedDefinitions(
+            URI context, String definitions, Map<URI, AbstractTerm> termMap, String language) {
         final TextAnalysisInput input = new TextAnalysisInput(
-                definitions,
-                language,
-                URI.create(config.getRepository().getUrl())
-        );
+                definitions, language, URI.create(config.getRepository().getUrl()));
         input.addVocabularyContext(context);
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
@@ -406,7 +410,6 @@ public class TextAnalysisService {
         }
     }
 
-
     /**
      * Checks whether the text analysis service supports the language of the specified file.
      * <p>
@@ -420,8 +423,9 @@ public class TextAnalysisService {
      */
     public boolean supportsLanguage(File file) {
         Objects.requireNonNull(file);
-        return file.getLanguage() == null || getSupportedLanguages().isEmpty() || getSupportedLanguages().contains(
-                file.getLanguage());
+        return file.getLanguage() == null
+                || getSupportedLanguages().isEmpty()
+                || getSupportedLanguages().contains(file.getLanguage());
     }
 
     private synchronized Set<String> getSupportedLanguages() {
@@ -435,19 +439,21 @@ public class TextAnalysisService {
             this.supportedLanguages = Set.of();
         } else {
             try {
-                LOG.debug("Getting list of supported languages from text analysis service at '{}'.",
-                          languagesEndpointUrl);
-                ResponseEntity<Set<String>> response = restClient.exchange(languagesEndpointUrl, HttpMethod.GET, null,
-                                                                           new ParameterizedTypeReference<>() {
-                                                                           });
+                LOG.debug(
+                        "Getting list of supported languages from text analysis service at '{}'.",
+                        languagesEndpointUrl);
+                ResponseEntity<Set<String>> response = restClient.exchange(
+                        languagesEndpointUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
                 this.supportedLanguages = response.getBody();
                 if (supportedLanguages == null) {
                     this.supportedLanguages = Set.of();
                 }
                 LOG.trace("Text analysis supported languages: {}", supportedLanguages);
             } catch (RuntimeException e) {
-                LOG.error("Unable to get list of supported languages from text analysis service at '{}'.",
-                          languagesEndpointUrl, e);
+                LOG.error(
+                        "Unable to get list of supported languages from text analysis service at '{}'.",
+                        languagesEndpointUrl,
+                        e);
                 this.supportedLanguages = Set.of();
             }
         }

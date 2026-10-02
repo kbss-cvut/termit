@@ -56,29 +56,31 @@ class AssetLink implements AssetVisitor {
         asset.accept(this);
         // We need to ensure that fragment is before query params, so first build the fragment with query params,
         // then build the whole URL
-        return ServletUriComponentsBuilder.fromUriString(baseUrl).fragment(assetPath.toUriString()).toUriString();
+        return ServletUriComponentsBuilder.fromUriString(baseUrl)
+                .fragment(assetPath.toUriString())
+                .toUriString();
     }
 
     @Override
     public void visitTerm(AbstractTerm term) {
         final UriComponentsBuilder builder = ServletUriComponentsBuilder.fromPath(FrontendPaths.TERM_PATH)
-                                                                        .queryParam(Constants.QueryParams.NAMESPACE,
-                                                                                    IdentifierResolver.extractIdentifierNamespace(
-                                                                                            term.getVocabulary()));
+                .queryParam(
+                        Constants.QueryParams.NAMESPACE,
+                        IdentifierResolver.extractIdentifierNamespace(term.getVocabulary()));
         params.forEach(builder::queryParam);
-        this.assetPath = builder.buildAndExpand(IdentifierResolver.extractIdentifierFragment(term.getVocabulary()),
-                                                IdentifierResolver.extractIdentifierFragment(term.getUri()));
+        this.assetPath = builder.buildAndExpand(
+                IdentifierResolver.extractIdentifierFragment(term.getVocabulary()),
+                IdentifierResolver.extractIdentifierFragment(term.getUri()));
     }
 
     @Override
     public void visitVocabulary(Vocabulary vocabulary) {
         final UriComponentsBuilder builder = ServletUriComponentsBuilder.fromPath(FrontendPaths.VOCABULARY_PATH)
-                                                                        .queryParam(Constants.QueryParams.NAMESPACE,
-                                                                                    IdentifierResolver.extractIdentifierNamespace(
-                                                                                            vocabulary.getUri()));
+                .queryParam(
+                        Constants.QueryParams.NAMESPACE,
+                        IdentifierResolver.extractIdentifierNamespace(vocabulary.getUri()));
         params.forEach(builder::queryParam);
-        this.assetPath = builder.buildAndExpand(IdentifierResolver.extractIdentifierFragment(
-                vocabulary.getUri()));
+        this.assetPath = builder.buildAndExpand(IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()));
     }
 
     @Override

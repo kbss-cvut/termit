@@ -67,110 +67,146 @@ public class CommentController extends BaseController {
         this.commentService = commentService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the comment with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets the comment with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Matching comment metadata."),
-            @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Matching comment metadata."),
+        @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{localName}", produces = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(
+            value = "/{localName}",
+            produces = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     public Comment getById(
-            @Parameter(description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+            @Parameter(
+                            description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         return commentService.findRequired(idResolver.resolveIdentifier(namespace, localName));
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates the comment with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates the comment with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Comment successfully updated."),
-            @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Comment successfully updated."),
+        @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
     })
-    @PutMapping(value = "/{localName}", consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    @PutMapping(
+            value = "/{localName}",
+            consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@Parameter(description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                  example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                       @PathVariable String localName,
-                       @Parameter(description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                  example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
-                       @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
-                       @Parameter(description = "The updated comment.")
-                       @RequestBody Comment update) {
+    public void update(
+            @Parameter(
+                            description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace,
+            @Parameter(description = "The updated comment.") @RequestBody Comment update) {
         verifyRequestAndEntityIdentifier(update, idResolver.resolveIdentifier(namespace, localName));
         commentService.update(update);
         LOG.debug("Comment {} successfully updated.", update);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes the comment with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Removes the comment with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Comment successfully removed."),
-            @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Comment successfully removed."),
+        @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
     })
     @DeleteMapping("/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remove(@Parameter(description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                  example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                       @PathVariable String localName,
-                       @Parameter(description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                  example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
-                       @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+    public void remove(
+            @Parameter(
+                            description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final Comment toRemove = getById(localName, namespace);
         commentService.remove(toRemove);
         LOG.debug("Comment {} successfully removed.", toRemove);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Adds the specified reaction to the comment with the specified identifier as the current user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Adds the specified reaction to the comment with the specified identifier as the current user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Reaction successfully added."),
-            @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Reaction successfully added."),
+        @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
     })
     @PostMapping(value = "/{localName}/reactions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addReaction(@Parameter(description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                       example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                            @PathVariable String localName,
-                            @Parameter(description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                       example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
-                            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
-                            @Parameter(description = "Type of the reaction.")
-                            @RequestParam(name = "type") String type) {
+    public void addReaction(
+            @Parameter(
+                            description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace,
+            @Parameter(description = "Type of the reaction.") @RequestParam(name = "type") String type) {
         final Comment comment = getById(localName, namespace);
         commentService.addReactionTo(comment, type);
         LOG.trace("User reacted with {} to comment {}.", type, comment);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes the current user's reaction to the comment with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Removes the current user's reaction to the comment with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Reaction successfully removed."),
-            @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Reaction successfully removed."),
+        @ApiResponse(responseCode = "404", description = CommentControllerDoc.NOT_FOUND_DESCRIPTION)
     })
     @DeleteMapping(value = "/{localName}/reactions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeReactionTo(@Parameter(description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                            example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                 @PathVariable String localName,
-                                 @Parameter(description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                 @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+    public void removeReactionTo(
+            @Parameter(
+                            description = CommentControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = CommentControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = CommentControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = CommentControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final Comment comment = getById(localName, namespace);
         commentService.removeMyReactionTo(comment);
         LOG.trace("Reaction on comment {} removed.", comment);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets most recently added/edited comments of the current user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets most recently added/edited comments of the current user.")
     @ApiResponse(responseCode = "200", description = "List of comments.")
-    @GetMapping(value = "/last-edited-by-me", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/last-edited-by-me",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getLastEditedByMe(
             @Parameter(description = "Maximum number of comments to retrieve.")
-            @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
+                    @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT)
+                    int limit) {
         return commentService.findLastEditedByMe(limit);
     }
 
@@ -178,7 +214,8 @@ public class CommentController extends BaseController {
      * A couple of constants for the {@link CommentController} API documentation.
      */
     private static final class CommentControllerDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the comment identifier.";
+        private static final String ID_LOCAL_NAME_DESCRIPTION =
+                "Locally (in the context of the specified namespace) unique part of the comment identifier.";
         private static final String ID_LOCAL_NAME_EXAMPLE = "instance-12345";
         private static final String ID_NAMESPACE_DESCRIPTION = "Comment identifier namespace.";
         private static final String ID_NAMESPACE_EXAMPLE = "http://rdfs.org/sioc/types#Comment/";

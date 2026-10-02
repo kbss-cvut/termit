@@ -77,12 +77,13 @@ public class SecurityConfig {
     private final JwtConfig jwtConfig;
 
     @Autowired
-    public SecurityConfig(AuthenticationSuccess authenticationSuccessHandler,
-                          AuthenticationFailureHandler authenticationFailureHandler,
-                          TermItUserDetailsService userDetailsService,
-                          PersonalAccessTokenService personalAccessTokenService,
-                          cz.cvut.kbss.termit.util.Configuration config,
-                          JwtConfig jwtConfig) {
+    public SecurityConfig(
+            AuthenticationSuccess authenticationSuccessHandler,
+            AuthenticationFailureHandler authenticationFailureHandler,
+            TermItUserDetailsService userDetailsService,
+            PersonalAccessTokenService personalAccessTokenService,
+            cz.cvut.kbss.termit.util.Configuration config,
+            JwtConfig jwtConfig) {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
         this.userDetailsService = userDetailsService;
@@ -95,15 +96,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
         LOG.debug("Using internal security mechanisms.");
         final PathPatternRequestMatcher.Builder matcher = PathPatternRequestMatcher.withDefaults();
-        http.authorizeHttpRequests((auth) -> auth.requestMatchers(matcher.matcher("/**")).permitAll())
-            .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .exceptionHandling(ehc -> ehc.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-            .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
-                                  .logoutSuccessHandler(authenticationSuccessHandler))
-            .authenticationManager(authManager)
-            .addFilter(authenticationFilter(authManager))
-            .addFilter(jwtConfig.jwtAuthorizationFilter(authManager));
+        http.authorizeHttpRequests(
+                        (auth) -> auth.requestMatchers(matcher.matcher("/**")).permitAll())
+                .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(
+                        ehc -> ehc.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
+                        .logoutSuccessHandler(authenticationSuccessHandler))
+                .authenticationManager(authManager)
+                .addFilter(authenticationFilter(authManager))
+                .addFilter(jwtConfig.jwtAuthorizationFilter(authManager));
         return http.build();
     }
 
@@ -136,9 +139,11 @@ public class SecurityConfig {
         // Since we are using cookie-based sessions, we have to specify the URL of the clients (CORS allowed origins)
         final CorsConfiguration corsConfiguration = new CorsConfiguration().applyPermitDefaultValues();
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-        corsConfiguration.setAllowedOrigins(Arrays.asList(corsConfig.getAllowedOrigins().split(",")));
+        corsConfiguration.setAllowedOrigins(
+                Arrays.asList(corsConfig.getAllowedOrigins().split(",")));
         if (corsConfig.getAllowedOriginPatterns() != null) {
-            corsConfiguration.setAllowedOriginPatterns(Arrays.asList(corsConfig.getAllowedOriginPatterns().split(",")));
+            corsConfiguration.setAllowedOriginPatterns(
+                    Arrays.asList(corsConfig.getAllowedOriginPatterns().split(",")));
         }
         corsConfiguration.addExposedHeader(HttpHeaders.AUTHORIZATION);
         corsConfiguration.addExposedHeader(HttpHeaders.LOCATION);
@@ -154,8 +159,7 @@ public class SecurityConfig {
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder decoder = jwtConfig.jwtDecoder();
         decoder.setClaimSetConverter(MappedJwtClaimSetConverter.withDefaults(
-                Map.of(JwtClaimNames.SUB, new UsernameToUserDetailsConverter(userDetailsService))
-        ));
+                Map.of(JwtClaimNames.SUB, new UsernameToUserDetailsConverter(userDetailsService))));
         decoder.setJwtValidator(jwtConfig.jwtValidator());
         return decoder;
     }

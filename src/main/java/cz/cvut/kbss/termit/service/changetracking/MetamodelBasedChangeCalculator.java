@@ -71,12 +71,13 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
             final Object originalValue = EntityPropertiesUtils.getAttributeValue(att, original);
             final Object updateValue = EntityPropertiesUtils.getAttributeValue(att, changed);
             if (att.isAssociation()) {
-                final Optional<UpdateChangeRecord> change = resolveAssociationChange(originalValue, updateValue, att,
-                                                                                     original.getUri());
+                final Optional<UpdateChangeRecord> change =
+                        resolveAssociationChange(originalValue, updateValue, att, original.getUri());
                 change.ifPresent(records::add);
 
             } else if (!areEqual(att, originalValue, updateValue)) {
-                final UpdateChangeRecord record = createChangeRecord(original.getUri(), att.getIRI().toURI());
+                final UpdateChangeRecord record =
+                        createChangeRecord(original.getUri(), att.getIRI().toURI());
                 recordValues(record, att, originalValue, updateValue);
                 records.add(record);
             }
@@ -91,8 +92,9 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
     }
 
     private boolean areEqual(Attribute<?, ?> att, Object originalValue, Object newValue) {
-        return att.isCollection() ? areCollectionsEqual((Collection<?>) originalValue, (Collection<?>) newValue) :
-               Objects.equals(originalValue, newValue);
+        return att.isCollection()
+                ? areCollectionsEqual((Collection<?>) originalValue, (Collection<?>) newValue)
+                : Objects.equals(originalValue, newValue);
     }
 
     private void recordValues(UpdateChangeRecord record, Attribute<?, ?> att, Object originalValue, Object newValue) {
@@ -113,8 +115,8 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         }
     }
 
-    private Optional<UpdateChangeRecord> resolveAssociationChange(Object originalValue, Object updateValue,
-                                                                  Attribute<?, ?> att, URI assetId) {
+    private Optional<UpdateChangeRecord> resolveAssociationChange(
+            Object originalValue, Object updateValue, Attribute<?, ?> att, URI assetId) {
         if (originalValue == null && updateValue == null) {
             return Optional.empty();
         }
@@ -122,7 +124,8 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         final Object updateToCompare;
         if (att.isCollection()) {
             final PluralAttribute<?, ?, ?> pluralAtt = (PluralAttribute<?, ?, ?>) att;
-            if (IdentifierTransformer.isValidIdentifierType(pluralAtt.getElementType().getJavaType())) {
+            if (IdentifierTransformer.isValidIdentifierType(
+                    pluralAtt.getElementType().getJavaType())) {
                 originalToCompare = originalValue;
                 updateToCompare = updateValue;
             } else {
@@ -140,16 +143,18 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         if (areEqual(att, originalToCompare, updateToCompare)) {
             return Optional.empty();
         } else {
-            final UpdateChangeRecord record = createChangeRecord(assetId, att.getIRI().toURI());
+            final UpdateChangeRecord record =
+                    createChangeRecord(assetId, att.getIRI().toURI());
             recordValues(record, att, originalToCompare, updateToCompare);
             return Optional.of(record);
         }
     }
 
     private Object extractIdentifiersInCollection(Object col) {
-        return col != null ?
-               ((Collection<?>) col).stream().map(item -> getIdentifier(item, metamodel)).collect(Collectors.toSet()) :
-               Collections.emptySet();
+        return col != null
+                ? ((Collection<?>) col)
+                        .stream().map(item -> getIdentifier(item, metamodel)).collect(Collectors.toSet())
+                : Collections.emptySet();
     }
 
     private UpdateChangeRecord createChangeRecord(URI assetId, URI property) {
@@ -159,9 +164,8 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         return record;
     }
 
-    private Optional<UpdateChangeRecord> resolveTypesChange(Asset<?> original, Asset<?> update,
-                                                            EntityType<? extends Asset> et,
-                                                            URI assetId) {
+    private Optional<UpdateChangeRecord> resolveTypesChange(
+            Asset<?> original, Asset<?> update, EntityType<? extends Asset> et, URI assetId) {
         final TypesSpecification<?, ?> typesSpec = et.getTypes();
         if (typesSpec == null) {
             return Optional.empty();
@@ -173,12 +177,12 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         } else {
             final UpdateChangeRecord record = createChangeRecord(assetId, URI.create(RDF.TYPE));
             if (origTypes != null) {
-                record.setOriginalValue(origTypes.stream().map(t -> URI.create(t.toString()))
-                                                 .collect(Collectors.toSet()));
+                record.setOriginalValue(
+                        origTypes.stream().map(t -> URI.create(t.toString())).collect(Collectors.toSet()));
             }
             if (updateTypes != null) {
-                record.setNewValue(updateTypes.stream().map(t -> URI.create(t.toString()))
-                                              .collect(Collectors.toSet()));
+                record.setNewValue(
+                        updateTypes.stream().map(t -> URI.create(t.toString())).collect(Collectors.toSet()));
             }
             return Optional.of(record);
         }
@@ -191,9 +195,8 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         return original == null && update.isEmpty() || original != null && original.isEmpty() && update == null;
     }
 
-    private Collection<UpdateChangeRecord> resolveUnmappedPropertiesChanges(Asset<?> original, Asset<?> update,
-                                                                            EntityType<? extends Asset> et,
-                                                                            URI assetId) {
+    private Collection<UpdateChangeRecord> resolveUnmappedPropertiesChanges(
+            Asset<?> original, Asset<?> update, EntityType<? extends Asset> et, URI assetId) {
         final PropertiesSpecification<?, ?, ?, ?> propsSpec = et.getProperties();
         if (propsSpec == null) {
             return Collections.emptySet();

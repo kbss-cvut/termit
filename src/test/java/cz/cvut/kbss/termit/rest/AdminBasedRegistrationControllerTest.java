@@ -63,10 +63,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableTransactionManagement
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties({Configuration.class})
-@ContextConfiguration(classes = {
-        TestRestSecurityConfig.class,
-        TestPersistenceConfig.class,
-        TestServiceConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestRestSecurityConfig.class, TestPersistenceConfig.class, TestServiceConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 @ActiveProfiles("test")
 class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
 
@@ -95,9 +94,8 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        mockMvc.perform(post(PATH).content(toJson(user))
-                                  .contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isCreated());
+        mockMvc.perform(post(PATH).content(toJson(user)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isCreated());
         verify(userService).adminCreateUser(user);
     }
 
@@ -107,9 +105,8 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
         Environment.setCurrentUser(admin);
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         final UserAccount user = Generator.generateUserAccount();
-        mockMvc.perform(post(PATH).content(toJson(user))
-                                  .contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isForbidden());
+        mockMvc.perform(post(PATH).content(toJson(user)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isForbidden());
         verify(userService, never()).persist(any());
     }
 
@@ -121,9 +118,8 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);
         final UserAccount user = Generator.generateUserAccount();
-        mockMvc.perform(post(PATH).content(toJson(user))
-                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isCreated());
+        mockMvc.perform(post(PATH).content(toJson(user)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isCreated());
 
         ArgumentCaptor<PasswordChangeRequest> argumentCaptor = ArgumentCaptor.forClass(PasswordChangeRequest.class);
         verify(passwordChangeNotifier).sendCreatePasswordEmail(argumentCaptor.capture());

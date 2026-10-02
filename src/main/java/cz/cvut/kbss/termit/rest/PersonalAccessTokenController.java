@@ -34,47 +34,46 @@ import java.util.Optional;
 @RestController
 @RequestMapping(PersonalAccessTokenController.PATH)
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
-public class PersonalAccessTokenController extends BaseController{
+public class PersonalAccessTokenController extends BaseController {
 
     public static final String PATH = UserController.PATH + UserController.CURRENT_USER_PATH + "/tokens";
 
     private final PersonalAccessTokenService service;
 
-    protected PersonalAccessTokenController(IdentifierResolver idResolver,
-                                            Configuration config,
-                                            PersonalAccessTokenService service) {
+    protected PersonalAccessTokenController(
+            IdentifierResolver idResolver, Configuration config, PersonalAccessTokenService service) {
         super(idResolver, config);
         this.service = service;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Lists all personal tokens for the current user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Lists all personal tokens for the current user.")
     @ApiResponse(responseCode = "200", description = "List of personal access tokens.")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<PersonalAccessTokenDto> listPersonalAccessTokens() {
         return service.findAllForCurrentUser();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new token for the current user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Creates a new token for the current user.")
     @ApiResponse(responseCode = "200", description = "The created token value.")
     @ApiResponse(responseCode = "400", description = "Invalid token parameters supplied.")
-    @PostMapping(produces = {"application/"+Constants.MediaType.JWT_ACCESS_TOKEN})
+    @PostMapping(produces = {"application/" + Constants.MediaType.JWT_ACCESS_TOKEN})
     public String create(
-            @Parameter(description = "Expiration date for the new token.")
-            @RequestParam("expiration")
-            Optional<LocalDate> expiration) {
+            @Parameter(description = "Expiration date for the new token.") @RequestParam("expiration")
+                    Optional<LocalDate> expiration) {
         return service.create(expiration.orElse(null));
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Deletes token with the specified identifier from the current user.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Deletes token with the specified identifier from the current user.")
     @ApiResponse(responseCode = "200", description = "Token deleted.")
     @ApiResponse(responseCode = "404", description = "Token not found.")
     @DeleteMapping("/{localName}")
-    public void delete(
-            @Parameter(description = "Local name of the token to delete.")
-            @PathVariable String localName) {
+    public void delete(@Parameter(description = "Local name of the token to delete.") @PathVariable String localName) {
         if (Utils.isBlank(localName)) {
             throw new InvalidParameterException("Invalid local name");
         }

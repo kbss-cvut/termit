@@ -43,9 +43,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -60,6 +57,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 @Component
 public class JwtUtils {
@@ -107,7 +107,8 @@ public class JwtUtils {
      * @return Generated JWT hash
      */
     public String generateToken(UserAccount user, Collection<? extends GrantedAuthority> authorities) {
-        final JWTClaimsSet claims = prebuildClaims(user.getUsername(), user.getUri(), authorities, null).build();
+        final JWTClaimsSet claims = prebuildClaims(user.getUsername(), user.getUri(), authorities, null)
+                .build();
         return sign(claims, null);
     }
 
@@ -117,8 +118,9 @@ public class JwtUtils {
     }
 
     private static String mapAuthoritiesToClaim(Collection<? extends GrantedAuthority> authorities) {
-        return authorities.stream().map(GrantedAuthority::getAuthority)
-                          .collect(Collectors.joining(SecurityConstants.JWT_ROLE_DELIMITER));
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(SecurityConstants.JWT_ROLE_DELIMITER));
     }
 
     /**
@@ -221,11 +223,11 @@ public class JwtUtils {
      * @param expiration  The token expiration or null to use default session length
      * @return {@link JWTClaimsSet.Builder} with common parts set
      */
-    private JWTClaimsSet.Builder prebuildClaims(String subject, URI userId,
-                                                Collection<? extends GrantedAuthority> authorities, Date expiration) {
+    private JWTClaimsSet.Builder prebuildClaims(
+            String subject, URI userId, Collection<? extends GrantedAuthority> authorities, Date expiration) {
         final Instant issued = issueTimestamp();
-        final Date exp = expiration == null ? Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT))
-                                            : expiration;
+        final Date exp =
+                expiration == null ? Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)) : expiration;
         return new JWTClaimsSet.Builder()
                 .subject(subject)
                 .issueTime(Date.from(issued))
@@ -233,7 +235,6 @@ public class JwtUtils {
                 .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
                 .jwtID(userId.toString());
     }
-
 
     private String sign(JWTClaimsSet claims, JOSEObjectType type) {
         return sign(claims, type, signer);
@@ -270,10 +271,13 @@ public class JwtUtils {
     public String generatePAT(PersonalAccessToken newToken) {
         Date expiration = new Date(Long.MAX_VALUE);
         if (newToken.getExpirationDate() != null) {
-            expiration = Date.from(newToken.getExpirationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+            expiration = Date.from(newToken.getExpirationDate()
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant());
         }
-        final JWTClaimsSet claims = prebuildClaims(newToken.getUri().toString(), newToken.getOwner().getUri(),
-                                                   List.of(), expiration).build();
+        final JWTClaimsSet claims = prebuildClaims(
+                        newToken.getUri().toString(), newToken.getOwner().getUri(), List.of(), expiration)
+                .build();
         return sign(claims, new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN));
     }
 }

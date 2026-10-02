@@ -60,14 +60,15 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             REST_MAPPING_PATH + PUBLIC_API_PATH,
             REST_MAPPING_PATH + LanguageController.PATH + "/types",
             REST_MAPPING_PATH + LanguageController.PATH + "/states",
-            REST_MAPPING_PATH + "/data/label"    // DataController.getLabel
-    ));
+            REST_MAPPING_PATH + "/data/label" // DataController.getLabel
+            ));
 
     private final JwtUtils jwtUtils;
 
     private final ObjectMapper objectMapper;
 
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils, ObjectMapper objectMapper) {
+    public JwtAuthorizationFilter(
+            AuthenticationManager authenticationManager, JwtUtils jwtUtils, ObjectMapper objectMapper) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
         this.objectMapper = objectMapper;
@@ -83,8 +84,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
         final String authToken = authHeader.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
         try {
-            final TermItUserDetails principal = authenticate(authToken)
-                    .orElseThrow(() -> new JwtException("Invalid JWT token contents"));
+            final TermItUserDetails principal =
+                    authenticate(authToken).orElseThrow(() -> new JwtException("Invalid JWT token contents"));
 
             SecurityUtils.setCurrentUser(principal);
             refreshToken(authToken, response);
@@ -102,7 +103,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     private Optional<TermItUserDetails> authenticate(String token) {
-        final Authentication authentication = getAuthenticationManager().authenticate(new BearerTokenAuthenticationToken(token));
+        final Authentication authentication =
+                getAuthenticationManager().authenticate(new BearerTokenAuthenticationToken(token));
 
         return Optional.of(authentication).map(SecurityUtils::extractUserDetails);
     }
@@ -110,8 +112,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
             throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        objectMapper.writeValue(response.getOutputStream(),
-                                ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
+        objectMapper.writeValue(
+                response.getOutputStream(), ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
     }
 
     private void refreshToken(String authToken, HttpServletResponse response) {
@@ -135,6 +137,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
         // Public API endpoints are not secured, so there is no need to check for token.
         // This resolves issues with public API requests containing expired/invalid JWT being rejected
-        return PUBLIC_ENDPOINTS.stream().anyMatch(pattern -> request.getRequestURI().contains(pattern));
+        return PUBLIC_ENDPOINTS.stream()
+                .anyMatch(pattern -> request.getRequestURI().contains(pattern));
     }
 }

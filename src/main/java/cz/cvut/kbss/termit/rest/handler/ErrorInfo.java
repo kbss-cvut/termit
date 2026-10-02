@@ -45,8 +45,7 @@ public class ErrorInfo {
      */
     private Map<String, String> values;
 
-    public ErrorInfo() {
-    }
+    public ErrorInfo() {}
 
     public ErrorInfo(String requestUri) {
         this.requestUri = requestUri;
@@ -93,7 +92,8 @@ public class ErrorInfo {
 
     @Override
     public String toString() {
-        return "ErrorInfo{" + requestUri + ", messageId=" + messageId + ", message='" + message + "', parameters='"+ Utils.mapToString(values) +"'}";
+        return "ErrorInfo{" + requestUri + ", messageId=" + messageId + ", message='" + message + "', parameters='"
+                + Utils.mapToString(values) + "'}";
     }
 
     /**
@@ -134,7 +134,8 @@ public class ErrorInfo {
         return errorInfo;
     }
 
-    public static ErrorInfo createParametrizedWithMessage(String message, String messageId, String requestUri, Map<String, String> values) {
+    public static ErrorInfo createParametrizedWithMessage(
+            String message, String messageId, String requestUri, Map<String, String> values) {
         final ErrorInfo errorInfo = new ErrorInfo(requestUri);
         errorInfo.setMessage(message);
         errorInfo.setMessageId(messageId);

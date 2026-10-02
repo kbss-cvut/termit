@@ -45,7 +45,9 @@ public class ResourceAuthorizationService implements AssetAuthorizationService<R
 
     @Override
     public boolean canModify(Resource asset) {
-        return resolveVocabulary(asset).map(vocabularyAuthorizationService::canModify).orElse(true);
+        return resolveVocabulary(asset)
+                .map(vocabularyAuthorizationService::canModify)
+                .orElse(true);
     }
 
     private Optional<Vocabulary> resolveVocabulary(Resource resource) {
@@ -65,6 +67,8 @@ public class ResourceAuthorizationService implements AssetAuthorizationService<R
 
     @Override
     public boolean canRemove(Resource asset) {
-        return resolveVocabulary(asset).map(vocabularyAuthorizationService::canRemoveFiles).orElse(true);
+        return resolveVocabulary(asset)
+                .map(vocabularyAuthorizationService::canRemoveFiles)
+                .orElse(true);
     }
 }

@@ -60,13 +60,16 @@ class VocabularyAccessControlListGeneratorTest {
 
     @Test
     void generateMissingAccessControlListsGeneratesAccessControlListsForVocabulariesWithoutACLs() {
-        final List<Vocabulary> vocabs = List.of(Generator.generateVocabularyWithId(), Generator.generateVocabularyWithId());
-        final List<AccessControlList> acls = List.of(Generator.generateAccessControlList(false), Generator.generateAccessControlList(false));
+        final List<Vocabulary> vocabs =
+                List.of(Generator.generateVocabularyWithId(), Generator.generateVocabularyWithId());
+        final List<AccessControlList> acls =
+                List.of(Generator.generateAccessControlList(false), Generator.generateAccessControlList(false));
         assertEquals(vocabs.size(), acls.size());
         final TypedQuery<URI> query = mock(TypedQuery.class);
         when(query.setParameter(anyString(), any())).thenReturn(query);
         when(em.createNativeQuery(anyString(), eq(URI.class))).thenReturn(query);
-        when(query.getResultList()).thenReturn(vocabs.stream().map(Asset::getUri).collect(Collectors.toList()));
+        when(query.getResultList())
+                .thenReturn(vocabs.stream().map(Asset::getUri).collect(Collectors.toList()));
         for (int i = 0; i < vocabs.size(); i++) {
             when(vocabularyService.findRequired(vocabs.get(i).getUri())).thenReturn(vocabs.get(i));
             when(aclService.createFor(vocabs.get(i))).thenReturn(acls.get(i));

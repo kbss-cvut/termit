@@ -73,56 +73,63 @@ class SearchControllerTest extends BaseControllerTestRunner {
 
     @Test
     void fullTextSearchExecutesSearchOnService() throws Exception {
-        final List<SearchResult> expected = Collections
-                .singletonList(
-                        new SearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
-                                         "test", "test", 1.0));
+        final List<SearchResult> expected = Collections.singletonList(
+                new SearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT, "test", "test", 1.0));
         final String searchLanguage = "pl";
-        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class))).thenReturn(
-                new PageImpl<>(expected));
+        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(expected));
         final String searchString = "test";
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts")
-                                                            .param("searchString", searchString)
-                                                            .param("language", searchLanguage))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<SearchResult> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(
+                        get(PATH + "/fts").param("searchString", searchString).param("language", searchLanguage))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<SearchResult> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(expected.size(), result.size());
         assertEquals(expected.get(0).getUri(), result.get(0).getUri());
         assertEquals(expected.get(0).getLabel(), result.get(0).getLabel());
         assertEquals(expected.get(0).getTypes(), result.get(0).getTypes());
-        verify(searchServiceMock).advancedSearch(new SearchString(searchString, searchLanguage),
-                                                 Collections.emptyList(),
-                                                 Constants.DEFAULT_PAGE_SPEC);
+        verify(searchServiceMock)
+                .advancedSearch(
+                        new SearchString(searchString, searchLanguage),
+                        Collections.emptyList(),
+                        Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
     void fullTextSearchLanguageDefaultsToNullWhenNotSpecified() throws Exception {
         final String searchString = "test";
-        when(searchServiceMock.advancedSearch(any(SearchString.class), anyCollection(), any(Pageable.class))).thenReturn(
-                Page.empty());
-        mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
-               .andExpect(status().isOk());
-        verify(searchServiceMock).advancedSearch(new SearchString(searchString, null), Collections.emptyList(),
-                                                 Constants.DEFAULT_PAGE_SPEC);
+        when(searchServiceMock.advancedSearch(any(SearchString.class), anyCollection(), any(Pageable.class)))
+                .thenReturn(Page.empty());
+        mockMvc.perform(get(PATH + "/fts").param("searchString", searchString)).andExpect(status().isOk());
+        verify(searchServiceMock)
+                .advancedSearch(
+                        new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
     void fullTextSearchOfTermsWithoutVocabularySpecificationExecutesSearchOnService() throws Exception {
         final URI vocabularyIri = URI.create("https://test.org/vocabulary");
-        final List<SearchResult> expected = Collections
-                .singletonList(new SearchResult(Generator.generateUri(), "test", "Term definition", vocabularyIri, null,
-                                                SKOS.CONCEPT, "test", "test", 1.0));
+        final List<SearchResult> expected = Collections.singletonList(new SearchResult(
+                Generator.generateUri(),
+                "test",
+                "Term definition",
+                vocabularyIri,
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0));
         when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
         final String searchString = "test";
 
         mockMvc.perform(get(PATH + "/fts/terms")
-                                .param("searchString", searchString)
-                                .param("vocabulary", vocabularyIri.toString()))
-               .andExpect(status().isOk()).andReturn();
-        verify(searchServiceMock).fullTextSearchOfTerms(new SearchString(searchString, null),
-                                                        Collections.singleton(vocabularyIri));
+                        .param("searchString", searchString)
+                        .param("vocabulary", vocabularyIri.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+        verify(searchServiceMock)
+                .fullTextSearchOfTerms(new SearchString(searchString, null), Collections.singleton(vocabularyIri));
     }
 
     @Test
@@ -130,9 +137,9 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final String searchString = "test";
         final String searchLanguage = "pl";
         mockMvc.perform(get(PATH + "/fts/terms")
-                                .param("searchString", searchString)
-                                .param("language", searchLanguage))
-               .andExpect(status().isOk());
+                        .param("searchString", searchString)
+                        .param("language", searchLanguage))
+                .andExpect(status().isOk());
         verify(searchServiceMock).fullTextSearchOfTerms(eq(new SearchString(searchString, searchLanguage)), any());
     }
 
@@ -140,72 +147,100 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void fullTextSearchOfTermsSearchLanguageDefaultsToNullWhenNotSpecified() throws Exception {
         final String searchString = "test";
         mockMvc.perform(get(PATH + "/fts/terms").param("searchString", searchString))
-               .andExpect(status().isOk());
+                .andExpect(status().isOk());
         verify(searchServiceMock).fullTextSearchOfTerms(eq(new SearchString(searchString, null)), any());
     }
 
     @Test
     void advancedSearchPassesSearchParametersToSearchService() throws Exception {
         final SearchResult term = new SearchResult(
-                Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
-                SKOS.CONCEPT, "test", "test", 1.0);
-        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class))).thenReturn(
-                new PageImpl<>(List.of(term)));
+                Generator.generateUri(),
+                "Test term",
+                null,
+                Generator.generateUri(),
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0);
+        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(term)));
         final List<SearchParam> searchParams = List.of(
                 new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH),
-                new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUri().toString()), MatchType.IRI));
+                new SearchParam(
+                        URI.create(RDF.TYPE), Set.of(Generator.generateUri().toString()), MatchType.IRI));
 
-        final MvcResult mvcResult = mockMvc.perform(
-                post(PATH + "/advanced").param("searchString", "test").content(toJson(searchParams)).contentType(
-                        MediaType.APPLICATION_JSON)).andReturn();
-        final List<SearchResult> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(post(PATH + "/advanced")
+                        .param("searchString", "test")
+                        .content(toJson(searchParams))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        final List<SearchResult> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getUri());
-        verify(searchServiceMock).advancedSearch(new SearchString("test", null), searchParams,
-                                                 Constants.DEFAULT_PAGE_SPEC);
+        verify(searchServiceMock)
+                .advancedSearch(new SearchString("test", null), searchParams, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
     void advancedSearchPassesSpecifiedPageSpecificationToService() throws Exception {
         final SearchResult term = new SearchResult(
-                Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
-                SKOS.CONCEPT, "test", "test", 1.0);
-        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class))).thenReturn(
-                new PageImpl<>(List.of(term)));
-        final List<SearchParam> searchParams = List.of(
-                new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));
+                Generator.generateUri(),
+                "Test term",
+                null,
+                Generator.generateUri(),
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0);
+        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(term)));
+        final List<SearchParam> searchParams =
+                List.of(new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));
         final int pageNo = Generator.randomInt(0, 5);
         final int pageSize = Generator.randomInt(100, 1000);
 
-        mockMvc.perform(
-                post(PATH + "/advanced").param("searchString", "test").content(toJson(searchParams)).contentType(
-                        MediaType.APPLICATION_JSON).param(Constants.QueryParams.PAGE, Integer.toString(pageNo)).param(
-                        Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))).andExpect(status().isOk());
-        verify(searchServiceMock).advancedSearch(new SearchString("test", null), searchParams,
-                                                 PageRequest.of(pageNo, pageSize));
+        mockMvc.perform(post(PATH + "/advanced")
+                        .param("searchString", "test")
+                        .content(toJson(searchParams))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param(Constants.QueryParams.PAGE, Integer.toString(pageNo))
+                        .param(Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize)))
+                .andExpect(status().isOk());
+        verify(searchServiceMock)
+                .advancedSearch(new SearchString("test", null), searchParams, PageRequest.of(pageNo, pageSize));
     }
 
     @Test
     void advancedSearchReturnsHeaderWithTotalNumberOfResultsForPagedRequest() throws Exception {
         final SearchResult term = new SearchResult(
-                Generator.generateUri(), "Test term", null, Generator.generateUri(), null,
-                SKOS.CONCEPT, "test", "test", 1.0);
+                Generator.generateUri(),
+                "Test term",
+                null,
+                Generator.generateUri(),
+                null,
+                SKOS.CONCEPT,
+                "test",
+                "test",
+                1.0);
         final int pageNo = 4;
         final int pageSize = 100;
         final long totalCount = 401L;
         final Pageable pageable = PageRequest.of(pageNo, pageSize);
-        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class))).thenReturn(
-                new PageImpl<>(List.of(term), pageable, totalCount));
-        final List<SearchParam> searchParams = List.of(
-                new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));
+        when(searchServiceMock.advancedSearch(any(), anyCollection(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(term), pageable, totalCount));
+        final List<SearchParam> searchParams =
+                List.of(new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));
 
-
-        final MvcResult mvcResult = mockMvc.perform(
-                                                   post(PATH + "/advanced").param("searchString", "test").content(toJson(searchParams)).contentType(
-                                                           MediaType.APPLICATION_JSON).param(Constants.QueryParams.PAGE, Integer.toString(pageNo)).param(
-                                                           Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))).andExpect(status().isOk())
-                                           .andReturn();
+        final MvcResult mvcResult = mockMvc.perform(post(PATH + "/advanced")
+                        .param("searchString", "test")
+                        .content(toJson(searchParams))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param(Constants.QueryParams.PAGE, Integer.toString(pageNo))
+                        .param(Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize)))
+                .andExpect(status().isOk())
+                .andReturn();
         assertEquals(Long.toString(totalCount), mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER));
     }
 }

@@ -72,22 +72,26 @@ class AssetControllerTest extends BaseControllerTestRunner {
     void getLastEditedRetrievesLastEditedAssetsFromService() throws Exception {
         final List<RecentlyModifiedAsset> assets = generateRecentlyModifiedAssetRecords();
         when(assetService.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/last-edited")).andExpect(status().isOk()).andReturn();
-        final List<RecentlyModifiedAsset> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/last-edited"))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<RecentlyModifiedAsset> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(assets, result);
         verify(assetService).findLastEdited(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     private static List<RecentlyModifiedAsset> generateRecentlyModifiedAssetRecords() {
         final User user = Generator.generateUserWithId();
-        return IntStream.range(0, 5).mapToObj(i -> new RecentlyModifiedAsset(Generator.generateUri(), "Test " + i,
-                                                                             Utils.timestamp(), user.getUri(), null,
-                                                                             Generator.randomBoolean() ?
-                                                                             SKOS.CONCEPT_SCHEME :
-                                                                             SKOS.CONCEPT,
-                                                                             Vocabulary.s_c_creation_of_entity))
-                        .collect(Collectors.toList());
+        return IntStream.range(0, 5)
+                .mapToObj(i -> new RecentlyModifiedAsset(
+                        Generator.generateUri(),
+                        "Test " + i,
+                        Utils.timestamp(),
+                        user.getUri(),
+                        null,
+                        Generator.randomBoolean() ? SKOS.CONCEPT_SCHEME : SKOS.CONCEPT,
+                        Vocabulary.s_c_creation_of_entity))
+                .collect(Collectors.toList());
     }
 
     @Test
@@ -96,9 +100,9 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final int pageSize = 10;
         final int pageNo = Generator.randomInt(0, 5);
         mockMvc.perform(get(PATH + "/last-edited")
-                                .param(Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))
-                                .param(Constants.QueryParams.PAGE, Integer.toString(pageNo)))
-               .andExpect(status().isOk());
+                        .param(Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))
+                        .param(Constants.QueryParams.PAGE, Integer.toString(pageNo)))
+                .andExpect(status().isOk());
         verify(assetService).findLastEdited(PageRequest.of(pageNo, pageSize));
     }
 
@@ -107,17 +111,20 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyModifiedAsset> assets = generateRecentlyModifiedAssetRecords();
         when(assetService.findMyLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-edited").param("forCurrentUserOnly", Boolean.TRUE.toString()))
-               .andExpect(status().isOk());
+                .andExpect(status().isOk());
         verify(assetService).findMyLastEdited(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     private static List<RecentlyCommentedAsset> generateRecentlyCommentedAssetRecords() {
-        return IntStream.range(0, 5).mapToObj(i -> new RecentlyCommentedAsset(Generator.generateUri(),
-                                                                              "Term " + Generator.randomInt(0, 1000),
-                                                                              Generator.generateUri(), null,
-                                                                              Generator.generateUri(),
-                                                                              SKOS.CONCEPT))
-                        .collect(Collectors.toList());
+        return IntStream.range(0, 5)
+                .mapToObj(i -> new RecentlyCommentedAsset(
+                        Generator.generateUri(),
+                        "Term " + Generator.randomInt(0, 1000),
+                        Generator.generateUri(),
+                        null,
+                        Generator.generateUri(),
+                        SKOS.CONCEPT))
+                .collect(Collectors.toList());
     }
 
     @Test
@@ -125,8 +132,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
         when(assetService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented")).andExpect(status().isOk());
-        verify(assetService).findLastCommented(
-                PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findLastCommented(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test
@@ -136,9 +142,9 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
         when(assetService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented")
-                                .param(Constants.QueryParams.PAGE_SIZE, "" + pageSize)
-                                .param(Constants.QueryParams.PAGE, "" + pageNo))
-               .andExpect(status().isOk());
+                        .param(Constants.QueryParams.PAGE_SIZE, "" + pageSize)
+                        .param(Constants.QueryParams.PAGE, "" + pageNo))
+                .andExpect(status().isOk());
         verify(assetService).findLastCommented(PageRequest.of(pageNo, pageSize));
     }
 
@@ -157,19 +163,19 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
         when(assetService.findMyLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/my-last-commented")
-                                .param(Constants.QueryParams.PAGE_SIZE, "" + pageSize)
-                                .param(Constants.QueryParams.PAGE, "" + pageNo))
-               .andExpect(status().isOk());
+                        .param(Constants.QueryParams.PAGE_SIZE, "" + pageSize)
+                        .param(Constants.QueryParams.PAGE, "" + pageNo))
+                .andExpect(status().isOk());
         verify(assetService).findMyLastCommented(PageRequest.of(pageNo, pageSize));
     }
 
     @Test
     void getLastCommentedInReactionToMineRetrievesLastCommentedInReactionToMineWithDefaultLimit() throws Exception {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
-        when(assetService.findLastCommentedInReactionToMine(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
+        when(assetService.findLastCommentedInReactionToMine(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented-in-reaction-to-mine")).andExpect(status().isOk());
-        verify(assetService).findLastCommentedInReactionToMine(
-                PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findLastCommentedInReactionToMine(PageRequest.of(0, parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test
@@ -177,11 +183,12 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final int pageSize = Math.abs(Generator.randomInt());
         final int pageNo = Generator.randomInt(0, 5);
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
-        when(assetService.findLastCommentedInReactionToMine(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
+        when(assetService.findLastCommentedInReactionToMine(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented-in-reaction-to-mine")
-                                .param(Constants.QueryParams.PAGE_SIZE, "" + pageSize)
-                                .param(Constants.QueryParams.PAGE, "" + pageNo))
-               .andExpect(status().isOk());
+                        .param(Constants.QueryParams.PAGE_SIZE, "" + pageSize)
+                        .param(Constants.QueryParams.PAGE, "" + pageNo))
+                .andExpect(status().isOk());
         verify(assetService).findLastCommentedInReactionToMine(PageRequest.of(pageNo, pageSize));
     }
 }

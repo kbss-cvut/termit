@@ -35,15 +35,13 @@ class SparqlResultToTermInfoMapperTest {
 
     @Test
     void mapsResultsWithSingleLabelToTermInfoInstances() {
-        final List<Object[]> toMap = Arrays.asList(new Object[]{
-                Generator.generateUri(),
-                new LangString("Test one", Environment.LANGUAGE),
-                Generator.generateUri()
-        }, new Object[]{
-                Generator.generateUri(),
-                new LangString("Test two", Environment.LANGUAGE),
-                Generator.generateUri()
-        });
+        final List<Object[]> toMap = Arrays.asList(
+                new Object[] {
+                    Generator.generateUri(), new LangString("Test one", Environment.LANGUAGE), Generator.generateUri()
+                },
+                new Object[] {
+                    Generator.generateUri(), new LangString("Test two", Environment.LANGUAGE), Generator.generateUri()
+                });
         final List<TermInfo> result = sut.map(toMap);
         assertEquals(toMap.size(), result.size());
         for (int i = 0; i < toMap.size(); i++) {
@@ -60,23 +58,11 @@ class SparqlResultToTermInfoMapperTest {
         final URI tOneUri = Generator.generateUri();
         final URI vocUri = Generator.generateUri();
         final URI tTwoUri = Generator.generateUri();
-        final List<Object[]> toMap = Arrays.asList(new Object[]{
-                tOneUri,
-                new LangString("Test one", Environment.LANGUAGE),
-                vocUri
-        }, new Object[]{
-                tOneUri,
-                new LangString("Test jedna", "cs"),
-                vocUri
-        }, new Object[]{
-                tTwoUri,
-                new LangString("Test two", Environment.LANGUAGE),
-                vocUri
-        }, new Object[]{
-                tTwoUri,
-                new LangString("Test dva", "cs"),
-                vocUri
-        });
+        final List<Object[]> toMap = Arrays.asList(
+                new Object[] {tOneUri, new LangString("Test one", Environment.LANGUAGE), vocUri},
+                new Object[] {tOneUri, new LangString("Test jedna", "cs"), vocUri},
+                new Object[] {tTwoUri, new LangString("Test two", Environment.LANGUAGE), vocUri},
+                new Object[] {tTwoUri, new LangString("Test dva", "cs"), vocUri});
 
         final List<TermInfo> result = sut.map(toMap);
         assertEquals(2, result.size());

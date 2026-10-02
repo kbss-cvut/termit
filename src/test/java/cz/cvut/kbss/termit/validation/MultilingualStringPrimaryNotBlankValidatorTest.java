@@ -53,7 +53,7 @@ class MultilingualStringPrimaryNotBlankValidatorTest {
     @BeforeEach
     void setUp() throws Exception {
         resetStaticReflectionCache();
-        when(annotationInstance.value()).thenReturn(new String[]{"fieldToValidate"});
+        when(annotationInstance.value()).thenReturn(new String[] {"fieldToValidate"});
         sut.initialize(annotationInstance);
     }
 
@@ -93,11 +93,9 @@ class MultilingualStringPrimaryNotBlankValidatorTest {
     @Test
     void isValidThrowsWhenAnnotatedClassIsMissingSpecifiedField() {
         reset(annotationInstance);
-        when(annotationInstance.value()).thenReturn(new String[]{"nonExistentField"});
+        when(annotationInstance.value()).thenReturn(new String[] {"nonExistentField"});
         sut.initialize(annotationInstance);
-        assertThrows(IllegalArgumentException.class, () ->
-            sut.isValid(new BeanToValidate(), validatorContext)
-        );
+        assertThrows(IllegalArgumentException.class, () -> sut.isValid(new BeanToValidate(), validatorContext));
     }
 
     /**
@@ -108,8 +106,9 @@ class MultilingualStringPrimaryNotBlankValidatorTest {
         final Class<?> executorClass = FieldConstraintExecutor.class;
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         lookup = MethodHandles.privateLookupIn(executorClass, lookup);
-        final ConcurrentMap cacheMap = (ConcurrentMap) lookup.findStaticVarHandle(
-                executorClass, "CACHE", ConcurrentMap.class).get();
+        final ConcurrentMap cacheMap =
+                (ConcurrentMap) lookup.findStaticVarHandle(executorClass, "CACHE", ConcurrentMap.class)
+                        .get();
         cacheMap.clear();
     }
 

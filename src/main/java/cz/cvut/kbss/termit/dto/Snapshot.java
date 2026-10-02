@@ -40,17 +40,21 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
-@SparqlResultSetMapping(name = "Snapshot",
-                        classes = {@ConstructorResult(targetClass = Snapshot.class,
-                                                      variables = {
-                                                              @VariableResult(name = "s", type = URI.class),
-                                                              @VariableResult(name = "created", type = Instant.class),
-                                                              @VariableResult(name = "asset", type = URI.class),
-                                                              @VariableResult(name = "type", type = String.class),
-                                                              @VariableResult(name = "author", type = URI.class),
-                                                              @VariableResult(name = "authorFirstName", type = String.class),
-                                                              @VariableResult(name = "authorLastName", type = String.class)
-                                                      })})
+@SparqlResultSetMapping(
+        name = "Snapshot",
+        classes = {
+            @ConstructorResult(
+                    targetClass = Snapshot.class,
+                    variables = {
+                        @VariableResult(name = "s", type = URI.class),
+                        @VariableResult(name = "created", type = Instant.class),
+                        @VariableResult(name = "asset", type = URI.class),
+                        @VariableResult(name = "type", type = String.class),
+                        @VariableResult(name = "author", type = URI.class),
+                        @VariableResult(name = "authorFirstName", type = String.class),
+                        @VariableResult(name = "authorLastName", type = String.class)
+                    })
+        })
 @OWLClass(iri = Vocabulary.s_c_version_of_object)
 public class Snapshot implements HasIdentifier, HasTypes, Serializable {
 
@@ -69,8 +73,7 @@ public class Snapshot implements HasIdentifier, HasTypes, Serializable {
     @Types
     private Set<String> types;
 
-    public Snapshot() {
-    }
+    public Snapshot() {}
 
     /**
      * Backward compatible constructor without author info.
@@ -79,7 +82,14 @@ public class Snapshot implements HasIdentifier, HasTypes, Serializable {
         this(uri, created, asset, type, null, null, null);
     }
 
-    public Snapshot(URI uri, Instant created, URI asset, String type, URI authorUri, String authorFirstName, String authorLastName) {
+    public Snapshot(
+            URI uri,
+            Instant created,
+            URI asset,
+            String type,
+            URI authorUri,
+            String authorFirstName,
+            String authorLastName) {
         this.uri = uri;
         this.created = created;
         this.versionOf = asset;
@@ -138,10 +148,6 @@ public class Snapshot implements HasIdentifier, HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "Snapshot{" +
-                uriToString(uri) +
-                ", created=" + created +
-                ", versionOf=" + uriToString(versionOf) +
-                '}';
+        return "Snapshot{" + uriToString(uri) + ", created=" + created + ", versionOf=" + uriToString(versionOf) + '}';
     }
 }

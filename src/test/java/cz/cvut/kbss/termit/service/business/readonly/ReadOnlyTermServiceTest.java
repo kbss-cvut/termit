@@ -93,11 +93,10 @@ class ReadOnlyTermServiceTest {
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
 
-        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection()))
+                .thenReturn(terms);
 
-        final TermSelectionParams params = new TermSelectionParams(
-                false, false, false, false, pageSpec
-        );
+        final TermSelectionParams params = new TermSelectionParams(false, false, false, false, pageSpec);
         final List<TermDto> result = sut.findAllRoots(vocabulary, params, List.of());
 
         assertEquals(terms, result);
@@ -110,11 +109,10 @@ class ReadOnlyTermServiceTest {
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         final Pageable pageSpec = PageRequest.of(1, 10);
 
-        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection())).thenReturn(terms);
+        when(termService.findAllRoots(any(Vocabulary.class), any(TermSelectionParams.class), anyCollection()))
+                .thenReturn(terms);
 
-        final TermSelectionParams params = new TermSelectionParams(
-                false, false, true, true, pageSpec
-        );
+        final TermSelectionParams params = new TermSelectionParams(false, false, true, true, pageSpec);
         final List<TermDto> result = sut.findAllRoots(vocabulary, params, List.of());
 
         assertEquals(terms, result);
@@ -137,7 +135,8 @@ class ReadOnlyTermServiceTest {
     @Test
     void findSubTermsRetrievesSubTermsOfSpecifiedTermFromService() {
         final Term term = Generator.generateTermWithId();
-        final List<TermDto> subTerms = Generator.generateTermsWithIds(3).stream().map(TermDto::new).toList();
+        final List<TermDto> subTerms =
+                Generator.generateTermsWithIds(3).stream().map(TermDto::new).toList();
         term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
         when(termService.findSubTerms(any())).thenReturn(subTerms);
 
@@ -154,8 +153,8 @@ class ReadOnlyTermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(Utils.timestamp());
-        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(
-                Collections.singletonList(comment));
+        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class)))
+                .thenReturn(Collections.singletonList(comment));
         final Instant from = Constants.EPOCH_TIMESTAMP;
         final Instant to = Utils.timestamp();
 
@@ -176,14 +175,14 @@ class ReadOnlyTermServiceTest {
 
     private static List<TermOccurrence> generateOccurrences(Term term, boolean of) {
         return IntStream.range(0, 5)
-                        .mapToObj(i -> {
-                            final Term t = of ? term : Generator.generateTermWithId();
-                            final Term target = of ? Generator.generateTermWithId() : term;
-                            final TermOccurrence o = Generator.generateTermOccurrence(t, target, false);
-                            o.setUri(Generator.generateUri());
-                            return o;
-                        })
-                        .collect(Collectors.toList());
+                .mapToObj(i -> {
+                    final Term t = of ? term : Generator.generateTermWithId();
+                    final Term target = of ? Generator.generateTermWithId() : term;
+                    final TermOccurrence o = Generator.generateTermOccurrence(t, target, false);
+                    o.setUri(Generator.generateUri());
+                    return o;
+                })
+                .collect(Collectors.toList());
     }
 
     @Test
@@ -200,8 +199,9 @@ class ReadOnlyTermServiceTest {
     void findSnapshotsRetrievesSnapshotsOfSpecifiedTerm() {
         final Term term = Generator.generateTermWithId();
         final ReadOnlyTerm asset = new ReadOnlyTerm(term);
-        final List<Snapshot> snapshots = IntStream.range(0, 3).mapToObj(i -> Generator.generateSnapshot(term))
-                                                  .collect(Collectors.toList());
+        final List<Snapshot> snapshots = IntStream.range(0, 3)
+                .mapToObj(i -> Generator.generateSnapshot(term))
+                .collect(Collectors.toList());
         when(termService.findSnapshots(term)).thenReturn(snapshots);
 
         final List<Snapshot> result = sut.findSnapshots(asset);
@@ -227,9 +227,13 @@ class ReadOnlyTermServiceTest {
     void findVersionAtReturnsReadOnlyTermWithWhitelistedProperties() {
         final Term term = Generator.generateTermWithId();
         term.setProperties(new HashMap<>());
-        term.getProperties().put(DC.Terms.REFERENCES, Collections.singleton(Generator.generateUri().toString()));
+        term.getProperties()
+                .put(
+                        DC.Terms.REFERENCES,
+                        Collections.singleton(Generator.generateUri().toString()));
         // This one is not whitelisted, so it will not be exported
-        term.getProperties().put(DC.Elements.DATE, Collections.singleton(Instant.now().toString()));
+        term.getProperties()
+                .put(DC.Elements.DATE, Collections.singleton(Instant.now().toString()));
         final Configuration.PublicView whitelistedProps = new Configuration.PublicView();
         whitelistedProps.setWhiteListProperties(Collections.singleton(DC.Terms.REFERENCES));
         when(configuration.getPublicView()).thenReturn(whitelistedProps);
@@ -237,15 +241,21 @@ class ReadOnlyTermServiceTest {
         when(termService.findVersionValidAt(term, timestamp)).thenReturn(term);
 
         final ReadOnlyTerm result = sut.findVersionValidAt(new ReadOnlyTerm(term), timestamp);
-        assertThat(result.getProperties(), hasEntry(DC.Terms.REFERENCES, term.getProperties()
-                                                                             .get(DC.Terms.REFERENCES)));
-        assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
+        assertThat(
+                result.getProperties(),
+                hasEntry(DC.Terms.REFERENCES, term.getProperties().get(DC.Terms.REFERENCES)));
+        assertThat(
+                result.getProperties(),
+                not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
     }
 
     @Test
     void resolveAllAncestorsRetrievesAllAncestorsFromService() {
         final Term term = Generator.generateTermWithId();
-        term.setParentTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
+        term.setParentTerms(Set.of(
+                Generator.generateTermInfoWithId(),
+                Generator.generateTermInfoWithId(),
+                Generator.generateTermInfoWithId()));
         final ReadOnlyTerm roTerm = new ReadOnlyTerm(term);
         final Set<TermInfoWithParents> resolvedAncestors = Set.of();
 

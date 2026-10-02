@@ -4,5 +4,4 @@ import tools.jackson.databind.JsonNode;
 
 import java.net.URI;
 
-public record LuceneConnector(URI uri, JsonNode options) {
-}
+public record LuceneConnector(URI uri, JsonNode options) {}

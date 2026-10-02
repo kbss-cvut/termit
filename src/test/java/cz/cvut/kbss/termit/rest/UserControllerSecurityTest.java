@@ -85,7 +85,8 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
         Environment.setCurrentUser(user);
         when(userService.getCurrent()).thenReturn(user);
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL + "/current").accept(MediaType.APPLICATION_JSON_VALUE))
-                                           .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk())
+                .andReturn();
         final UserAccount result = readValue(mvcResult, UserAccount.class);
         assertEquals(user, result);
     }
@@ -97,7 +98,7 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
         final UserAccount toEnable = Generator.generateUserAccountWithPassword();
 
         mockMvc.perform(post(BASE_URL + "/" + extractIdentifierFragment(toEnable.getUri()) + "/status"))
-               .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden());
         verify(userService, never()).enable(any());
     }
 
@@ -108,7 +109,7 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
         final UserAccount toDisable = Generator.generateUserAccountWithPassword();
 
         mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(toDisable.getUri()) + "/status"))
-               .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden());
         verify(userService, never()).disable(any());
     }
 }

@@ -57,8 +57,7 @@ public class TypeAwareByteArrayResource extends ByteArrayResource implements Typ
         if (!super.equals(o)) {
             return false;
         }
-        return Objects.equals(mediaType, that.mediaType) &&
-                Objects.equals(fileExtension, that.fileExtension);
+        return Objects.equals(mediaType, that.mediaType) && Objects.equals(fileExtension, that.fileExtension);
     }
 
     @Override

@@ -36,8 +36,8 @@ class ResourceTermOccurrencesTest {
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
         final int count = 117;
-        final ResourceTermOccurrences result = new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri,
-                count, false);
+        final ResourceTermOccurrences result =
+                new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri, count, false);
         assertNotNull(result);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
     }
@@ -49,8 +49,8 @@ class ResourceTermOccurrencesTest {
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
         final int count = 117;
-        final ResourceTermOccurrences result = new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri,
-                count, true);
+        final ResourceTermOccurrences result =
+                new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri, count, true);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence));
     }

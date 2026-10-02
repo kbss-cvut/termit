@@ -34,8 +34,7 @@ import java.util.stream.Collectors;
 @OWLClass(iri = Vocabulary.s_c_definition_occurrence_target)
 public class DefinitionalOccurrenceTarget extends OccurrenceTarget {
 
-    public DefinitionalOccurrenceTarget() {
-    }
+    public DefinitionalOccurrenceTarget() {}
 
     @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public DefinitionalOccurrenceTarget(AbstractTerm source) {
@@ -46,7 +45,8 @@ public class DefinitionalOccurrenceTarget extends OccurrenceTarget {
     public DefinitionalOccurrenceTarget copy() {
         final DefinitionalOccurrenceTarget copy = new DefinitionalOccurrenceTarget();
         copy.setSource(getSource());
-        copy.setSelectors(Utils.emptyIfNull(getSelectors()).stream().map(Copyable::copy).collect(Collectors.toSet()));
+        copy.setSelectors(
+                Utils.emptyIfNull(getSelectors()).stream().map(Copyable::copy).collect(Collectors.toSet()));
         return copy;
     }
 

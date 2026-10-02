@@ -79,11 +79,11 @@ class CommentControllerTest extends BaseControllerTestRunner {
         final Comment comment = generateComment();
         when(commentService.findRequired(comment.getUri())).thenReturn(comment);
 
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + NAME)
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + NAME)
                         .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk())
+                .andReturn();
         final Comment result = readValue(mvcResult, Comment.class);
         assertNotNull(result);
         assertEquals(comment, result);
@@ -101,8 +101,8 @@ class CommentControllerTest extends BaseControllerTestRunner {
     @Test
     void updateUpdatesSpecifiedComment() throws Exception {
         final Comment comment = generateComment();
-        mockMvc.perform(
-                put(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
+        mockMvc.perform(put(PATH + NAME)
+                        .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
                         .content(toJson(comment))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
@@ -114,10 +114,12 @@ class CommentControllerTest extends BaseControllerTestRunner {
     void updateThrowsValidationExceptionWhenCommentUriDoesNotMatchRequestPath() throws Exception {
         final Comment comment = generateComment();
         comment.setUri(Generator.generateUri());
-        final MvcResult mvcResult = mockMvc.perform(
-                put(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
+        final MvcResult mvcResult = mockMvc.perform(put(PATH + NAME)
+                        .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
                         .content(toJson(comment))
-                        .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isConflict()).andReturn();
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict())
+                .andReturn();
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
         verify(commentService, never()).update(any());
@@ -127,8 +129,7 @@ class CommentControllerTest extends BaseControllerTestRunner {
     void removeRemovesCommentWithSpecifiedIdentifier() throws Exception {
         final Comment comment = generateComment();
         when(commentService.findRequired(comment.getUri())).thenReturn(comment);
-        mockMvc.perform(
-                delete(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+        mockMvc.perform(delete(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
                 .andExpect(status().isNoContent());
         verify(commentService).remove(comment);
     }
@@ -140,9 +141,10 @@ class CommentControllerTest extends BaseControllerTestRunner {
         final Principal principal = mock(Principal.class);
         when(principal.getName()).thenReturn("testuser");
         final String likeType = "https://www.w3.org/ns/activitystreams#Like";
-        mockMvc.perform(
-                post(PATH + NAME + "/reactions").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
-                        .queryParam("type", likeType).principal(principal))
+        mockMvc.perform(post(PATH + NAME + "/reactions")
+                        .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
+                        .queryParam("type", likeType)
+                        .principal(principal))
                 .andExpect(status().isNoContent());
         verify(commentService).addReactionTo(comment, likeType);
     }
@@ -153,9 +155,10 @@ class CommentControllerTest extends BaseControllerTestRunner {
         when(commentService.findRequired(comment.getUri())).thenReturn(comment);
         final Principal principal = mock(Principal.class);
         when(principal.getName()).thenReturn("testuser");
-        mockMvc.perform(
-                delete(PATH + NAME + "/reactions").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
-                        .principal(principal)).andExpect(status().isNoContent());
+        mockMvc.perform(delete(PATH + NAME + "/reactions")
+                        .queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
+                        .principal(principal))
+                .andExpect(status().isNoContent());
         verify(commentService).removeMyReactionTo(comment);
     }
 }

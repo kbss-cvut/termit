@@ -19,7 +19,10 @@ public class PersonalAccessTokenDao extends BaseDao<PersonalAccessToken> {
     public List<PersonalAccessToken> findAllByUserAccount(UserAccount userAccount) {
         Objects.requireNonNull(userAccount);
         try {
-            return em.createQuery("SELECT DISTINCT token FROM " + type.getSimpleName() + " token WHERE token.owner = :userAccount", type)
+            return em.createQuery(
+                            "SELECT DISTINCT token FROM " + type.getSimpleName()
+                                    + " token WHERE token.owner = :userAccount",
+                            type)
                     .setParameter("userAccount", userAccount)
                     .getResultList();
         } catch (RuntimeException e) {

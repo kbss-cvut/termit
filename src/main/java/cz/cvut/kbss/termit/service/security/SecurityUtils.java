@@ -57,8 +57,11 @@ public class SecurityUtils {
     private final Configuration.Namespace configuration;
 
     @Autowired
-    public SecurityUtils(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
-                         IdentifierResolver idResolver, Configuration configuration) {
+    public SecurityUtils(
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder,
+            IdentifierResolver idResolver,
+            Configuration configuration) {
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
         this.idResolver = idResolver;
@@ -75,14 +78,15 @@ public class SecurityUtils {
         assert context != null && context.getAuthentication().isAuthenticated();
         if (context.getAuthentication().getPrincipal() instanceof Jwt jwt) {
             Object principal = jwt.getClaim(JwtClaimNames.SUB);
-            if(principal instanceof TermItUserDetails termItUserDetails) {
+            if (principal instanceof TermItUserDetails termItUserDetails) {
                 return termItUserDetails.getUser();
             }
 
             return resolveAccountFromOAuthPrincipal(context);
         }
 
-        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        final TermItUserDetails userDetails =
+                (TermItUserDetails) context.getAuthentication().getDetails();
         return userDetails.getUser();
     }
 
@@ -95,8 +99,8 @@ public class SecurityUtils {
         if (authentication.getDetails() instanceof TermItUserDetails userDetails) {
             return userDetails;
         }
-        if (authentication.getPrincipal() instanceof Jwt jwt &&
-                jwt.getClaim(JwtClaimNames.SUB) instanceof TermItUserDetails userDetails) {
+        if (authentication.getPrincipal() instanceof Jwt jwt
+                && jwt.getClaim(JwtClaimNames.SUB) instanceof TermItUserDetails userDetails) {
             return userDetails;
         }
         return null;
@@ -110,7 +114,8 @@ public class SecurityUtils {
         account.setLastName(userInfo.getFamilyName());
         account.setUsername(userInfo.getPreferredUsername());
         HierarchicalRoleBasedAuthorityMapper.resolveUserRolesFromAuthorities(
-                context.getAuthentication().getAuthorities()).forEach(r -> account.addType(r.getType()));
+                        context.getAuthentication().getAuthorities())
+                .forEach(r -> account.addType(r.getType()));
         account.setUri(idResolver.generateIdentifier(configuration.getUser(), userInfo.getSubject()));
         return account;
     }
@@ -123,7 +128,8 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication() != null && !(context.getAuthentication() instanceof AnonymousAuthenticationToken);
+        return context.getAuthentication() != null
+                && !(context.getAuthentication() instanceof AnonymousAuthenticationToken);
     }
 
     /**
@@ -154,8 +160,8 @@ public class SecurityUtils {
      * Reloads the current user's data from the database.
      */
     public void updateCurrentUser() {
-        final TermItUserDetails updateDetails = (TermItUserDetails) userDetailsService.loadUserByUsername(
-                getCurrentUser().getUsername());
+        final TermItUserDetails updateDetails = (TermItUserDetails)
+                userDetailsService.loadUserByUsername(getCurrentUser().getUsername());
         setCurrentUser(updateDetails);
     }
 

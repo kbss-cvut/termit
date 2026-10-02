@@ -19,8 +19,8 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,50 +71,48 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
     @Test
     void generateIdentifierFailsWhenNoAssetTypeIsSpecified() throws Exception {
         final String label = "Metropolitan plan";
-        mockMvc.perform(post(PATH)
-                                .param("name", label))
-               .andExpect(status().is4xxClientError()).andReturn();
+        mockMvc.perform(post(PATH).param("name", label))
+                .andExpect(status().is4xxClientError())
+                .andReturn();
     }
 
     @Test
     void generateIdentifierFailsWhenInvalidAssetTypeIsSpecified() throws Exception {
         final String label = "Metropolitan plan";
-        mockMvc.perform(post(PATH)
-                                .param("name", label)
-                                .param("assetType", "INVALID")
-        ).andExpect(status().is4xxClientError()).andReturn();
+        mockMvc.perform(post(PATH).param("name", label).param("assetType", "INVALID"))
+                .andExpect(status().is4xxClientError())
+                .andReturn();
     }
 
     @Test
     void generateIdentifierFailsWhenAssetTypeDoesNotSupportContextIri() throws Exception {
         final String label = "Metropolitan plan";
         mockMvc.perform(post(PATH)
-                                .param("name", label)
-                                .param("contextIri", "http://example.org/")
-                                .param("assetType", "VOCABULARY")
-        ).andExpect(status().is4xxClientError()).andReturn();
+                        .param("name", label)
+                        .param("contextIri", "http://example.org/")
+                        .param("assetType", "VOCABULARY"))
+                .andExpect(status().is4xxClientError())
+                .andReturn();
     }
 
     @Test
     void generateIdentifierFailsWhenAssetTypeRequiresContextIriButItIsNotProvided() throws Exception {
         final String label = "Metropolitan plan";
-        mockMvc.perform(post(PATH)
-                                .param("name", label)
-                                .param("assetType", "FILE")
-        ).andExpect(status().is4xxClientError()).andReturn();
+        mockMvc.perform(post(PATH).param("name", label).param("assetType", "FILE"))
+                .andExpect(status().is4xxClientError())
+                .andReturn();
     }
 
     @Test
-    void generateResourceIdentifierLetsServiceGenerateIdentifierUsingSpecifiedLabel()
-            throws Exception {
+    void generateResourceIdentifierLetsServiceGenerateIdentifierUsingSpecifiedLabel() throws Exception {
         final String label = "Metropolitan plan";
         final URI uri = Generator.generateUri();
-        when(identifierResolverMock.generateIdentifier(config.getNamespace().getResource(), label)).thenReturn(uri);
-        final MvcResult mvcResult = mockMvc.perform(post(PATH)
-                                                            .param("name", label)
-                                                            .param("assetType", "RESOURCE")
-                                           )
-                                           .andExpect(status().isOk()).andReturn();
+        when(identifierResolverMock.generateIdentifier(config.getNamespace().getResource(), label))
+                .thenReturn(uri);
+        final MvcResult mvcResult = mockMvc.perform(
+                        post(PATH).param("name", label).param("assetType", "RESOURCE"))
+                .andExpect(status().isOk())
+                .andReturn();
         assertEquals(uri.toString(), readValue(mvcResult, String.class));
         verify(identifierResolverMock).generateIdentifier(config.getNamespace().getResource(), label);
     }
@@ -125,37 +123,35 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
         final String label = "Metropolitan plan";
         final String name = "metropolitan-plan";
         final String documentName = "doc";
-        final URI documentUri = URI.create(Environment.BASE_URI + "/" + documentName +
-                                                   "/soubor/" + name);
+        final URI documentUri = URI.create(Environment.BASE_URI + "/" + documentName + "/soubor/" + name);
         Generator.generateUri();
-        final URI fileUri = URI.create(Environment.BASE_URI + "/" + documentName +
-                                               "/soubor/" + name);
-        when(identifierResolverMock.generateDerivedIdentifier(any(), any(), any())).thenReturn(fileUri);
+        final URI fileUri = URI.create(Environment.BASE_URI + "/" + documentName + "/soubor/" + name);
+        when(identifierResolverMock.generateDerivedIdentifier(any(), any(), any()))
+                .thenReturn(fileUri);
 
-        final MvcResult mvcResult = mockMvc
-                .perform(post(PATH)
-                                 .param("name", label)
-                                 .param("contextIri", documentUri.toString())
-                                 .param("assetType", "FILE")
-                )
-                .andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(post(PATH)
+                        .param("name", label)
+                        .param("contextIri", documentUri.toString())
+                        .param("assetType", "FILE"))
+                .andExpect(status().isOk())
+                .andReturn();
         final String result = readValue(mvcResult, String.class);
         assertEquals(fileUri.toString(), result);
-        verify(identifierResolverMock).generateDerivedIdentifier(documentUri,
-                                                                 config.getNamespace().getFile().getSeparator(), label);
+        verify(identifierResolverMock)
+                .generateDerivedIdentifier(
+                        documentUri, config.getNamespace().getFile().getSeparator(), label);
     }
 
     @Test
-    void generateVocabularyIdentifierLetsServiceGenerateIdentifierUsingSpecifiedLabel()
-            throws Exception {
+    void generateVocabularyIdentifierLetsServiceGenerateIdentifierUsingSpecifiedLabel() throws Exception {
         final String label = "Metropolitan plan";
         final URI uri = Generator.generateUri();
-        when(identifierResolverMock.generateIdentifier(config.getNamespace().getVocabulary(), label)).thenReturn(uri);
-        final MvcResult mvcResult = mockMvc.perform(post(PATH)
-                                                            .param("name", label)
-                                                            .param("assetType", "VOCABULARY")
-                                           )
-                                           .andExpect(status().isOk()).andReturn();
+        when(identifierResolverMock.generateIdentifier(config.getNamespace().getVocabulary(), label))
+                .thenReturn(uri);
+        final MvcResult mvcResult = mockMvc.perform(
+                        post(PATH).param("name", label).param("assetType", "VOCABULARY"))
+                .andExpect(status().isOk())
+                .andReturn();
         assertEquals(uri.toString(), readValue(mvcResult, String.class));
         verify(identifierResolverMock).generateIdentifier(config.getNamespace().getVocabulary(), label);
     }
@@ -169,15 +165,15 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
         final URI vocabularyUri = URI.create(Environment.BASE_URI + "/" + vocabularyName);
         when(vocabularyNamespaceResolverMock.resolveNamespace(vocabularyUri)).thenReturn(vocabularyUri + "/pojem/");
         final URI termUri = URI.create(Environment.BASE_URI + "/" + vocabularyName + "/pojem/" + name);
-        when(identifierResolverMock.generateIdentifier(vocabularyUri + "/pojem/", label)).thenReturn(termUri);
+        when(identifierResolverMock.generateIdentifier(vocabularyUri + "/pojem/", label))
+                .thenReturn(termUri);
 
-        final MvcResult mvcResult = mockMvc
-                .perform(post(PATH)
-                                 .param("name", label)
-                                 .param("contextIri", vocabularyUri.toString())
-                                 .param("assetType", "TERM")
-                )
-                .andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(post(PATH)
+                        .param("name", label)
+                        .param("contextIri", vocabularyUri.toString())
+                        .param("assetType", "TERM"))
+                .andExpect(status().isOk())
+                .andReturn();
         final String result = readValue(mvcResult, String.class);
         assertEquals(termUri.toString(), result);
         verify(identifierResolverMock).generateIdentifier(vocabularyUri + "/pojem/", label);

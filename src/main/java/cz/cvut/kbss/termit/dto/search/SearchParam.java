@@ -38,8 +38,7 @@ public class SearchParam {
 
     private MatchType matchType = MatchType.EXACT_MATCH;
 
-    public SearchParam() {
-    }
+    public SearchParam() {}
 
     // For test purposes
     public SearchParam(URI property, Set<Object> value, MatchType matchType) {
@@ -96,7 +95,8 @@ public class SearchParam {
             return false;
         }
         return Objects.equals(property, that.property)
-                && Objects.equals(value, that.value) && matchType == that.matchType;
+                && Objects.equals(value, that.value)
+                && matchType == that.matchType;
     }
 
     @Override
@@ -106,10 +106,9 @@ public class SearchParam {
 
     @Override
     public String toString() {
-        return "SearchParam{" +
-                "property=" + Utils.uriToString(property) +
-                ", value='" + value + '\'' +
-                ", matchType=" + matchType +
-                '}';
+        return "SearchParam{" + "property="
+                + Utils.uriToString(property) + ", value='"
+                + value + '\'' + ", matchType="
+                + matchType + '}';
     }
 }

@@ -64,8 +64,10 @@ public class DefaultDocumentManager implements DocumentManager {
     private final ResourceRepositoryService resourceRepositoryService;
 
     @Autowired
-    public DefaultDocumentManager(Configuration config, DocumentBackupManager backupManager,
-                                  ResourceRepositoryService resourceRepositoryService) {
+    public DefaultDocumentManager(
+            Configuration config,
+            DocumentBackupManager backupManager,
+            ResourceRepositoryService resourceRepositoryService) {
         this.configuration = config;
         this.backupManager = backupManager;
         this.resourceRepositoryService = resourceRepositoryService;
@@ -204,7 +206,8 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private void removeDocumentFolderWithContent(Document document) {
         LOG.debug("Removing directory of document {} together will all its content.", document);
-        final java.io.File result = storageDirectory().resolve(document.getDirectoryName()).toFile();
+        final java.io.File result =
+                storageDirectory().resolve(document.getDirectoryName()).toFile();
         if (result.exists()) {
             final java.io.File[] files = result.listFiles();
             if (files != null) {
@@ -272,13 +275,16 @@ public class DefaultDocumentManager implements DocumentManager {
         final File tmpNewFile = new File();
         tmpNewFile.setUri(changedFile.getUri());
         tmpNewFile.setLabel(event.getNewName());
-        final java.io.File newDirectory = new java.io.File(originalDirectory.getParentFile().getAbsolutePath() +
-                                                                   java.io.File.separator + tmpNewFile.getDirectoryName());
-        LOG.trace("Moving file parent directory from '{}' to '{}' due to file rename.",
-                  originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
+        final java.io.File newDirectory =
+                new java.io.File(originalDirectory.getParentFile().getAbsolutePath()
+                        + java.io.File.separator
+                        + tmpNewFile.getDirectoryName());
+        LOG.trace(
+                "Moving file parent directory from '{}' to '{}' due to file rename.",
+                originalDirectory.getAbsolutePath(),
+                newDirectory.getAbsolutePath());
         Files.move(originalDirectory.toPath(), newDirectory.toPath());
-        return new java.io.File(
-                newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
+        return new java.io.File(newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
     }
 
     private void moveFile(File original, java.io.File physicalOriginal, FileRenameEvent event) throws IOException {
@@ -287,8 +293,7 @@ public class DefaultDocumentManager implements DocumentManager {
         tempNewFile.setDocument(event.getSource().getDocument());
         tempNewFile.setLabel(event.getNewName());
         final java.io.File newFile = resolveFile(tempNewFile, false);
-        LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
-                  event.getNewName());
+        LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(), event.getNewName());
         Files.move(physicalOriginal.toPath(), newFile.toPath());
         moveBackupFiles(original, physicalOriginal.getParentFile(), event);
     }

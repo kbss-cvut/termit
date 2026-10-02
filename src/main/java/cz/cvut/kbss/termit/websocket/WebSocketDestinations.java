@@ -42,7 +42,8 @@ public final class WebSocketDestinations {
     /**
      * Used for notifying clients about a text analysis end
      */
-    public static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION = VOCABULARIES_TEXT_ANALYSIS_FINISHED + "/term-definition";
+    public static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION =
+            VOCABULARIES_TEXT_ANALYSIS_FINISHED + "/term-definition";
 
     /**
      * Used for pushing updates about long-running tasks to clients

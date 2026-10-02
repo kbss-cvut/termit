@@ -75,7 +75,11 @@ public class WebSocketConfig {
      */
     @Bean
     public AuthorizationManager<Message<?>> messageAuthorizationManager() {
-        return messageAuthorizationManagerBuilder().simpTypeMatchers(SimpMessageType.DISCONNECT).permitAll()
-                                                   .anyMessage().authenticated().build();
+        return messageAuthorizationManagerBuilder()
+                .simpTypeMatchers(SimpMessageType.DISCONNECT)
+                .permitAll()
+                .anyMessage()
+                .authenticated()
+                .build();
     }
 }

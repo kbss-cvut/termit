@@ -58,8 +58,8 @@ class UfoTermTypesServiceTest {
         when(languageTtlUrl.getInputStream()).thenReturn(url.openStream());
         List<Term> result = sut.getTypes();
         final Optional<Term> individual = result.stream()
-                                                .filter(t -> t.getUri().toString().equals("http://onto.fel.cvut.cz/ontologies/ufo/individual"))
-                                                .findAny();
+                .filter(t -> t.getUri().toString().equals("http://onto.fel.cvut.cz/ontologies/ufo/individual"))
+                .findAny();
         assertTrue(individual.isPresent());
         assertFalse(individual.get().getSubTerms().isEmpty());
     }
@@ -70,8 +70,8 @@ class UfoTermTypesServiceTest {
         when(languageTtlUrl.getInputStream()).thenReturn(url.openStream());
         List<Term> result = sut.getTypes();
         final Optional<Term> individual = result.stream()
-                                                .filter(t -> t.getUri().toString().equals("http://onto.fel.cvut.cz/ontologies/ufo/individual"))
-                                                .findAny();
+                .filter(t -> t.getUri().toString().equals("http://onto.fel.cvut.cz/ontologies/ufo/individual"))
+                .findAny();
         assertTrue(individual.isPresent());
         assertFalse(individual.get().getSubTerms().isEmpty());
     }

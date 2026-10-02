@@ -81,7 +81,9 @@ public class WebSocketExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketExceptionHandler.class);
 
     private static String destination(Message<?> message) {
-        return message.getHeaders().getOrDefault("destination", "(missing destination)").toString();
+        return message.getHeaders()
+                .getOrDefault("destination", "(missing destination)")
+                .toString();
     }
 
     private static boolean hasDestination(Message<?> message) {
@@ -116,8 +118,8 @@ public class WebSocketExceptionHandler {
     }
 
     private static ErrorInfo errorInfo(Message<?> message, TermItException e) {
-        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), destination(message),
-                                                       e.getParameters());
+        return ErrorInfo.createParametrizedWithMessage(
+                e.getMessage(), e.getMessageId(), destination(message), e.getParameters());
     }
 
     /**
@@ -159,7 +161,8 @@ public class WebSocketExceptionHandler {
         if (throwable instanceof Exception exception) {
             // find all methods annotated with MessageExceptionHandler
             List<Method> methods = Arrays.stream(this.getClass().getMethods())
-                                         .filter(m -> m.isAnnotationPresent(MessageExceptionHandler.class)).toList();
+                    .filter(m -> m.isAnnotationPresent(MessageExceptionHandler.class))
+                    .toList();
             for (final Method method : methods) {
                 // check for reflection access to prevent IllegalAccessException
                 if (!method.canAccess(this)) {
@@ -172,17 +175,17 @@ public class WebSocketExceptionHandler {
                 }
                 // check if the MessageExceptionHandler annotation has value with allowed exceptions
                 Class<? extends Throwable>[] allowedExceptions = Optional.ofNullable(
-                                                                                 method.getAnnotation(MessageExceptionHandler.class))
-                                                                         .map(MessageExceptionHandler::value)
-                                                                         .orElseGet(() -> new Class[0]);
+                                method.getAnnotation(MessageExceptionHandler.class))
+                        .map(MessageExceptionHandler::value)
+                        .orElseGet(() -> new Class[0]);
                 // if the exception is not allowed by the annotation, skip the method
-                if (allowedExceptions.length > 0 && Arrays.stream(allowedExceptions)
-                                                          .noneMatch(e -> e.isAssignableFrom(exception.getClass()))) {
+                if (allowedExceptions.length > 0
+                        && Arrays.stream(allowedExceptions).noneMatch(e -> e.isAssignableFrom(exception.getClass()))) {
                     continue;
                 }
                 // validate the method signature
-                if (params[0].isAssignableFrom(message.getClass()) && params[1].isAssignableFrom(
-                        exception.getClass())) {
+                if (params[0].isAssignableFrom(message.getClass())
+                        && params[1].isAssignableFrom(exception.getClass())) {
                     // call the method with message, exception parameters
                     method.invoke(this, message, exception);
                     return true; // exception was handled
@@ -228,7 +231,8 @@ public class WebSocketExceptionHandler {
 
     @MessageExceptionHandler(NotFoundException.class)
     public ErrorInfo resourceNotFound(Message<?> message, NotFoundException e) {
-        // Not necessary to log NotFoundException, they may be quite frequent and do not represent an issue with the application
+        // Not necessary to log NotFoundException, they may be quite frequent and do not represent an issue with the
+        // application
         return errorInfo(message, e);
     }
 
@@ -251,12 +255,15 @@ public class WebSocketExceptionHandler {
 
     @MessageExceptionHandler({AuthenticationException.class, AuthenticationServiceException.class})
     public ErrorInfo authenticationException(Message<?> message, AuthenticationException e) {
-        LOG.atWarn().setMessage("Authentication failure during message processing: {}\nMessage: {}")
-           .addArgument(e.getMessage()).addArgument(message::toString).log();
+        LOG.atWarn()
+                .setMessage("Authentication failure during message processing: {}\nMessage: {}")
+                .addArgument(e.getMessage())
+                .addArgument(message::toString)
+                .log();
 
-        if (ExceptionUtils.findCause(e, JwtException.class).isPresent() || ExceptionUtils.findCause(e,
-                                                                                                    InvalidBearerTokenException.class)
-                                                                                         .isPresent()) {
+        if (ExceptionUtils.findCause(e, JwtException.class).isPresent()
+                || ExceptionUtils.findCause(e, InvalidBearerTokenException.class)
+                        .isPresent()) {
             return errorInfo(message, e);
         }
 
@@ -271,8 +278,11 @@ public class WebSocketExceptionHandler {
     public ErrorInfo accessDeniedException(Message<?> message, AccessDeniedException e) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         if (accessor.getUser() != null) {
-            LOG.atWarn().setMessage("[{}] Unauthorized access: {}").addArgument(() -> accessor.getUser().getName())
-               .addArgument(e.getMessage()).log();
+            LOG.atWarn()
+                    .setMessage("[{}] Unauthorized access: {}")
+                    .addArgument(() -> accessor.getUser().getName())
+                    .addArgument(e.getMessage())
+                    .log();
         }
         return errorInfo(message, e);
     }
@@ -340,8 +350,8 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler
     public ErrorInfo maxUploadSizeExceededException(Message<?> message, MaxUploadSizeExceededException e) {
         logException(e, message);
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), "error.file.maxUploadSizeExceeded",
-                                                       destination(message));
+        return ErrorInfo.createWithMessageAndMessageId(
+                e.getMessage(), "error.file.maxUploadSizeExceeded", destination(message));
     }
 
     @MessageExceptionHandler
@@ -369,8 +379,8 @@ public class WebSocketExceptionHandler {
     }
 
     @MessageExceptionHandler
-    public ErrorInfo invalidPasswordChangeRequestException(Message<?> message,
-                                                           InvalidPasswordChangeRequestException e) {
+    public ErrorInfo invalidPasswordChangeRequestException(
+            Message<?> message, InvalidPasswordChangeRequestException e) {
         logException(e, message);
         return errorInfo(message, e);
     }
@@ -388,8 +398,8 @@ public class WebSocketExceptionHandler {
     }
 
     @MessageExceptionHandler
-    public ErrorInfo unsupportedTextAnalysisLanguageException(Message<?> message,
-                                                              UnsupportedTextAnalysisLanguageException e) {
+    public ErrorInfo unsupportedTextAnalysisLanguageException(
+            Message<?> message, UnsupportedTextAnalysisLanguageException e) {
         logException(e, message);
         return errorInfo(message, e);
     }

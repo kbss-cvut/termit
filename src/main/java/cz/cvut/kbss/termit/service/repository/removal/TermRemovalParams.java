@@ -20,10 +20,12 @@ public record TermRemovalParams(
         Term termToRemove,
         SubTermRemovalStrategy subTermsStrategy,
         boolean removeOccurrences,
-        boolean removeRelationships
-) {
-    public TermRemovalParams(Term termToRemove, SubTermRemovalStrategy subTermsStrategy, boolean removeOccurrences,
-                             boolean removeRelationships) {
+        boolean removeRelationships) {
+    public TermRemovalParams(
+            Term termToRemove,
+            SubTermRemovalStrategy subTermsStrategy,
+            boolean removeOccurrences,
+            boolean removeRelationships) {
         this.termToRemove = Objects.requireNonNull(termToRemove);
         this.subTermsStrategy = subTermsStrategy != null ? subTermsStrategy : SubTermRemovalStrategy.FAIL;
         this.removeOccurrences = removeOccurrences;

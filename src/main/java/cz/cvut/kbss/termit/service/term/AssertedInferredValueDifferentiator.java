@@ -56,7 +56,8 @@ public class AssertedInferredValueDifferentiator {
         target.setInverseRelated(differentiateAssertedAndInferred(target.getRelated(), original.getInverseRelated()));
     }
 
-    private Set<TermInfo> differentiateAssertedAndInferred(Set<TermInfo> targetAsserted, Set<TermInfo> originalInferred) {
+    private Set<TermInfo> differentiateAssertedAndInferred(
+            Set<TermInfo> targetAsserted, Set<TermInfo> originalInferred) {
         final Set<TermInfo> targetInferred = new HashSet<>();
         final Iterator<TermInfo> it = targetAsserted.iterator();
         while (it.hasNext()) {
@@ -83,7 +84,8 @@ public class AssertedInferredValueDifferentiator {
         if (target.getRelatedMatch() == null || original.getInverseRelatedMatch() == null) {
             return;
         }
-        target.setInverseRelatedMatch(differentiateAssertedAndInferred(target.getRelatedMatch(), original.getInverseRelatedMatch()));
+        target.setInverseRelatedMatch(
+                differentiateAssertedAndInferred(target.getRelatedMatch(), original.getInverseRelatedMatch()));
     }
 
     /**
@@ -100,6 +102,7 @@ public class AssertedInferredValueDifferentiator {
         if (target.getExactMatchTerms() == null || original.getInverseExactMatchTerms() == null) {
             return;
         }
-        target.setInverseExactMatchTerms(differentiateAssertedAndInferred(target.getExactMatchTerms(), original.getInverseExactMatchTerms()));
+        target.setInverseExactMatchTerms(
+                differentiateAssertedAndInferred(target.getExactMatchTerms(), original.getInverseExactMatchTerms()));
     }
 }

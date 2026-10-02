@@ -53,7 +53,9 @@ class ConfigurationControllerTest extends BaseControllerTestRunner {
         final ConfigurationDto config = new ConfigurationDto();
         config.setLanguage(Environment.LANGUAGE);
         when(configurationProvider.getConfiguration()).thenReturn(config);
-        final MvcResult mvcResult = mockMvc.perform(get("/configuration")).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(get("/configuration"))
+                .andExpect(status().isOk())
+                .andReturn();
         final ConfigurationDto result = readValue(mvcResult, ConfigurationDto.class);
         assertNotNull(result);
         assertEquals(config.getLanguage(), result.getLanguage());

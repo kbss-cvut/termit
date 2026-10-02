@@ -69,31 +69,38 @@ class DataControllerTest extends BaseControllerTestRunner {
     void getPropertiesLoadsPropertiesFromDao() throws Exception {
         final RdfsResource property = create(Vocabulary.s_p_has_first_name, "Name", null);
         when(dataServiceMock.findAllProperties()).thenReturn(Collections.singletonList(property));
-        final MvcResult mvcResult = mockMvc.perform(get("/data/properties")).andExpect(status().isOk()).andReturn();
-        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(get("/data/properties"))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(Collections.singletonList(property), result);
     }
 
     private static RdfsResource create(String uri, String label, String comment) {
-        return new RdfsResource(URI.create(uri), new LangString(label, Environment.LANGUAGE),
-                                comment != null ? new LangString(comment, Environment.LANGUAGE) : null, null);
+        return new RdfsResource(
+                URI.create(uri),
+                new LangString(label, Environment.LANGUAGE),
+                comment != null ? new LangString(comment, Environment.LANGUAGE) : null,
+                null);
     }
 
     @Test
     void getByIdReturnsResourceWithSpecifiedIdentifier() throws Exception {
         final RdfsResource property = create(Vocabulary.s_p_has_first_name, "Name", null);
         when(dataServiceMock.find(any())).thenReturn(Optional.of(property));
-        final MvcResult mvcResult = mockMvc.perform(get("/data/resource").param("iri", property.getUri().toString()))
-                                           .andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(
+                        get("/data/resource").param("iri", property.getUri().toString()))
+                .andExpect(status().isOk())
+                .andReturn();
         assertEquals(property, readValue(mvcResult, RdfsResource.class));
     }
 
     @Test
     void getByIdThrowsNotFoundExceptionForUnknownResourceIdentifier() throws Exception {
         when(dataServiceMock.find(any())).thenReturn(Optional.empty());
-        mockMvc.perform(get("/data/resource").param("iri", Generator.generateUri().toString()))
-               .andExpect(status().isNotFound());
+        mockMvc.perform(get("/data/resource")
+                        .param("iri", Generator.generateUri().toString()))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -102,7 +109,8 @@ class DataControllerTest extends BaseControllerTestRunner {
         final String label = "Test term";
         when(dataServiceMock.getLabel(uri, null)).thenReturn(Optional.of(label));
         final MvcResult mvcResult = mockMvc.perform(get("/data/label").param("iri", uri.toString()))
-                                           .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk())
+                .andReturn();
         assertEquals(label, readValue(mvcResult, String.class));
     }
 
@@ -117,9 +125,10 @@ class DataControllerTest extends BaseControllerTestRunner {
     void createPropertySavesResource() throws Exception {
         final RdfsResource property = create(RDFS.RANGE, "Range", "Property range");
         property.setTypes(Collections.singleton(RDF.PROPERTY));
-        mockMvc.perform(
-                       post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isCreated());
+        mockMvc.perform(post("/data/properties")
+                        .content(toJson(property))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isCreated());
         verify(dataServiceMock).persist(property);
     }
 
@@ -127,9 +136,11 @@ class DataControllerTest extends BaseControllerTestRunner {
     void createPropertyReturnsLocationHeaderLeadingToProperties() throws Exception {
         final RdfsResource property = create(RDFS.RANGE, "Range", "Property range");
         property.setTypes(Collections.singleton(RDF.PROPERTY));
-        final MvcResult mvcResult = mockMvc.perform(
-                                                   post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
-                                           .andExpect(status().isCreated()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(post("/data/properties")
+                        .content(toJson(property))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isCreated())
+                .andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION), containsString("/data/properties"));
     }
 }

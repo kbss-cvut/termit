@@ -59,24 +59,31 @@ class LanguageControllerTest extends BaseControllerTestRunner {
     void getTermTypesReturnsLanguageOfTermTypes() throws Exception {
         final List<Term> types = List.of(Generator.generateTermWithId(), Generator.generateTermWithId());
         when(serviceMock.getTermTypes()).thenReturn(types);
-        final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/types")).andExpect(status().isOk())
-                                           .andReturn();
-        assertEquals(types, readValue(mvcResult, new TypeReference<List<Term>>() {
-        }));
+        final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/types"))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertEquals(types, readValue(mvcResult, new TypeReference<List<Term>>() {}));
         verify(serviceMock).getTermTypes();
     }
 
     @Test
     void getTermStatesReturnsLanguageOfTermStates() throws Exception {
         final List<RdfsResource> states = List.of(
-                new RdfsResource(Generator.generateUri(), MultilingualString.create("Initial state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_initial_term_state),
-                new RdfsResource(Generator.generateUri(), MultilingualString.create("Terminal state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_terminal_term_state)
-        );
+                new RdfsResource(
+                        Generator.generateUri(),
+                        MultilingualString.create("Initial state", Environment.LANGUAGE),
+                        MultilingualString.create("Empty comment", Environment.LANGUAGE),
+                        Vocabulary.s_c_initial_term_state),
+                new RdfsResource(
+                        Generator.generateUri(),
+                        MultilingualString.create("Terminal state", Environment.LANGUAGE),
+                        MultilingualString.create("Empty comment", Environment.LANGUAGE),
+                        Vocabulary.s_c_terminal_term_state));
         when(serviceMock.getTermStates()).thenReturn(states);
-        final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/states")).andExpect(status().isOk())
-                                           .andReturn();
-        assertEquals(states, readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
-        }));
+        final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/states"))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertEquals(states, readValue(mvcResult, new TypeReference<List<RdfsResource>>() {}));
         verify(serviceMock).getTermStates();
     }
 }

@@ -55,22 +55,22 @@ public abstract class AssetSnapshotLoader<T extends Asset<?>> {
         Objects.requireNonNull(asset);
         Objects.requireNonNull(at);
         try {
-            return Optional.of(em.createNativeQuery("SELECT ?s WHERE { " +
-                                                            "?s a ?type ; " +
-                                                            "a ?snapshotType ; " +
-                                                            "?versionOf ?asset ; " +
-                                                            "?hasCreated ?created . " +
-                                                            "FILTER (?created <= ?at) " +
-                                                            "} ORDER BY DESC(?created)",
-                                                    assetClass())
-                                 .setMaxResults(1)
-                                 .setParameter("type", assetType)
-                                 .setParameter("snapshotType", snapshotType)
-                                 .setParameter("hasCreated",
-                                               URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
-                                 .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
-                                 .setParameter("at", at)
-                                 .setParameter("asset", asset).getSingleResult());
+            return Optional.of(em.createNativeQuery(
+                            "SELECT ?s WHERE { " + "?s a ?type ; "
+                                    + "a ?snapshotType ; "
+                                    + "?versionOf ?asset ; "
+                                    + "?hasCreated ?created . "
+                                    + "FILTER (?created <= ?at) "
+                                    + "} ORDER BY DESC(?created)",
+                            assetClass())
+                    .setMaxResults(1)
+                    .setParameter("type", assetType)
+                    .setParameter("snapshotType", snapshotType)
+                    .setParameter("hasCreated", URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
+                    .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
+                    .setParameter("at", at)
+                    .setParameter("asset", asset)
+                    .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (RuntimeException e) {

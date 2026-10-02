@@ -92,8 +92,7 @@ class VocabularyAuthorizationServiceTest {
         return Stream.of(
                 Arguments.of(false, UserRole.RESTRICTED_USER),
                 Arguments.of(true, UserRole.FULL_USER),
-                Arguments.of(true, UserRole.ADMIN)
-        );
+                Arguments.of(true, UserRole.ADMIN));
     }
 
     @Test
@@ -127,7 +126,8 @@ class VocabularyAuthorizationServiceTest {
     @Test
     void canManageAccessChecksIfCurrentUserHasSecurityAccessBasedOnAccessControlList() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary))
+                .thenReturn(true);
 
         assertTrue(sut.canManageAccess(vocabulary));
         verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
@@ -144,7 +144,8 @@ class VocabularyAuthorizationServiceTest {
     @Test
     void canReimportReturnsTrueWhenVocabularyExistsAndUserHasSecurityAccessBasedOnAccessControlList() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary))
+                .thenReturn(true);
         when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(true);
         assertTrue(sut.canReimport(vocabulary.getUri()));
         verify(vocabularyRepositoryService).exists(vocabulary.getUri());
@@ -174,7 +175,8 @@ class VocabularyAuthorizationServiceTest {
     @Test
     void canRemoveFilesReturnsTrueWhenVocabularyExistsAndUserHasSecurityAccessBasedOnAccessControlList() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary))
+                .thenReturn(true);
 
         assertTrue(sut.canRemoveFiles(vocabulary));
         verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);

@@ -26,6 +26,7 @@ public abstract class BaseDocumentTestRunner extends BaseServiceTestRunner {
 
     @Autowired
     protected Configuration configuration;
+
     protected Document document;
     protected Path documentDir;
 
@@ -52,7 +53,8 @@ public abstract class BaseDocumentTestRunner extends BaseServiceTestRunner {
     }
 
     protected java.io.File generateFile(String filePrefix, String fileSuffix, String fileContent) throws Exception {
-        final java.io.File content = Files.createTempFile(documentDir, filePrefix, fileSuffix).toFile();
+        final java.io.File content =
+                Files.createTempFile(documentDir, filePrefix, fileSuffix).toFile();
         content.deleteOnExit();
         Files.write(content.toPath(), Collections.singletonList(fileContent));
         return content;

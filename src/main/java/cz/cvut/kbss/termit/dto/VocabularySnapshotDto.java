@@ -43,7 +43,8 @@ public class VocabularySnapshotDto extends VocabularyDto {
     public VocabularySnapshotDto(Vocabulary source) {
         super(source);
         if (source.getProperties() != null && source.getProperties().containsKey(DC.Terms.CREATOR)) {
-            Object authorValue = source.getProperties().get(DC.Terms.CREATOR).iterator().next();
+            Object authorValue =
+                    source.getProperties().get(DC.Terms.CREATOR).iterator().next();
             if (authorValue instanceof URI authorUri) {
                 this.author = new UserAccount();
                 this.author.setUri(authorUri);
@@ -59,4 +60,3 @@ public class VocabularySnapshotDto extends VocabularyDto {
         this.author = author;
     }
 }
-

@@ -26,8 +26,11 @@ public class PersonalAccessTokenService {
     private final JwtUtils jwtUtils;
     private final Validator validator;
 
-    public PersonalAccessTokenService(PersonalAccessTokenRepositoryService repositoryService,
-                                      SecurityUtils securityUtils, JwtUtils jwtUtils, Validator validator) {
+    public PersonalAccessTokenService(
+            PersonalAccessTokenRepositoryService repositoryService,
+            SecurityUtils securityUtils,
+            JwtUtils jwtUtils,
+            Validator validator) {
         this.repositoryService = repositoryService;
         this.securityUtils = securityUtils;
         this.jwtUtils = jwtUtils;
@@ -52,9 +55,7 @@ public class PersonalAccessTokenService {
      * @throws TokenExpiredException when the token is invalid (e.g. expired)
      */
     public PersonalAccessToken findValid(URI tokenUri) {
-        return repositoryService.find(tokenUri)
-                                .map(this::ensureTokenValid)
-                                .orElseThrow();
+        return repositoryService.find(tokenUri).map(this::ensureTokenValid).orElseThrow();
     }
 
     /**
@@ -102,8 +103,7 @@ public class PersonalAccessTokenService {
      * @throws NullPointerException  when a required field is null
      */
     public PersonalAccessToken ensureTokenValid(PersonalAccessToken token) {
-        validator.validateObject(token)
-                 .failOnError((err) -> new JwtException("Invalid PAT token: " + err));
+        validator.validateObject(token).failOnError((err) -> new JwtException("Invalid PAT token: " + err));
         return token;
     }
 

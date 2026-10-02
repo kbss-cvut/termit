@@ -15,8 +15,8 @@ import java.util.Objects;
 public class DocumentFileUtils {
     private static final Logger LOG = LoggerFactory.getLogger(DocumentFileUtils.class);
     static final String BACKUP_NAME_SEPARATOR = "~";
-    static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
-                                                                              .withZone(ZoneId.systemDefault());
+    static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S").withZone(ZoneId.systemDefault());
     static final int BACKUP_TIMESTAMP_LENGTH = 19;
 
     private DocumentFileUtils() {
@@ -35,8 +35,9 @@ public class DocumentFileUtils {
     public static java.io.File resolveTermitFile(Path termitDir, File file, boolean verifyExists) {
         Objects.requireNonNull(termitDir);
         Objects.requireNonNull(file);
-        final Path path = termitDir.resolve(file.getDirectoryName())
-                                             .resolve(IdentifierResolver.sanitizeFileName(file.getLabel()));
+        final Path path = termitDir
+                .resolve(file.getDirectoryName())
+                .resolve(IdentifierResolver.sanitizeFileName(file.getLabel()));
         final java.io.File result = path.toFile();
         if (verifyExists && !result.isFile()) {
             LOG.error("File {} not found at location {}.", file, path);
@@ -53,8 +54,10 @@ public class DocumentFileUtils {
      */
     public static String generateBackupFileName(File file, BackupReason reason, Instant timestamp) {
         final String origName = IdentifierResolver.sanitizeFileName(file.getLabel());
-        return origName +
-                BACKUP_NAME_SEPARATOR + BACKUP_TIMESTAMP_FORMAT.format(timestamp) +
-                BACKUP_NAME_SEPARATOR + reason.name();
+        return origName
+                + BACKUP_NAME_SEPARATOR
+                + BACKUP_TIMESTAMP_FORMAT.format(timestamp)
+                + BACKUP_NAME_SEPARATOR
+                + reason.name();
     }
 }

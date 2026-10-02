@@ -71,14 +71,15 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     private final WebSocketExceptionHandler webSocketExceptionHandler;
 
-    public WebSocketMessageBrokerConfig(AuthorizationManager<Message<?>> messageAuthorizationManager,
-                                        ApplicationContext context,
-                                        WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor,
-                                        @Lazy SimpMessagingTemplate simpMessagingTemplate,
-                                        StringMessageConverter termitStringMessageConverter,
-                                        @Qualifier("jsonLdMapper") JsonMapper jsonLdMapper,
-                                        cz.cvut.kbss.termit.util.Configuration configuration,
-                                        WebSocketExceptionHandler webSocketExceptionHandler) {
+    public WebSocketMessageBrokerConfig(
+            AuthorizationManager<Message<?>> messageAuthorizationManager,
+            ApplicationContext context,
+            WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor,
+            @Lazy SimpMessagingTemplate simpMessagingTemplate,
+            StringMessageConverter termitStringMessageConverter,
+            @Qualifier("jsonLdMapper") JsonMapper jsonLdMapper,
+            cz.cvut.kbss.termit.util.Configuration configuration,
+            WebSocketExceptionHandler webSocketExceptionHandler) {
         this.messageAuthorizationManager = messageAuthorizationManager;
         this.context = context;
         this.webSocketJwtAuthorizationInterceptor = webSocketJwtAuthorizationInterceptor;
@@ -108,7 +109,8 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     public void configureClientInboundChannel(@Nonnull ChannelRegistration registration) {
         AuthorizationChannelInterceptor interceptor = new AuthorizationChannelInterceptor(messageAuthorizationManager);
         interceptor.setAuthorizationEventPublisher(new SpringAuthorizationEventPublisher(context));
-        registration.interceptors(webSocketJwtAuthorizationInterceptor, new SecurityContextChannelInterceptor(), interceptor);
+        registration.interceptors(
+                webSocketJwtAuthorizationInterceptor, new SecurityContextChannelInterceptor(), interceptor);
     }
 
     @Override
@@ -119,8 +121,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/")
-                .setUserDestinationPrefix("/user");
+        registry.setApplicationDestinationPrefixes("/").setUserDestinationPrefix("/user");
     }
 
     @Override

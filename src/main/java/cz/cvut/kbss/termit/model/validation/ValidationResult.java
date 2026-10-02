@@ -71,7 +71,6 @@ public class ValidationResult implements Serializable {
     @OWLObjectProperty(iri = "sh:resultPath")
     private URI resultPath;
 
-
     public URI getId() {
         return id;
     }

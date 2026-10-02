@@ -76,7 +76,8 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
 @Profile("!test")
 public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvider {
     static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
-    static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
+    static final URI LUCENE_LIST_OPTION_VALUES =
+            URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
     static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
     static final URI LUCENE_CREATE_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#createConnector");
     private static final Logger LOG = LoggerFactory.getLogger(GraphDBLuceneConnectorInitializer.class);
@@ -95,6 +96,7 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
      * The predicate is excluded if it is not a valid URI.
      */
     private final Set<URI> indexedFields;
+
     private final EntityManager em;
     private final ObjectMapper mapper;
     private Set<String> indexedLanguages = Set.of();
@@ -107,8 +109,7 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
 
         this.requiredConnectors = Map.of(
                 Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX, loadConnectorJson("label.json", mapper),
-                Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX, loadConnectorJson("defcom.json", mapper)
-        );
+                Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX, loadConnectorJson("defcom.json", mapper));
         this.indexedFields = resolveIndexedLiterals(requiredConnectors.values());
         this.analyzerMap = loadAnalyzersMap(mapper);
     }
@@ -123,25 +124,30 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
         Set<String> indexedLiterals = new HashSet<>();
         for (JsonNode connectorOptions : connectorsOptions) { // for each connector
             if (connectorOptions.get("fields") instanceof ArrayNode fields) { // get fields property (which is an array)
-                for (JsonNode field: fields.values() ) { // for each field
+                for (JsonNode field : fields.values()) { // for each field
                     JsonNode chainArray = field.get("propertyChain");
                     if (chainArray != null && chainArray.isArray()) { // extract the last node of propertyChain property
-                        indexedLiterals.add(chainArray.get(chainArray.size() - 1).asString());
+                        indexedLiterals.add(
+                                chainArray.get(chainArray.size() - 1).asString());
                     } else {
-                        throw new TermItException("Connector field is missing propertyChain property or it is not an array!");
+                        throw new TermItException(
+                                "Connector field is missing propertyChain property or it is not an array!");
                     }
                 }
             } else {
                 throw new TermItException("Connector is missing fields property or it is not an array!");
             }
         }
-        return indexedLiterals.stream().map(str -> {
-            try {
-                return URI.create(str);
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toSet());
+        return indexedLiterals.stream()
+                .map(str -> {
+                    try {
+                        return URI.create(str);
+                    } catch (IllegalArgumentException e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -184,8 +190,8 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                     FILTER(BOUND(?lang)) .
                 }
                 """, String.class)
-                               .setParameter("indexedFields", indexedFields)
-                               .getResultList());
+                .setParameter("indexedFields", indexedFields)
+                .getResultList());
     }
 
     /**
@@ -199,9 +205,9 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                                                   ?uri ?listOptionValues ?createString .
                                               }
                                               """, String.class)
-                                      .setParameter("uri", uri)
-                                      .setParameter("listOptionValues", LUCENE_LIST_OPTION_VALUES)
-                                      .getSingleResult();
+                .setParameter("uri", uri)
+                .setParameter("listOptionValues", LUCENE_LIST_OPTION_VALUES)
+                .getSingleResult();
         return new LuceneConnector(uri, mapper.readTree(createString));
     }
 
@@ -215,8 +221,10 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                     ?cntUri ?listConnectors [] .
                 }
                 """, URI.class)
-                 .setParameter("listConnectors", LUCENE_LIST_CONNECTORS)
-                 .getResultStream().map(this::fetchLuceneConnector).toList();
+                .setParameter("listConnectors", LUCENE_LIST_CONNECTORS)
+                .getResultStream()
+                .map(this::fetchLuceneConnector)
+                .toList();
     }
 
     /**
@@ -238,7 +246,9 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
             }
 
             if (language != null) {
-                languageConnectors.computeIfAbsent(language, k -> new HashSet<>(2)).add(connector);
+                languageConnectors
+                        .computeIfAbsent(language, k -> new HashSet<>(2))
+                        .add(connector);
             }
         }
         return languageConnectors;
@@ -271,9 +281,9 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                       ?connectorUri ?dropConnector [].
                   }
                   """)
-          .setParameter("connectorUri", connectorUri)
-          .setParameter("dropConnector", LUCENE_DROP_CONNECTOR)
-          .executeUpdate();
+                .setParameter("connectorUri", connectorUri)
+                .setParameter("dropConnector", LUCENE_DROP_CONNECTOR)
+                .executeUpdate();
     }
 
     /**
@@ -313,10 +323,10 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
                     ?connectorUri ?createConnector ?options .
                 }
                 """)
-          .setParameter("connectorUri", connectorUri)
-          .setParameter("options", options.toString())
-          .setParameter("createConnector", LUCENE_CREATE_CONNECTOR)
-          .executeUpdate();
+                .setParameter("connectorUri", connectorUri)
+                .setParameter("options", options.toString())
+                .setParameter("createConnector", LUCENE_CREATE_CONNECTOR)
+                .executeUpdate();
     }
 
     /**
@@ -361,7 +371,8 @@ public class GraphDBLuceneConnectorInitializer implements IndexedLanguagesProvid
         LOG.debug("Initializing Lucene Connectors");
         final Map<String, Set<LuceneConnector>> connectors = loadExistingConnectors();
         indexedLanguages = fetchUsedLanguages();
-        indexedLanguages.add(""); // explicitly add empty language to force creation of universal index for all languages
+        indexedLanguages.add(
+                ""); // explicitly add empty language to force creation of universal index for all languages
         for (String lang : indexedLanguages) {
             handleRequiredConnectors(lang, connectors.getOrDefault(lang, Set.of()));
         }

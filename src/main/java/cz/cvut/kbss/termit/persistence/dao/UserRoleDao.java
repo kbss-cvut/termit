@@ -35,7 +35,8 @@ public class UserRoleDao {
     }
 
     public List<UserRole> findAll() {
-        return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r", UserRole.class).getResultList();
+        return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r", UserRole.class)
+                .getResultList();
     }
 
     public Optional<UserRole> find(URI id) {

@@ -100,8 +100,7 @@ public class Vocabulary extends Asset<MultilingualString>
     @Types
     private Set<String> types;
 
-    public Vocabulary() {
-    }
+    public Vocabulary() {}
 
     public Vocabulary(URI uri) {
         setUri(uri);
@@ -264,7 +263,8 @@ public class Vocabulary extends Asset<MultilingualString>
      * @return {@code true} if a value for the specified unmapped property is set, {@code false} otherwise
      */
     public boolean hasUnmappedPropertyValue(String property) {
-        return properties != null && !properties.getOrDefault(property, Set.of()).isEmpty();
+        return properties != null
+                && !properties.getOrDefault(property, Set.of()).isEmpty();
     }
 
     @Override
@@ -305,14 +305,12 @@ public class Vocabulary extends Asset<MultilingualString>
 
     @Override
     public String toString() {
-        String result = "Vocabulary{" +
-                getLabel() + " "
-                + Utils.uriToString(getUri());
+        String result = "Vocabulary{" + getLabel() + " " + Utils.uriToString(getUri());
         try {
             if (importedVocabularies != null) {
-                result += ", importedVocabularies = [" +
-                        importedVocabularies.stream().map(Utils::uriToString)
-                                            .collect(Collectors.joining(", ")) + "]";
+                result += ", importedVocabularies = ["
+                        + importedVocabularies.stream().map(Utils::uriToString).collect(Collectors.joining(", "))
+                        + "]";
             }
         } catch (LazyLoadingException e) {
             // persistent context not available

@@ -56,7 +56,9 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
     @Override
     public Message<?> preSend(@Nonnull Message<?> message, @Nonnull MessageChannel channel) {
         StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-        if (headerAccessor != null && StompCommand.CONNECT.equals(headerAccessor.getCommand()) && headerAccessor.isMutable()) {
+        if (headerAccessor != null
+                && StompCommand.CONNECT.equals(headerAccessor.getCommand())
+                && headerAccessor.isMutable()) {
             final String authHeader = headerAccessor.getFirstNativeHeader(HttpHeaders.AUTHORIZATION);
             if (authHeader != null) {
                 headerAccessor.removeNativeHeader(HttpHeaders.AUTHORIZATION);

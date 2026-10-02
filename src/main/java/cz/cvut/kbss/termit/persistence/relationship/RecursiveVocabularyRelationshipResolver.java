@@ -64,8 +64,8 @@ public class RecursiveVocabularyRelationshipResolver implements VocabularyRelati
         while (!toProcess.isEmpty()) {
             final URI item = toProcess.pop();
             final Set<URI> toAdd = resolvers.stream()
-                                            .flatMap(r -> r.getRelatedVocabularies(item).stream())
-                                            .collect(Collectors.toSet());
+                    .flatMap(r -> r.getRelatedVocabularies(item).stream())
+                    .collect(Collectors.toSet());
             toAdd.removeAll(result);
             result.addAll(toAdd);
             // Do not recurse into classification vocabularies, as they may be connected to many other vocabularies we
@@ -86,9 +86,9 @@ public class RecursiveVocabularyRelationshipResolver implements VocabularyRelati
                                                      ?inVocabulary ?typeVocabulary .
                                                  }
                                             """, URI.class)
-                 .setParameter("vocabulary", vocabulary)
-                 .setParameter("termType", URI.create(SKOS.CONCEPT))
-                 .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-                 .getResultList();
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("termType", URI.create(SKOS.CONCEPT))
+                .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
+                .getResultList();
     }
 }

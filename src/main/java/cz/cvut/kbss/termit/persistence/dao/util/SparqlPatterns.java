@@ -42,8 +42,7 @@ public class SparqlPatterns {
      * Binds parameters for {@link #insertVocabularyPattern(String)}
      */
     public static void bindVocabularyRelatedParameters(Query query) {
-        query
-                .setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME))
+        query.setParameter("isFromVocabulary", URI.create(SKOS.IN_SCHEME))
                 .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_has_document_vocabulary))
                 .setParameter("inDocument", URI.create(Vocabulary.s_p_is_part_of_document))
                 .setParameter("vocabularyType", URI.create(SKOS.CONCEPT_SCHEME));
@@ -83,21 +82,51 @@ public class SparqlPatterns {
      * accented characters with sorting-friendly sequences
      */
     public static String orderSentence(String var) {
-        return r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
-            "'á'", "'azz'"),
-            "'č'", "'czz'"),
-            "'ď'", "'dzz'"),
-            "'é'", "'ezz'"),
-            "'ě'", "'ezz'"),
-            "'í'", "'izz'"),
-            "'ň'", "'nzz'"),
-            "'ó'", "'ozz'"),
-            "'ř'", "'rzz'"),
-            "'š'", "'szz'"),
-            "'ť'", "'tzz'"),
-            "'ú'", "'uzz'"),
-            "'ý'", "'yzz'"),
-            "'ž'", "'zzz'");
+        return r(
+                r(
+                        r(
+                                r(
+                                        r(
+                                                r(
+                                                        r(
+                                                                r(
+                                                                        r(
+                                                                                r(
+                                                                                        r(
+                                                                                                r(
+                                                                                                        r(
+                                                                                                                r(
+                                                                                                                        "lcase("
+                                                                                                                                + var
+                                                                                                                                + ")",
+                                                                                                                        "'á'",
+                                                                                                                        "'azz'"),
+                                                                                                                "'č'",
+                                                                                                                "'czz'"),
+                                                                                                        "'ď'",
+                                                                                                        "'dzz'"),
+                                                                                                "'é'",
+                                                                                                "'ezz'"),
+                                                                                        "'ě'",
+                                                                                        "'ezz'"),
+                                                                                "'í'",
+                                                                                "'izz'"),
+                                                                        "'ň'",
+                                                                        "'nzz'"),
+                                                                "'ó'",
+                                                                "'ozz'"),
+                                                        "'ř'",
+                                                        "'rzz'"),
+                                                "'š'",
+                                                "'szz'"),
+                                        "'ť'",
+                                        "'tzz'"),
+                                "'ú'",
+                                "'uzz'"),
+                        "'ý'",
+                        "'yzz'"),
+                "'ž'",
+                "'zzz'");
     }
 
     /**

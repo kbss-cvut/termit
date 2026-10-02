@@ -49,7 +49,8 @@ public class OntologicalAuthenticationProvider implements AuthenticationProvider
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public OntologicalAuthenticationProvider(TermItUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public OntologicalAuthenticationProvider(
+            TermItUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -88,8 +89,8 @@ public class OntologicalAuthenticationProvider implements AuthenticationProvider
 
     @Override
     public boolean supports(Class<?> aClass) {
-        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(aClass) ||
-                AuthenticationToken.class.isAssignableFrom(aClass);
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(aClass)
+                || AuthenticationToken.class.isAssignableFrom(aClass);
     }
 
     @Override

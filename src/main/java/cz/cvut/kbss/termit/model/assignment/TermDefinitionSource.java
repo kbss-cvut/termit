@@ -29,8 +29,7 @@ import java.net.URI;
 @OWLClass(iri = Vocabulary.s_c_term_definition_source)
 public class TermDefinitionSource extends TermFileOccurrence {
 
-    public TermDefinitionSource() {
-    }
+    public TermDefinitionSource() {}
 
     @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     public TermDefinitionSource(URI term, FileOccurrenceTarget target) {

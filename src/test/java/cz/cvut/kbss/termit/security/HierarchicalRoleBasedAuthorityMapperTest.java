@@ -33,9 +33,10 @@ class HierarchicalRoleBasedAuthorityMapperTest {
 
     @Test
     void mapAuthoritiesAddsLowerLevelRoleAuthoritiesToResult() {
-        final Collection<SimpleGrantedAuthority> result = sut.mapAuthorities(
-                Collections.singleton(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
-        UserRole.FULL_USER.getGranted()
-                          .forEach(r -> assertThat(result, hasItem(new SimpleGrantedAuthority(r.getName()))));
+        final Collection<SimpleGrantedAuthority> result =
+                sut.mapAuthorities(Collections.singleton(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
+        UserRole.FULL_USER
+                .getGranted()
+                .forEach(r -> assertThat(result, hasItem(new SimpleGrantedAuthority(r.getName()))));
     }
 }

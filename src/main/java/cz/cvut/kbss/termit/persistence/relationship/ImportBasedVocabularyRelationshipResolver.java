@@ -45,8 +45,8 @@ class ImportBasedVocabularyRelationshipResolver implements VocabularyRelationshi
     public Set<URI> getRelatedVocabularies(@Nonnull URI vocabulary) {
         return new HashSet<>(
                 em.createNativeQuery("SELECT DISTINCT ?imported WHERE { ?v ?imports ?imported . }", URI.class)
-                  .setParameter("imports",
-                                URI.create(Vocabulary.s_p_imports_vocabulary))
-                  .setParameter("v", vocabulary).getResultList());
+                        .setParameter("imports", URI.create(Vocabulary.s_p_imports_vocabulary))
+                        .setParameter("v", vocabulary)
+                        .getResultList());
     }
 }

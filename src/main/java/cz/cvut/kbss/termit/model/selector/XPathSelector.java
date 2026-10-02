@@ -34,8 +34,7 @@ public class XPathSelector extends Selector {
     @OWLDataProperty(iri = RDF.VALUE, simpleLiteral = true)
     private String value;
 
-    public XPathSelector() {
-    }
+    public XPathSelector() {}
 
     public XPathSelector(@NotBlank String value) {
         this.value = value;
@@ -72,8 +71,6 @@ public class XPathSelector extends Selector {
 
     @Override
     public String toString() {
-        return "XPathSelector{" +
-                "value='" + value + '\'' +
-                "} " + super.toString();
+        return "XPathSelector{" + "value='" + value + '\'' + "} " + super.toString();
     }
 }

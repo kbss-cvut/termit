@@ -170,8 +170,9 @@ class ResourceServiceTest {
     @Test
     void getContentThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class,
-                     () -> sut.getContent(resource, new ResourceRetrievalSpecification(Optional.empty(), false)));
+        assertThrows(
+                UnsupportedAssetOperationException.class,
+                () -> sut.getContent(resource, new ResourceRetrievalSpecification(Optional.empty(), false)));
         verify(documentManager, never()).getAsResource(any());
     }
 
@@ -187,7 +188,9 @@ class ResourceServiceTest {
     void saveContentThrowsUnsupportedAssetOperationExceptionWhenResourceIsNotFile() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class, () -> sut.saveContent(resource, bis, ResourceSaveReason.UNKNOWN));
+        assertThrows(
+                UnsupportedAssetOperationException.class,
+                () -> sut.saveContent(resource, bis, ResourceSaveReason.UNKNOWN));
         verify(documentManager, never()).saveFileContent(any(), any());
     }
 
@@ -228,8 +231,8 @@ class ResourceServiceTest {
     @Test
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class,
-                     () -> sut.runTextAnalysis(resource, Collections.emptySet()));
+        assertThrows(
+                UnsupportedAssetOperationException.class, () -> sut.runTextAnalysis(resource, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -237,8 +240,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenFileHasNoVocabularyAndNoVocabulariesAreSpecifiedEither() {
         final File file = Generator.generateFileWithId("test.html");
         when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
-        assertThrows(UnsupportedAssetOperationException.class,
-                     () -> sut.runTextAnalysis(file, Collections.emptySet()));
+        assertThrows(UnsupportedAssetOperationException.class, () -> sut.runTextAnalysis(file, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -489,11 +491,13 @@ class ResourceServiceTest {
         document.addFile(fileB);
         when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
         doAnswer((answer) -> {
-            if (answer.getArgument(0) instanceof File file) {
-                document.removeFile(file);
-            }
-            return null;
-        }).when(resourceRepositoryService).remove(notNull(Resource.class));
+                    if (answer.getArgument(0) instanceof File file) {
+                        document.removeFile(file);
+                    }
+                    return null;
+                })
+                .when(resourceRepositoryService)
+                .remove(notNull(Resource.class));
 
         sut.remove(document);
         verify(documentManager).remove(fileA);
@@ -523,8 +527,8 @@ class ResourceServiceTest {
         }
         when(documentManager.getAsResource(file)).thenReturn(content);
 
-        final TypeAwareResource result = sut.getContent(file,
-                                                        new ResourceRetrievalSpecification(Optional.empty(), true));
+        final TypeAwareResource result =
+                sut.getContent(file, new ResourceRetrievalSpecification(Optional.empty(), true));
         final org.jsoup.nodes.Document doc = Jsoup.parse(result.getInputStream(), StandardCharsets.UTF_8.name(), "");
         assertTrue(doc.select("span[score]").isEmpty());
     }
@@ -566,7 +570,9 @@ class ResourceServiceTest {
         file.getDocument().setVocabulary(vocabulary.getUri());
         file.setLanguage("sk");
         when(textAnalysisService.supportsLanguage(file)).thenReturn(false);
-        assertThrows(UnsupportedTextAnalysisLanguageException.class, () -> sut.runTextAnalysis(file, Set.of(vocabulary.getUri())));
+        assertThrows(
+                UnsupportedTextAnalysisLanguageException.class,
+                () -> sut.runTextAnalysis(file, Set.of(vocabulary.getUri())));
         verify(textAnalysisService).supportsLanguage(file);
     }
 

@@ -67,8 +67,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canReadTestArguments")
-    void canReadReturnsCorrectResultWhenACLHasUserRecordWithSpecifiedAccessLevel(boolean expected,
-                                                                                 AccessLevel accessLevel) {
+    void canReadReturnsCorrectResultWhenACLHasUserRecordWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(true);
         final UserAccessControlRecord record = new UserAccessControlRecord(accessLevel, user.toUser());
         record.setUri(Generator.generateUri());
@@ -85,14 +85,13 @@ class AccessControlListBasedAuthorizationServiceTest {
                 Arguments.of(false, AccessLevel.NONE),
                 Arguments.of(true, AccessLevel.READ),
                 Arguments.of(true, AccessLevel.WRITE),
-                Arguments.of(true, AccessLevel.SECURITY)
-        );
+                Arguments.of(true, AccessLevel.SECURITY));
     }
 
     @ParameterizedTest
     @MethodSource("canReadTestArguments")
-    void canReadReturnsCorrectResultWhenACLHasUserGroupRecordContainingUserWithSpecifiedAccessLevel(boolean expected,
-                                                                                                    AccessLevel accessLevel) {
+    void canReadReturnsCorrectResultWhenACLHasUserGroupRecordContainingUserWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(true);
         final UserGroup group = Generator.generateUserGroup();
         group.addMember(user.toUser());
@@ -108,8 +107,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canReadTestArguments")
-    void canReadReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(boolean expected,
-                                                                                                 AccessLevel accessLevel) {
+    void canReadReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(false);
         final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
         user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
@@ -132,8 +131,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canModifyTestArguments")
-    void canModifyReturnsCorrectResultWhenACLHasUserRecordWithSpecifiedAccessLevel(boolean expected,
-                                                                                   AccessLevel accessLevel) {
+    void canModifyReturnsCorrectResultWhenACLHasUserRecordWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(true);
         final UserAccessControlRecord record = new UserAccessControlRecord(accessLevel, user.toUser());
         record.setUri(Generator.generateUri());
@@ -150,14 +149,13 @@ class AccessControlListBasedAuthorizationServiceTest {
                 Arguments.of(false, AccessLevel.NONE),
                 Arguments.of(false, AccessLevel.READ),
                 Arguments.of(true, AccessLevel.WRITE),
-                Arguments.of(true, AccessLevel.SECURITY)
-        );
+                Arguments.of(true, AccessLevel.SECURITY));
     }
 
     @ParameterizedTest
     @MethodSource("canModifyTestArguments")
-    void canModifyReturnsCorrectResultWhenACLHasUserGroupRecordContainingUserWithSpecifiedAccessLevel(boolean expected,
-                                                                                                      AccessLevel accessLevel) {
+    void canModifyReturnsCorrectResultWhenACLHasUserGroupRecordContainingUserWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(true);
         final UserGroup group = Generator.generateUserGroup();
         group.addMember(user.toUser());
@@ -173,8 +171,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canModifyTestArguments")
-    void canModifyReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(boolean expected,
-                                                                                                   AccessLevel accessLevel) {
+    void canModifyReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(false);
         final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
         user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
@@ -197,8 +195,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canRemoveTestArguments")
-    void canRemoveReturnsCorrectResultWhenACLHasUserRecordWithSpecifiedAccessLevel(boolean expected,
-                                                                                   AccessLevel accessLevel) {
+    void canRemoveReturnsCorrectResultWhenACLHasUserRecordWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(true);
         final UserAccessControlRecord record = new UserAccessControlRecord(accessLevel, user.toUser());
         record.setUri(Generator.generateUri());
@@ -215,14 +213,13 @@ class AccessControlListBasedAuthorizationServiceTest {
                 Arguments.of(false, AccessLevel.NONE),
                 Arguments.of(false, AccessLevel.READ),
                 Arguments.of(false, AccessLevel.WRITE),
-                Arguments.of(true, AccessLevel.SECURITY)
-        );
+                Arguments.of(true, AccessLevel.SECURITY));
     }
 
     @ParameterizedTest
     @MethodSource("canRemoveTestArguments")
-    void canRemoveReturnsCorrectResultWhenACLHasUserGroupRecordContainingUserWithSpecifiedAccessLevel(boolean expected,
-                                                                                                      AccessLevel accessLevel) {
+    void canRemoveReturnsCorrectResultWhenACLHasUserGroupRecordContainingUserWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(true);
         final UserGroup group = Generator.generateUserGroup();
         group.addMember(user.toUser());
@@ -238,8 +235,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canRemoveTestArguments")
-    void canRemoveReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(boolean expected,
-                                                                                                   AccessLevel accessLevel) {
+    void canRemoveReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(
+            boolean expected, AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(false);
         final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
         user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
@@ -299,7 +296,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canReadAnonymouslyTestArguments")
-    void canReadAnonymouslyReturnsCorrectResultForAnonymousUserRoleAccessLevel(Boolean canRead, AccessLevel accessLevel) {
+    void canReadAnonymouslyReturnsCorrectResultForAnonymousUserRoleAccessLevel(
+            Boolean canRead, AccessLevel accessLevel) {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
         final UserRole role = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
@@ -313,9 +311,8 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     static Stream<Arguments> canReadAnonymouslyTestArguments() {
         return Stream.of(
-                Arguments.of(false, AccessLevel.NONE),
-                Arguments.of(true, AccessLevel.READ)
+                Arguments.of(false, AccessLevel.NONE), Arguments.of(true, AccessLevel.READ)
                 // WRITE and SECURITY access levels are not allowed for anonymous users
-        );
+                );
     }
 }

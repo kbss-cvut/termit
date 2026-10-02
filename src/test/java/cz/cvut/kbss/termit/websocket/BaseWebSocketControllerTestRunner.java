@@ -58,8 +58,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @ExtendWith(MockitoExtension.class)
 @EnableConfigurationProperties({Configuration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@ContextConfiguration(classes = {TestRestSecurityConfig.class, TestWebSocketConfig.class},
-                      initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestRestSecurityConfig.class, TestWebSocketConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 public abstract class BaseWebSocketControllerTestRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseWebSocketControllerTestRunner.class);

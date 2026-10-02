@@ -113,7 +113,8 @@ public class Environment {
             return null;
         }
 
-        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        final TermItUserDetails userDetails =
+                (TermItUserDetails) context.getAuthentication().getDetails();
         assert userDetails != null;
         return userDetails.getUser();
     }
@@ -159,8 +160,7 @@ public class Environment {
      * @return JSON-LD message converter
      */
     public static HttpMessageConverter<?> createJsonLdMessageConverter() {
-        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(
-                getJsonLdObjectMapper());
+        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(getJsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
         return converter;
     }
@@ -200,8 +200,10 @@ public class Environment {
                 }
             }
             conn.add(new File("ontology/termit.ttl"), BASE_URI, RDFFormat.TURTLE);
-            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
-                     RDFFormat.RDFXML);
+            conn.add(
+                    Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"),
+                    "",
+                    RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
@@ -212,7 +214,7 @@ public class Environment {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
     }
 
-    public static List<FlatTermDto>termsToFlatDtos(List<Term> terms) {
+    public static List<FlatTermDto> termsToFlatDtos(List<Term> terms) {
         return terms.stream().map(FlatTermDto::new).collect(Collectors.toList());
     }
 
@@ -226,7 +228,8 @@ public class Environment {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.begin();
-            conn.add(vf.createIRI(subject.toString()),
+            conn.add(
+                    vf.createIRI(subject.toString()),
                     vf.createIRI(predicate.toString()),
                     vf.createIRI(object.toString()));
             conn.commit();

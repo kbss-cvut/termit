@@ -14,6 +14,8 @@ import java.net.URI;
 @JsonLdAttributeOrder({"uri", "label", "vocabulary", "state"})
 public interface TermDescription extends Serializable, HasIdentifier, HasTypes {
     MultilingualString getLabel();
+
     URI getVocabulary();
+
     URI getState();
 }

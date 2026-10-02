@@ -25,8 +25,8 @@ public class TermRelationshipAnnotationRepositoryService implements TermRelation
 
     private final Validator validator;
 
-    public TermRelationshipAnnotationRepositoryService(TermService termService, TermRelationshipAnnotationDao dao,
-                                                       Validator validator) {
+    public TermRelationshipAnnotationRepositoryService(
+            TermService termService, TermRelationshipAnnotationDao dao, Validator validator) {
         this.termService = termService;
         this.dao = dao;
         this.validator = validator;

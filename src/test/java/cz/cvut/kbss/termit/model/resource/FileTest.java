@@ -47,7 +47,9 @@ class FileTest {
         sut.setLabel("text-mpp.html");
         sut.setUri(Generator.generateUri());
         final String result = sut.getDirectoryName();
-        assertThat(result, containsString(sut.getLabel().substring(0, sut.getLabel().indexOf('.'))));
+        assertThat(
+                result,
+                containsString(sut.getLabel().substring(0, sut.getLabel().indexOf('.'))));
         assertThat(result, containsString(Integer.toString(sut.getUri().hashCode())));
     }
 

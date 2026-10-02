@@ -42,8 +42,7 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_has_new_value)
     private Set<Object> newValue;
 
-    public UpdateChangeRecord() {
-    }
+    public UpdateChangeRecord() {}
 
     public UpdateChangeRecord(Asset<?> changedAsset) {
         super(changedAsset);
@@ -94,10 +93,7 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
 
     @Override
     public String toString() {
-        return "UpdateChangeRecord{" +
-                super.toString() +
-                "changedAttribute=" + changedAttribute +
-                "}";
+        return "UpdateChangeRecord{" + super.toString() + "changedAttribute=" + changedAttribute + "}";
     }
 
     @Override

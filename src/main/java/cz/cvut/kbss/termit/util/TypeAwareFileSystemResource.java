@@ -43,8 +43,9 @@ public class TypeAwareFileSystemResource extends FileSystemResource implements T
     @Override
     public Optional<String> getFileExtension() {
         assert getFilename() != null;
-        return getFilename().contains(".") ? Optional.of(getFilename().substring(getFilename().lastIndexOf("."))) :
-               Optional.empty();
+        return getFilename().contains(".")
+                ? Optional.of(getFilename().substring(getFilename().lastIndexOf(".")))
+                : Optional.empty();
     }
 
     @Override

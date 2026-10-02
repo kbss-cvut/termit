@@ -96,13 +96,13 @@ public class FieldConstraintExecutor {
     public static void reportViolation(ConstraintValidatorContext ctx, String fieldName) {
         ctx.disableDefaultConstraintViolation();
         ctx.buildConstraintViolationWithTemplate(ctx.getDefaultConstraintMessageTemplate())
-           .addPropertyNode(fieldName)
-           .addConstraintViolation();
+                .addPropertyNode(fieldName)
+                .addConstraintViolation();
     }
 
     private Class<?> findAnnotatedClass(Object bean) {
-        return ReflectionUtils.findAnnotatedClass(bean, annotationType).orElseThrow(
-                () -> new IllegalArgumentException(
+        return ReflectionUtils.findAnnotatedClass(bean, annotationType)
+                .orElseThrow(() -> new IllegalArgumentException(
                         annotationType.getSimpleName() + " annotation not found on class " + bean.getClass()));
     }
 
@@ -115,10 +115,11 @@ public class FieldConstraintExecutor {
     }
 
     private List<VarHandle> getFieldHandles(Class<?> annotatedClass) {
-        return CACHE.computeIfAbsent(new CacheKey(annotatedClass, fieldNames), key ->
-                Arrays.stream(key.fieldNames)
-                      .map(fieldName -> resolveVarHandle(key.clazz, fieldName))
-                      .toList());
+        return CACHE.computeIfAbsent(
+                new CacheKey(annotatedClass, fieldNames),
+                key -> Arrays.stream(key.fieldNames)
+                        .map(fieldName -> resolveVarHandle(key.clazz, fieldName))
+                        .toList());
     }
 
     private VarHandle resolveVarHandle(Class<?> beanClass, String fieldName) {
@@ -128,7 +129,8 @@ public class FieldConstraintExecutor {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new IllegalArgumentException(
                     "Wrong " + annotationType.getSimpleName() + " annotation usage: field '" + fieldName
-                            + "' not found in " + beanClass, e);
+                            + "' not found in " + beanClass,
+                    e);
         }
     }
 

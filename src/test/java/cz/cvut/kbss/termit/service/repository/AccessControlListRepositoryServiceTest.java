@@ -85,8 +85,8 @@ class AccessControlListRepositoryServiceTest {
     private Configuration configuration = new Configuration();
 
     @Spy
-    private SecurityUtils securityUtils = new SecurityUtils(null, new BCryptPasswordEncoder(), null,
-                                                            new Configuration());
+    private SecurityUtils securityUtils =
+            new SecurityUtils(null, new BCryptPasswordEncoder(), null, new Configuration());
 
     @InjectMocks
     private AccessControlListRepositoryService sut;
@@ -116,10 +116,10 @@ class AccessControlListRepositoryServiceTest {
     @Test
     void removeRecordLoadsTargetAccessControlListRemovesSpecifiedRecordsAndUpdatesIt() {
         final AccessControlList acl = generateAcl();
-        acl.addRecord(new RoleAccessControlRecord(AccessLevel.READ, new UserRole(
-                cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
-        acl.addRecord(new RoleAccessControlRecord(AccessLevel.WRITE,
-                                                  new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
+        acl.addRecord(new RoleAccessControlRecord(
+                AccessLevel.READ, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
+        acl.addRecord(new RoleAccessControlRecord(
+                AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
         final UserAccessControlRecord existingRecord = new UserAccessControlRecord();
         existingRecord.setUri(Generator.generateUri());
         existingRecord.setHolder(Generator.generateUserWithId());
@@ -154,8 +154,10 @@ class AccessControlListRepositoryServiceTest {
         sut.updateRecordAccessLevel(acl, update);
 
         final AccessLevel updatedLevel = acl.getRecords().stream()
-                                            .filter(r -> update.getUri().equals(r.getUri()))
-                                            .findAny().map(AccessControlRecord::getAccessLevel).orElseThrow();
+                .filter(r -> update.getUri().equals(r.getUri()))
+                .findAny()
+                .map(AccessControlRecord::getAccessLevel)
+                .orElseThrow();
 
         assertEquals(generatedRecords + 1, acl.getRecords().size());
         assertEquals(update.getAccessLevel(), updatedLevel);
@@ -201,10 +203,11 @@ class AccessControlListRepositoryServiceTest {
         when(changeRecordService.getAuthors(subject)).thenReturn(Set.of(author, authorTwo));
 
         final AccessControlList result = sut.createFor(subject);
-        assertThat(result.getRecords(), hasItems(
-                new UserAccessControlRecord(AccessLevel.SECURITY, author),
-                new UserAccessControlRecord(AccessLevel.SECURITY, authorTwo)
-        ));
+        assertThat(
+                result.getRecords(),
+                hasItems(
+                        new UserAccessControlRecord(AccessLevel.SECURITY, author),
+                        new UserAccessControlRecord(AccessLevel.SECURITY, authorTwo)));
         verify(dao).persist(result);
     }
 
@@ -217,18 +220,19 @@ class AccessControlListRepositoryServiceTest {
         when(userRoleService.findAll()).thenReturn(getAllUserRoles());
 
         final AccessControlList result = sut.createFor(subject);
-        assertThat(result.getRecords(), hasItems(
-                new RoleAccessControlRecord(configuration.getAcl().getDefaultEditorAccessLevel(), editor),
-                new RoleAccessControlRecord(configuration.getAcl().getDefaultReaderAccessLevel(), reader)
-        ));
+        assertThat(
+                result.getRecords(),
+                hasItems(
+                        new RoleAccessControlRecord(configuration.getAcl().getDefaultEditorAccessLevel(), editor),
+                        new RoleAccessControlRecord(configuration.getAcl().getDefaultReaderAccessLevel(), reader)));
         verify(dao).persist(result);
     }
 
     @Test
     void removeRecordThrowsUnsupportedOperationExceptionWhenAttemptingToRemoveRoleRecord() {
         final AccessControlList acl = generateAcl();
-        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(
-                cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
+        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(
+                AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
         acl.addRecord(toRemove);
 
         assertThrows(UnsupportedOperationException.class, () -> sut.removeRecord(acl, toRemove));
@@ -239,10 +243,12 @@ class AccessControlListRepositoryServiceTest {
         final AccessControlList original = Generator.generateAccessControlList(true);
         final URI newAclUri = Generator.generateUri();
         doAnswer(inv -> {
-            final AccessControlList arg = inv.getArgument(0, AccessControlList.class);
-            arg.setUri(newAclUri);
-            return null;
-        }).when(dao).persist(any(AccessControlList.class));
+                    final AccessControlList arg = inv.getArgument(0, AccessControlList.class);
+                    arg.setUri(newAclUri);
+                    return null;
+                })
+                .when(dao)
+                .persist(any(AccessControlList.class));
 
         final AccessControlList result = sut.clone(original);
         assertNotNull(result);
@@ -256,8 +262,7 @@ class AccessControlListRepositoryServiceTest {
                 new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER),
                 new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER),
                 new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER),
-                new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ADMIN)
-        );
+                new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ADMIN));
     }
 
     @Test
@@ -272,9 +277,7 @@ class AccessControlListRepositoryServiceTest {
     }
 
     private static Stream<AccessLevel> getAccessLevelsGreaterThanRead() {
-        return Arrays.stream(AccessLevel.values()).filter(level ->
-            level.ordinal() > AccessLevel.READ.ordinal()
-        );
+        return Arrays.stream(AccessLevel.values()).filter(level -> level.ordinal() > AccessLevel.READ.ordinal());
     }
 
     @ParameterizedTest
@@ -294,9 +297,7 @@ class AccessControlListRepositoryServiceTest {
     }
 
     private static Stream<AccessLevel> getAccessLevelsLessOrEqualToRead() {
-        return Arrays.stream(AccessLevel.values()).filter(level ->
-            level.ordinal() <= AccessLevel.READ.ordinal()
-        );
+        return Arrays.stream(AccessLevel.values()).filter(level -> level.ordinal() <= AccessLevel.READ.ordinal());
     }
 
     @ParameterizedTest
@@ -347,9 +348,7 @@ class AccessControlListRepositoryServiceTest {
     }
 
     private static Stream<AccessLevel> getAccessLevelsLessThanSecurity() {
-        return Arrays.stream(AccessLevel.values()).filter(level ->
-                level.ordinal() < AccessLevel.SECURITY.ordinal()
-        );
+        return Arrays.stream(AccessLevel.values()).filter(level -> level.ordinal() < AccessLevel.SECURITY.ordinal());
     }
 
     @ParameterizedTest
@@ -368,5 +367,4 @@ class AccessControlListRepositoryServiceTest {
         assertDoesNotThrow(() -> sut.validate(acl));
         assertDoesNotThrow(() -> sut.validate(accessRecord));
     }
-
 }

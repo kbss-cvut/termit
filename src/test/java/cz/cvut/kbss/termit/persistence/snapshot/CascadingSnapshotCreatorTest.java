@@ -79,12 +79,14 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         }
 
         transactional(() -> sut.createSnapshot(root));
-        vocabularyTerms.keySet().forEach(
-                v -> assertTrue(em.createNativeQuery("ASK { ?snapshot ?isSnapshotOf ?v . }", Boolean.class)
-                                  .setParameter("isSnapshotOf",
-                                          URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
-                                  .setParameter("v", v)
-                                  .getSingleResult()));
+        vocabularyTerms
+                .keySet()
+                .forEach(v -> assertTrue(em.createNativeQuery("ASK { ?snapshot ?isSnapshotOf ?v . }", Boolean.class)
+                        .setParameter(
+                                "isSnapshotOf",
+                                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
+                        .setParameter("v", v)
+                        .getSingleResult()));
     }
 
     private Vocabulary generateVocabularyWithTerm(boolean rootTerm) {
@@ -157,11 +159,13 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
     }
 
     private <T extends Asset<?>> T findRequiredSnapshot(HasIdentifier asset, Class<T> cls) {
-        final String isSnapshotOf = Vocabulary.class.equals(cls) ? cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary : cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term;
+        final String isSnapshotOf = Vocabulary.class.equals(cls)
+                ? cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary
+                : cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term;
         final T result = em.createNativeQuery("SELECT ?s WHERE { ?s ?isSnapshotOf ?a }", cls)
-                           .setParameter("isSnapshotOf", URI.create(isSnapshotOf))
-                           .setParameter("a", asset)
-                           .getSingleResult();
+                .setParameter("isSnapshotOf", URI.create(isSnapshotOf))
+                .setParameter("a", asset)
+                .getSingleResult();
         assertNotNull(result);
         return result;
     }
@@ -173,11 +177,15 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.createSnapshot(vocabulary));
         final String queryString = "ASK { ?s ?isSnapshotOf ?a }";
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                             cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary)).setParameter("a", vocabulary)
-                     .getSingleResult());
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term)).setParameter("a", term).getSingleResult());
+        assertTrue(em.createNativeQuery(queryString, Boolean.class)
+                .setParameter(
+                        "isSnapshotOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
+                .setParameter("a", vocabulary)
+                .getSingleResult());
+        assertTrue(em.createNativeQuery(queryString, Boolean.class)
+                .setParameter("isSnapshotOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term))
+                .setParameter("a", term)
+                .getSingleResult());
     }
 
     @Test

@@ -92,12 +92,13 @@ class SearchDaoTest {
     void fullTextSearchUsesOneTokenSearchStringAsRequiredWildcardMatch() {
         mockSearchQuery();
         final String searchString = "test";
-        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
+        sut.advancedSearch(
+                new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.contains("+" + searchString + SearchDao.LUCENE_WILDCARD))
-                                                .findAny();
+                .filter(s -> s.contains("+" + searchString + SearchDao.LUCENE_WILDCARD))
+                .findAny();
         assertTrue(argument.isPresent());
     }
 
@@ -106,13 +107,14 @@ class SearchDaoTest {
         mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
-        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
+        sut.advancedSearch(
+                new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.contains("+termOne +termTwo"))
-                                                .filter(s -> s.contains('+' + lastToken + SearchDao.LUCENE_WILDCARD))
-                                                .findAny();
+                .filter(s -> s.contains("+termOne +termTwo"))
+                .filter(s -> s.contains('+' + lastToken + SearchDao.LUCENE_WILDCARD))
+                .findAny();
         assertTrue(argument.isPresent());
     }
 
@@ -120,11 +122,13 @@ class SearchDaoTest {
     void fullTextSearchDoesNotAddWildcardIfLastTokenAlreadyEndsWithWildcard() {
         mockSearchQuery();
         final String searchString = "test token*";
-        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
+        sut.advancedSearch(
+                new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
-        final Optional<String> argument = captor.getAllValues().stream().filter(s -> s.startsWith(searchString))
-                                                .findAny();
+        final Optional<String> argument = captor.getAllValues().stream()
+                .filter(s -> s.startsWith(searchString))
+                .findAny();
         assertTrue(argument.isPresent());
         assertEquals(searchString, argument.get());
     }
@@ -133,17 +137,19 @@ class SearchDaoTest {
     void fullTextSearchDoesNotAddWildcardForShortLastToken() {
         mockSearchQuery();
         final String searchString = "ab";
-        sut.advancedSearch(new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
+        sut.advancedSearch(
+                new SearchString(searchString, null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(ftsQueryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         assertTrue(captor.getAllValues().stream().anyMatch(s -> s.equals("+" + searchString)));
-        assertFalse(captor.getAllValues().stream().anyMatch(s -> s.equals("+" + searchString + SearchDao.LUCENE_WILDCARD)));
+        assertFalse(
+                captor.getAllValues().stream().anyMatch(s -> s.equals("+" + searchString + SearchDao.LUCENE_WILDCARD)));
     }
 
     @Test
     void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
-        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Collections.emptyList(),
-                                                             Constants.DEFAULT_PAGE_SPEC, List.of());
+        final Page<SearchResult> result = sut.advancedSearch(
+                new SearchString("", null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         assertTrue(result.isEmpty());
         verify(emMock, never()).createNativeQuery(any(), anyString());
     }
@@ -154,10 +160,10 @@ class SearchDaoTest {
         final SearchParam typeParam = new SearchParam(
                 URI.create(RDF.TYPE.stringValue()),
                 Set.of("http://onto.fel.cvut.cz/ontologies/ufo/event"),
-                MatchType.IRI
-        );
+                MatchType.IRI);
 
-        sut.advancedSearch(new SearchString("matching", null), Set.of(typeParam), Constants.DEFAULT_PAGE_SPEC, List.of());
+        sut.advancedSearch(
+                new SearchString("matching", null), Set.of(typeParam), Constants.DEFAULT_PAGE_SPEC, List.of());
 
         final ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
         verify(emMock).createNativeQuery(queryCaptor.capture(), anyString());
@@ -171,14 +177,14 @@ class SearchDaoTest {
     @Test
     void advancedSearchWithFullTextResolvesTotalNumberOfResults() {
         mockSearchQuery();
-        final Page<SearchResult> result = sut.advancedSearch(new SearchString("matching", null), Collections.emptyList(),
-                                                             Constants.DEFAULT_PAGE_SPEC, List.of());
+        final Page<SearchResult> result = sut.advancedSearch(
+                new SearchString("matching", null), Collections.emptyList(), Constants.DEFAULT_PAGE_SPEC, List.of());
         assertEquals(13, result.getTotalElements());
     }
 
     @Test
     void joinLuceneQueryWithWildcardMatchesTheExpectedPatternForSingleItemArray() {
-        final String[] tokens = new String[]{"+slovo"};
+        final String[] tokens = new String[] {"+slovo"};
 
         final String result = SearchDao.joinLuceneQueryWithWildcard(tokens, tokens[0].length());
 
@@ -187,7 +193,7 @@ class SearchDaoTest {
 
     @Test
     void joinLuceneQueryWithWildcardMatchesTheExpectedPatternForMultipleItemArray() {
-        final String[] tokens = new String[]{"+afrikán", "+slunečnice", "+růže"};
+        final String[] tokens = new String[] {"+afrikán", "+slunečnice", "+růže"};
         final int totalLength = String.join("", tokens).length();
 
         final String result = SearchDao.joinLuceneQueryWithWildcard(tokens, totalLength);

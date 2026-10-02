@@ -55,7 +55,13 @@ import java.util.UUID;
 @TestConfiguration
 @EnableWebSocketMessageBroker
 @EnableConfigurationProperties(Configuration.class)
-@Import({TestSecurityConfig.class, TestRestSecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class})
+@Import({
+    TestSecurityConfig.class,
+    TestRestSecurityConfig.class,
+    WebAppConfig.class,
+    WebSocketConfig.class,
+    WebSocketMessageBrokerConfig.class
+})
 @ComponentScan(basePackages = {"cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"})
 public class TestWebSocketConfig
         implements ApplicationListener<ContextRefreshedEvent>, WebSocketMessageBrokerConfigurer {
@@ -113,13 +119,15 @@ public class TestWebSocketConfig
     public SimpMessagingTemplate brokerMessagingTemplate(
             AbstractSubscribableChannel brokerChannel, CompositeMessageConverter brokerMessageConverter) {
 
-        SimpMessagingTemplate template = new ReturnValueCollectingSimpMessagingTemplate(brokerChannel, returnedValuesMap());
+        SimpMessagingTemplate template =
+                new ReturnValueCollectingSimpMessagingTemplate(brokerChannel, returnedValuesMap());
         template.setMessageConverter(brokerMessageConverter);
         return template;
     }
 
     @Bean
-    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor(AuthenticationManager authenticationManager) {
+    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor(
+            AuthenticationManager authenticationManager) {
         return new WebSocketJwtAuthorizationInterceptor(authenticationManager);
     }
 }

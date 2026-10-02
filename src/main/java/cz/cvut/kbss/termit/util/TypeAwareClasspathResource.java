@@ -40,7 +40,8 @@ public class TypeAwareClasspathResource extends ClassPathResource implements Typ
 
     @Override
     public Optional<String> getFileExtension() {
-        return getPath().contains(".") ? Optional.of(getPath().substring(getPath().lastIndexOf("."))) :
-               Optional.empty();
+        return getPath().contains(".")
+                ? Optional.of(getPath().substring(getPath().lastIndexOf(".")))
+                : Optional.empty();
     }
 }

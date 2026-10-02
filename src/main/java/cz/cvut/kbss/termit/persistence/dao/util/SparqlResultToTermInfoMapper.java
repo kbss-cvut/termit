@@ -56,7 +56,8 @@ public class SparqlResultToTermInfoMapper implements SparqlResultMapper<TermInfo
             } else {
                 ti = new TermInfo(uri);
                 visited.put(uri, ti);
-                ti.setLabel(MultilingualString.create(ls.getValue(), ls.getLanguage().orElse(null)));
+                ti.setLabel(MultilingualString.create(
+                        ls.getValue(), ls.getLanguage().orElse(null)));
             }
             ti.setVocabulary((URI) row[2]);
             visited.put(ti.getUri(), ti);

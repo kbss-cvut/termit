@@ -71,8 +71,10 @@ public class OAuth2SecurityConfig {
     private final JwtConfig jwtConfig;
 
     @Autowired
-    public OAuth2SecurityConfig(AuthenticationSuccess authenticationSuccessHandler,
-                                cz.cvut.kbss.termit.util.Configuration config, JwtConfig jwtConfig) {
+    public OAuth2SecurityConfig(
+            AuthenticationSuccess authenticationSuccessHandler,
+            cz.cvut.kbss.termit.util.Configuration config,
+            JwtConfig jwtConfig) {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.config = config;
         this.jwtConfig = jwtConfig;
@@ -84,19 +86,17 @@ public class OAuth2SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager)
+            throws Exception {
         LOG.debug("Using OAuth2/OIDC security.");
         final PathPatternRequestMatcher.Builder matcher = PathPatternRequestMatcher.withDefaults();
-        http.oauth2ResourceServer(
-                    (auth) -> auth
-                            .jwt((jwt) -> jwt.authenticationManager(authenticationManager)))
-            .authorizeHttpRequests(
-                    (auth) -> auth
-                            .requestMatchers(matcher.matcher("/**")).permitAll())
-            .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
-                                  .logoutSuccessHandler(authenticationSuccessHandler));
+        http.oauth2ResourceServer((auth) -> auth.jwt((jwt) -> jwt.authenticationManager(authenticationManager)))
+                .authorizeHttpRequests(
+                        (auth) -> auth.requestMatchers(matcher.matcher("/**")).permitAll())
+                .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
+                        .logoutSuccessHandler(authenticationSuccessHandler));
         return http.build();
     }
 
@@ -105,8 +105,8 @@ public class OAuth2SecurityConfig {
      * and TermIt's internal {@link JwtDecoder} for PAT authentication.
      */
     @Bean
-    public JwtTypeDelegatingAuthenticationProvider authenticationProvider(JwtDecoder jwtDecoder,
-                                                                          PersonalAccessTokenService personalAccessTokenService) {
+    public JwtTypeDelegatingAuthenticationProvider authenticationProvider(
+            JwtDecoder jwtDecoder, PersonalAccessTokenService personalAccessTokenService) {
         final JwtAuthenticationProvider defaultProvider = new JwtAuthenticationProvider(jwtDecoder);
         defaultProvider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
 
@@ -121,10 +121,10 @@ public class OAuth2SecurityConfig {
 
     private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
         return source -> {
-            final Collection<SimpleGrantedAuthority> authorities = new OidcGrantedAuthoritiesExtractor(
-                    config.getSecurity()).convert(source);
-            return new JwtAuthenticationToken(source,
-                                              new HierarchicalRoleBasedAuthorityMapper().mapAuthorities(authorities));
+            final Collection<SimpleGrantedAuthority> authorities =
+                    new OidcGrantedAuthoritiesExtractor(config.getSecurity()).convert(source);
+            return new JwtAuthenticationToken(
+                    source, new HierarchicalRoleBasedAuthorityMapper().mapAuthorities(authorities));
         };
     }
 }

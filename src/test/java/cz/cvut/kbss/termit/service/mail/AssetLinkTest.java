@@ -43,16 +43,15 @@ class AssetLinkTest {
         final Term term = Generator.generateTermWithId(Generator.generateUri());
         final String result = new AssetLink(BASE_URL).createLink(term, Collections.emptyMap());
         assertThat(result, startsWith(BASE_URL));
-        assertThat(result, containsString(FrontendPaths.TERM_PATH.replace("{vocabularyName}",
-                                                                          IdentifierResolver.extractIdentifierFragment(
-                                                                                  term.getVocabulary()))
-                                                                 .replace("{termName}",
-                                                                          IdentifierResolver.extractIdentifierFragment(
-                                                                                  term.getUri()))));
-        assertThat(result, containsString(
-                Constants.QueryParams.NAMESPACE + "=" + IdentifierResolver.extractIdentifierNamespace(
-                        term.getVocabulary())));
-
+        assertThat(
+                result,
+                containsString(FrontendPaths.TERM_PATH
+                        .replace("{vocabularyName}", IdentifierResolver.extractIdentifierFragment(term.getVocabulary()))
+                        .replace("{termName}", IdentifierResolver.extractIdentifierFragment(term.getUri()))));
+        assertThat(
+                result,
+                containsString(Constants.QueryParams.NAMESPACE + "="
+                        + IdentifierResolver.extractIdentifierNamespace(term.getVocabulary())));
     }
 
     @Test
@@ -60,20 +59,21 @@ class AssetLinkTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final String result = new AssetLink(BASE_URL).createLink(vocabulary, Collections.emptyMap());
         assertThat(result, startsWith(BASE_URL));
-        assertThat(result, containsString(FrontendPaths.VOCABULARY_PATH.replace("{vocabularyName}",
-                                                                                IdentifierResolver.extractIdentifierFragment(
-                                                                                        vocabulary.getUri()))));
-        assertThat(result, containsString(
-                Constants.QueryParams.NAMESPACE + "=" + IdentifierResolver.extractIdentifierNamespace(
-                        vocabulary.getUri())));
+        assertThat(
+                result,
+                containsString(FrontendPaths.VOCABULARY_PATH.replace(
+                        "{vocabularyName}", IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()))));
+        assertThat(
+                result,
+                containsString(Constants.QueryParams.NAMESPACE + "="
+                        + IdentifierResolver.extractIdentifierNamespace(vocabulary.getUri())));
     }
 
     @Test
     void createLinkAddsQueryParamsFromSpecifiedMapToResultUrl() {
         final Term term = Generator.generateTermWithId(Generator.generateUri());
-        final Map<String, Collection<String>> params = Collections.singletonMap(FrontendPaths.ACTIVE_TAB_PARAM,
-                                                                                Collections.singleton(
-                                                                                        FrontendPaths.COMMENTS_TAB));
+        final Map<String, Collection<String>> params = Collections.singletonMap(
+                FrontendPaths.ACTIVE_TAB_PARAM, Collections.singleton(FrontendPaths.COMMENTS_TAB));
         final String result = new AssetLink(BASE_URL).createLink(term, params);
         assertThat(result, containsString(FrontendPaths.ACTIVE_TAB_PARAM + "=" + FrontendPaths.COMMENTS_TAB));
     }
@@ -81,19 +81,14 @@ class AssetLinkTest {
     @Test
     void createLinkAddsQueryParamsAfterAssetPathFragment() {
         final Term term = Generator.generateTermWithId(Generator.generateUri());
-        final Map<String, Collection<String>> params = Collections.singletonMap(FrontendPaths.ACTIVE_TAB_PARAM,
-                                                                                Collections.singleton(
-                                                                                        FrontendPaths.COMMENTS_TAB));
+        final Map<String, Collection<String>> params = Collections.singletonMap(
+                FrontendPaths.ACTIVE_TAB_PARAM, Collections.singleton(FrontendPaths.COMMENTS_TAB));
         final String result = new AssetLink(BASE_URL).createLink(term, params);
-        final int fragmentIndex = result.indexOf(FrontendPaths.TERM_PATH.replace("{vocabularyName}",
-                                                                                 IdentifierResolver.extractIdentifierFragment(
-                                                                                         term.getVocabulary()))
-                                                                        .replace("{termName}",
-                                                                                 IdentifierResolver.extractIdentifierFragment(
-                                                                                         term.getUri())));
-        final int namespaceIndex = result.indexOf(
-                Constants.QueryParams.NAMESPACE + "=" + IdentifierResolver.extractIdentifierNamespace(
-                        term.getVocabulary()));
+        final int fragmentIndex = result.indexOf(FrontendPaths.TERM_PATH
+                .replace("{vocabularyName}", IdentifierResolver.extractIdentifierFragment(term.getVocabulary()))
+                .replace("{termName}", IdentifierResolver.extractIdentifierFragment(term.getUri())));
+        final int namespaceIndex = result.indexOf(Constants.QueryParams.NAMESPACE + "="
+                + IdentifierResolver.extractIdentifierNamespace(term.getVocabulary()));
         final int tabIndex = result.indexOf(FrontendPaths.ACTIVE_TAB_PARAM + "=" + FrontendPaths.COMMENTS_TAB);
         assertThat(fragmentIndex, lessThan(namespaceIndex));
         assertThat(fragmentIndex, lessThan(tabIndex));

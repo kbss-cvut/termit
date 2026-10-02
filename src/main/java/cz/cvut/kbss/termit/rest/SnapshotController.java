@@ -55,19 +55,23 @@ public class SnapshotController extends BaseController {
         this.snapshotService = snapshotService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Deletes the specified snapshot.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Deletes the specified snapshot.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Snapshot successfully deleted."),
-            @ApiResponse(responseCode = "404", description = "Snapshot with the specified identifier not found.")
+        @ApiResponse(responseCode = "204", description = "Snapshot successfully deleted."),
+        @ApiResponse(responseCode = "404", description = "Snapshot with the specified identifier not found.")
     })
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeSnapshot(@Parameter(
-            description = "Locally (in the context of the specified namespace) unique part of the snapshot identifier.")
-                               @PathVariable String localName,
-                               @Parameter(description = "Snapshot identifier namespace.")
-                               @RequestParam(name = NAMESPACE) String namespace) {
+    public void removeSnapshot(
+            @Parameter(
+                            description =
+                                    "Locally (in the context of the specified namespace) unique part of the snapshot identifier.")
+                    @PathVariable
+                    String localName,
+            @Parameter(description = "Snapshot identifier namespace.") @RequestParam(name = NAMESPACE)
+                    String namespace) {
         final URI id = idResolver.resolveIdentifier(namespace, localName);
         snapshotService.remove(snapshotService.findRequired(id));
     }

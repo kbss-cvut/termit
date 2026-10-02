@@ -271,7 +271,9 @@ class ThrottledFutureTest {
         threadB.start();
 
         // thread B should not be blocked
-        await("threadB start").atMost(Duration.ofSeconds(30)).until(() -> threadB.getState().equals(Thread.State.TERMINATED));
+        await("threadB start")
+                .atMost(Duration.ofSeconds(30))
+                .until(() -> threadB.getState().equals(Thread.State.TERMINATED));
         assertTrue(future.isRunning());
 
         allowExit.set(true);
@@ -368,8 +370,9 @@ class ThrottledFutureTest {
     void transferUpdatesSecondFutureWithCallbacks() {
         final Consumer<ThrottledFuture<String>> firstCallback = (result) -> {};
         final Consumer<ThrottledFuture<String>> secondCallback = (result) -> {};
-        final ThrottledFuture<String> firstFuture = ThrottledFuture.of(()->"").then(firstCallback);
-        final ThrottledFuture<String> secondFuture = ThrottledFuture.of(()->"").then(secondCallback);
+        final ThrottledFuture<String> firstFuture = ThrottledFuture.of(() -> "").then(firstCallback);
+        final ThrottledFuture<String> secondFuture =
+                ThrottledFuture.of(() -> "").then(secondCallback);
         final ThrottledFuture<String> mocked = mock(ThrottledFuture.class);
         final List<Consumer<String>> captured = new ArrayList<>(2);
 
@@ -392,7 +395,8 @@ class ThrottledFutureTest {
     void callbacksAreClearedAfterTransferring() {
         final Consumer<ThrottledFuture<String>> firstCallback = (result) -> {};
         final Consumer<ThrottledFuture<String>> secondCallback = (result) -> {};
-        final ThrottledFuture<String> future = ThrottledFuture.of(()->"").then(firstCallback).then(secondCallback);
+        final ThrottledFuture<String> future =
+                ThrottledFuture.of(() -> "").then(firstCallback).then(secondCallback);
         final ThrottledFuture<String> mocked = mock(ThrottledFuture.class);
 
         future.transfer(mocked);
@@ -407,8 +411,8 @@ class ThrottledFutureTest {
 
     @Test
     void transferReturnsTargetWhenFutureIsRunning() {
-        final ThrottledFuture<String> future = spy(ThrottledFuture.of(()->""));
-        final ThrottledFuture<String> target = ThrottledFuture.of(()->"");
+        final ThrottledFuture<String> future = spy(ThrottledFuture.of(() -> ""));
+        final ThrottledFuture<String> target = ThrottledFuture.of(() -> "");
         when(future.isRunning()).thenReturn(true);
         doCallRealMethod().when(future).transfer(any());
 
@@ -419,7 +423,7 @@ class ThrottledFutureTest {
     @Test
     void transferReturnsTargetWhenFutureIsDone() {
         final ThrottledFuture<String> future = ThrottledFuture.done("");
-        final ThrottledFuture<String> target = ThrottledFuture.of(()->"");
+        final ThrottledFuture<String> target = ThrottledFuture.of(() -> "");
 
         final ThrottledFuture<String> result = future.transfer(target);
         assertEquals(target, result);
@@ -428,8 +432,8 @@ class ThrottledFutureTest {
     @Test
     void transferReturnsTargetWhenLockIsNotLockedForTransfer() throws Throwable {
         final ReentrantLock futureLock = new ReentrantLock();
-        final ThrottledFuture<String> future = ThrottledFuture.of(()->"");
-        final ThrottledFuture<String> target = ThrottledFuture.of(()->"");
+        final ThrottledFuture<String> future = ThrottledFuture.of(() -> "");
+        final ThrottledFuture<String> target = ThrottledFuture.of(() -> "");
 
         final Thread thread = new Thread(futureLock::lock);
         thread.start();
@@ -443,7 +447,7 @@ class ThrottledFutureTest {
 
     @Test
     void updateSetsTask() {
-        final Supplier<String> task = ()->"";
+        final Supplier<String> task = () -> "";
         final ThrottledFuture<String> future = ThrottledFuture.of(() -> "");
 
         future.update(task, List.of());
@@ -457,7 +461,7 @@ class ThrottledFutureTest {
         final Consumer<ThrottledFuture<String>> originalCallback = result -> {};
         final ThrottledFuture<String> future = ThrottledFuture.of(() -> "").then(originalCallback);
 
-        future.update(()->"", List.of(callback));
+        future.update(() -> "", List.of(callback));
 
         final Collection<Consumer<String>> callbacks =
                 (Collection<Consumer<String>>) ReflectionTestUtils.getField(future, "onCompletion");
@@ -470,19 +474,19 @@ class ThrottledFutureTest {
 
     @Test
     void updateReturnsNewFutureWhenFutureIsRunning() {
-        final ThrottledFuture<String> future = spy(ThrottledFuture.of(()->""));
+        final ThrottledFuture<String> future = spy(ThrottledFuture.of(() -> ""));
         when(future.isRunning()).thenReturn(true);
         doCallRealMethod().when(future).update(any(), any());
 
-        final ThrottledFuture<String> result = future.update(()->"", List.of());
+        final ThrottledFuture<String> result = future.update(() -> "", List.of());
         assertNotEquals(future, result);
     }
 
     @Test
     void updateReturnsSelfWhenFutureIsNotRunningAndNotDone() {
-        final ThrottledFuture<String> future = ThrottledFuture.of(()->"");
+        final ThrottledFuture<String> future = ThrottledFuture.of(() -> "");
 
-        final ThrottledFuture<String> result = future.update(()->"", List.of());
+        final ThrottledFuture<String> result = future.update(() -> "", List.of());
         assertEquals(future, result);
     }
 
@@ -490,14 +494,14 @@ class ThrottledFutureTest {
     void updateReturnsNewFutureWhenFutureIsDone() {
         final ThrottledFuture<String> future = ThrottledFuture.done("");
 
-        final ThrottledFuture<String> result = future.update(()->"", List.of());
+        final ThrottledFuture<String> result = future.update(() -> "", List.of());
         assertNotEquals(future, result);
     }
 
     @Test
     void updateReturnsNewFutureWhenLockIsNotLockedForUpdate() throws Throwable {
         final ReentrantLock futureLock = new ReentrantLock();
-        final ThrottledFuture<String> future = ThrottledFuture.of(()->"");
+        final ThrottledFuture<String> future = ThrottledFuture.of(() -> "");
 
         final Thread thread = new Thread(futureLock::lock);
         thread.start();
@@ -505,14 +509,14 @@ class ThrottledFutureTest {
 
         ReflectionTestUtils.setField(future, "lock", futureLock);
 
-        final ThrottledFuture<String> result = future.update(()->"", List.of());
+        final ThrottledFuture<String> result = future.update(() -> "", List.of());
         assertNotEquals(future, result);
     }
 
     @Test
     void runExecutionCallbackIsExecutedAfterStartedAtIsSetAndBeforeTaskExecution() {
         final AtomicBoolean taskExecuted = new AtomicBoolean(false);
-        final ThrottledFuture<Void> future = ThrottledFuture.of(()->{
+        final ThrottledFuture<Void> future = ThrottledFuture.of(() -> {
             taskExecuted.set(true);
         });
 

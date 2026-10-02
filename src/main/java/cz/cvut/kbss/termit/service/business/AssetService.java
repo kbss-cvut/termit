@@ -47,9 +47,11 @@ public class AssetService {
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao,
-                        VocabularyAuthorizationService vocabularyAuthorizationService,
-                        SecurityUtils securityUtils) {
+    public AssetService(
+            TermRepositoryService termRepositoryService,
+            AssetDao assetDao,
+            VocabularyAuthorizationService vocabularyAuthorizationService,
+            SecurityUtils securityUtils) {
         this.termRepositoryService = termRepositoryService;
         this.assetDao = assetDao;
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
@@ -77,12 +79,13 @@ public class AssetService {
      * @return Sanitized input
      */
     private Page<RecentlyModifiedAsset> sanitizeUnauthorizedAssets(Page<RecentlyModifiedAsset> input) {
-        input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
-                     new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
-             .forEach(ra -> {
-                 ra.setLabel(MASK);
-                 ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_forbidden);
-             });
+        input.get()
+                .filter(ra -> !vocabularyAuthorizationService.canRead(
+                        new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
+                .forEach(ra -> {
+                    ra.setLabel(MASK);
+                    ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_forbidden);
+                });
         return input;
     }
 
@@ -107,13 +110,14 @@ public class AssetService {
      * @return Sanitized input
      */
     private Page<RecentlyCommentedAsset> sanitizeUnauthorizedComments(Page<RecentlyCommentedAsset> input) {
-        input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
-                     new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
-             .forEach(ra -> {
-                 ra.setLabel(MASK);
-                 ra.getLastComment().setContent(MASK);
-                 ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_forbidden);
-             });
+        input.get()
+                .filter(ra -> !vocabularyAuthorizationService.canRead(
+                        new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
+                .forEach(ra -> {
+                    ra.setLabel(MASK);
+                    ra.getLastComment().setContent(MASK);
+                    ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_forbidden);
+                });
         return input;
     }
 

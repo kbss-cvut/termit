@@ -106,7 +106,8 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
     }
 
     private java.io.File generateFileWithoutParentDocument(File file) throws Exception {
-        final java.io.File fileDir = documentDir.getParent().resolve(file.getDirectoryName()).toFile();
+        final java.io.File fileDir =
+                documentDir.getParent().resolve(file.getDirectoryName()).toFile();
         fileDir.mkdir();
         fileDir.deleteOnExit();
         final java.io.File content = new java.io.File(fileDir + java.io.File.separator + file.getLabel());
@@ -175,14 +176,16 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         document.addFile(file);
         file.setDocument(document);
         sut.saveFileContent(file, content);
-        final java.io.File contentFile = new java.io.File(
-                configuration.getFile().getStorage() + java.io.File.separator +
-                        document.getDirectoryName() + java.io.File.separator + file.getLabel());
+        final java.io.File contentFile =
+                new java.io.File(configuration.getFile().getStorage()
+                        + java.io.File.separator
+                        + document.getDirectoryName()
+                        + java.io.File.separator
+                        + file.getLabel());
         final List<String> lines = Files.readAllLines(contentFile.toPath());
         final String result = String.join("\n", lines);
         assertFalse(result.isEmpty());
     }
-
 
     @Test
     void existsReturnsTrueForExistingFile() throws Exception {
@@ -240,8 +243,11 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         file.setUri(Generator.generateUri());
         file.setLabel("test.html");
         sut.saveFileContent(file, content);
-        final java.io.File physicalFile =
-                documentDir.getParent().resolve(file.getDirectoryName()).resolve(file.getLabel()).toFile();
+        final java.io.File physicalFile = documentDir
+                .getParent()
+                .resolve(file.getDirectoryName())
+                .resolve(file.getLabel())
+                .toFile();
         assertTrue(physicalFile.exists());
         physicalFile.getParentFile().deleteOnExit();
         physicalFile.deleteOnExit();
@@ -256,8 +262,11 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         sut.saveFileContent(file, new ByteArrayInputStream(CONTENT.getBytes()));
 
         String sanitizedName = IdentifierResolver.sanitizeFileName(file.getLabel());
-        final java.io.File physicalFile =
-                documentDir.getParent().resolve(file.getDirectoryName()).resolve(sanitizedName).toFile();
+        final java.io.File physicalFile = documentDir
+                .getParent()
+                .resolve(file.getDirectoryName())
+                .resolve(sanitizedName)
+                .toFile();
         assertTrue(physicalFile.exists());
         physicalFile.getParentFile().deleteOnExit();
         physicalFile.deleteOnExit();
@@ -381,9 +390,11 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
         file.setLabel(newName);
 
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
-        final java.io.File newFile = new java.io.File(
-                configuration.getFile().getStorage() + java.io.File.separator + file.getDirectoryName() +
-                        java.io.File.separator + file.getLabel());
+        final java.io.File newFile = new java.io.File(configuration.getFile().getStorage()
+                + java.io.File.separator
+                + file.getDirectoryName()
+                + java.io.File.separator
+                + file.getLabel());
         assertTrue(newFile.exists());
         newFile.deleteOnExit();
         assertFalse(physicalFile.exists());
@@ -416,8 +427,8 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
 
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
         for (java.io.File backup : backups) {
-            final java.io.File newBackup = new java.io.File(documentDir +
-                            java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
+            final java.io.File newBackup = new java.io.File(
+                    documentDir + java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
             assertTrue(newBackup.exists());
             newBackup.deleteOnExit();
             assertFalse(backup.exists());
@@ -439,9 +450,11 @@ class DefaultDocumentManagerTest extends BaseDocumentTestRunner {
                 configuration.getFile().getStorage() + java.io.File.separator + file.getDirectoryName());
         assertTrue(newDirectory.exists());
         newDirectory.deleteOnExit();
-        final java.io.File newFile = new java.io.File(
-                configuration.getFile().getStorage() + java.io.File.separator + file.getDirectoryName() +
-                        java.io.File.separator + file.getLabel());
+        final java.io.File newFile = new java.io.File(configuration.getFile().getStorage()
+                + java.io.File.separator
+                + file.getDirectoryName()
+                + java.io.File.separator
+                + file.getLabel());
         assertTrue(newFile.exists());
         newFile.deleteOnExit();
         assertFalse(physicalOriginal.getParentFile().exists());

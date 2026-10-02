@@ -101,8 +101,8 @@ class OntologicalAuthenticationProviderTest {
 
         final Authentication result = sut.authenticate(auth);
         assertNotNull(SecurityContextHolder.getContext());
-        final TermItUserDetails details =
-                (TermItUserDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        final TermItUserDetails details = (TermItUserDetails)
+                SecurityContextHolder.getContext().getAuthentication().getDetails();
         assertEquals(user.getUsername(), details.getUsername());
         assertTrue(result.isAuthenticated());
     }
@@ -137,8 +137,8 @@ class OntologicalAuthenticationProviderTest {
     @Test
     void authenticateThrowsAuthenticationExceptionForEmptyUsername() {
         final Authentication auth = authentication("", "");
-        final UsernameNotFoundException ex = assertThrows(UsernameNotFoundException.class,
-                                                          () -> sut.authenticate(auth));
+        final UsernameNotFoundException ex =
+                assertThrows(UsernameNotFoundException.class, () -> sut.authenticate(auth));
         assertThat(ex.getMessage(), containsString("Username cannot be empty."));
         verify(userDetailsService, never()).loadUserByUsername("");
     }

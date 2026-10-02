@@ -106,13 +106,14 @@ class CommentDaoTest extends BaseDaoTestRunner {
     }
 
     private EntityDescriptor createDescriptor() {
-        final EntityDescriptor descriptor = new EntityDescriptor(
-                URI.create(configuration.getComments().getContext()));
-        descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("author"),
-                                          new EntityDescriptor((URI) null));
-        descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("reactions"),
-                                          new FieldDescriptor((URI) null, em.getMetamodel().entity(Comment.class)
-                                                                            .getAttribute("reactions")));
+        final EntityDescriptor descriptor =
+                new EntityDescriptor(URI.create(configuration.getComments().getContext()));
+        descriptor.addAttributeDescriptor(
+                em.getMetamodel().entity(Comment.class).getAttribute("author"), new EntityDescriptor((URI) null));
+        descriptor.addAttributeDescriptor(
+                em.getMetamodel().entity(Comment.class).getAttribute("reactions"),
+                new FieldDescriptor(
+                        (URI) null, em.getMetamodel().entity(Comment.class).getAttribute("reactions")));
         return descriptor;
     }
 
@@ -163,7 +164,9 @@ class CommentDaoTest extends BaseDaoTestRunner {
     void findAllByAssetRetrievesAllCommentsForSpecifiedAsset() {
         final Term term = Generator.generateTermWithId();
 
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).toList();
+        final List<Comment> comments = IntStream.range(0, 10)
+                .mapToObj(i -> generateComment(term.getUri()))
+                .toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> {
             em.persist(c, descriptor);
@@ -188,7 +191,9 @@ class CommentDaoTest extends BaseDaoTestRunner {
             em.persist(comment, descriptor);
             final CommentReaction reaction = new CommentReaction(author, comment);
             reaction.addType(Vocabulary.s_c_Like);
-            em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
+            em.persist(
+                    reaction,
+                    new EntityDescriptor(URI.create(configuration.getComments().getContext())));
             generateCommentReactionReference(reaction);
         });
         em.getEntityManagerFactory().getCache().evictAll();
@@ -201,9 +206,10 @@ class CommentDaoTest extends BaseDaoTestRunner {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(reaction.getObject().toString()),
-                     vf.createIRI(Comment_.reactionsPropertyIRI.toString()),
-                     vf.createIRI(reaction.getUri().toString()));
+            conn.add(
+                    vf.createIRI(reaction.getObject().toString()),
+                    vf.createIRI(Comment_.reactionsPropertyIRI.toString()),
+                    vf.createIRI(reaction.getUri().toString()));
         }
     }
 
@@ -211,7 +217,9 @@ class CommentDaoTest extends BaseDaoTestRunner {
     void findAllByAssetAndTimeIntervalRetrievesCommentsCreatedInSpecifiedTimePeriod() {
         final Term term = Generator.generateTermWithId();
 
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).toList();
+        final List<Comment> comments = IntStream.range(0, 10)
+                .mapToObj(i -> generateComment(term.getUri()))
+                .toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
@@ -230,10 +238,11 @@ class CommentDaoTest extends BaseDaoTestRunner {
 
     private void verifyCommentInterval(Instant from, Instant to, List<Comment> result) {
         assertFalse(result.isEmpty());
-        result.forEach(c -> assertThat(c, anyOf(
-                hasProperty("created", both(greaterThanOrEqualTo(from)).and(lessThan(to))),
-                hasProperty("modified", both(greaterThanOrEqualTo(from)).and(lessThan(to)))
-        )));
+        result.forEach(c -> assertThat(
+                c,
+                anyOf(
+                        hasProperty("created", both(greaterThanOrEqualTo(from)).and(lessThan(to))),
+                        hasProperty("modified", both(greaterThanOrEqualTo(from)).and(lessThan(to))))));
     }
 
     @Test
@@ -245,7 +254,9 @@ class CommentDaoTest extends BaseDaoTestRunner {
             em.persist(comment, descriptor);
             final CommentReaction reaction = new CommentReaction(author, comment);
             reaction.addType(Vocabulary.s_c_Like);
-            em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
+            em.persist(
+                    reaction,
+                    new EntityDescriptor(URI.create(configuration.getComments().getContext())));
             generateCommentReactionReference(reaction);
         });
 
@@ -256,14 +267,16 @@ class CommentDaoTest extends BaseDaoTestRunner {
         });
 
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?reactsTo ?comment }", Boolean.class)
-                      .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
-                      .setParameter("comment", comment).getSingleResult());
+                .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
+                .setParameter("comment", comment)
+                .getSingleResult());
     }
 
     @Test
     void findAllByAssetAndTimeIntervalAllowsMissingAsset() {
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .toList();
+        final List<Comment> comments = IntStream.range(0, 10)
+                .mapToObj(i -> generateComment(Generator.generateUri()))
+                .toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
@@ -281,19 +294,20 @@ class CommentDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllByAssetAndTimeIntervalReturnsCommentsEditedInSpecifiedTimeInterval() {
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .toList();
+        final List<Comment> comments = IntStream.range(0, 10)
+                .mapToObj(i -> generateComment(Generator.generateUri()))
+                .toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
                 final Comment c = comments.get(i);
                 em.createNativeQuery("INSERT DATA { GRAPH ?g { ?c ?modified ?timestamp } }")
-                  .setParameter("g", descriptor.getSingleContext().get())
-                  .setParameter("c", c)
-                  .setParameter("modified", URI.create(DC.Terms.MODIFIED))
-                  .setParameter("timestamp", Utils.timestamp().minus(i, ChronoUnit.DAYS))
-                  .executeUpdate();
+                        .setParameter("g", descriptor.getSingleContext().get())
+                        .setParameter("c", c)
+                        .setParameter("modified", URI.create(DC.Terms.MODIFIED))
+                        .setParameter("timestamp", Utils.timestamp().minus(i, ChronoUnit.DAYS))
+                        .executeUpdate();
             }
         });
         final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);

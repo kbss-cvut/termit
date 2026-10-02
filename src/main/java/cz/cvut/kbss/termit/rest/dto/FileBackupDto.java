@@ -21,6 +21,7 @@ import java.util.Objects;
 public class FileBackupDto {
     @OWLAnnotationProperty(iri = DC.Terms.CREATED)
     private Instant timestamp;
+
     @OWLDataProperty(iri = DC.Terms.DESCRIPTION)
     private BackupReason backupReason;
 
@@ -62,8 +63,7 @@ public class FileBackupDto {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (FileBackupDto) obj;
-        return Objects.equals(this.timestamp, that.timestamp) &&
-                Objects.equals(this.backupReason, that.backupReason);
+        return Objects.equals(this.timestamp, that.timestamp) && Objects.equals(this.backupReason, that.backupReason);
     }
 
     @Override
@@ -73,8 +73,6 @@ public class FileBackupDto {
 
     @Override
     public String toString() {
-        return "FileBackupDto[" +
-                "timestamp=" + timestamp + ", " +
-                "backupReason=" + backupReason + ']';
+        return "FileBackupDto[" + "timestamp=" + timestamp + ", " + "backupReason=" + backupReason + ']';
     }
 }

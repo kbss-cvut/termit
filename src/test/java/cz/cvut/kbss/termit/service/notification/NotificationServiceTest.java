@@ -63,8 +63,12 @@ class NotificationServiceTest {
         final String cronExpr = "0 1 5 * * MON";
         configuration.getSchedule().getCron().getNotification().setComments(cronExpr);
         final Instant now = Utils.timestamp();
-        final Instant nextRun = OffsetDateTime.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(5)
-                                              .withMinute(1).withSecond(0).toInstant();
+        final Instant nextRun = OffsetDateTime.now()
+                .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
+                .withHour(5)
+                .withMinute(1)
+                .withSecond(0)
+                .toInstant();
         final Instant previous = now.minus(Duration.between(now, nextRun));
 
         sut.notifyOfCommentChanges();
@@ -79,9 +83,12 @@ class NotificationServiceTest {
     void notifyOfCommentChangesSendsMessageProvidedByChangeNotifier() {
         final String cronExpr = "0 1 5 * * MON";
         configuration.getSchedule().getCron().getNotification().setComments(cronExpr);
-        final Message testMessage = Message.to("test@example.org").content("Test message").subject("Test").build();
-        when(commentChangeNotifier.createCommentChangesMessage(any(Instant.class), any(Instant.class))).thenReturn(
-                Optional.of(testMessage));
+        final Message testMessage = Message.to("test@example.org")
+                .content("Test message")
+                .subject("Test")
+                .build();
+        when(commentChangeNotifier.createCommentChangesMessage(any(Instant.class), any(Instant.class)))
+                .thenReturn(Optional.of(testMessage));
 
         sut.notifyOfCommentChanges();
         verify(postman).sendMessage(testMessage);
@@ -91,8 +98,8 @@ class NotificationServiceTest {
     void notifyOfCommentChangesDoesNotSendAnythingWhenCommentChangeNotifierReturnsEmptyMessage() {
         final String cronExpr = "0 1 5 * * MON";
         configuration.getSchedule().getCron().getNotification().setComments(cronExpr);
-        when(commentChangeNotifier.createCommentChangesMessage(any(Instant.class), any(Instant.class))).thenReturn(
-                Optional.empty());
+        when(commentChangeNotifier.createCommentChangesMessage(any(Instant.class), any(Instant.class)))
+                .thenReturn(Optional.empty());
 
         sut.notifyOfCommentChanges();
         verify(postman, never()).sendMessage(any());

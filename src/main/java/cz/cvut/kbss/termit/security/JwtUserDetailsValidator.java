@@ -25,7 +25,8 @@ public class JwtUserDetailsValidator implements OAuth2TokenValidator<Jwt> {
                 return OAuth2TokenValidatorResult.success();
             }
         } catch (Exception e) {
-            return OAuth2TokenValidatorResult.failure(new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, e.getMessage(), null));
+            return OAuth2TokenValidatorResult.failure(
+                    new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, e.getMessage(), null));
         }
         return OAuth2TokenValidatorResult.failure();
     }

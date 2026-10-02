@@ -49,33 +49,38 @@ public class StatisticsController {
         this.service = service;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets statistics of the term distribution in vocabularies.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Term distribution statistics.")
-    })
-    @GetMapping(value = "/term-distribution", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets statistics of the term distribution in vocabularies.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Term distribution statistics.")})
+    @GetMapping(
+            value = "/term-distribution",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<DistributionDto> getTermDistribution() {
         return service.getTermDistribution();
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the number of assets of the given type.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets the number of assets of the given type.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Number of assets."),
-            @ApiResponse(responseCode = "400", description = "Unsupported type of asset.")
+        @ApiResponse(responseCode = "200", description = "Number of assets."),
+        @ApiResponse(responseCode = "400", description = "Unsupported type of asset.")
     })
-    @GetMapping(value = "/count", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(
+            value = "/count",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public int getCount(@RequestParam(name = "assetType") CountableAssetType assetType) {
         return service.getAssetCount(assetType);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets statistics of the distribution of term types in vocabularies.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Term type distribution statistics.")
-    })
-    @GetMapping(value = "/term-type-distribution", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets statistics of the distribution of term types in vocabularies.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Term type distribution statistics.")})
+    @GetMapping(
+            value = "/term-type-distribution",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermTypeDistributionDto> getTermTypeDistribution() {
         return service.getTermTypeDistribution();
     }

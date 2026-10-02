@@ -108,7 +108,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         final boolean wasCanceled = isCancelled();
-        if(!future.cancel(mayInterruptIfRunning)) {
+        if (!future.cancel(mayInterruptIfRunning)) {
             return false;
         }
 
@@ -179,7 +179,6 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
             }
         }
     }
-
 
     /**
      * Returns future with the task from the specified {@code throttledFuture}.

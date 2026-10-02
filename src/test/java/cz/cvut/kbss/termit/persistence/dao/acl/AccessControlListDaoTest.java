@@ -113,16 +113,17 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.persist(acl));
 
-        assertTrue(em.createNativeQuery("ASK WHERE {" +
-                                                "GRAPH ?g {" +
-                                                "?x a ?aclType ;" +
-                                                "?hasRecord ?record ." +
-                                                "?record ?hasLevel ?level . }}", Boolean.class)
-                     .setParameter("g", URI.create(StaticContexts.ACCESS_CONTROL_LISTS))
-                     .setParameter("aclType", AccessControlList_.entityClassIRI.toURI())
-                     .setParameter("hasRecord", AccessControlList_.recordsPropertyIRI.toURI())
-                     .setParameter("hasLevel", AccessControlRecord_.accessLevelPropertyIRI.toURI())
-                     .getSingleResult());
+        assertTrue(em.createNativeQuery(
+                        "ASK WHERE {" + "GRAPH ?g {"
+                                + "?x a ?aclType ;"
+                                + "?hasRecord ?record ."
+                                + "?record ?hasLevel ?level . }}",
+                        Boolean.class)
+                .setParameter("g", URI.create(StaticContexts.ACCESS_CONTROL_LISTS))
+                .setParameter("aclType", AccessControlList_.entityClassIRI.toURI())
+                .setParameter("hasRecord", AccessControlList_.recordsPropertyIRI.toURI())
+                .setParameter("hasLevel", AccessControlRecord_.accessLevelPropertyIRI.toURI())
+                .getSingleResult());
     }
 
     @Test
@@ -145,8 +146,8 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         acl.addRecord(toAdd);
         transactional(() -> sut.update(acl));
 
-        final AccessControlList result = em.find(AccessControlList.class, acl.getUri(),
-                                                 descriptorFactory.accessControlListDescriptor());
+        final AccessControlList result =
+                em.find(AccessControlList.class, acl.getUri(), descriptorFactory.accessControlListDescriptor());
         assertNotNull(result);
         assertThat(result.getRecords(), containsSameEntities(Arrays.asList(record, toAdd)));
     }
@@ -166,13 +167,13 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         acl.getRecords().clear();
 
         transactional(() -> sut.update(acl));
-        final AccessControlList result = em.find(AccessControlList.class, acl.getUri(),
-                                                 descriptorFactory.accessControlListDescriptor());
+        final AccessControlList result =
+                em.find(AccessControlList.class, acl.getUri(), descriptorFactory.accessControlListDescriptor());
         assertThat(result.getRecords(), anyOf(nullValue(), empty()));
         assertFalse(em.createNativeQuery("ASK WHERE { ?x a ?recordType . }", Boolean.class)
-                      .setParameter("x", record.getUri())
-                      .setParameter("recordType", UserAccessControlRecord_.entityClassIRI.toURI())
-                      .getSingleResult());
+                .setParameter("x", record.getUri())
+                .setParameter("recordType", UserAccessControlRecord_.entityClassIRI.toURI())
+                .getSingleResult());
     }
 
     @Test

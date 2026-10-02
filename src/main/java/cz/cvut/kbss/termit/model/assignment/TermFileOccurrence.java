@@ -28,8 +28,7 @@ import java.net.URI;
 @OWLClass(iri = Vocabulary.s_c_file_term_occurrence)
 public class TermFileOccurrence extends TermOccurrence {
 
-    public TermFileOccurrence() {
-    }
+    public TermFileOccurrence() {}
 
     public TermFileOccurrence(URI term, FileOccurrenceTarget target) {
         super(term, target);

@@ -63,12 +63,10 @@ class VocabularyImportersTest {
     void importVocabularyInvokesSkosImporterForRdfSkosInput() {
         when(appContext.getBean(SKOSImporter.class)).thenReturn(skosImporter);
         when(skosImporter.importVocabulary(any(), any())).thenReturn(importedVocabulary);
-        final VocabularyImporter.ImportConfiguration importConfig = new VocabularyImporter.ImportConfiguration(false,
-                                                                                                               Generator.generateUri(),
-                                                                                                               mock(Consumer.class));
+        final VocabularyImporter.ImportConfiguration importConfig =
+                new VocabularyImporter.ImportConfiguration(false, Generator.generateUri(), mock(Consumer.class));
         final VocabularyImporter.ImportInput importInput = new VocabularyImporter.ImportInput(
-                Constants.MediaType.TURTLE, new ByteArrayInputStream("data".getBytes(
-                StandardCharsets.UTF_8)));
+                Constants.MediaType.TURTLE, new ByteArrayInputStream("data".getBytes(StandardCharsets.UTF_8)));
         final Vocabulary result = sut.importVocabulary(importConfig, importInput);
         assertEquals(importedVocabulary, result);
         verify(skosImporter).importVocabulary(importConfig, importInput);
@@ -78,13 +76,10 @@ class VocabularyImportersTest {
     void importVocabularyInvokesExcelImporterForExcelInput() {
         when(appContext.getBean(ExcelImporter.class)).thenReturn(excelImporter);
         when(excelImporter.importVocabulary(any(), any())).thenReturn(importedVocabulary);
-        final VocabularyImporter.ImportConfiguration importConfig = new VocabularyImporter.ImportConfiguration(false,
-                                                                                                               Generator.generateUri(),
-                                                                                                               mock(Consumer.class));
-        final VocabularyImporter.ImportInput importInput = new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
-                                                                                              new ByteArrayInputStream(
-                                                                                                      "data".getBytes(
-                                                                                                              StandardCharsets.UTF_8)));
+        final VocabularyImporter.ImportConfiguration importConfig =
+                new VocabularyImporter.ImportConfiguration(false, Generator.generateUri(), mock(Consumer.class));
+        final VocabularyImporter.ImportInput importInput = new VocabularyImporter.ImportInput(
+                Constants.MediaType.EXCEL, new ByteArrayInputStream("data".getBytes(StandardCharsets.UTF_8)));
         final Vocabulary result = sut.importVocabulary(importConfig, importInput);
         assertEquals(importedVocabulary, result);
         verify(excelImporter).importVocabulary(importConfig, importInput);
@@ -92,13 +87,10 @@ class VocabularyImportersTest {
 
     @Test
     void importVocabularyThrowsUnsupportedImportMediaTypeExceptionForUnsupportedMediaType() {
-        final VocabularyImporter.ImportConfiguration importConfig = new VocabularyImporter.ImportConfiguration(false,
-                                                                                                               Generator.generateUri(),
-                                                                                                               mock(Consumer.class));
-        final VocabularyImporter.ImportInput importInput = new VocabularyImporter.ImportInput("text/csv",
-                                                                                              new ByteArrayInputStream(
-                                                                                                      "data".getBytes(
-                                                                                                              StandardCharsets.UTF_8)));
+        final VocabularyImporter.ImportConfiguration importConfig =
+                new VocabularyImporter.ImportConfiguration(false, Generator.generateUri(), mock(Consumer.class));
+        final VocabularyImporter.ImportInput importInput = new VocabularyImporter.ImportInput(
+                "text/csv", new ByteArrayInputStream("data".getBytes(StandardCharsets.UTF_8)));
 
         assertThrows(UnsupportedImportMediaTypeException.class, () -> sut.importVocabulary(importConfig, importInput));
         verify(skosImporter, never()).importVocabulary(any(), any());

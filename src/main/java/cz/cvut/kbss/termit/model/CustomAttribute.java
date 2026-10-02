@@ -26,11 +26,9 @@ public class CustomAttribute extends RdfsResource {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_relationship)
     private Set<URI> annotatedRelationships;
 
-    public CustomAttribute() {
-    }
+    public CustomAttribute() {}
 
-    public CustomAttribute(URI uri, MultilingualString label,
-                           MultilingualString comment) {
+    public CustomAttribute(URI uri, MultilingualString label, MultilingualString comment) {
         super(uri, label, comment, RDF.PROPERTY);
     }
 

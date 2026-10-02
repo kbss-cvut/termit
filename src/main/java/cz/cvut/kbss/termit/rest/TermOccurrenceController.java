@@ -61,62 +61,75 @@ public class TermOccurrenceController extends BaseController {
 
     private final TermOccurrenceService occurrenceService;
 
-    public TermOccurrenceController(IdentifierResolver idResolver, Configuration config,
-                                    TermOccurrenceService occurrenceService) {
+    public TermOccurrenceController(
+            IdentifierResolver idResolver, Configuration config, TermOccurrenceService occurrenceService) {
         super(idResolver, config);
         this.occurrenceService = occurrenceService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates or updates a term occurrence.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Creates or updates a term occurrence.")
     @ApiResponses({
-            @ApiResponse(responseCode = "202", description = "Term occurrence saved"),
-            @ApiResponse(responseCode = "409",
-                         description = "The occurrence is not valid, e.g., the term or target asset do not exist")
+        @ApiResponse(responseCode = "202", description = "Term occurrence saved"),
+        @ApiResponse(
+                responseCode = "409",
+                description = "The occurrence is not valid, e.g., the term or target asset do not exist")
     })
     @PutMapping(consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveOccurrence(@Parameter(description = "Term occurrence to save")
-                               @RequestBody TermOccurrence occurrence) {
+    public void saveOccurrence(
+            @Parameter(description = "Term occurrence to save") @RequestBody TermOccurrence occurrence) {
         occurrenceService.persistOrUpdate(occurrence);
         LOG.debug("Saved term occurrence {}.", occurrence);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Approves a suggested term occurrence with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Approves a suggested term occurrence with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Term occurrence approved."),
-            @ApiResponse(responseCode = "404", description = "Term occurrence not found.")
+        @ApiResponse(responseCode = "204", description = "Term occurrence approved."),
+        @ApiResponse(responseCode = "404", description = "Term occurrence not found.")
     })
     @PutMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void approveOccurrence(
-            @Parameter(description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = TermOccurrenceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = TermOccurrenceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = TermOccurrenceControllerDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+            @Parameter(
+                            description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermOccurrenceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermOccurrenceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermOccurrenceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, localName);
 
         occurrenceService.approve(identifier);
         LOG.debug("Occurrence with identifier <{}> approved.", identifier);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Rejects a suggested term occurrence with the specified identifier.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Rejects a suggested term occurrence with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Term occurrence rejected."),
-            @ApiResponse(responseCode = "404", description = "Term occurrence not found.")
+        @ApiResponse(responseCode = "204", description = "Term occurrence rejected."),
+        @ApiResponse(responseCode = "404", description = "Term occurrence not found.")
     })
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeOccurrence(@Parameter(description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                            example = TermOccurrenceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                 @PathVariable String localName,
-                                 @Parameter(description = TermOccurrenceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = TermOccurrenceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                 @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+    public void removeOccurrence(
+            @Parameter(
+                            description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = TermOccurrenceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = TermOccurrenceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = TermOccurrenceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, localName);
         occurrenceService.remove(identifier);
         LOG.debug("Occurrence with identifier <{}> removed.", identifier);
@@ -126,9 +139,11 @@ public class TermOccurrenceController extends BaseController {
      * A couple of constants for the {@link TermOccurrenceController} API documentation.
      */
     private static final class TermOccurrenceControllerDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the term occurrence identifier.";
+        private static final String ID_LOCAL_NAME_DESCRIPTION =
+                "Locally (in the context of the specified namespace) unique part of the term occurrence identifier.";
         private static final String ID_LOCAL_NAME_EXAMPLE = "instance-12345";
         private static final String ID_NAMESPACE_DESCRIPTION = "Term occurrence identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/application/termit/term-occurrence/";
+        private static final String ID_NAMESPACE_EXAMPLE =
+                "http://onto.fel.cvut.cz/ontologies/application/termit/term-occurrence/";
     }
 }

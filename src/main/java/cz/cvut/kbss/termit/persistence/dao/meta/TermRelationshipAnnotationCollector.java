@@ -16,7 +16,8 @@ import java.util.stream.Collector;
  * Combines instances of {@link TermRelationshipAnnotation} that share the same relationship and attribute.
  */
 class TermRelationshipAnnotationCollector
-        implements Collector<TermRelationshipAnnotation, List<TermRelationshipAnnotation>, List<TermRelationshipAnnotation>> {
+        implements Collector<
+                TermRelationshipAnnotation, List<TermRelationshipAnnotation>, List<TermRelationshipAnnotation>> {
 
     @Override
     public Supplier<List<TermRelationshipAnnotation>> supplier() {
@@ -30,8 +31,8 @@ class TermRelationshipAnnotationCollector
                 lst.add(ann);
             }
             final TermRelationshipAnnotation lastItem = lst.get(lst.size() - 1);
-            if (Objects.equals(lastItem.getRelationship(), ann.getRelationship()) && Objects.equals(
-                    lastItem.getAttribute(), ann.getAttribute())) {
+            if (Objects.equals(lastItem.getRelationship(), ann.getRelationship())
+                    && Objects.equals(lastItem.getAttribute(), ann.getAttribute())) {
                 lastItem.getValue().addAll(ann.getValue());
             } else {
                 lst.add(ann);

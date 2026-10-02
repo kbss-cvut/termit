@@ -35,6 +35,5 @@ public interface SupportsLastModification {
      * This method is required only for implementations which actually store the last modified value. Those which act
      * only as delegates need not implement it.
      */
-    default void refreshLastModified() {
-    }
+    default void refreshLastModified() {}
 }

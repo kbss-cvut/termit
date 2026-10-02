@@ -37,16 +37,12 @@ class MultilingualStringDeserializerTest {
     void setUp() {
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(MultilingualString.class, sut);
-        this.mapper = JsonMapper.builder()
-                .addModule(module).build();
+        this.mapper = JsonMapper.builder().addModule(module).build();
     }
 
     @Test
     void deserializeDeserializesMapOfTranslationsIntoMultilingualString() {
-        final String input = "{" +
-                "\"en\": \"building\"," +
-                "\"cs\": \"budova\"" +
-                "}";
+        final String input = "{" + "\"en\": \"building\"," + "\"cs\": \"budova\"" + "}";
         final MultilingualString result = mapper.readValue(input, MultilingualString.class);
         assertNotNull(result);
         assertEquals("building", result.get("en"));
@@ -55,10 +51,7 @@ class MultilingualStringDeserializerTest {
 
     @Test
     void deserializeInterpretsValueWithEmptyKeyAsSimpleLiteral() {
-        final String input = "{" +
-                "\"en\": \"building\"," +
-                "\"\": \"budova\"" +
-                "}";
+        final String input = "{" + "\"en\": \"building\"," + "\"\": \"budova\"" + "}";
         final MultilingualString result = mapper.readValue(input, MultilingualString.class);
         assertNotNull(result);
         assertEquals("building", result.get("en"));

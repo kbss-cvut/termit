@@ -67,7 +67,8 @@ public class TestServiceConfig {
     @Bean
     public RestTemplate restTemplate() {
         final RestTemplate client = new RestTemplate();
-        final JacksonJsonHttpMessageConverter jacksonConverter = new JacksonJsonHttpMessageConverter(Environment.getObjectMapper());
+        final JacksonJsonHttpMessageConverter jacksonConverter =
+                new JacksonJsonHttpMessageConverter(Environment.getObjectMapper());
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         client.setMessageConverters(
                 Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter()));

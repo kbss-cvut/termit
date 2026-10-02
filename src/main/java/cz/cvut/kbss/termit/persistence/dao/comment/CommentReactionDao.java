@@ -42,7 +42,8 @@ public class CommentReactionDao {
     @Autowired
     public CommentReactionDao(EntityManager em, Configuration config) {
         this.em = em;
-        this.commentDescriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+        this.commentDescriptor =
+                new EntityDescriptor(URI.create(config.getComments().getContext()));
     }
 
     /**
@@ -67,16 +68,30 @@ public class CommentReactionDao {
      */
     public void removeExisting(User author, Comment comment) {
         try {
-            em.createNativeQuery("DELETE WHERE {" +
-                    "?x a ?type ;" +
-                    "?hasAuthor ?author ;" +
-                    "?reactsTo ?comment . }")
-                    .setParameter("hasAuthor", em.getMetamodel().entity(CommentReaction.class).getAttribute("actor").getIRI().toURI())
+            em.createNativeQuery("DELETE WHERE {" + "?x a ?type ;" + "?hasAuthor ?author ;" + "?reactsTo ?comment . }")
+                    .setParameter(
+                            "hasAuthor",
+                            em.getMetamodel()
+                                    .entity(CommentReaction.class)
+                                    .getAttribute("actor")
+                                    .getIRI()
+                                    .toURI())
                     .setParameter("author", author)
-                    .setParameter("reactsTo", em.getMetamodel().entity(CommentReaction.class).getAttribute("object").getIRI().toURI())
-                    .setParameter("comment", comment).executeUpdate();
-            em.getEntityManagerFactory().getCache()
-                    .evict(Comment.class, comment.getUri(), commentDescriptor.getSingleContext().orElse(null));
+                    .setParameter(
+                            "reactsTo",
+                            em.getMetamodel()
+                                    .entity(CommentReaction.class)
+                                    .getAttribute("object")
+                                    .getIRI()
+                                    .toURI())
+                    .setParameter("comment", comment)
+                    .executeUpdate();
+            em.getEntityManagerFactory()
+                    .getCache()
+                    .evict(
+                            Comment.class,
+                            comment.getUri(),
+                            commentDescriptor.getSingleContext().orElse(null));
             em.getEntityManagerFactory().getCache().evict(CommentReaction.class);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

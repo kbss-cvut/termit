@@ -64,8 +64,10 @@ public class UnconfirmedTermOccurrenceRemover {
             final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
             writer.write(doc.toString()); // Write modified HTML to output stream
             writer.close();
-            return new TypeAwareByteArrayResource(out.toByteArray(), input.getMediaType().orElse(null),
-                                                  input.getFileExtension().orElse(null));
+            return new TypeAwareByteArrayResource(
+                    out.toByteArray(),
+                    input.getMediaType().orElse(null),
+                    input.getFileExtension().orElse(null));
         } catch (IOException e) {
             throw new FileContentProcessingException("Unable to read resource for unconfirmed occurrence removal.", e);
         }

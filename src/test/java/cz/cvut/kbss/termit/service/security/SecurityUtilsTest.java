@@ -119,8 +119,8 @@ class SecurityUtilsTest {
     void verifyCurrentUserPasswordThrowsIllegalArgumentWhenPasswordDoesNotMatch() {
         Environment.setCurrentUser(user);
         final String password = "differentPassword";
-        final ValidationException ex = assertThrows(ValidationException.class,
-                                                    () -> sut.verifyCurrentUserPassword(password));
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.verifyCurrentUserPassword(password));
         assertThat(ex.getMessage(), containsString("does not match"));
     }
 
@@ -137,10 +137,8 @@ class SecurityUtilsTest {
 
     @Test
     void isAuthenticatedReturnsFalseForAnonymousRequest() {
-        final AnonymousAuthenticationToken token = new AnonymousAuthenticationToken("anonymousUser", "anonymousUser",
-                                                                                    Collections.singleton(
-                                                                                            new SimpleGrantedAuthority(
-                                                                                                    "ROLE_ANONYMOUS")));
+        final AnonymousAuthenticationToken token = new AnonymousAuthenticationToken(
+                "anonymousUser", "anonymousUser", Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
         token.setDetails(new WebAuthenticationDetails("0.0.0.0", null));
         token.setAuthenticated(true);
         SecurityContextHolder.setContext(new SecurityContextImpl(token));
@@ -159,16 +157,17 @@ class SecurityUtilsTest {
         final UserAccount user = Generator.generateUserAccount();
         final String subject = UUID.randomUUID().toString();
         user.setUri(idResolver.generateIdentifier(config.getNamespace().getUser(), subject));
-        final Jwt jwt = Jwt.withTokenValue("12345").subject(subject)
-                           .claim("given_name", user.getFirstName())
-                           .claim("family_name", user.getLastName())
-                           .claim("preferred_username", user.getUsername())
-                           .issuedAt(Utils.timestamp())
-                           .expiresAt(Utils.timestamp().plusSeconds(30))
-                           .header("alg", "RS256").build();
-        SecurityContextHolder.setContext(
-                new SecurityContextImpl(new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority(
-                        UserRole.FULL_USER.getName())))));
+        final Jwt jwt = Jwt.withTokenValue("12345")
+                .subject(subject)
+                .claim("given_name", user.getFirstName())
+                .claim("family_name", user.getLastName())
+                .claim("preferred_username", user.getUsername())
+                .issuedAt(Utils.timestamp())
+                .expiresAt(Utils.timestamp().plusSeconds(30))
+                .header("alg", "RS256")
+                .build();
+        SecurityContextHolder.setContext(new SecurityContextImpl(
+                new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())))));
 
         final UserAccount result = sut.getCurrentUser();
         assertEquals(user, result);

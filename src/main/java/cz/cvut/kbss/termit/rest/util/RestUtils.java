@@ -68,8 +68,10 @@ public class RestUtils {
      */
     public static URI createLocationFromCurrentUriWithPath(String path, Object... uriVariableValues) {
         Objects.requireNonNull(path);
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().path(path).buildAndExpand(
-                uriVariableValues).toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .path(path)
+                .buildAndExpand(uriVariableValues)
+                .toUri();
     }
 
     /**
@@ -84,8 +86,10 @@ public class RestUtils {
      */
     public static URI createLocationFromCurrentUriWithQueryParam(String param, Object... values) {
         Objects.requireNonNull(param);
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().queryParam(param, values).build()
-                                          .toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .queryParam(param, values)
+                .build()
+                .toUri();
     }
 
     /**
@@ -102,13 +106,15 @@ public class RestUtils {
      * @see #createLocationFromCurrentUriWithPath(String, Object...)
      * @see #createLocationFromCurrentUriWithQueryParam(String, Object...)
      */
-    public static URI createLocationFromCurrentUriWithPathAndQuery(String path, String param,
-                                                                   Object paramValue,
-                                                                   Object... pathValues) {
+    public static URI createLocationFromCurrentUriWithPathAndQuery(
+            String path, String param, Object paramValue, Object... pathValues) {
         Objects.requireNonNull(path);
         Objects.requireNonNull(param);
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().queryParam(param, paramValue)
-                                          .path(path).buildAndExpand(pathValues).toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .queryParam(param, paramValue)
+                .path(path)
+                .buildAndExpand(pathValues)
+                .toUri();
     }
 
     /**
@@ -125,12 +131,15 @@ public class RestUtils {
      * @see #createLocationFromCurrentUriWithPath(String, Object...)
      * @see #createLocationFromCurrentUriWithQueryParam(String, Object...)
      */
-    public static URI createLocationFromCurrentContextWithPathAndQuery(String path, String queryParam,
-                                                                       String queryValue, Object... pathValues) {
+    public static URI createLocationFromCurrentContextWithPathAndQuery(
+            String path, String queryParam, String queryValue, Object... pathValues) {
         Objects.requireNonNull(path);
         Objects.requireNonNull(queryParam);
-        return ServletUriComponentsBuilder.fromCurrentContextPath().queryParam(queryParam, queryValue).path(path)
-                                          .buildAndExpand(pathValues).toUri();
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .queryParam(queryParam, queryValue)
+                .path(path)
+                .buildAndExpand(pathValues)
+                .toUri();
     }
 
     /**
@@ -164,8 +173,8 @@ public class RestUtils {
         try {
             return parseTimestampWithException(strTimestamp);
         } catch (DateTimeParseException | NullPointerException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                              "Value '" + strTimestamp + "' is not a valid timestamp in ISO format.");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Value '" + strTimestamp + "' is not a valid timestamp in ISO format.");
         }
     }
 

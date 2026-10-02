@@ -66,7 +66,10 @@ public class Comment extends AbstractEntity {
     private Instant modified;
 
     @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_reaction, cascade = {CascadeType.REMOVE}, fetch = FetchType.EAGER)
+    @OWLObjectProperty(
+            iri = Vocabulary.s_p_has_reaction,
+            cascade = {CascadeType.REMOVE},
+            fetch = FetchType.EAGER)
     private Set<CommentReaction> reactions;
 
     public URI getAsset() {
@@ -135,10 +138,10 @@ public class Comment extends AbstractEntity {
         if (!(o instanceof Comment comment)) {
             return false;
         }
-        return Objects.equals(asset, comment.asset) &&
-                Objects.equals(content, comment.content) &&
-                Objects.equals(author, comment.author) &&
-                Objects.equals(created, comment.created);
+        return Objects.equals(asset, comment.asset)
+                && Objects.equals(content, comment.content)
+                && Objects.equals(author, comment.author)
+                && Objects.equals(created, comment.created);
     }
 
     @Override
@@ -148,12 +151,11 @@ public class Comment extends AbstractEntity {
 
     @Override
     public String toString() {
-        return "Comment{" +
-                super.toString() +
-                ", asset=<" + asset + '>' +
-                ", content='" + content.substring(0, Math.min(50, content.length())) + '\'' +
-                ", author=" + author +
-                ", created=" + created +
-                "}";
+        return "Comment{" + super.toString()
+                + ", asset=<"
+                + asset + '>' + ", content='"
+                + content.substring(0, Math.min(50, content.length())) + '\'' + ", author="
+                + author + ", created="
+                + created + "}";
     }
 }

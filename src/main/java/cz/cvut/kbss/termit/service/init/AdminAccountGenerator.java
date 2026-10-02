@@ -83,21 +83,26 @@ public class AdminAccountGenerator {
                 return;
             }
             LOG.debug("Writing admin credentials into file: {}", credentialsFile);
-            Files.write(credentialsFile.toPath(),
-                        Collections.singletonList(admin.getUsername() + "/" + passwordPlain),
-                        StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(
+                    credentialsFile.toPath(),
+                    Collections.singletonList(admin.getUsername() + "/" + passwordPlain),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             LOG.error("Unable to create admin credentials file.", e);
         }
     }
 
     private File createHiddenFile() throws IOException {
-        final File credentialsFile = new File(config.getAdmin().getCredentialsLocation() + File.separator +
-                                                      config.getAdmin().getCredentialsFile());
+        final File credentialsFile = new File(config.getAdmin().getCredentialsLocation()
+                + File.separator
+                + config.getAdmin().getCredentialsFile());
         final boolean result = credentialsFile.createNewFile();
         if (!result) {
-            LOG.error("Unable to create admin credentials file {}. Admin credentials won't be saved in any file!",
-                      config.getAdmin().getCredentialsFile());
+            LOG.error(
+                    "Unable to create admin credentials file {}. Admin credentials won't be saved in any file!",
+                    config.getAdmin().getCredentialsFile());
             return null;
         }
         // Hidden attribute on Windows

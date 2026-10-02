@@ -105,9 +105,9 @@ public class WebAppConfig implements WebMvcConfigurer {
         multilingualStringModule.addDeserializer(MultilingualString.class, new MultilingualStringDeserializer());
         multilingualStringModule.addSerializer(LangString.class, new LangStringSerializer());
         return JsonMapper.builder()
-                         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                         .addModule(multilingualStringModule)
-                         .build();
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .addModule(multilingualStringModule)
+                .build();
     }
 
     /**
@@ -123,9 +123,9 @@ public class WebAppConfig implements WebMvcConfigurer {
         jsonLdModule.configure(ConfigParam.ASSUME_TARGET_TYPE, "true");
         jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
         return JsonMapper.builder()
-                         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                         .addModule(jsonLdModule)
-                         .build();
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .addModule(jsonLdModule)
+                .build();
     }
 
     @Bean(name = "objectMapper")
@@ -187,63 +187,78 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        return new OpenAPI().components(new Components().addSecuritySchemes("bearer-key",
-                                                                            new SecurityScheme().type(
-                                                                                                        SecurityScheme.Type.HTTP)
-                                                                                                .scheme("bearer")
-                                                                                                .bearerFormat("JWT")))
-                            .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
-                                            .version(version));
+        return new OpenAPI()
+                .components(new Components()
+                        .addSecuritySchemes(
+                                "bearer-key",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")))
+                .info(new Info()
+                        .title("TermIt REST API")
+                        .description("TermIt REST API definition.")
+                        .version(version));
     }
 
     @Bean
     public OpenApiCustomizer customerGlobalHeaderOpenApiCustomizer() {
         return openApi -> {
             // Add form login endpoint
-            // We create the docs programmatically because our custom AuthenticationFilter apparently prevents Springdoc from
-            // correctly recognizing the login endpoint and not offering the url-encoded content type in the login endpoint docs.
+            // We create the docs programmatically because our custom AuthenticationFilter apparently prevents Springdoc
+            // from
+            // correctly recognizing the login endpoint and not offering the url-encoded content type in the login
+            // endpoint docs.
             openApi.getPaths().addPathItem(SecurityConstants.LOGIN_PATH, createLoginPathDocumentation());
         };
     }
 
     private static PathItem createLoginPathDocumentation() {
         return new PathItem()
-                .post(new Operation()
-                              .addTagsItem("Authentication")
-                              .summary("Login with username and password")
-                              .description("Authenticates user and returns JWT token")
-                              .requestBody(new RequestBody()
-                                                   .content(new Content()
-                                                                    .addMediaType(
-                                                                            MediaType.APPLICATION_FORM_URLENCODED_VALUE,
-                                                                            new io.swagger.v3.oas.models.media.MediaType().schema(
-                                                                                    new Schema<Map<String, String>>()
-                                                                                            .type("object")
-                                                                                            .addProperty(
-                                                                                                    SecurityConstants.USERNAME_PARAM,
-                                                                                                    new StringSchema().description(
-                                                                                                            "The username"))
-                                                                                            .addProperty(
-                                                                                                    SecurityConstants.PASSWORD_PARAM,
-                                                                                                    new StringSchema().description(
-                                                                                                                              "The password")
-                                                                                                                      .format("password"))
-                                                                                            .required(
-                                                                                                    java.util.Arrays.asList(
-                                                                                                            SecurityConstants.USERNAME_PARAM,
-                                                                                                            SecurityConstants.PASSWORD_PARAM))))))
-                              .responses(new ApiResponses()
-                                                 .addApiResponse("200",
-                                                                 new ApiResponse().description(
-                                                                                          "Authentication request successfully processed")
-                                                                                  .content(
-                                                                                          new Content().addMediaType(
-                                                                                                  MediaType.APPLICATION_JSON_VALUE,
-                                                                                                  new io.swagger.v3.oas.models.media.MediaType().example(
-                                                                                                          new LoginStatus(
-                                                                                                                  true,
-                                                                                                                  true,
-                                                                                                                  "username",
-                                                                                                                  "Error message if not logged in.")))))));
+                .post(
+                        new Operation()
+                                .addTagsItem("Authentication")
+                                .summary("Login with username and password")
+                                .description("Authenticates user and returns JWT token")
+                                .requestBody(new RequestBody()
+                                        .content(new Content()
+                                                .addMediaType(
+                                                        MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+                                                        new io.swagger.v3.oas.models.media.MediaType()
+                                                                .schema(new Schema<Map<String, String>>()
+                                                                        .type("object")
+                                                                        .addProperty(
+                                                                                SecurityConstants.USERNAME_PARAM,
+                                                                                new StringSchema()
+                                                                                        .description("The username"))
+                                                                        .addProperty(
+                                                                                SecurityConstants.PASSWORD_PARAM,
+                                                                                new StringSchema()
+                                                                                        .description("The password")
+                                                                                        .format("password"))
+                                                                        .required(java.util.Arrays.asList(
+                                                                                SecurityConstants.USERNAME_PARAM,
+                                                                                SecurityConstants.PASSWORD_PARAM))))))
+                                .responses(
+                                        new ApiResponses()
+                                                .addApiResponse(
+                                                        "200",
+                                                        new ApiResponse()
+                                                                .description(
+                                                                        "Authentication request successfully processed")
+                                                                .content(
+                                                                        new Content()
+                                                                                .addMediaType(
+                                                                                        MediaType
+                                                                                                .APPLICATION_JSON_VALUE,
+                                                                                        new io.swagger.v3.oas.models
+                                                                                                        .media
+                                                                                                        .MediaType()
+                                                                                                .example(
+                                                                                                        new LoginStatus(
+                                                                                                                true,
+                                                                                                                true,
+                                                                                                                "username",
+                                                                                                                "Error message if not logged in.")))))));
     }
 }

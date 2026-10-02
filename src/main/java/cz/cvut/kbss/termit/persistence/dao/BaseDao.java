@@ -56,9 +56,10 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>,
     @Override
     public List<T> findAll() {
         try {
-            return em.createNativeQuery("SELECT DISTINCT ?x WHERE { ?x a ?type . }", type).setParameter("type", typeUri)
+            return em.createNativeQuery("SELECT DISTINCT ?x WHERE { ?x a ?type . }", type)
+                    .setParameter("type", typeUri)
                     .setDescriptor(getDescriptor())
-                     .getResultList();
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -147,8 +148,10 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>,
     public boolean exists(URI id) {
         Objects.requireNonNull(id);
         try {
-            return em.createNativeQuery("ASK { ?x a ?type . }", Boolean.class).setParameter("x", id)
-                     .setParameter("type", typeUri).getSingleResult();
+            return em.createNativeQuery("ASK { ?x a ?type . }", Boolean.class)
+                    .setParameter("x", id)
+                    .setParameter("type", typeUri)
+                    .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

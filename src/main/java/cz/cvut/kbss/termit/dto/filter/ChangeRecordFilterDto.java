@@ -32,8 +32,7 @@ public class ChangeRecordFilterDto {
     private String authorName = "";
     private URI changeType = null;
 
-    public ChangeRecordFilterDto() {
-    }
+    public ChangeRecordFilterDto() {}
 
     public ChangeRecordFilterDto(String changedAttributeName, String authorName, URI changeType) {
         this.changedAttributeName = changedAttributeName;
@@ -85,27 +84,26 @@ public class ChangeRecordFilterDto {
      */
     @JsonIgnore
     public boolean isEmpty() {
-        return Utils.isBlank(assetLabel) &&
-                Utils.isBlank(changedAttributeName) &&
-                Utils.isBlank(authorName) &&
-                changeType == null;
+        return Utils.isBlank(assetLabel)
+                && Utils.isBlank(changedAttributeName)
+                && Utils.isBlank(authorName)
+                && changeType == null;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ChangeRecordFilterDto that)) return false;
-        return Objects.equals(assetLabel, that.assetLabel) &&
-                Objects.equals(changedAttributeName, that.changedAttributeName) &&
-                Objects.equals(authorName, that.authorName) &&
-                Objects.equals(changeType, that.changeType);
+        return Objects.equals(assetLabel, that.assetLabel)
+                && Objects.equals(changedAttributeName, that.changedAttributeName)
+                && Objects.equals(authorName, that.authorName)
+                && Objects.equals(changeType, that.changeType);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(assetLabel, changedAttributeName, authorName, changeType);
     }
-
 
     /**
      * Constants for the Open API documentation of the REST API.

@@ -54,19 +54,22 @@ class UserGroupRepositoryServiceTest {
         final List<UserAccount> accounts = List.of(Generator.generateUserAccount(), Generator.generateUserAccount());
         sut.addMembers(group, accounts.stream().map(UserAccount::toUser).collect(Collectors.toList()));
         verify(dao).update(group);
-        assertThat(group.getMembers(), hasItems(accounts.stream().map(UserAccount::toUser).toArray(User[]::new)));
+        assertThat(
+                group.getMembers(),
+                hasItems(accounts.stream().map(UserAccount::toUser).toArray(User[]::new)));
     }
 
     @Test
     void removeMembersRemovesUsersFromTargetGroup() {
         final UserGroup group = Generator.generateUserGroup();
-        final List<User> users = IntStream.range(0, 5).mapToObj(i -> Generator.generateUserWithId())
-                                          .collect(Collectors.toList());
+        final List<User> users = IntStream.range(0, 5)
+                .mapToObj(i -> Generator.generateUserWithId())
+                .collect(Collectors.toList());
         group.setMembers(new HashSet<>(users));
         final List<User> usersToRemove = users.subList(0, users.size() / 2);
         sut.removeMembers(group, usersToRemove);
         verify(dao).update(group);
-        assertThat(group.getMembers(), IsNot.not(hasItems(usersToRemove.toArray(new User[]{}))));
+        assertThat(group.getMembers(), IsNot.not(hasItems(usersToRemove.toArray(new User[] {}))));
         assertFalse(group.getMembers().isEmpty());
     }
 }

@@ -50,8 +50,10 @@ public class TermOccurrenceSelectorCreator {
 
     private final ResourceService resourceService;
 
-    public TermOccurrenceSelectorCreator(HtmlSelectorGenerators selectorGenerators, DocumentManager documentManager,
-                                         ResourceService resourceService) {
+    public TermOccurrenceSelectorCreator(
+            HtmlSelectorGenerators selectorGenerators,
+            DocumentManager documentManager,
+            ResourceService resourceService) {
         this.selectorGenerators = selectorGenerators;
         this.documentManager = documentManager;
         this.resourceService = resourceService;
@@ -75,12 +77,12 @@ public class TermOccurrenceSelectorCreator {
         }
         final FileOccurrenceTarget ft = (FileOccurrenceTarget) target;
         final Document targetContent = loadTargetContent(ft);
-        final Elements elements = targetContent.select(
-                "[" + Constants.RDFa.ABOUT + "=" + Constants.BNODE_PREFIX + elementAbout + "]");
+        final Elements elements =
+                targetContent.select("[" + Constants.RDFa.ABOUT + "=" + Constants.BNODE_PREFIX + elementAbout + "]");
         if (elements.isEmpty()) {
             throw new SelectorGenerationException("No element with id " + elementAbout + " found in " + ft.getSource());
         }
-        return selectorGenerators.generateSelectors(elements.toArray(new Element[]{}));
+        return selectorGenerators.generateSelectors(elements.toArray(new Element[] {}));
     }
 
     private Document loadTargetContent(FileOccurrenceTarget ft) {

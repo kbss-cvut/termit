@@ -117,9 +117,8 @@ public class ReadOnlyVocabulary extends Asset<MultilingualString> implements Has
 
     @Override
     public String toString() {
-        return "ReadOnlyVocabulary{" + label +
-                " " + uriToString(getUri()) +
-                ", importedVocabularies=" + importedVocabularies +
-                '}';
+        return "ReadOnlyVocabulary{" + label + " "
+                + uriToString(getUri()) + ", importedVocabularies="
+                + importedVocabularies + '}';
     }
 }

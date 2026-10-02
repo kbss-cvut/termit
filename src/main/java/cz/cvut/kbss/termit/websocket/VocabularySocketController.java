@@ -53,8 +53,11 @@ public class VocabularySocketController extends BaseWebSocketController {
 
     private final VocabularyService vocabularyService;
 
-    protected VocabularySocketController(IdentifierResolver idResolver, Configuration config,
-                                         SimpMessagingTemplate messagingTemplate, VocabularyService vocabularyService) {
+    protected VocabularySocketController(
+            IdentifierResolver idResolver,
+            Configuration config,
+            SimpMessagingTemplate messagingTemplate,
+            VocabularyService vocabularyService) {
         super(idResolver, config, messagingTemplate);
         this.vocabularyService = vocabularyService;
     }
@@ -64,37 +67,39 @@ public class VocabularySocketController extends BaseWebSocketController {
      * Immediately responds with a result from the cache, if available.
      */
     @MessageMapping("/{localName}/validate")
-    public void validateVocabulary(@DestinationVariable String localName,
-                                   @Header(name = Constants.QueryParams.NAMESPACE,
-                                           required = false) Optional<String> namespace,
-                                   @Nonnull MessageHeaders messageHeaders) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
+    public void validateVocabulary(
+            @DestinationVariable String localName,
+            @Header(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Nonnull MessageHeaders messageHeaders) {
+        final URI identifier =
+                resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
 
-        final ThrottledFuture<Collection<ValidationResult>> future = vocabularyService.validateContents(vocabulary.getUri());
+        final ThrottledFuture<Collection<ValidationResult>> future =
+                vocabularyService.validateContents(vocabulary.getUri());
 
-        future.getNow().ifPresentOrElse(validationResults ->
-            // if there is a result present (returned from cache), send it
-            sendToSession(
-                    WebSocketDestinations.VOCABULARIES_VALIDATION,
-                    validationResults,
-                    getHeaders(identifier,
-                            // results are cached if we received a future result, but the future is not done yet
-                            Map.of("cached", !future.isDone())),
-                    messageHeaders
-            ), () ->
-            // otherwise reply will be sent once the future is resolved
-            future.then(completedFuture ->
-                    completedFuture.getNow().ifPresent(results ->
-                sendToSession(
-                        WebSocketDestinations.VOCABULARIES_VALIDATION,
-                        results,
-                        getHeaders(identifier,
-                                Map.of("cached", false)),
-                        messageHeaders
-                )))
-        );
-
+        future.getNow()
+                .ifPresentOrElse(
+                        validationResults ->
+                                // if there is a result present (returned from cache), send it
+                                sendToSession(
+                                        WebSocketDestinations.VOCABULARIES_VALIDATION,
+                                        validationResults,
+                                        getHeaders(
+                                                identifier,
+                                                // results are cached if we received a future result, but the future is
+                                                // not done yet
+                                                Map.of("cached", !future.isDone())),
+                                        messageHeaders),
+                        () ->
+                                // otherwise reply will be sent once the future is resolved
+                                future.then(completedFuture -> completedFuture
+                                        .getNow()
+                                        .ifPresent(results -> sendToSession(
+                                                WebSocketDestinations.VOCABULARIES_VALIDATION,
+                                                results,
+                                                getHeaders(identifier, Map.of("cached", false)),
+                                                messageHeaders))));
     }
 
     /**
@@ -105,17 +110,13 @@ public class VocabularySocketController extends BaseWebSocketController {
         messagingTemplate.convertAndSend(
                 WebSocketDestinations.VOCABULARIES_VALIDATION,
                 event.getValidationResults(),
-                getHeaders(event.getVocabularyIri(), Map.of("cached", false))
-        );
+                getHeaders(event.getVocabularyIri(), Map.of("cached", false)));
     }
 
     @EventListener
     public void onFileTextAnalysisFinished(FileTextAnalysisFinishedEvent event) {
         messagingTemplate.convertAndSend(
-                WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_FILE,
-                event.getFileUri(),
-                getHeaders(event)
-        );
+                WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_FILE, event.getFileUri(), getHeaders(event));
     }
 
     @EventListener
@@ -123,8 +124,7 @@ public class VocabularySocketController extends BaseWebSocketController {
         messagingTemplate.convertAndSend(
                 WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FAILED,
                 event.getException().getMessage(),
-                getHeaders(event)
-        );
+                getHeaders(event));
     }
 
     @EventListener
@@ -132,8 +132,7 @@ public class VocabularySocketController extends BaseWebSocketController {
         messagingTemplate.convertAndSend(
                 WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION,
                 event.getTermUri(),
-                getHeaders(event)
-        );
+                getHeaders(event));
     }
 
     protected @Nonnull Map<String, Object> getHeaders(@Nonnull VocabularyEvent event) {

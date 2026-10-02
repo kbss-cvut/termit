@@ -121,7 +121,7 @@ class ResourceRepositoryServiceTest {
         final File file = Generator.generateFileWithId("test.html");
         final Document parent = Generator.generateDocumentWithId();
         parent.addFile(file);
-        file.setDocument(parent);   // Manually set the inferred attribute
+        file.setDocument(parent); // Manually set the inferred attribute
 
         sut.remove(file);
 

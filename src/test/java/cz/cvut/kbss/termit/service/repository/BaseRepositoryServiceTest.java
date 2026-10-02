@@ -68,16 +68,15 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
     @TestConfiguration
     public static class Config {
 
-
         @Bean
         public BaseRepositoryServiceImpl baseRepositoryService(UserAccountDao userAccountDao, Validator validator) {
             return new BaseRepositoryServiceImpl(userAccountDao, validator);
         }
+
         @Bean
         public LocalValidatorFactoryBean validatorFactoryBean() {
             return new LocalValidatorFactoryBean();
         }
-
     }
 
     @Test
@@ -188,7 +187,8 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void findAllExecutesPostLoadForEachLoadedEntity() {
-        final List<UserAccount> users = IntStream.range(0, 5).mapToObj(i -> Generator.generateUserAccountWithPassword())
+        final List<UserAccount> users = IntStream.range(0, 5)
+                .mapToObj(i -> Generator.generateUserAccountWithPassword())
                 .collect(Collectors.toList());
         when(userAccountDaoMock.findAll()).thenReturn(users);
         final BaseRepositoryServiceImpl sut = spy(new BaseRepositoryServiceImpl(userAccountDaoMock, validator));

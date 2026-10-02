@@ -45,8 +45,10 @@ public class ConfigurationProvider {
     private String maxFileUploadSize;
 
     @Autowired
-    public ConfigurationProvider(Configuration config, UserRoleRepositoryService service,
-                                 IndexedLanguagesProvider indexedLanguagesProvider) {
+    public ConfigurationProvider(
+            Configuration config,
+            UserRoleRepositoryService service,
+            IndexedLanguagesProvider indexedLanguagesProvider) {
         this.config = config;
         this.service = service;
         this.indexedLanguagesProvider = indexedLanguagesProvider;

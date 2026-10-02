@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.dto.assignment;
 
-
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
@@ -35,17 +34,19 @@ import java.util.Objects;
  * <p>
  * It contains info about the Resource - identifier and label - and how many times the Term occurs in it.
  */
-@SparqlResultSetMapping(name = "TermOccurrences", classes = @ConstructorResult(
-        targetClass = TermOccurrences.class,
-        variables = {
-                @VariableResult(name = "term", type = URI.class),
-                @VariableResult(name = "resource", type = URI.class),
-                @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "cnt", type = BigInteger.class),
-                @VariableResult(name = "type", type = String.class),
-                @VariableResult(name = "suggested", type = Boolean.class)
-        }
-))
+@SparqlResultSetMapping(
+        name = "TermOccurrences",
+        classes =
+                @ConstructorResult(
+                        targetClass = TermOccurrences.class,
+                        variables = {
+                            @VariableResult(name = "term", type = URI.class),
+                            @VariableResult(name = "resource", type = URI.class),
+                            @VariableResult(name = "label", type = String.class),
+                            @VariableResult(name = "cnt", type = BigInteger.class),
+                            @VariableResult(name = "type", type = String.class),
+                            @VariableResult(name = "suggested", type = Boolean.class)
+                        }))
 public class TermOccurrences extends AbstractAssignmentsInfo {
 
     public static final String COUNT_PROPERTY = Vocabulary.ONTOLOGY_IRI_TERMIT + "/count";
@@ -56,11 +57,10 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
     @OWLDataProperty(iri = COUNT_PROPERTY)
     private Integer count;
 
-    public TermOccurrences() {
-    }
+    public TermOccurrences() {}
 
-    public TermOccurrences(URI term, URI resource, String resourceLabel, BigInteger count, String type,
-                           Boolean suggested) {
+    public TermOccurrences(
+            URI term, URI resource, String resourceLabel, BigInteger count, String type, Boolean suggested) {
         super(term, resource);
         this.resourceLabel = resourceLabel;
         this.count = count.intValueExact();
@@ -115,10 +115,6 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
 
     @Override
     public String toString() {
-        return "TermOccurrences{" +
-                super.toString() +
-                ", resourceLabel='" + resourceLabel +
-                "', count=" + count +
-                "}";
+        return "TermOccurrences{" + super.toString() + ", resourceLabel='" + resourceLabel + "', count=" + count + "}";
     }
 }

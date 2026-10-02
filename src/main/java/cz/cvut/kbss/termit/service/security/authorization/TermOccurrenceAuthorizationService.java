@@ -45,10 +45,12 @@ public class TermOccurrenceAuthorizationService {
 
     private final ResourceAuthorizationService resourceAuthorizationService;
 
-    public TermOccurrenceAuthorizationService(TermOccurrenceDao dao, TermRepositoryService termService,
-                                              ResourceRepositoryService resourceService,
-                                              VocabularyAuthorizationService vocabularyAuthorizationService,
-                                              ResourceAuthorizationService resourceAuthorizationService) {
+    public TermOccurrenceAuthorizationService(
+            TermOccurrenceDao dao,
+            TermRepositoryService termService,
+            ResourceRepositoryService resourceService,
+            VocabularyAuthorizationService vocabularyAuthorizationService,
+            ResourceAuthorizationService resourceAuthorizationService) {
         this.dao = dao;
         this.termService = termService;
         this.resourceService = resourceService;
@@ -62,8 +64,9 @@ public class TermOccurrenceAuthorizationService {
         if (occurrence instanceof TermDefinitionalOccurrence definitionalOccurrence) {
             final Optional<URI> vocabularyUri = termService.findTermVocabulary(
                     definitionalOccurrence.getTarget().getSource());
-            return vocabularyUri.map(vUri -> vocabularyAuthorizationService.canModify(new Vocabulary(vUri)))
-                                .orElse(false);
+            return vocabularyUri
+                    .map(vUri -> vocabularyAuthorizationService.canModify(new Vocabulary(vUri)))
+                    .orElse(false);
         } else {
             final TermFileOccurrence fo = (TermFileOccurrence) occurrence;
             final Optional<Resource> file = resourceService.find(fo.getTarget().getSource());

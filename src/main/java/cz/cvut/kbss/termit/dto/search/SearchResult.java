@@ -42,33 +42,37 @@ import java.util.Collections;
 import java.util.Set;
 
 @SparqlResultSetMappings({
-        @SparqlResultSetMapping(name = "FullTextSearchResult",
-                                classes = {
-                                        @ConstructorResult(
-                                                targetClass = SearchResult.class,
-                                                variables = {
-                                                        @VariableResult(name = "entity", type = URI.class),
-                                                        @VariableResult(name = "label", type = String.class),
-                                                        @VariableResult(name = "description", type = String.class),
-                                                        @VariableResult(name = "vocabularyUri", type = URI.class),
-                                                        @VariableResult(name = "state", type = URI.class),
-                                                        @VariableResult(name = "type", type = String.class),
-                                                        @VariableResult(name = "snippetField", type = String.class),
-                                                        @VariableResult(name = "snippetText", type = String.class),
-                                                        @VariableResult(name = "score", type = Double.class)
-                                                })}),
-        @SparqlResultSetMapping(name = "FacetedSearchResult",
-                                classes = {
-                                        @ConstructorResult(
-                                                targetClass = SearchResult.class,
-                                                variables = {
-                                                        @VariableResult(name = "entity", type = URI.class),
-                                                        @VariableResult(name = "label", type = String.class),
-                                                        @VariableResult(name = "description", type = String.class),
-                                                        @VariableResult(name = "vocabularyUri", type = URI.class),
-                                                        @VariableResult(name = "state", type = URI.class),
-                                                        @VariableResult(name = "type", type = String.class)
-                                                })})
+    @SparqlResultSetMapping(
+            name = "FullTextSearchResult",
+            classes = {
+                @ConstructorResult(
+                        targetClass = SearchResult.class,
+                        variables = {
+                            @VariableResult(name = "entity", type = URI.class),
+                            @VariableResult(name = "label", type = String.class),
+                            @VariableResult(name = "description", type = String.class),
+                            @VariableResult(name = "vocabularyUri", type = URI.class),
+                            @VariableResult(name = "state", type = URI.class),
+                            @VariableResult(name = "type", type = String.class),
+                            @VariableResult(name = "snippetField", type = String.class),
+                            @VariableResult(name = "snippetText", type = String.class),
+                            @VariableResult(name = "score", type = Double.class)
+                        })
+            }),
+    @SparqlResultSetMapping(
+            name = "FacetedSearchResult",
+            classes = {
+                @ConstructorResult(
+                        targetClass = SearchResult.class,
+                        variables = {
+                            @VariableResult(name = "entity", type = URI.class),
+                            @VariableResult(name = "label", type = String.class),
+                            @VariableResult(name = "description", type = String.class),
+                            @VariableResult(name = "vocabularyUri", type = URI.class),
+                            @VariableResult(name = "state", type = URI.class),
+                            @VariableResult(name = "type", type = String.class)
+                        })
+            })
 })
 public class SearchResult implements HasIdentifier, HasTypes, Serializable {
 
@@ -101,15 +105,22 @@ public class SearchResult implements HasIdentifier, HasTypes, Serializable {
     @Types
     private Set<String> types;
 
-    public SearchResult() {
-    }
+    public SearchResult() {}
 
     public SearchResult(URI uri, String label, String description, URI vocabulary, URI state, String type) {
         this(uri, label, description, vocabulary, state, type, null, null, null);
     }
 
-    public SearchResult(URI uri, String label, String description, URI vocabulary, URI state, String type,
-                        String snippetField, String snippetText, Double score) {
+    public SearchResult(
+            URI uri,
+            String label,
+            String description,
+            URI vocabulary,
+            URI state,
+            String type,
+            String snippetField,
+            String snippetText,
+            Double score) {
         this.uri = uri;
         this.label = separateGroupConcatenatedMultilingualStrings(label);
         this.description = separateGroupConcatenatedMultilingualStrings(description);
@@ -213,15 +224,13 @@ public class SearchResult implements HasIdentifier, HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "FullTextSearchResult{" +
-                "uri=" + uri +
-                ", label='" + label + '\'' +
-                ", vocabulary=" + vocabulary +
-                ", types=" + types +
-                ", snippetText='" + snippetText + '\'' +
-                ", snippetField='" + snippetField + '\'' +
-                ", score=" + score +
-                '}';
+        return "FullTextSearchResult{" + "uri="
+                + uri + ", label='"
+                + label + '\'' + ", vocabulary="
+                + vocabulary + ", types="
+                + types + ", snippetText='"
+                + snippetText + '\'' + ", snippetField='"
+                + snippetField + '\'' + ", score="
+                + score + '}';
     }
 }
-

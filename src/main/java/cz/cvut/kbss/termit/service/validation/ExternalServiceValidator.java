@@ -42,8 +42,8 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
     /**
      * Validation rules to use for vocabulary validation.
      */
-    static final List<String> VALIDATION_RULES = List.of("g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9",
-                                                         "g10", "g11", "g12", "g13", "g14", "m1", "m2");
+    static final List<String> VALIDATION_RULES = List.of(
+            "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9", "g10", "g11", "g12", "g13", "g14", "m1", "m2");
 
     private final RestTemplate restClient;
 
@@ -70,7 +70,8 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         LOG.debug("Invoking validation service for contexts {} and language '{}'.", contexts, language);
         final long start = System.currentTimeMillis();
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.addAll("vocabularyContextIri", contexts.stream().map(URI::toString).toList());
+        params.addAll(
+                "vocabularyContextIri", contexts.stream().map(URI::toString).toList());
         params.addAll("rule", VALIDATION_RULES);
         params.add("language", language);
         final HttpHeaders headers = new HttpHeaders();
@@ -78,20 +79,23 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         try {
-            final ResponseEntity<ExternalValidationReport> resp = restClient.exchange(validationServiceUrl,
-                                                                                      HttpMethod.POST,
-                                                                                      new HttpEntity<>(params, headers),
-                                                                                      ExternalValidationReport.class);
+            final ResponseEntity<ExternalValidationReport> resp = restClient.exchange(
+                    validationServiceUrl,
+                    HttpMethod.POST,
+                    new HttpEntity<>(params, headers),
+                    ExternalValidationReport.class);
             final ExternalValidationReport report = resp.getBody();
             assert report != null;
             final long end = System.currentTimeMillis();
-            LOG.debug("Validation finished in {}s. Valid? {}.", Utils.millisToString(end - start),
-                      report.isConforms());
-            return report.results.stream().sorted().map(r -> new ValidationResult()
-                    .setTermUri(r.focusNode())
-                    .setSeverity(r.severity())
-                    .setMessage(new MultilingualString(r.message()))
-                    .setIssueCauseUri(r.sourceShape())).toList();
+            LOG.debug("Validation finished in {}s. Valid? {}.", Utils.millisToString(end - start), report.isConforms());
+            return report.results.stream()
+                    .sorted()
+                    .map(r -> new ValidationResult()
+                            .setTermUri(r.focusNode())
+                            .setSeverity(r.severity())
+                            .setMessage(new MultilingualString(r.message()))
+                            .setIssueCauseUri(r.sourceShape()))
+                    .toList();
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.PAYLOAD_TOO_LARGE) {
                 LOG.warn("Validation failed for {} with message: {}", contexts, e.getResponseBodyAsString());
@@ -121,8 +125,7 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
             return results;
         }
 
-        public void setResults(
-                List<ValidationResultItem> results) {
+        public void setResults(List<ValidationResultItem> results) {
             this.results = results;
         }
     }
@@ -132,13 +135,14 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         @Override
         public int compareTo(@Nonnull ExternalServiceValidator.ValidationResultItem o) {
             final Optional<ShaclSeverity> ownSeverity = Arrays.stream(ShaclSeverity.values())
-                                                              .filter(ss -> ss.getUri().equals(severity))
-                                                              .findFirst();
+                    .filter(ss -> ss.getUri().equals(severity))
+                    .findFirst();
             final Optional<ShaclSeverity> otherSeverity = Arrays.stream(ShaclSeverity.values())
-                                                                .filter(ss -> ss.getUri().equals(o.severity))
-                                                                .findFirst();
-            return ownSeverity.map(value -> otherSeverity.map(value::compareTo).orElse(-1))
-                              .orElseGet(() -> otherSeverity.isPresent() ? 1 : 0);
+                    .filter(ss -> ss.getUri().equals(o.severity))
+                    .findFirst();
+            return ownSeverity
+                    .map(value -> otherSeverity.map(value::compareTo).orElse(-1))
+                    .orElseGet(() -> otherSeverity.isPresent() ? 1 : 0);
         }
     }
 

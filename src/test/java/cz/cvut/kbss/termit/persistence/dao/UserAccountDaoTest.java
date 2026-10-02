@@ -80,8 +80,8 @@ class UserAccountDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsAccountsSortedByUserLastNameAndFirstName() {
         final List<UserAccount> accounts = IntStream.range(0, 10)
-                                                    .mapToObj(i -> Generator.generateUserAccountWithPassword()).collect(
-                        Collectors.toList());
+                .mapToObj(i -> Generator.generateUserAccountWithPassword())
+                .collect(Collectors.toList());
         transactional(() -> accounts.forEach(em::persist));
 
         final List<UserAccount> result = sut.findAll();

@@ -88,9 +88,6 @@ public class Resource extends Asset<String> implements Serializable {
 
     @Override
     public String toString() {
-        return "Resource{" +
-                getLabel() +
-                " <" + getUri() + '>' +
-                "}";
+        return "Resource{" + getLabel() + " <" + getUri() + '>' + "}";
     }
 }

@@ -40,9 +40,11 @@ public class LongRunningTasksWebSocketController extends BaseWebSocketController
 
     private final LongRunningTasksRegistry registry;
 
-    protected LongRunningTasksWebSocketController(IdentifierResolver idResolver, Configuration config,
-                                                  SimpMessagingTemplate messagingTemplate,
-                                                  LongRunningTasksRegistry registry) {
+    protected LongRunningTasksWebSocketController(
+            IdentifierResolver idResolver,
+            Configuration config,
+            SimpMessagingTemplate messagingTemplate,
+            LongRunningTasksRegistry registry) {
         super(idResolver, config, messagingTemplate);
         this.registry = registry;
     }

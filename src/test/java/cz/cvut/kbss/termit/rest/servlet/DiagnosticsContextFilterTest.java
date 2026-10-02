@@ -59,9 +59,11 @@ class DiagnosticsContextFilterTest {
         final Principal token = new AuthenticationToken(Collections.emptyList(), new TermItUserDetails(user));
         when(requestMock.getUserPrincipal()).thenReturn(token);
         doAnswer((answer) -> {
-            assertEquals(user.getUsername(), MDC.get(DiagnosticsContextFilter.MDC_KEY));
-            return null;
-        }).when(chainMock).doFilter(requestMock, responseMock);
+                    assertEquals(user.getUsername(), MDC.get(DiagnosticsContextFilter.MDC_KEY));
+                    return null;
+                })
+                .when(chainMock)
+                .doFilter(requestMock, responseMock);
 
         filter.doFilter(requestMock, responseMock, chainMock);
         verify(chainMock).doFilter(requestMock, responseMock);
@@ -71,9 +73,11 @@ class DiagnosticsContextFilterTest {
     void doesNotSetDiagnosticsContextForAnonymousPrincipal() throws Exception {
         when(requestMock.getUserPrincipal()).thenReturn(null);
         doAnswer((answer) -> {
-            assertNull(MDC.get(DiagnosticsContextFilter.MDC_KEY));
-            return null;
-        }).when(chainMock).doFilter(requestMock, responseMock);
+                    assertNull(MDC.get(DiagnosticsContextFilter.MDC_KEY));
+                    return null;
+                })
+                .when(chainMock)
+                .doFilter(requestMock, responseMock);
 
         filter.doFilter(requestMock, responseMock, chainMock);
         verify(chainMock).doFilter(requestMock, responseMock);

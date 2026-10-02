@@ -18,12 +18,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<PersonalAccessToken, PersonalAccessTokenDto> {
+public class PersonalAccessTokenRepositoryService
+        extends BaseRepositoryService<PersonalAccessToken, PersonalAccessTokenDto> {
 
     private final PersonalAccessTokenDao dao;
     private final DtoMapper dtoMapper;
 
-    protected PersonalAccessTokenRepositoryService(Validator validator, PersonalAccessTokenDao dao, DtoMapper dtoMapper) {
+    protected PersonalAccessTokenRepositoryService(
+            Validator validator, PersonalAccessTokenDao dao, DtoMapper dtoMapper) {
         super(validator);
         this.dao = dao;
         this.dtoMapper = dtoMapper;
@@ -64,6 +66,8 @@ public class PersonalAccessTokenRepositoryService extends BaseRepositoryService<
      */
     @Transactional(readOnly = true)
     public List<PersonalAccessTokenDto> findAllByUserAccount(UserAccount userAccount) {
-        return dao.findAllByUserAccount(userAccount).stream().map(this::mapToDto).toList();
+        return dao.findAllByUserAccount(userAccount).stream()
+                .map(this::mapToDto)
+                .toList();
     }
 }

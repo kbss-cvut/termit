@@ -46,9 +46,11 @@ public class ThrottlingValidator implements VocabularyContentValidator {
     private final ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public ThrottlingValidator(RepositoryContextValidator validator, @Lazy VocabularyService vocabularyService,
-                               VocabularyContextMapper vocabularyContextMapper,
-                               ApplicationEventPublisher eventPublisher) {
+    public ThrottlingValidator(
+            RepositoryContextValidator validator,
+            @Lazy VocabularyService vocabularyService,
+            VocabularyContextMapper vocabularyContextMapper,
+            ApplicationEventPublisher eventPublisher) {
         this.validator = validator;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -58,8 +60,8 @@ public class ThrottlingValidator implements VocabularyContentValidator {
     @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
     @Override
     @Nonnull
-    public ThrottledFuture<Collection<ValidationResult>> validate(final @Nonnull URI originVocabularyIri,
-                                                                  final @Nonnull Collection<URI> vocabularyIris) {
+    public ThrottledFuture<Collection<ValidationResult>> validate(
+            final @Nonnull URI originVocabularyIri, final @Nonnull Collection<URI> vocabularyIris) {
         if (vocabularyIris.isEmpty()) {
             return ThrottledFuture.done(List.of());
         }
@@ -73,9 +75,13 @@ public class ThrottlingValidator implements VocabularyContentValidator {
         });
     }
 
-    protected synchronized List<ValidationResult> runValidation(@Nonnull Collection<URI> vocabularyIris, String language) {
+    protected synchronized List<ValidationResult> runValidation(
+            @Nonnull Collection<URI> vocabularyIris, String language) {
         LOG.debug("Validating vocabularies {}", vocabularyIris);
-        return validator.validate(vocabularyIris.stream().map(
-                vocabularyContextMapper::getVocabularyContext).toList(), language);
+        return validator.validate(
+                vocabularyIris.stream()
+                        .map(vocabularyContextMapper::getVocabularyContext)
+                        .toList(),
+                language);
     }
 }

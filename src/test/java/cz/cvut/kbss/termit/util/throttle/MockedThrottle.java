@@ -47,7 +47,7 @@ public class MockedThrottle implements Throttle {
 
     @Override
     public String name() {
-        return "NameOfMockedThrottle"+group+value;
+        return "NameOfMockedThrottle" + group + value;
     }
 
     @Override

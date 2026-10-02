@@ -86,7 +86,8 @@ class ReadOnlyTermTest {
 
         final ReadOnlyTerm result = new ReadOnlyTerm(term, whiteList);
         assertEquals(1, result.getProperties().size());
-        assertEquals(Collections.singleton(u2.toString()), result.getProperties().keySet());
+        assertEquals(
+                Collections.singleton(u2.toString()), result.getProperties().keySet());
         assertEquals(Collections.singleton("b"), result.getProperties().get(u2.toString()));
     }
 

@@ -39,13 +39,15 @@ public class LongRunningTaskStatus implements Serializable {
     public LongRunningTaskStatus(@Nonnull LongRunningTask task) {
         Objects.requireNonNull(task.getName());
         this.name = task.getName();
-        this.startedAt = task.startedAt().map(time -> time.truncatedTo(ChronoUnit.SECONDS)).orElse(null);
+        this.startedAt = task.startedAt()
+                .map(time -> time.truncatedTo(ChronoUnit.SECONDS))
+                .orElse(null);
         this.state = State.of(task);
         this.uuid = task.getUuid();
     }
 
-    public LongRunningTaskStatus(@Nonnull String name, @Nonnull UUID uuid, @Nonnull State state,
-                                 @Nullable Instant startedAt) {
+    public LongRunningTaskStatus(
+            @Nonnull String name, @Nonnull UUID uuid, @Nonnull State state, @Nullable Instant startedAt) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(uuid);
         Objects.requireNonNull(state);
@@ -77,7 +79,9 @@ public class LongRunningTaskStatus implements Serializable {
     }
 
     public enum State {
-        PENDING, RUNNING, DONE;
+        PENDING,
+        RUNNING,
+        DONE;
 
         public static State of(@Nonnull LongRunningTask task) {
             if (task.isRunning()) {

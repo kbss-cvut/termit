@@ -19,9 +19,8 @@ public class OntologyDownloader implements LauncherSessionListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(OntologyDownloader.class);
 
-    private static final Map<String, String> TO_DOWNLOAD = Map.of(
-            "https://onto.fel.cvut.cz/ontologies/data-description", "data-description.ttl"
-    );
+    private static final Map<String, String> TO_DOWNLOAD =
+            Map.of("https://onto.fel.cvut.cz/ontologies/data-description", "data-description.ttl");
 
     private static Path directory;
 

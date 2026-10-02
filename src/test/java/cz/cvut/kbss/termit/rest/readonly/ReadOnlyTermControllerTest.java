@@ -117,19 +117,19 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllReturnsAllTermsFromVocabularyFromService() throws Exception {
-        when(idResolver.resolveIdentifier(config.getNamespace()
-                                                .getVocabulary(), VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         doReturn(terms).when(termService).findAll(any(), any(TermSelectionParams.class));
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")).andExpect(status().isOk())
-                                           .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms"))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(terms, result);
-        verify(termService).findAll(eq(vocabulary), eq(termSelectionParamsBuilder().build()));
+        verify(termService)
+                .findAll(eq(vocabulary), eq(termSelectionParamsBuilder().build()));
     }
 
     private List<TermDto> generateTerms() {
@@ -138,53 +138,57 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllWithSearchStringUsesServiceToRetrieveMatchingTermsAndReturnsThem() throws Exception {
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         doReturn(terms).when(termService).findAll(any(), any(), any(TermSelectionParams.class));
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform((get(PATH + VOCABULARY_NAME + "/terms"))
-                                                            .param(Constants.QueryParams.NAMESPACE,
-                                                                   Environment.BASE_URI)
-                                                            .param("searchString", searchString))
-                                           .andExpect(status().isOk())
-                                           .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                        .param("searchString", searchString))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(terms, result);
-        verify(termService).findAll(eq(searchString), eq(vocabulary), eq(termSelectionParamsBuilder().build()));
+        verify(termService)
+                .findAll(
+                        eq(searchString),
+                        eq(vocabulary),
+                        eq(termSelectionParamsBuilder().build()));
     }
 
     @Test
     void getAllWithSearchStringAndIncludeImportedUsesServiceToRetrieveMatchingTermsIncludingImportedOnesAndReturnsThem()
             throws Exception {
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         doReturn(terms).when(termService).findAll(any(), any(), any(TermSelectionParams.class));
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform((get(PATH + VOCABULARY_NAME + "/terms"))
-                                                            .param(Constants.QueryParams.NAMESPACE,
-                                                                   Environment.BASE_URI)
-                                                            .param("searchString", searchString)
-                                                            .param("includeImported", Boolean.TRUE.toString()))
-                                           .andExpect(status().isOk())
-                                           .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                        .param("searchString", searchString)
+                        .param("includeImported", Boolean.TRUE.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(terms, result);
-        verify(termService).findAll(eq(searchString), eq(vocabulary), eq(termSelectionParamsBuilder().includeImported().build()));
+        verify(termService)
+                .findAll(
+                        eq(searchString),
+                        eq(vocabulary),
+                        eq(termSelectionParamsBuilder().includeImported().build()));
     }
 
     @Test
     void getAllWithSearchStringAndIncludeRelatedUsesServiceToRetrieveMatchingTermsIncludingRelatedOnesAndReturnsThem()
             throws Exception {
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         doReturn(terms).when(termService).findAll(any(), any(), any(TermSelectionParams.class));
@@ -196,21 +200,27 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                         .param("includeRelated", Boolean.TRUE.toString()))
                 .andExpect(status().isOk())
                 .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(terms, result);
-        verify(termService).findAll(eq(searchString), eq(vocabulary), eq(termSelectionParamsBuilder().includeRelated().build()));
+        verify(termService)
+                .findAll(
+                        eq(searchString),
+                        eq(vocabulary),
+                        eq(termSelectionParamsBuilder().includeRelated().build()));
     }
 
     @Test
     void getAllRootsLoadsRootsFromCorrectPage() throws Exception {
-        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any())).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any()))
+                .thenReturn(terms);
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")
+                        .param(PAGE, "5")
+                        .param(PAGE_SIZE, "100"))
                 .andExpect(status().isOk());
 
         final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
@@ -220,11 +230,12 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
-        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any())).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any()))
+                .thenReturn(terms);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
 
@@ -235,17 +246,18 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsRetrievesRootTermsIncludingImportedWhenParameterIsSpecified() throws Exception {
-        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any())).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any()))
+                .thenReturn(terms);
 
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeImported", Boolean.TRUE.toString()))
-                .andExpect(status().isOk()).andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(
+                        get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeImported", Boolean.TRUE.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {});
 
         assertEquals(terms, result);
         final ArgumentCaptor<TermSelectionParams> captor = ArgumentCaptor.forClass(TermSelectionParams.class);
@@ -255,17 +267,20 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsPassesIncludeTermsToTermService() throws Exception {
-        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any())).thenReturn(terms);
+        when(termService.findAllRoots(eq(vocabulary), any(TermSelectionParams.class), any()))
+                .thenReturn(terms);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")
-                       .param("includeTerms", terms.getFirst().getUri().toString()))
-               .andExpect(status().isOk()).andReturn();
+                        .param("includeTerms", terms.getFirst().getUri().toString()))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        verify(termService).findAllRoots(eq(vocabulary), any(), eq(List.of(terms.getFirst().getUri())));
+        verify(termService)
+                .findAllRoots(eq(vocabulary), any(), eq(List.of(terms.getFirst().getUri())));
     }
 
     @Test
@@ -273,12 +288,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
         when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termService.findRequired(any())).thenReturn(term);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).param(
-                Constants.QueryParams.NAMESPACE, Environment.BASE_URI)).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI))
+                .andExpect(status().isOk())
+                .andReturn();
         final ReadOnlyTerm result = readValue(mvcResult, ReadOnlyTerm.class);
         assertEquals(term, result);
         verify(termService).findRequired(term.getUri());
@@ -286,11 +303,12 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getByIdReturnsNotFoundWhenNotFoundExceptionIsThrownByService() throws Exception {
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenThrow(NotFoundException.class);
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).param(
-                Constants.QueryParams.NAMESPACE, Environment.BASE_URI)).andExpect(status().isNotFound());
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -299,19 +317,18 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
         when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
-                URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);
-        final List<TermDto> subTerms = Generator.generateTermsWithIds(5).stream()
-                                                .map(TermDto::new)
-                                                .toList();
+        final List<TermDto> subTerms =
+                Generator.generateTermsWithIds(5).stream().map(TermDto::new).toList();
         when(termService.findSubTerms(term)).thenReturn(subTerms);
 
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms").param(
-                        Constants.QueryParams.NAMESPACE, Environment.BASE_URI)).andExpect(status().isOk()).andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
-        });
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms")
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(subTerms, result);
         verify(termService).findSubTerms(term);
     }
@@ -323,12 +340,13 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         term.setUri(termUri);
         when(termService.getReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
-        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
+        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class)))
+                .thenReturn(comments);
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments"))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(comments, result);
         final ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
         verify(termService).getComments(eq(term), eq(Constants.EPOCH_TIMESTAMP), toCaptor.capture());
@@ -342,16 +360,17 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         term.setUri(termUri);
         when(termService.getReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
-        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
+        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class)))
+                .thenReturn(comments);
         final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
         final Instant to = Utils.timestamp().minus(Generator.randomInt(0, 30), ChronoUnit.DAYS);
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments")
-                                                            .param("from", from.toString())
-                                                            .param("to", to.toString()))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                        .param("from", from.toString())
+                        .param("to", to.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {});
         assertEquals(comments, result);
         verify(termService).getComments(term, from, to);
     }
@@ -366,10 +385,10 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         when(termService.getDefinitionallyRelatedOf(term)).thenReturn(occurrences);
 
         final MvcResult mvcResult = mockMvc.perform(
-                                                   get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/def-related-of"))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                        get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/def-related-of"))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<>() {});
         assertThat(result, containsSameEntities(occurrences));
         verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedOf(term);
@@ -377,14 +396,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     private static List<TermOccurrence> generateOccurrences(Term term, boolean of) {
         return IntStream.range(0, 5)
-                        .mapToObj(i -> {
-                            final Term t = of ? term : Generator.generateTermWithId();
-                            final Term target = of ? Generator.generateTermWithId() : term;
-                            final TermOccurrence o = Generator.generateTermOccurrence(t, target, false);
-                            o.setUri(Generator.generateUri());
-                            return o;
-                        })
-                        .collect(Collectors.toList());
+                .mapToObj(i -> {
+                    final Term t = of ? term : Generator.generateTermWithId();
+                    final Term target = of ? Generator.generateTermWithId() : term;
+                    final TermOccurrence o = Generator.generateTermOccurrence(t, target, false);
+                    o.setUri(Generator.generateUri());
+                    return o;
+                })
+                .collect(Collectors.toList());
     }
 
     @Test
@@ -397,10 +416,10 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         when(termService.getDefinitionallyRelatedTargeting(term)).thenReturn(occurrences);
 
         final MvcResult mvcResult = mockMvc.perform(
-                                                   get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/def-related-target"))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<>() {
-        });
+                        get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/def-related-target"))
+                .andExpect(status().isOk())
+                .andReturn();
+        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<>() {});
         assertThat(result, containsSameEntities(occurrences));
         verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedTargeting(term);
@@ -412,15 +431,15 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
         when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termService.findRequired(any())).thenReturn(term);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
-                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
-                       .param("withAncestors", "true")
-               )
-               .andExpect(status().isOk());
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
+                        .param("withAncestors", "true"))
+                .andExpect(status().isOk());
 
         verify(termService).resolveAllAncestors(term);
     }
@@ -431,14 +450,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
 
         when(namespaceResolver.resolveNamespace(URI.create(VOCABULARY_URI))).thenReturn(NAMESPACE);
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termService.findRequired(any())).thenReturn(term);
 
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME)
-                       .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI)
-               )
-               .andExpect(status().isOk());
+                        .param(Constants.QueryParams.NAMESPACE, Environment.BASE_URI))
+                .andExpect(status().isOk());
 
         verify(termService, never()).resolveAllAncestors(term);
     }

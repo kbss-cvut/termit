@@ -35,47 +35,10 @@ import java.util.Objects;
 public class IdentifierResolver {
 
     private static final char REPLACEMENT_CHARACTER = '-';
-    private static final int[] ILLEGAL_FILENAME_CHARS = {34,
-                                                         60,
-                                                         62,
-                                                         124,
-                                                         0,
-                                                         1,
-                                                         2,
-                                                         3,
-                                                         4,
-                                                         5,
-                                                         6,
-                                                         7,
-                                                         8,
-                                                         9,
-                                                         10,
-                                                         11,
-                                                         12,
-                                                         13,
-                                                         14,
-                                                         15,
-                                                         16,
-                                                         17,
-                                                         18,
-                                                         19,
-                                                         20,
-                                                         21,
-                                                         22,
-                                                         23,
-                                                         24,
-                                                         25,
-                                                         26,
-                                                         27,
-                                                         28,
-                                                         29,
-                                                         30,
-                                                         31,
-                                                         58,
-                                                         42,
-                                                         63,
-                                                         92,
-                                                         47};
+    private static final int[] ILLEGAL_FILENAME_CHARS = {
+        34, 60, 62, 124, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 58, 42, 63, 92, 47
+    };
 
     static {
         Arrays.sort(ILLEGAL_FILENAME_CHARS);
@@ -147,8 +110,8 @@ public class IdentifierResolver {
         if (isAbsoluteUri(comps)) {
             final URI tempUri = URI.create(comps);
             try {
-                return new URI(tempUri.getScheme(), tempUri.getAuthority(), tempUri.getPath(), null,
-                               tempUri.getFragment());
+                return new URI(
+                        tempUri.getScheme(), tempUri.getAuthority(), tempUri.getPath(), null, tempUri.getFragment());
             } catch (URISyntaxException e) {
                 // Shouldn't happen, URI has been already validated using URI.create
                 throw new TermItException(e);

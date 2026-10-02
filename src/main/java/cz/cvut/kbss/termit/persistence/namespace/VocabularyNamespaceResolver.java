@@ -36,8 +36,9 @@ public class VocabularyNamespaceResolver {
     @Nonnull
     public String resolveNamespace(@Nonnull URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return vocabularyDao.getPreferredNamespace(vocabularyUri)
-                            .orElseGet(() -> generateNamespace(vocabularyUri.toString()));
+        return vocabularyDao
+                .getPreferredNamespace(vocabularyUri)
+                .orElseGet(() -> generateNamespace(vocabularyUri.toString()));
     }
 
     /**
@@ -69,8 +70,8 @@ public class VocabularyNamespaceResolver {
         }
         if (Utils.isBlank(vocabulary.getPreferredNamespaceUri())) {
             String configuredSep = namespaceConfig.getSeparator();
-            vocabulary.setPreferredNamespaceUri(IdentifierResolver.ensureNamespaceSeparatorTermination(
-                    vocabulary.getUri() + configuredSep));
+            vocabulary.setPreferredNamespaceUri(
+                    IdentifierResolver.ensureNamespaceSeparatorTermination(vocabulary.getUri() + configuredSep));
         }
     }
 

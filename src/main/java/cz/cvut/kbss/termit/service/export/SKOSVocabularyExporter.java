@@ -72,9 +72,10 @@ public abstract class SKOSVocabularyExporter implements VocabularyExporter {
             default:
                 throw new UnsupportedOperationException("Unsupported export type " + config.getType());
         }
-        final TypeAwareResource res = new TypeAwareByteArrayResource(skosExporter.exportAs(exportFormat()),
-                                                                     exportFormat().getMediaType(),
-                                                                     exportFormat().getFileExtension());
+        final TypeAwareResource res = new TypeAwareByteArrayResource(
+                skosExporter.exportAs(exportFormat()),
+                exportFormat().getMediaType(),
+                exportFormat().getFileExtension());
         LOG.trace("Export finished successfully.");
         return res;
     }

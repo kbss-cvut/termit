@@ -37,8 +37,8 @@ public class PasswordChangeRequestRepositoryService
     private final PasswordChangeRequestDao passwordChangeRequestDao;
     private final DtoMapper dtoMapper;
 
-    public PasswordChangeRequestRepositoryService(PasswordChangeRequestDao passwordChangeRequestDao,
-                                                  DtoMapper dtoMapper, Validator validator) {
+    public PasswordChangeRequestRepositoryService(
+            PasswordChangeRequestDao passwordChangeRequestDao, DtoMapper dtoMapper, Validator validator) {
         super(validator);
         this.passwordChangeRequestDao = passwordChangeRequestDao;
         this.dtoMapper = dtoMapper;

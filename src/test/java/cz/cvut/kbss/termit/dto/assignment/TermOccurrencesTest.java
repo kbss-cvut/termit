@@ -36,8 +36,8 @@ class TermOccurrencesTest {
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
         final BigInteger count = BigInteger.valueOf(Generator.randomInt(1, 1000));
-        final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
-                Vocabulary.s_c_file_term_occurrence, false);
+        final TermOccurrences result =
+                new TermOccurrences(termUri, resourceUri, label, count, Vocabulary.s_c_file_term_occurrence, false);
         assertNotNull(result);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
     }
@@ -48,8 +48,8 @@ class TermOccurrencesTest {
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
         final BigInteger count = BigInteger.valueOf(Generator.randomInt(1, 1000));
-        final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
-                Vocabulary.s_c_file_term_occurrence, true);
+        final TermOccurrences result =
+                new TermOccurrences(termUri, resourceUri, label, count, Vocabulary.s_c_file_term_occurrence, true);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_term_occurrence));
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_suggested_term_occurrence));
     }

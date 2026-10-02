@@ -34,8 +34,7 @@ public class CssSelector extends Selector {
     @OWLDataProperty(iri = RDF.VALUE, simpleLiteral = true)
     private String value;
 
-    public CssSelector() {
-    }
+    public CssSelector() {}
 
     public CssSelector(@NotBlank String value) {
         this.value = value;
@@ -72,8 +71,6 @@ public class CssSelector extends Selector {
 
     @Override
     public String toString() {
-        return "CssSelector{" +
-                "value='" + value + '\'' +
-                "} " + super.toString();
+        return "CssSelector{" + "value='" + value + '\'' + "} " + super.toString();
     }
 }

@@ -114,22 +114,26 @@ public class Constants {
      * <p>
      * It represents ISO instant string without separator dashes and colons truncated to seconds at the UTC timezone.
      */
-    public static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX")
-                                                                                 .withZone(ZoneId.of("UTC"));
+    public static final DateTimeFormatter TIMESTAMP_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneId.of("UTC"));
 
     /**
      * SKOS relationships between concepts from different concept schemes (glossaries).
      */
     public static final Set<URI> SKOS_CONCEPT_MATCH_RELATIONSHIPS = Stream.of(
-            SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH
-    ).map(URI::create).collect(Collectors.toSet());
+                    SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH)
+            .map(URI::create)
+            .collect(Collectors.toSet());
 
     /**
      * Relations between vocabularies that do not prevent vocabulary to be removed
      */
     public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
-            Vocabulary.s_p_is_version_of, Vocabulary.s_p_is_version_of_vocabulary, Vocabulary.s_p_imports_vocabulary
-    ).map(URI::create).collect(Collectors.toSet());
+                    Vocabulary.s_p_is_version_of,
+                    Vocabulary.s_p_is_version_of_vocabulary,
+                    Vocabulary.s_p_imports_vocabulary)
+            .map(URI::create)
+            .collect(Collectors.toSet());
 
     /**
      * Labels of columns representing exported term attributes in various supported languages.
@@ -137,15 +141,43 @@ public class Constants {
      */
     public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(
             "cs",
-            List.of("Identifikátor", "Název", "Synonyma", "Vyhledávací texty", "Definice", "Doplňující poznámka", "Typ",
-                    "Zdroj", "Nadřazené pojmy", "Podřazené pojmy", "Související pojmy", "Externí související pojmy",
-                    "Pojmy se stejným významem", "Stav pojmu", "Notace", "Příklady", "Reference"),
+            List.of(
+                    "Identifikátor",
+                    "Název",
+                    "Synonyma",
+                    "Vyhledávací texty",
+                    "Definice",
+                    "Doplňující poznámka",
+                    "Typ",
+                    "Zdroj",
+                    "Nadřazené pojmy",
+                    "Podřazené pojmy",
+                    "Související pojmy",
+                    "Externí související pojmy",
+                    "Pojmy se stejným významem",
+                    "Stav pojmu",
+                    "Notace",
+                    "Příklady",
+                    "Reference"),
             DEFAULT_LANGUAGE,
-            List.of("Identifier", "Label", "Synonyms", "Search strings", "Definition", "Scope note", "Type", "Source",
-                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "State",
-                    "Notation", "Example", "References")
-    );
-
+            List.of(
+                    "Identifier",
+                    "Label",
+                    "Synonyms",
+                    "Search strings",
+                    "Definition",
+                    "Scope note",
+                    "Type",
+                    "Source",
+                    "Parent terms",
+                    "Sub terms",
+                    "Related terms",
+                    "Related match terms",
+                    "Exact matches",
+                    "State",
+                    "Notation",
+                    "Example",
+                    "References"));
 
     /**
      * the maximum amount of data to buffer when sending messages to a WebSocket session
@@ -243,6 +275,7 @@ public class Constants {
          * Media type for .xlsx
          */
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";
         /**

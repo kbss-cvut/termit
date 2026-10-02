@@ -39,5 +39,6 @@ public interface VocabularyContentValidator {
      * @return List of violations of validation rules. Empty list if there are no violations
      */
     @Nonnull
-    ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris);
+    ThrottledFuture<Collection<ValidationResult>> validate(
+            @Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris);
 }

@@ -50,43 +50,77 @@ public class ExcelTermExporter {
         Objects.requireNonNull(row);
         write(row, 0, prefixedUri(t.getVocabulary(), t));
         write(row, 1, t.getLabel().get(langCode));
-        write(row, 2, Utils.emptyIfNull(t.getAltLabels()).stream()
-                           .map(str -> str.get(langCode))
-                           .filter(Objects::nonNull)
-                           .collect(Collectors.joining(
-                                   TabularTermExportUtils.STRING_DELIMITER)));
-        write(row, 3, Utils.emptyIfNull(t.getHiddenLabels()).stream()
-                           .map(str -> str.get(langCode))
-                           .filter(Objects::nonNull)
-                           .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        write(row, 4, Utils.markdownToPlainText(t.getDefinition() != null ? t.getDefinition().get(langCode) : null));
-        write(row, 5, Utils.markdownToPlainText(t.getDescription() != null ? t.getDescription().get(langCode) : null));
+        write(
+                row,
+                2,
+                Utils.emptyIfNull(t.getAltLabels()).stream()
+                        .map(str -> str.get(langCode))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                3,
+                Utils.emptyIfNull(t.getHiddenLabels()).stream()
+                        .map(str -> str.get(langCode))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                4,
+                Utils.markdownToPlainText(
+                        t.getDefinition() != null ? t.getDefinition().get(langCode) : null));
+        write(
+                row,
+                5,
+                Utils.markdownToPlainText(
+                        t.getDescription() != null ? t.getDescription().get(langCode) : null));
         write(row, 6, String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getTypes())));
         write(row, 7, String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getSources())));
-        write(row, 8, Utils.emptyIfNull(t.getParentTerms()).stream().map(pt -> prefixedUri(pt.getVocabulary(), pt))
-                           .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        write(row, 9, Utils.emptyIfNull(t.getSubTerms()).stream()
-                           .map(this::termInfoPrefixedUri)
-                           .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        write(row, 10, Utils.joinCollections(t.getRelated(), t.getInverseRelated()).stream()
-                            .map(this::termInfoPrefixedUri)
-                            .distinct()
-                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        write(row, 11, Utils.joinCollections(t.getRelatedMatch(), t.getInverseRelatedMatch()).stream()
-                            .map(this::termInfoPrefixedUri)
-                            .distinct()
-                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        write(row, 12, Utils.joinCollections(t.getExactMatchTerms(), t.getInverseExactMatchTerms()).stream()
-                            .map(this::termInfoPrefixedUri)
-                            .distinct()
-                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                8,
+                Utils.emptyIfNull(t.getParentTerms()).stream()
+                        .map(pt -> prefixedUri(pt.getVocabulary(), pt))
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                9,
+                Utils.emptyIfNull(t.getSubTerms()).stream()
+                        .map(this::termInfoPrefixedUri)
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                10,
+                Utils.joinCollections(t.getRelated(), t.getInverseRelated()).stream()
+                        .map(this::termInfoPrefixedUri)
+                        .distinct()
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                11,
+                Utils.joinCollections(t.getRelatedMatch(), t.getInverseRelatedMatch()).stream()
+                        .map(this::termInfoPrefixedUri)
+                        .distinct()
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(
+                row,
+                12,
+                Utils.joinCollections(t.getExactMatchTerms(), t.getInverseExactMatchTerms()).stream()
+                        .map(this::termInfoPrefixedUri)
+                        .distinct()
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
         write(row, 13, t.getState() != null ? t.getState().toString() : "");
         write(row, 14, String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getNotations())));
-        write(row, 15, Utils.emptyIfNull(t.getExamples()).stream()
-                            .map(str -> str.get(langCode))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        if (t.getProperties() != null && !Utils.emptyIfNull(t.getProperties().get(DC.Terms.REFERENCES)).isEmpty()) {
+        write(
+                row,
+                15,
+                Utils.emptyIfNull(t.getExamples()).stream()
+                        .map(str -> str.get(langCode))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        if (t.getProperties() != null
+                && !Utils.emptyIfNull(t.getProperties().get(DC.Terms.REFERENCES))
+                        .isEmpty()) {
             write(row, 16, t.getProperties().get(DC.Terms.REFERENCES).toString());
         }
     }
@@ -106,7 +140,9 @@ public class ExcelTermExporter {
         }
         final PrefixDeclaration prefix = prefixes.get(vocabularyUri);
         if (prefix.getNamespace() != null && strUri.startsWith(prefix.getNamespace())) {
-            return prefix.getPrefix() + PrefixDeclaration.SEPARATOR + strUri.substring(prefix.getNamespace().length());
+            return prefix.getPrefix()
+                    + PrefixDeclaration.SEPARATOR
+                    + strUri.substring(prefix.getNamespace().length());
         }
         return strUri;
     }

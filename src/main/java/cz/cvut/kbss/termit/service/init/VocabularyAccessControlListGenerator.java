@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.init;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
@@ -27,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -43,9 +43,8 @@ public class VocabularyAccessControlListGenerator {
 
     private final AccessControlListService aclService;
 
-    public VocabularyAccessControlListGenerator(EntityManager em,
-                                                VocabularyRepositoryService vocabularyService,
-                                                AccessControlListService aclService) {
+    public VocabularyAccessControlListGenerator(
+            EntityManager em, VocabularyRepositoryService vocabularyService, AccessControlListService aclService) {
         this.em = em;
         this.vocabularyService = vocabularyService;
         this.aclService = aclService;
@@ -76,9 +75,10 @@ public class VocabularyAccessControlListGenerator {
 
     private List<URI> resolveVocabulariesWithoutAcl() {
         return em.createNativeQuery(
-                         "SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }", URI.class)
-                 .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
-                 .getResultList();
+                        "SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }",
+                        URI.class)
+                .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
+                .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                .getResultList();
     }
 }

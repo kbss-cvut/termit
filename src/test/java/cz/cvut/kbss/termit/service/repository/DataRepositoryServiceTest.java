@@ -133,15 +133,17 @@ class DataRepositoryServiceTest {
 
     @Test
     void updateCustomAttributeUpdatesLabelAndDescriptionOfExistingCustomAttribute() {
-        final CustomAttribute existing = new CustomAttribute(Generator.generateUri(),
-                                                             MultilingualString.create("Attribute one", "en"),
-                                                             MultilingualString.create("Description one", "en"));
+        final CustomAttribute existing = new CustomAttribute(
+                Generator.generateUri(),
+                MultilingualString.create("Attribute one", "en"),
+                MultilingualString.create("Description one", "en"));
         existing.setDomain(URI.create(SKOS.CONCEPT));
         existing.setRange(URI.create(SKOS.CONCEPT));
         when(dataDao.findCustomAttribute(existing.getUri())).thenReturn(Optional.of(existing));
-        final CustomAttribute updated = new CustomAttribute(existing.getUri(),
-                                                            MultilingualString.create("Updated attribute", "en"),
-                                                            MultilingualString.create("Updated description", "en"));
+        final CustomAttribute updated = new CustomAttribute(
+                existing.getUri(),
+                MultilingualString.create("Updated attribute", "en"),
+                MultilingualString.create("Updated description", "en"));
         updated.setDomain(URI.create(SKOS.CONCEPT));
         updated.setRange(URI.create("http://www.w3.org/2001/XMLSchema#string"));
         updated.setAnnotatedRelationships(Set.of(URI.create("http://example.org/property")));
@@ -160,8 +162,7 @@ class DataRepositoryServiceTest {
         final CustomAttribute attribute = new CustomAttribute();
         attribute.setUri(uri);
 
-        when(dataDao.findCustomAttribute(uri))
-                .thenReturn(Optional.of(attribute));
+        when(dataDao.findCustomAttribute(uri)).thenReturn(Optional.of(attribute));
 
         sut.removeCustomAttribute(uri, false);
 
@@ -175,8 +176,7 @@ class DataRepositoryServiceTest {
         final CustomAttribute attribute = new CustomAttribute();
         attribute.setUri(uri);
 
-        when(dataDao.findCustomAttribute(uri))
-                .thenReturn(Optional.of(attribute));
+        when(dataDao.findCustomAttribute(uri)).thenReturn(Optional.of(attribute));
 
         sut.removeCustomAttribute(uri, true);
 
@@ -191,10 +191,8 @@ class DataRepositoryServiceTest {
         final CustomAttribute attribute = new CustomAttribute();
         attribute.setUri(uri);
 
-        when(dataDao.findCustomAttribute(uri))
-                .thenReturn(Optional.of(attribute));
-        when(dataDao.findCustomAttributeUsageContexts(attribute))
-                .thenReturn(affectedContexts);
+        when(dataDao.findCustomAttribute(uri)).thenReturn(Optional.of(attribute));
+        when(dataDao.findCustomAttributeUsageContexts(attribute)).thenReturn(affectedContexts);
 
         sut.removeCustomAttribute(uri, true);
 

@@ -38,8 +38,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import tools.jackson.databind.ObjectMapper;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -54,6 +52,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -70,11 +70,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration test for the authentication stack using MockMvc. This test initializes almost whole application and mocks
  * only DAOs, the goal is to test the security configuration close to production.
  */
-@ContextConfiguration(classes = {
-        TestAuthenticationStackConfig.class,
-        TestConfig.class,
-        TestServiceConfig.class},
-                      initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestAuthenticationStackConfig.class, TestConfig.class, TestServiceConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Execution(ExecutionMode.SAME_THREAD)
@@ -154,8 +152,7 @@ public class RestAuthenticationStackTest {
     }
 
     private SecretKey getValidSecretKey() {
-        return new SecretKeySpec(configuration.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8),
-                                 "HmacSHA256");
+        return new SecretKeySpec(configuration.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
     /**
@@ -164,11 +161,14 @@ public class RestAuthenticationStackTest {
      */
     private String generateExpiredJwt() {
         final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
-        final String token = JwtUtils.sign(new JWTClaimsSet.Builder().subject(staticUser.getUsername())
-                                                                     .issueTime(Date.from(issued))
-                                                                     .expirationTime(
-                                                                             Date.from(issued.plus(1, ChronoUnit.DAYS)))
-                                                                     .build(), null, signer);
+        final String token = JwtUtils.sign(
+                new JWTClaimsSet.Builder()
+                        .subject(staticUser.getUsername())
+                        .issueTime(Date.from(issued))
+                        .expirationTime(Date.from(issued.plus(1, ChronoUnit.DAYS)))
+                        .build(),
+                null,
+                signer);
         return SecurityConstants.JWT_TOKEN_PREFIX + token;
     }
 
@@ -179,25 +179,28 @@ public class RestAuthenticationStackTest {
     private String generateExpiredPat() {
         final Instant issued = Instant.now().minus(5, ChronoUnit.DAYS);
         final Date expiration = Date.from(issued.plus(1, ChronoUnit.DAYS));
-        return JwtUtils.sign(new JWTClaimsSet.Builder().subject(patToken.getUri().toString())
-                                                       .issueTime(Date.from(issued))
-                                                       .expirationTime(expiration)
-                                                       .build(),
-                             new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN), signer);
+        return JwtUtils.sign(
+                new JWTClaimsSet.Builder()
+                        .subject(patToken.getUri().toString())
+                        .issueTime(Date.from(issued))
+                        .expirationTime(expiration)
+                        .build(),
+                new JOSEObjectType(Constants.MediaType.JWT_ACCESS_TOKEN),
+                signer);
     }
 
     private ResultActions makeRequestWithJwt(String authToken) throws Exception {
         return mockMvc.perform(get(Constants.REST_MAPPING_PATH + UserController.PATH + UserController.CURRENT_USER_PATH)
-                                       .header(HttpHeaders.AUTHORIZATION, authToken));
+                .header(HttpHeaders.AUTHORIZATION, authToken));
     }
 
     private String performLogin() throws Exception {
         MvcResult result = mockMvc.perform(post(SecurityConstants.LOGIN_PATH)
-                                                   .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                                                   .param("username", staticUser.getUsername())
-                                                   .param("password", plainPassword))
-                                  .andExpect(status().isOk())
-                                  .andReturn();
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("username", staticUser.getUsername())
+                        .param("password", plainPassword))
+                .andExpect(status().isOk())
+                .andReturn();
 
         String authToken = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
         assertFalse(Utils.isBlank(authToken));
@@ -206,31 +209,34 @@ public class RestAuthenticationStackTest {
 
     private String requestPat(String userJWT) throws Exception {
         MvcResult result = mockMvc.perform(post(Constants.REST_MAPPING_PATH + PersonalAccessTokenController.PATH)
-                                                   .header(HttpHeaders.AUTHORIZATION, userJWT))
-                                  .andExpect(status().isOk())
-                                  .andReturn();
+                        .header(HttpHeaders.AUTHORIZATION, userJWT))
+                .andExpect(status().isOk())
+                .andReturn();
         String patToken = result.getResponse().getContentAsString();
         assertFalse(Utils.isBlank(patToken));
         return SecurityConstants.JWT_TOKEN_PREFIX + patToken;
     }
 
     private void mockExistingToken(Supplier<PersonalAccessToken> existingToken) {
-        doAnswer(i -> i.getArgument(0, PersonalAccessToken.class))
-                .when(patDao).update(any(PersonalAccessToken.class));
+        doAnswer(i -> i.getArgument(0, PersonalAccessToken.class)).when(patDao).update(any(PersonalAccessToken.class));
         doAnswer(i -> {
-            final URI existingUri = Optional.ofNullable(existingToken.get())
-                                            .map(PersonalAccessToken::getUri)
-                                            .orElse(null);
-            return Objects.equals(existingUri, i.getArgument(0));
-        }).when(patDao).exists(notNull());
+                    final URI existingUri = Optional.ofNullable(existingToken.get())
+                            .map(PersonalAccessToken::getUri)
+                            .orElse(null);
+                    return Objects.equals(existingUri, i.getArgument(0));
+                })
+                .when(patDao)
+                .exists(notNull());
         doAnswer(i -> {
-            PersonalAccessToken ref = existingToken.get();
-            URI requestURI = i.getArgument(0, URI.class);
-            if (requestURI.equals(ref.getUri())) {
-                return Optional.of(ref);
-            }
-            return Optional.empty();
-        }).when(patDao).find(any());
+                    PersonalAccessToken ref = existingToken.get();
+                    URI requestURI = i.getArgument(0, URI.class);
+                    if (requestURI.equals(ref.getUri())) {
+                        return Optional.of(ref);
+                    }
+                    return Optional.empty();
+                })
+                .when(patDao)
+                .find(any());
     }
 
     /**
@@ -240,21 +246,18 @@ public class RestAuthenticationStackTest {
     void validLoginReturnsValidUserJwtInAuthorizationHeader() throws Exception {
         String authToken = performLogin();
         // Verify that the token works
-        makeRequestWithJwt(authToken)
-                .andExpect(status().isOk());
+        makeRequestWithJwt(authToken).andExpect(status().isOk());
     }
 
     @Test
     void validSignatureTokenIsAccepted() throws Exception {
         String validJwtToken = generateValidJWT();
-        makeRequestWithJwt(validJwtToken)
-                .andExpect(status().isOk());
+        makeRequestWithJwt(validJwtToken).andExpect(status().isOk());
     }
 
     @Test
     void invalidSignatureTokenIsRejected() throws Exception {
-        makeRequestWithJwt(generateJwtWithInvalidSignature())
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(generateJwtWithInvalidSignature()).andExpect(status().isUnauthorized());
     }
 
     /**
@@ -266,53 +269,48 @@ public class RestAuthenticationStackTest {
         mockExistingToken(createdToken::get);
         // store created token on persist
         doAnswer(i -> {
-            createdToken.set(i.getArgument(0, PersonalAccessToken.class));
-            return null;
-        }).when(patDao).persist(any(PersonalAccessToken.class));
+                    createdToken.set(i.getArgument(0, PersonalAccessToken.class));
+                    return null;
+                })
+                .when(patDao)
+                .persist(any(PersonalAccessToken.class));
 
         final String userJWT = performLogin();
         final String pat = requestPat(userJWT);
 
-        MvcResult result = makeRequestWithJwt(pat)
-                .andExpect(status().isOk())
-                .andReturn();
+        MvcResult result = makeRequestWithJwt(pat).andExpect(status().isOk()).andReturn();
 
-        final UserAccount currentUser = objectMapper.readValue(result.getResponse().getContentAsString(),
-                                                               UserAccount.class);
+        final UserAccount currentUser =
+                objectMapper.readValue(result.getResponse().getContentAsString(), UserAccount.class);
 
         assertEquals(staticUser, currentUser);
     }
 
     @Test
     void patWithInvalidSignatureIsRejected() throws Exception {
-        makeRequestWithJwt(generatePatWithInvalidSignature())
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(generatePatWithInvalidSignature()).andExpect(status().isUnauthorized());
     }
 
     @Test
     void patWithValidSignatureIsAccepted() throws Exception {
-        makeRequestWithJwt(generateValidPat())
-                .andExpect(status().isOk());
+        makeRequestWithJwt(generateValidPat()).andExpect(status().isOk());
     }
 
     @Test
     void expiredJwtIsRejected() throws Exception {
-        makeRequestWithJwt(generateExpiredJwt())
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(generateExpiredJwt()).andExpect(status().isUnauthorized());
     }
 
     @Test
     void expiredPatJwtIsRejected() throws Exception {
-        makeRequestWithJwt(generateExpiredPat())
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(generateExpiredPat()).andExpect(status().isUnauthorized());
     }
 
     @Test
     void validPatJwtForExpiredPatIsRejected() throws Exception {
         final String patJwt = generateValidPat();
         patToken.setExpirationDate(LocalDate.now().minusDays(2));
-        makeRequestWithJwt(patJwt)
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(patJwt).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -323,8 +321,7 @@ public class RestAuthenticationStackTest {
         mockExistingToken(() -> token);
         // token not known to the application
         final String patJwt = SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generatePAT(token);
-        makeRequestWithJwt(patJwt)
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(patJwt).andExpect(status().isUnauthorized());
     }
 
     static UserAccount customizeAccount(Consumer<UserAccount> customizer) {
@@ -334,10 +331,7 @@ public class RestAuthenticationStackTest {
     }
 
     static Stream<UserAccount> invalidUserAccountSource() {
-        return Stream.of(
-                customizeAccount(UserAccount::lock),
-                customizeAccount(UserAccount::disable)
-        );
+        return Stream.of(customizeAccount(UserAccount::lock), customizeAccount(UserAccount::disable));
     }
 
     @ParameterizedTest
@@ -345,7 +339,6 @@ public class RestAuthenticationStackTest {
     void validJwtAndPatAreRejectedForInvalidUserAccount(UserAccount userAccount) throws Exception {
         setUserToContext(userAccount);
         final String token = SecurityConstants.JWT_TOKEN_PREFIX + validJwtUtils.generateToken(userAccount, List.of());
-        makeRequestWithJwt(token)
-                .andExpect(status().isUnauthorized());
+        makeRequestWithJwt(token).andExpect(status().isUnauthorized());
     }
 }

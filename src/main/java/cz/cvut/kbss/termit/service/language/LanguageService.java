@@ -17,8 +17,8 @@
  */
 package cz.cvut.kbss.termit.service.language;
 
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
@@ -46,8 +46,10 @@ public class LanguageService {
 
     private final TermStateLanguageService termStatesService;
 
-    public LanguageService(DataRepositoryService dataService, UfoTermTypesService termTypesService,
-                           TermStateLanguageService termStatesService) {
+    public LanguageService(
+            DataRepositoryService dataService,
+            UfoTermTypesService termTypesService,
+            TermStateLanguageService termStatesService) {
         this.dataService = dataService;
         this.termTypesService = termTypesService;
         this.termStatesService = termStatesService;
@@ -70,9 +72,10 @@ public class LanguageService {
      * @return List of resources
      */
     public List<RdfsResource> getAccessLevels() {
-        return Stream.of(AccessLevel.values()).map(al -> dataService.find(URI.create(al.getIri())))
-                     .flatMap(Optional::stream)
-                     .collect(Collectors.toList());
+        return Stream.of(AccessLevel.values())
+                .map(al -> dataService.find(URI.create(al.getIri())))
+                .flatMap(Optional::stream)
+                .collect(Collectors.toList());
     }
 
     /**

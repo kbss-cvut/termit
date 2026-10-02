@@ -76,8 +76,9 @@ public class Document extends Resource implements SupportsStorage {
      * @return {@code Optional} containing the file with a matching filename or an empty {@code Optional}
      */
     public Optional<File> getFile(String fileName) {
-        return files != null ? files.stream().filter(f -> f.getLabel().equals(fileName)).findAny() :
-               Optional.empty();
+        return files != null
+                ? files.stream().filter(f -> f.getLabel().equals(fileName)).findAny()
+                : Optional.empty();
     }
 
     public URI getVocabulary() {
@@ -111,11 +112,10 @@ public class Document extends Resource implements SupportsStorage {
 
     @Override
     public String toString() {
-        return "Document{" +
-                "uri=" + getUri() +
-                ", name='" + getLabel() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", files=" + files +
-                '}';
+        return "Document{" + "uri="
+                + getUri() + ", name='"
+                + getLabel() + '\'' + ", description='"
+                + getDescription() + '\'' + ", files="
+                + files + '}';
     }
 }

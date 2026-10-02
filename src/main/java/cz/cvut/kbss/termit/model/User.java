@@ -121,9 +121,6 @@ public class User extends AccessControlAgent implements HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "User{" +
-                getFullName() +
-                ", username='" + username + '\'' +
-                '}';
+        return "User{" + getFullName() + ", username='" + username + '\'' + '}';
     }
 }

@@ -154,13 +154,18 @@ class VocabularyServiceTest {
         final Vocabulary v = Generator.generateVocabularyWithId();
         final Vocabulary vv = Generator.generateVocabularyWithId();
 
-        final List<VocabularyDto> vocabularies = List.of(Environment.getDtoMapper().vocabularyToVocabularyDto(v),
+        final List<VocabularyDto> vocabularies = List.of(
+                Environment.getDtoMapper().vocabularyToVocabularyDto(v),
                 Environment.getDtoMapper().vocabularyToVocabularyDto(vv));
 
-        final List<TermDto> terms = Stream.of(Generator.generateTermWithId(v.getUri()), Generator.generateTermWithId(v.getUri()))
-                                          .map(TermDto::new).toList();
-        final List<TermDto> terms2 = Stream.of(Generator.generateTermWithId(vv.getUri()), Generator.generateTermWithId(vv.getUri()))
-                                           .map(TermDto::new).toList();
+        final List<TermDto> terms = Stream.of(
+                        Generator.generateTermWithId(v.getUri()), Generator.generateTermWithId(v.getUri()))
+                .map(TermDto::new)
+                .toList();
+        final List<TermDto> terms2 = Stream.of(
+                        Generator.generateTermWithId(vv.getUri()), Generator.generateTermWithId(vv.getUri()))
+                .map(TermDto::new)
+                .toList();
 
         when(repositoryService.findRequired(v.getUri())).thenReturn(v);
         when(repositoryService.findRequired(vv.getUri())).thenReturn(vv);
@@ -214,8 +219,8 @@ class VocabularyServiceTest {
     @Test
     void getChangesRetrievesChangesForVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<AbstractChangeRecord> records = Generator.generateChangeRecords(vocabulary,
-                                                                                   Generator.generateUserWithId());
+        final List<AbstractChangeRecord> records =
+                Generator.generateChangeRecords(vocabulary, Generator.generateUserWithId());
         final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
         when(changeRecordService.getChanges(vocabulary, emptyFilter)).thenReturn(records);
         final List<AbstractChangeRecord> result = sut.getChanges(vocabulary);
@@ -239,8 +244,8 @@ class VocabularyServiceTest {
     void getAccessControlListRetrievesACLForSpecifiedVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        when(aclService.findForAsDto(vocabulary)).thenReturn(
-                Optional.of(Environment.getDtoMapper().accessControlListToDto(acl)));
+        when(aclService.findForAsDto(vocabulary))
+                .thenReturn(Optional.of(Environment.getDtoMapper().accessControlListToDto(acl)));
 
         final AccessControlListDto result = sut.getAccessControlList(vocabulary);
         assertEquals(acl.getUri(), result.getUri());
@@ -382,10 +387,11 @@ class VocabularyServiceTest {
 
     @Test
     void importNewVocabularyCreatesAccessControlListForImportedVocabulary() {
-        final MultipartFile fileToImport = new MockMultipartFile("test.ttl", "content to import".getBytes(
-                StandardCharsets.UTF_8));
+        final MultipartFile fileToImport =
+                new MockMultipartFile("test.ttl", "content to import".getBytes(StandardCharsets.UTF_8));
         final Vocabulary persisted = Generator.generateVocabularyWithId();
-        when(repositoryService.importVocabulary(anyBoolean(), any(MultipartFile.class))).thenReturn(persisted);
+        when(repositoryService.importVocabulary(anyBoolean(), any(MultipartFile.class)))
+                .thenReturn(persisted);
         final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.createFor(any(HasIdentifier.class))).thenReturn(acl);
 
@@ -398,17 +404,21 @@ class VocabularyServiceTest {
 
     @Test
     void importNewVocabularyPublishesVocabularyCreatedEvent() {
-        final MultipartFile fileToImport = new MockMultipartFile("test.ttl", "content to import".getBytes(
-                StandardCharsets.UTF_8));
+        final MultipartFile fileToImport =
+                new MockMultipartFile("test.ttl", "content to import".getBytes(StandardCharsets.UTF_8));
         final Vocabulary persisted = Generator.generateVocabularyWithId();
-        when(repositoryService.importVocabulary(anyBoolean(), any(MultipartFile.class))).thenReturn(persisted);
+        when(repositoryService.importVocabulary(anyBoolean(), any(MultipartFile.class)))
+                .thenReturn(persisted);
         final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.createFor(any(HasIdentifier.class))).thenReturn(acl);
 
         sut.importVocabulary(false, fileToImport);
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
-        Optional<VocabularyCreatedEvent> event = captor.getAllValues().stream().filter(e -> e instanceof VocabularyCreatedEvent).map(e->(VocabularyCreatedEvent)e).findAny();
+        Optional<VocabularyCreatedEvent> event = captor.getAllValues().stream()
+                .filter(e -> e instanceof VocabularyCreatedEvent)
+                .map(e -> (VocabularyCreatedEvent) e)
+                .findAny();
         assertTrue(event.isPresent());
         assertEquals(persisted.getUri(), event.get().getVocabularyIri());
     }
@@ -418,10 +428,14 @@ class VocabularyServiceTest {
         when(appContext.getBean(Configuration.class)).thenReturn(new Configuration());
         final TypeAwareResource result = sut.getExcelImportTemplateFile();
         assertTrue(result.getFileExtension().isPresent());
-        assertEquals(ExportFormat.EXCEL.getFileExtension(), result.getFileExtension().get());
+        assertEquals(
+                ExportFormat.EXCEL.getFileExtension(), result.getFileExtension().get());
         assertTrue(result.getMediaType().isPresent());
         assertEquals(ExportFormat.EXCEL.getMediaType(), result.getMediaType().get());
-        final File expectedFile = new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI());
+        final File expectedFile = new File(getClass()
+                .getClassLoader()
+                .getResource("template/termit-import.xlsx")
+                .toURI());
         assertEquals(expectedFile, result.getFile());
     }
 
@@ -431,7 +445,8 @@ class VocabularyServiceTest {
      */
     @Test
     void publishingVocabularyContentModifiedEventTriggersContentsValidation() {
-        when(repositoryService.getTransitivelyImportedVocabularies(any(URI.class))).thenReturn(Set.of());
+        when(repositoryService.getTransitivelyImportedVocabularies(any(URI.class)))
+                .thenReturn(Set.of());
         final VocabularyContentModifiedEvent event = new VocabularyContentModifiedEvent(this, Generator.generateUri());
         sut.onVocabularyContentModified(event);
         verify(vocabularyValidator).validate(event.getVocabularyIri(), Set.of(event.getVocabularyIri()));
@@ -443,7 +458,8 @@ class VocabularyServiceTest {
         final Set<URI> imported = Set.of(Generator.generateUri(), Generator.generateUri());
         final Set<URI> allVocabularies = new HashSet<>(imported);
         allVocabularies.add(vocabularyUri);
-        when(repositoryService.getTransitivelyImportedVocabularies(vocabularyUri)).thenReturn(imported);
+        when(repositoryService.getTransitivelyImportedVocabularies(vocabularyUri))
+                .thenReturn(imported);
 
         sut.validateContents(vocabularyUri);
         verify(repositoryService).getTransitivelyImportedVocabularies(vocabularyUri);

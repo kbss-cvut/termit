@@ -55,7 +55,8 @@ public interface CacheableFuture<T> extends Future<T> {
                 return Optional.of(get());
             }
         } catch (ExecutionException e) {
-            if (e.getCause() instanceof UnsupportedOperationException || e.getCause() instanceof TooLargeToValidateException) {
+            if (e.getCause() instanceof UnsupportedOperationException
+                    || e.getCause() instanceof TooLargeToValidateException) {
                 return Optional.empty();
             }
             throw new TermItException(e);

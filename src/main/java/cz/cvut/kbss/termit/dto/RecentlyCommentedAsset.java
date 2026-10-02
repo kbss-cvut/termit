@@ -39,16 +39,20 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@SparqlResultSetMapping(name = "RecentlyCommentedAsset",
-    classes = {@ConstructorResult(targetClass = RecentlyCommentedAsset.class,
-        variables = {
-            @VariableResult(name = "entity", type = URI.class),
-            @VariableResult(name = "label", type = String.class),
-            @VariableResult(name = "lastCommentUri", type = URI.class),
-            @VariableResult(name = "myLastCommentUri", type = URI.class),
-            @VariableResult(name = "vocabulary", type = URI.class),
-            @VariableResult(name = "type", type = String.class)
-        })})
+@SparqlResultSetMapping(
+        name = "RecentlyCommentedAsset",
+        classes = {
+            @ConstructorResult(
+                    targetClass = RecentlyCommentedAsset.class,
+                    variables = {
+                        @VariableResult(name = "entity", type = URI.class),
+                        @VariableResult(name = "label", type = String.class),
+                        @VariableResult(name = "lastCommentUri", type = URI.class),
+                        @VariableResult(name = "myLastCommentUri", type = URI.class),
+                        @VariableResult(name = "vocabulary", type = URI.class),
+                        @VariableResult(name = "type", type = String.class)
+                    })
+        })
 public class RecentlyCommentedAsset implements HasTypes, Serializable {
 
     @Id
@@ -75,10 +79,10 @@ public class RecentlyCommentedAsset implements HasTypes, Serializable {
     @Types
     private Set<String> types;
 
-    public RecentlyCommentedAsset() {
-    }
+    public RecentlyCommentedAsset() {}
 
-    public RecentlyCommentedAsset(URI entity, String label, URI lastCommentUri, URI myLastCommentUri, URI vocabulary, String type) {
+    public RecentlyCommentedAsset(
+            URI entity, String label, URI lastCommentUri, URI myLastCommentUri, URI vocabulary, String type) {
         this.uri = entity;
         this.label = label;
         this.lastCommentUri = lastCommentUri;
@@ -157,12 +161,11 @@ public class RecentlyCommentedAsset implements HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "RecentlyCommentedAsset{" +
-                label + " " + Utils.uriToString(uri) +
-            ", comment=" + lastComment +
-            ", myLastComment=" + myLastComment +
-            ", types=" + types +
-            '}';
+        return "RecentlyCommentedAsset{" + label
+                + " " + Utils.uriToString(uri) + ", comment="
+                + lastComment + ", myLastComment="
+                + myLastComment + ", types="
+                + types + '}';
     }
 
     @Override
@@ -173,10 +176,10 @@ public class RecentlyCommentedAsset implements HasTypes, Serializable {
         if (!(o instanceof RecentlyCommentedAsset that)) {
             return false;
         }
-        return Objects.equals(uri, that.uri) &&
-            Objects.equals(lastComment, that.lastComment) &&
-            Objects.equals(myLastComment, that.myLastComment) &&
-            Objects.equals(types, that.types);
+        return Objects.equals(uri, that.uri)
+                && Objects.equals(lastComment, that.lastComment)
+                && Objects.equals(myLastComment, that.myLastComment)
+                && Objects.equals(types, that.types);
     }
 
     @Override

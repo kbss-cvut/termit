@@ -54,7 +54,10 @@ public abstract class TermOccurrence extends AbstractEntity implements Copyable<
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_target, cascade = {CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @OWLObjectProperty(
+            iri = Vocabulary.s_p_has_target,
+            cascade = {CascadeType.MERGE},
+            fetch = FetchType.EAGER)
     OccurrenceTarget target;
 
     @OWLDataProperty(iri = DC.Terms.DESCRIPTION)
@@ -73,8 +76,7 @@ public abstract class TermOccurrence extends AbstractEntity implements Copyable<
     @OWLDataProperty(iri = DC.Terms.IDENTIFIER)
     private String elementAbout;
 
-    public TermOccurrence() {
-    }
+    public TermOccurrence() {}
 
     public TermOccurrence(URI term, OccurrenceTarget target) {
         this.term = Objects.requireNonNull(term);
@@ -184,10 +186,7 @@ public abstract class TermOccurrence extends AbstractEntity implements Copyable<
 
     @Override
     public String toString() {
-        return "TermOccurrence{<" +
-                getUri() +
-                ">, term=<" + term +
-                ">, target=" + target + '}';
+        return "TermOccurrence{<" + getUri() + ">, term=<" + term + ">, target=" + target + '}';
     }
 
     /**

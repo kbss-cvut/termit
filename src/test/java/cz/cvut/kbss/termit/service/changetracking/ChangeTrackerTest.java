@@ -97,12 +97,12 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     }
 
     private List<AbstractChangeRecord> findRecords(HasIdentifier entity) {
-        return em.createNativeQuery("SELECT ?x WHERE { ?x a ?changeRecord ; ?concerns ?entity . }",
-                                    AbstractChangeRecord.class)
-                 .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_change))
-                 .setParameter("concerns", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_changed_entity))
-                 .setParameter("entity", entity.getUri())
-                 .getResultList();
+        return em.createNativeQuery(
+                        "SELECT ?x WHERE { ?x a ?changeRecord ; ?concerns ?entity . }", AbstractChangeRecord.class)
+                .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_change))
+                .setParameter("concerns", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_changed_entity))
+                .setParameter("entity", entity.getUri())
+                .getResultList();
     }
 
     @Test
@@ -134,7 +134,9 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         final AbstractChangeRecord record = result.get(0);
         assertEquals(original.getUri(), record.getChangedEntity());
         assertThat(record, instanceOf(UpdateChangeRecord.class));
-        assertEquals(SKOS.DEFINITION, ((UpdateChangeRecord) record).getChangedAttribute().toString());
+        assertEquals(
+                SKOS.DEFINITION,
+                ((UpdateChangeRecord) record).getChangedAttribute().toString());
     }
 
     @Test
@@ -154,8 +156,9 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         result.forEach(record -> {
             assertEquals(original.getUri(), record.getChangedEntity());
             assertThat(record, instanceOf(UpdateChangeRecord.class));
-            assertThat(((UpdateChangeRecord) record).getChangedAttribute().toString(), anyOf(equalTo(SKOS.DEFINITION),
-                                                                                             equalTo(DC.Terms.SOURCE)));
+            assertThat(
+                    ((UpdateChangeRecord) record).getChangedAttribute().toString(),
+                    anyOf(equalTo(SKOS.DEFINITION), equalTo(DC.Terms.SOURCE)));
         });
     }
 }

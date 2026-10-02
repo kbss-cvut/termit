@@ -41,10 +41,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -53,7 +53,9 @@ import static org.mockito.Mockito.mock;
 
 @Tag("security")
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
-@ContextConfiguration(classes = {TestConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 class JwtAuthenticationFilterTest {
 
     @Autowired
@@ -75,8 +77,7 @@ class JwtAuthenticationFilterTest {
         this.user = Generator.generateUserAccount();
         this.mockRequest = new MockHttpServletRequest();
         this.mockResponse = new MockHttpServletResponse();
-        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class),
-                                               new JwtUtils(config));
+        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class), new JwtUtils(config));
     }
 
     @Test
@@ -88,8 +89,8 @@ class JwtAuthenticationFilterTest {
         assertNotNull(value);
         assertTrue(value.startsWith(SecurityConstants.JWT_TOKEN_PREFIX));
         final String jwtToken = value.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
-        final SecretKey key = new SecretKeySpec(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8),
-                                                "HmacSHA256");
+        final SecretKey key =
+                new SecretKeySpec(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         final SignedJWT jwt = SignedJWT.parse(jwtToken);
         assertTrue(jwt.verify(new MACVerifier(key)));
         assertFalse(jwt.getJWTClaimsSet().getClaims().isEmpty());

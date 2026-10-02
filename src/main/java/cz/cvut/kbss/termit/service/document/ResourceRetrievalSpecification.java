@@ -26,5 +26,4 @@ import java.util.Optional;
  * @param at                            Timestamp indicating the version of the resource to retrieve
  * @param withoutUnconfirmedOccurrences Whether the content should not contain unconfirmed term occurrences
  */
-public record ResourceRetrievalSpecification(Optional<Instant> at, boolean withoutUnconfirmedOccurrences) {
-}
+public record ResourceRetrievalSpecification(Optional<Instant> at, boolean withoutUnconfirmedOccurrences) {}

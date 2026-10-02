@@ -37,8 +37,7 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
     @Types
     private Set<String> types;
 
-    public AbstractAssignmentsInfo() {
-    }
+    public AbstractAssignmentsInfo() {}
 
     protected AbstractAssignmentsInfo(URI term, URI resource) {
         this.term = term;
@@ -79,9 +78,9 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
         if (!(o instanceof AbstractAssignmentsInfo that)) {
             return false;
         }
-        return Objects.equals(term, that.term) &&
-                Objects.equals(resource, that.resource) &&
-                Objects.equals(types, that.types);
+        return Objects.equals(term, that.term)
+                && Objects.equals(resource, that.resource)
+                && Objects.equals(types, that.types);
     }
 
     @Override
@@ -91,8 +90,6 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
 
     @Override
     public String toString() {
-        return "term=" + term +
-                ", resource=" + resource +
-                ", types=" + types;
+        return "term=" + term + ", resource=" + resource + ", types=" + types;
     }
 }

@@ -52,11 +52,14 @@ public class AuthenticationSuccess extends SimpleUrlAuthenticationSuccessHandler
     }
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                                        Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse,
+            Authentication authentication)
+            throws IOException {
         Objects.requireNonNull(authentication);
-        final LoginStatus loginStatus = new LoginStatus(true, authentication.isAuthenticated(),
-                getUsername(authentication), null);
+        final LoginStatus loginStatus =
+                new LoginStatus(true, authentication.isAuthenticated(), getUsername(authentication), null);
         mapper.writeValue(httpServletResponse.getOutputStream(), loginStatus);
     }
 
@@ -66,8 +69,11 @@ public class AuthenticationSuccess extends SimpleUrlAuthenticationSuccessHandler
     }
 
     @Override
-    public void onLogoutSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                                Authentication authentication) throws IOException {
+    public void onLogoutSuccess(
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse,
+            Authentication authentication)
+            throws IOException {
         LOG.trace("Successfully logged out user {}", getUsername(authentication));
         final LoginStatus loginStatus = new LoginStatus(false, true, null, null);
         mapper.writeValue(httpServletResponse.getOutputStream(), loginStatus);

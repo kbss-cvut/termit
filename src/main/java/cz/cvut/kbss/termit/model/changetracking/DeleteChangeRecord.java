@@ -50,7 +50,8 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
         } else if (changedEntity.getLabel() instanceof MultilingualString multilingualLabel) {
             this.label = multilingualLabel;
         } else {
-            throw new IllegalArgumentException("Unsupported label type: " + changedEntity.getLabel().getClass());
+            throw new IllegalArgumentException(
+                    "Unsupported label type: " + changedEntity.getLabel().getClass());
         }
     }
 
@@ -84,10 +85,7 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
 
     @Override
     public String toString() {
-        return "DeleteChangeRecord{" +
-                super.toString() +
-                ", label=" + label +
-                '}';
+        return "DeleteChangeRecord{" + super.toString() + ", label=" + label + '}';
     }
 
     @Override

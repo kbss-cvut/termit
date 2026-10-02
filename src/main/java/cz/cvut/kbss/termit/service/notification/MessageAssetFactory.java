@@ -61,11 +61,12 @@ public class MessageAssetFactory {
             if (term.getPrimaryLanguage() != null) {
                 termLabel = term.getPrimaryLabel();
             } else {
-                termLabel = dataService.getLabel(term.getUri(), null)
-                                       .orElse(term.getUri().toString());
+                termLabel = dataService
+                        .getLabel(term.getUri(), null)
+                        .orElse(term.getUri().toString());
             }
-            this.label = termLabel +
-                    " (" + dataService.getLabel(term.getVocabulary(), null).orElse("") + ")";
+            this.label = termLabel + " ("
+                    + dataService.getLabel(term.getVocabulary(), null).orElse("") + ")";
         }
 
         @Override

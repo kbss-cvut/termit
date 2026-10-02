@@ -52,8 +52,11 @@ public class LongRunningTasksRegistry {
         final LongRunningTaskStatus status = new LongRunningTaskStatus(task);
 
         if (LOG.isTraceEnabled()) {
-            LOG.atTrace().setMessage("Long running task changed state: {}{}").addArgument(status::getName)
-               .addArgument(status).log();
+            LOG.atTrace()
+                    .setMessage("Long running task changed state: {}{}")
+                    .addArgument(status::getName)
+                    .addArgument(status)
+                    .log();
         }
 
         handleTaskChanged(task);
@@ -71,8 +74,8 @@ public class LongRunningTasksRegistry {
                 count.incrementAndGet();
                 if (entry.getValue().getName() != null) {
                     // announce that the task is done
-                    final LongRunningTaskStatus doneStatus = new LongRunningTaskStatus(entry.getValue().getName(),
-                            entry.getKey(), LongRunningTaskStatus.State.DONE, null);
+                    final LongRunningTaskStatus doneStatus = new LongRunningTaskStatus(
+                            entry.getValue().getName(), entry.getKey(), LongRunningTaskStatus.State.DONE, null);
                     eventPublisher.publishEvent(new LongRunningTaskChangedEvent(this, doneStatus));
                 }
                 return true;
@@ -89,7 +92,7 @@ public class LongRunningTasksRegistry {
     }
 
     private void handleTaskChanged(@Nonnull final LongRunningTask task) {
-        if(task.isDone()) {
+        if (task.isDone()) {
             registry.remove(task.getUuid());
         } else {
             registry.put(task.getUuid(), task);

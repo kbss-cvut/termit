@@ -40,8 +40,8 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
 
     private final EntityManager em;
 
-    public CascadingVocabularySnapshotRemover(VocabularyRelationshipResolver relationshipResolver,
-                                              VocabularyDao vocabularyDao, EntityManager em) {
+    public CascadingVocabularySnapshotRemover(
+            VocabularyRelationshipResolver relationshipResolver, VocabularyDao vocabularyDao, EntityManager em) {
         this.relationshipResolver = relationshipResolver;
         this.vocabularyDao = vocabularyDao;
         this.em = em;
@@ -52,16 +52,17 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
         Objects.requireNonNull(snapshot);
         ensureCanRemove(snapshot);
         Stream.concat(
-                Stream.of(snapshot.getUri()),
-                relationshipResolver.getRelatedVocabularies(snapshot.getUri()).stream()
-        ).forEach(snapshotUri -> {
-            final URI ctx = resolveSnapshotContext(snapshotUri);
-            clearContext(ctx);
-        });
+                        Stream.of(snapshot.getUri()),
+                        relationshipResolver.getRelatedVocabularies(snapshot.getUri()).stream())
+                .forEach(snapshotUri -> {
+                    final URI ctx = resolveSnapshotContext(snapshotUri);
+                    clearContext(ctx);
+                });
     }
 
     private void ensureCanRemove(Snapshot snapshot) {
-        if (!Utils.emptyIfNull(snapshot.getTypes()).contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)) {
+        if (!Utils.emptyIfNull(snapshot.getTypes())
+                .contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)) {
             throw new UnsupportedAssetOperationException("Only removal of vocabulary snapshots is supported.");
         }
         final Vocabulary toRemove = vocabularyDao.getReference(snapshot.getUri());
@@ -72,9 +73,9 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
 
     private URI resolveSnapshotContext(URI snapshot) {
         return em.createNativeQuery("SELECT ?g WHERE { GRAPH ?g { ?snapshot a ?snapshotType . } }", URI.class)
-                 .setParameter("snapshot", snapshot)
-                 .setParameter("snapshotType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
-                 .getSingleResult();
+                .setParameter("snapshot", snapshot)
+                .setParameter("snapshotType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                .getSingleResult();
     }
 
     private void clearContext(URI ctx) {

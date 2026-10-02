@@ -48,10 +48,10 @@ public class VocabularyPrimaryLanguageGenerator {
                         }
                     }
                     """)
-          .setParameter("vocabularyType", URI.create(SKOS.CONCEPT_SCHEME))
-          .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-          .setParameter("language", config.getLanguage(), null)
-          .executeUpdate();
+                .setParameter("vocabularyType", URI.create(SKOS.CONCEPT_SCHEME))
+                .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                .setParameter("language", config.getLanguage(), null)
+                .executeUpdate();
         em.flush();
     }
 }

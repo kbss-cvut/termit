@@ -38,7 +38,8 @@ public class TermItUserDetailsService implements UserDetailsService {
     @Cacheable(cacheNames = "userDetails", key = "#username")
     @Override
     public TermItUserDetails loadUserByUsername(String username) {
-        return new TermItUserDetails(userAccountDao.findByUsername(username).orElseThrow(
-                () -> new UsernameNotFoundException("User with username " + username + " not found.")));
+        return new TermItUserDetails(userAccountDao
+                .findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User with username " + username + " not found.")));
     }
 }

@@ -45,10 +45,11 @@ public class ValidationException extends TermItException {
         if (validationResult == null) {
             return super.getMessage();
         }
-        return String.join("\n",
+        return String.join(
+                "\n",
                 validationResult.getViolations().stream()
-                                .map(cv -> "Value of " + cv.getRootBeanClass().getSimpleName() + "." +
-                                        cv.getPropertyPath() + " " + cv.getMessage())
-                                .collect(Collectors.toSet()));
+                        .map(cv -> "Value of " + cv.getRootBeanClass().getSimpleName() + "." + cv.getPropertyPath()
+                                + " " + cv.getMessage())
+                        .collect(Collectors.toSet()));
     }
 }

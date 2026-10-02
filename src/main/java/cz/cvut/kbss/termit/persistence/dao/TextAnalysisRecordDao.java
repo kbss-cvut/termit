@@ -58,16 +58,18 @@ public class TextAnalysisRecordDao {
     public Optional<TextAnalysisRecord> findLatest(Resource resource) {
         Objects.requireNonNull(resource);
         try {
-            return Optional.of(em.createNativeQuery("SELECT ?x WHERE { " +
-                    "?x a ?type ;" +
-                    "?hasResource ?resource ;" +
-                    "?hasDateCreated ?dateCreated ." +
-                    "} ORDER BY DESC(?dateCreated)", TextAnalysisRecord.class)
-                                       .setMaxResults(1)
-                                 .setParameter("type", URI.create(Vocabulary.s_c_text_analysis_record))
-                                 .setParameter("hasResource", URI.create(Vocabulary.s_p_has_analyzed_resource))
-                                 .setParameter("hasDateCreated", URI.create(DC.Terms.CREATED))
-                                 .setParameter("resource", resource.getUri()).getSingleResult());
+            return Optional.of(em.createNativeQuery(
+                            "SELECT ?x WHERE { " + "?x a ?type ;"
+                                    + "?hasResource ?resource ;"
+                                    + "?hasDateCreated ?dateCreated ."
+                                    + "} ORDER BY DESC(?dateCreated)",
+                            TextAnalysisRecord.class)
+                    .setMaxResults(1)
+                    .setParameter("type", URI.create(Vocabulary.s_c_text_analysis_record))
+                    .setParameter("hasResource", URI.create(Vocabulary.s_p_has_analyzed_resource))
+                    .setParameter("hasDateCreated", URI.create(DC.Terms.CREATED))
+                    .setParameter("resource", resource.getUri())
+                    .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         }

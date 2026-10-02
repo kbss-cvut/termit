@@ -90,9 +90,8 @@ public class UserGroup extends AccessControlAgent {
 
     @Override
     public String toString() {
-        return "UserGroup{" +
-                label + Utils.uriToString(getUri()) +
-                ", member count = " + Utils.emptyIfNull(members).size() +
-                '}';
+        return "UserGroup{" + label
+                + Utils.uriToString(getUri()) + ", member count = "
+                + Utils.emptyIfNull(members).size() + '}';
     }
 }

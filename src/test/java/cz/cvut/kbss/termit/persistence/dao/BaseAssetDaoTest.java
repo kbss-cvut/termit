@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
-class BaseAssetDaoTest extends BaseDaoTestRunner{
+class BaseAssetDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
@@ -71,8 +71,9 @@ class BaseAssetDaoTest extends BaseDaoTestRunner{
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
-                                                      .filter(AssetPersistEvent.class::isInstance)
-                                                      .map(AssetPersistEvent.class::cast).findFirst();
+                .filter(AssetPersistEvent.class::isInstance)
+                .map(AssetPersistEvent.class::cast)
+                .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(t, evt.get().getAsset());
     }
@@ -88,8 +89,9 @@ class BaseAssetDaoTest extends BaseDaoTestRunner{
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
-                                                     .filter(AssetUpdateEvent.class::isInstance)
-                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+                .filter(AssetUpdateEvent.class::isInstance)
+                .map(AssetUpdateEvent.class::cast)
+                .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(t, evt.get().getAsset());
     }

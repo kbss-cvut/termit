@@ -53,9 +53,10 @@ class UserGroupDaoTest extends BaseDaoTestRunner {
         group.setUri(null);
         transactional(() -> sut.persist(group));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x a ?type . } }", Boolean.class)
-                     .setParameter("ctx", URI.create(StaticContexts.USER_GROUPS))
-                     .setParameter("x", group)
-                     .setParameter("type", URI.create(Vocabulary.s_c_Usergroup)).getSingleResult());
+                .setParameter("ctx", URI.create(StaticContexts.USER_GROUPS))
+                .setParameter("x", group)
+                .setParameter("type", URI.create(Vocabulary.s_c_Usergroup))
+                .getSingleResult());
         assertTrue(sut.find(group.getUri()).isPresent());
     }
 }

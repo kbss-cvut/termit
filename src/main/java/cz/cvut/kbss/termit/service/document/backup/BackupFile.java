@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.service.document.backup;
 
-
 import java.io.File;
 import java.time.Instant;
 
@@ -13,6 +12,4 @@ import java.time.Instant;
  * @param file the file containing the backup
  * @param backupReason the reason of backup creation
  */
-public record BackupFile(Instant timestamp, File file, BackupReason backupReason) {
-
-}
+public record BackupFile(Instant timestamp, File file, BackupReason backupReason) {}

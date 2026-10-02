@@ -86,7 +86,8 @@ public @interface Throttle {
      * returning a List of Objects or a String which will be used to construct the unique identifier
      * for this throttled instance.
      */
-    @Nonnull String value() default "";
+    @Nonnull
+    String value() default "";
 
     /**
      * The Spring-EL expression
@@ -110,7 +111,8 @@ public @interface Throttle {
      * Blank string disables any group processing.
      * @see String#compareTo(String)
      */
-    @Nonnull String group() default "";
+    @Nonnull
+    String group() default "";
 
     /**
      * @return a key name of the task which is displayed on the frontend.
@@ -118,5 +120,6 @@ public @interface Throttle {
      * {@code "longrunningtasks.name.validation"} is displayed.
      * Leave blank to hide the task on the frontend.
      */
-    @Nullable String name() default "";
+    @Nullable
+    String name() default "";
 }

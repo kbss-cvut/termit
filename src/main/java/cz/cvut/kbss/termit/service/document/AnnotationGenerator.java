@@ -55,8 +55,8 @@ public class AnnotationGenerator {
     private final TermOccurrenceSaver occurrenceSaver;
 
     @Autowired
-    public AnnotationGenerator(DocumentManager documentManager, TermOccurrenceResolvers resolvers,
-                               TermOccurrenceSaver occurrenceSaver) {
+    public AnnotationGenerator(
+            DocumentManager documentManager, TermOccurrenceResolvers resolvers, TermOccurrenceSaver occurrenceSaver) {
         this.documentManager = documentManager;
         this.resolvers = resolvers;
         this.occurrenceSaver = occurrenceSaver;

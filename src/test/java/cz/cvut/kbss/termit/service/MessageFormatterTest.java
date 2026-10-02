@@ -39,10 +39,7 @@ class MessageFormatterTest {
     }
 
     static Stream<Arguments> i18nFormattingValues() {
-        return Stream.of(
-                Arguments.of("en", "Document for Test"),
-                Arguments.of("cs", "Dokument pro Test")
-        );
+        return Stream.of(Arguments.of("en", "Document for Test"), Arguments.of("cs", "Dokument pro Test"));
     }
 
     @Test

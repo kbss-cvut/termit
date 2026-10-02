@@ -63,15 +63,16 @@ class BaseDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllRetrievesAllExistingInstances() {
-        final List<Term> terms =
-                IntStream.range(0, 5).mapToObj(i -> {
+        final List<Term> terms = IntStream.range(0, 5)
+                .mapToObj(i -> {
                     final Term u = Generator.generateTerm();
                     u.setUri(Generator.generateUri());
                     return u;
-                }).collect(Collectors.toList());
+                })
+                .collect(Collectors.toList());
         transactional(() -> sut.persist(terms));
         final List<Term> result = sut.findAll();
-        assertThat(result, hasItems(terms.toArray(new Term[]{})));
+        assertThat(result, hasItems(terms.toArray(new Term[] {})));
     }
 
     @Test
@@ -114,7 +115,8 @@ class BaseDaoTest extends BaseDaoTestRunner {
             assertTrue(em.contains(updated));
             assertEquals(lastNameUpdate, updated.getLabel().get(Environment.LANGUAGE));
         });
-        assertEquals(lastNameUpdate, em.find(Term.class, term.getUri()).getLabel().get(Environment.LANGUAGE));
+        assertEquals(
+                lastNameUpdate, em.find(Term.class, term.getUri()).getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -162,8 +164,8 @@ class BaseDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = Collections.singletonList(Generator.generateTermWithId());
         transactional(() -> sut.persist(terms));
 
-        final PersistenceException e = assertThrows(PersistenceException.class,
-                                                    () -> transactional(() -> sut.persist(terms)));
+        final PersistenceException e =
+                assertThrows(PersistenceException.class, () -> transactional(() -> sut.persist(terms)));
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
     }
 

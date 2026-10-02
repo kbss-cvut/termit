@@ -38,9 +38,11 @@ public class PasswordChangeRequestDao extends BaseDao<PasswordChangeRequest> {
     public List<PasswordChangeRequest> findAllByUserAccount(UserAccount userAccount) {
         Objects.requireNonNull(userAccount);
         try {
-            return em.createQuery("SELECT DISTINCT t FROM " + type.getSimpleName() + " t WHERE t.userAccount = :userAccount", type)
-                     .setParameter("userAccount", userAccount)
-                     .getResultList();
+            return em.createQuery(
+                            "SELECT DISTINCT t FROM " + type.getSimpleName() + " t WHERE t.userAccount = :userAccount",
+                            type)
+                    .setParameter("userAccount", userAccount)
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

@@ -45,8 +45,7 @@ public class CommentReaction extends AbstractEntity implements HasTypes {
     @Types
     private Set<String> types;
 
-    public CommentReaction() {
-    }
+    public CommentReaction() {}
 
     public CommentReaction(User author, Comment comment) {
         this.actor = Objects.requireNonNull(author).getUri();
@@ -85,9 +84,9 @@ public class CommentReaction extends AbstractEntity implements HasTypes {
         if (!(o instanceof CommentReaction reaction)) {
             return false;
         }
-        return Objects.equals(actor, reaction.actor) &&
-                Objects.equals(object, reaction.object) &&
-                Objects.equals(types, reaction.types);
+        return Objects.equals(actor, reaction.actor)
+                && Objects.equals(object, reaction.object)
+                && Objects.equals(types, reaction.types);
     }
 
     @Override
@@ -97,10 +96,6 @@ public class CommentReaction extends AbstractEntity implements HasTypes {
 
     @Override
     public String toString() {
-        return "CommentReaction{" +
-                "actor=" + actor +
-                ", object=" + object +
-                ", types=" + types +
-                "}";
+        return "CommentReaction{" + "actor=" + actor + ", object=" + object + ", types=" + types + "}";
     }
 }

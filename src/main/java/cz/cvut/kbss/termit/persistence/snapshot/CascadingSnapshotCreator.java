@@ -60,9 +60,11 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
     private final String snapshotVocabularyQuery;
     private final String snapshotTermQuery;
 
-    public CascadingSnapshotCreator(Configuration configuration, EntityManager em,
-                                    VocabularyRelationshipResolver relationshipResolver,
-                                    SecurityUtils securityUtils) {
+    public CascadingSnapshotCreator(
+            Configuration configuration,
+            EntityManager em,
+            VocabularyRelationshipResolver relationshipResolver,
+            SecurityUtils securityUtils) {
         super(configuration);
         this.em = em;
         this.relationshipResolver = relationshipResolver;
@@ -81,8 +83,11 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
             snapshotVocabulary(v, currentUser.getUri());
             snapshotTerms(v);
         });
-        final Snapshot snapshot = new Snapshot(snapshotUri(vocabulary.getUri()), timestamp, vocabulary.getUri(),
-                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
+        final Snapshot snapshot = new Snapshot(
+                snapshotUri(vocabulary.getUri()),
+                timestamp,
+                vocabulary.getUri(),
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary);
         snapshot.setAuthor(currentUser);
         LOG.debug("Snapshot created: {}", snapshot);
         return snapshot;
@@ -94,27 +99,31 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
 
     private Set<URI> resolveVocabulariesToSnapshot(Vocabulary root) {
         LOG.trace("Resolving vocabularies to snapshot, starting from {}.", root);
-        final Set<URI> toSnapshot = Stream.concat(Stream.of(root.getUri()),
-                                                  relationshipResolver.getRelatedVocabularies(root.getUri()).stream())
-                                          .collect(Collectors.toSet());
+        final Set<URI> toSnapshot = Stream.concat(
+                        Stream.of(root.getUri()), relationshipResolver.getRelatedVocabularies(root.getUri()).stream())
+                .collect(Collectors.toSet());
         LOG.trace("Found {} vocabularies to snapshot: {}", toSnapshot.size(), toSnapshot);
         return toSnapshot;
     }
 
     private void snapshotVocabulary(URI vocabulary, URI author) {
-        LOG.trace("Creating snapshot of vocabulary {} with identifier {}.", uriToString(vocabulary),
-                  uriToString(snapshotUri(vocabulary)));
-        em.createNativeQuery(snapshotVocabularyQuery).setParameter("vocabulary", vocabulary)
-          .setParameter("suffix", getSnapshotSuffix())
-          .setParameter("created", timestamp)
-          .setParameter("author", author)
-          .executeUpdate();
+        LOG.trace(
+                "Creating snapshot of vocabulary {} with identifier {}.",
+                uriToString(vocabulary),
+                uriToString(snapshotUri(vocabulary)));
+        em.createNativeQuery(snapshotVocabularyQuery)
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("suffix", getSnapshotSuffix())
+                .setParameter("created", timestamp)
+                .setParameter("author", author)
+                .executeUpdate();
     }
 
     private void snapshotTerms(URI vocabulary) {
-        em.createNativeQuery(snapshotTermQuery).setParameter("vocabulary", vocabulary)
-          .setParameter("suffix", getSnapshotSuffix())
-          .setParameter("created", timestamp)
-          .executeUpdate();
+        em.createNativeQuery(snapshotTermQuery)
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("suffix", getSnapshotSuffix())
+                .setParameter("created", timestamp)
+                .executeUpdate();
     }
 }

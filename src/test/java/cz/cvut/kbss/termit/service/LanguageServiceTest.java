@@ -19,10 +19,10 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.language.TermStateLanguageService;
@@ -52,8 +52,9 @@ import static org.mockito.Mockito.when;
 class LanguageServiceTest {
 
     private static final List<RdfsResource> TERM_STATE_RESOURCES = Stream.of(Generator.TERM_STATES)
-                                                                         .map(u -> new RdfsResource(u, MultilingualString.create("Label", Environment.LANGUAGE), null, Vocabulary.s_c_term_state))
-                                                                         .collect(Collectors.toList());
+            .map(u -> new RdfsResource(
+                    u, MultilingualString.create("Label", Environment.LANGUAGE), null, Vocabulary.s_c_term_state))
+            .collect(Collectors.toList());
 
     @Mock
     private DataRepositoryService dataService;
@@ -66,9 +67,8 @@ class LanguageServiceTest {
 
     @Test
     void getAccessLevelsRetrievesResourcesRepresentingEachOfAccessLevelConstants() {
-        final RdfsResource res = new RdfsResource(URI.create(Vocabulary.s_i_read), new LangString("Read",
-                Environment.LANGUAGE),
-                null, null);
+        final RdfsResource res = new RdfsResource(
+                URI.create(Vocabulary.s_i_read), new LangString("Read", Environment.LANGUAGE), null, null);
         when(dataService.find(any(URI.class))).thenReturn(Optional.of(res));
 
         final List<RdfsResource> result = sut.getAccessLevels();

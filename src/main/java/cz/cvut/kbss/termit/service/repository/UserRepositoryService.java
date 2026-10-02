@@ -46,9 +46,12 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
     private final Configuration.Namespace cfgNamespace;
 
     @Autowired
-    public UserRepositoryService(UserAccountDao userAccountDao, IdentifierResolver idResolver,
-                                 PasswordEncoder passwordEncoder, Validator validator,
-                                 Configuration config) {
+    public UserRepositoryService(
+            UserAccountDao userAccountDao,
+            IdentifierResolver idResolver,
+            PasswordEncoder passwordEncoder,
+            Validator validator,
+            Configuration config) {
         super(validator);
         this.userAccountDao = userAccountDao;
         this.idResolver = idResolver;
@@ -90,8 +93,8 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
     protected void prePersist(@Nonnull UserAccount instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver
-                    .generateIdentifier(cfgNamespace.getUser(), instance.getFirstName(), instance.getLastName()));
+            instance.setUri(idResolver.generateIdentifier(
+                    cfgNamespace.getUser(), instance.getFirstName(), instance.getLastName()));
         }
         if (instance.getPassword() != null) {
             instance.setPassword(passwordEncoder.encode(instance.getPassword()));
@@ -100,8 +103,9 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
 
     @Override
     protected void preUpdate(@Nonnull UserAccount instance) {
-        final UserAccount original = userAccountDao.find(instance.getUri()).orElseThrow(
-                () -> new NotFoundException("User " + instance + " does not exist."));
+        final UserAccount original = userAccountDao
+                .find(instance.getUri())
+                .orElseThrow(() -> new NotFoundException("User " + instance + " does not exist."));
         if (instance.getPassword() != null) {
             instance.setPassword(passwordEncoder.encode(instance.getPassword()));
         } else {

@@ -68,9 +68,10 @@ public interface VocabularyImporter {
      *                        overwritten
      * @param prePersist      Procedure to call before persisting the resulting vocabulary
      */
-    record ImportConfiguration(boolean allowReIdentify, URI vocabularyIri,
-                               @Nonnull Consumer<Vocabulary> prePersist) {
-    }
+    record ImportConfiguration(
+            boolean allowReIdentify,
+            URI vocabularyIri,
+            @Nonnull Consumer<Vocabulary> prePersist) {}
 
     /**
      * Data to import.
@@ -78,6 +79,5 @@ public interface VocabularyImporter {
      * @param mediaType Media type of the imported data
      * @param data      Streams containing the data
      */
-    record ImportInput(@Nonnull String mediaType, InputStream... data) {
-    }
+    record ImportInput(@Nonnull String mediaType, InputStream... data) {}
 }

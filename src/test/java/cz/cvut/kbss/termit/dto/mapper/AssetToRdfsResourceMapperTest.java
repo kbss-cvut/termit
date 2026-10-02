@@ -50,7 +50,7 @@ class AssetToRdfsResourceMapperTest {
         final Term t = Generator.generateTermWithId();
         t.addType(Generator.generateUri().toString());
         t.accept(sut);
-        assertThat(sut.getRdfsResource().getTypes(), hasItems(t.getTypes().toArray(new String[]{})));
+        assertThat(sut.getRdfsResource().getTypes(), hasItems(t.getTypes().toArray(new String[] {})));
     }
 
     @Test

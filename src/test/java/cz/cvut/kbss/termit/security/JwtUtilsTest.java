@@ -43,8 +43,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,6 +51,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import static cz.cvut.kbss.termit.security.model.TermItUserDetails.DEFAULT_AUTHORITY;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -65,7 +65,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("security")
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
-@ContextConfiguration(classes = {TestConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
+@ContextConfiguration(
+        classes = {TestConfig.class},
+        initializers = {ConfigDataApplicationContextInitializer.class})
 class JwtUtilsTest {
 
     private static final List<String> ROLES = Arrays.asList("USER", "ADMIN");
@@ -125,8 +127,8 @@ class JwtUtilsTest {
         assertThat(claims.getExpirationTime(), greaterThan(claims.getIssueTime()));
         if (!authorities.isEmpty()) {
             assertNotNull(claims.getStringClaim(SecurityConstants.JWT_ROLE_CLAIM));
-            final String[] roles = claims.getStringClaim(SecurityConstants.JWT_ROLE_CLAIM)
-                                         .split(SecurityConstants.JWT_ROLE_DELIMITER);
+            final String[] roles =
+                    claims.getStringClaim(SecurityConstants.JWT_ROLE_CLAIM).split(SecurityConstants.JWT_ROLE_DELIMITER);
             for (String role : roles) {
                 assertTrue(authorities.contains(new SimpleGrantedAuthority(role)));
             }
@@ -135,19 +137,20 @@ class JwtUtilsTest {
 
     @Test
     void generateTokenCreatesJwtForUserWithAuthorities() throws Exception {
-        final Set<GrantedAuthority> authorities = ROLES.stream().map(SimpleGrantedAuthority::new)
-                                                       .collect(Collectors.toSet());
+        final Set<GrantedAuthority> authorities =
+                ROLES.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
         final String jwtToken = sut.generateToken(user, authorities);
         verifyJWToken(jwtToken, user, authorities);
     }
 
     @Test
     void extractUserInfoExtractsDataOfUserWithoutAuthoritiesFromJWT() {
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .jwtID(user.getUri().toString())
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .jwtID(user.getUri().toString())
+                .issueTime(new Date())
+                .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                .build());
 
         final TermItUserDetails result = sut.extractUserInfo(token);
         assertEquals(user, result.getUser());
@@ -157,13 +160,13 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoExtractsDataOfUserWithAuthoritiesFromJWT() {
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .jwtID(user.getUri().toString())
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .claim(SecurityConstants.JWT_ROLE_CLAIM,
-                                                                   String.join(SecurityConstants.JWT_ROLE_DELIMITER, ROLES))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .jwtID(user.getUri().toString())
+                .issueTime(new Date())
+                .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                .claim(SecurityConstants.JWT_ROLE_CLAIM, String.join(SecurityConstants.JWT_ROLE_DELIMITER, ROLES))
+                .build());
 
         final TermItUserDetails result = sut.extractUserInfo(token);
         ROLES.forEach(r -> assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(r))));
@@ -178,61 +181,67 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoThrowsJwtExceptionWhenUserIdentifierIsNotValidUri() {
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .jwtID("_:123")
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .jwtID("_:123")
+                .issueTime(new Date())
+                .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                .build());
         assertThrows(JwtException.class, () -> sut.extractUserInfo(token));
     }
 
     @Test
     void extractUserInfoThrowsIncompleteJwtExceptionWhenUsernameIsMissing() {
-        final String token = sign(new JWTClaimsSet.Builder().jwtID(user.getUri().toString())
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .jwtID(user.getUri().toString())
+                .issueTime(new Date())
+                .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                .build());
         final IncompleteJwtException ex = assertThrows(IncompleteJwtException.class, () -> sut.extractUserInfo(token));
         assertThat(ex.getMessage(), containsString("subject"));
     }
 
     @Test
     void extractUserInfoThrowsIncompleteJwtExceptionWhenIdentifierIsMissing() {
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .issueTime(new Date())
+                .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                .build());
         final IncompleteJwtException ex = assertThrows(IncompleteJwtException.class, () -> sut.extractUserInfo(token));
         assertThat(ex.getMessage(), containsString("id"));
     }
 
     @Test
     void extractUserInfoThrowsTokenExpiredExceptionWhenExpirationIsInPast() {
-        final String token = sign(new JWTClaimsSet.Builder().jwtID(user.getUri().toString())
-                                                            .subject(user.getUsername())
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() - 1000))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .jwtID(user.getUri().toString())
+                .subject(user.getUsername())
+                .issueTime(new Date())
+                .expirationTime(new Date(System.currentTimeMillis() - 1000))
+                .build());
         assertThrows(TokenExpiredException.class, () -> sut.extractUserInfo(token));
     }
 
     @Test
     void extractUserInfoThrowsTokenExpiredExceptionWhenExpirationIsMissing() {
-        final String token = sign(new JWTClaimsSet.Builder().jwtID(user.getUri().toString())
-                                                            .subject(user.getUsername())
-                                                            .issueTime(new Date())
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .jwtID(user.getUri().toString())
+                .subject(user.getUsername())
+                .issueTime(new Date())
+                .build());
         assertThrows(TokenExpiredException.class, () -> sut.extractUserInfo(token));
     }
 
     @Test
     void refreshTokenUpdatesIssuedDate() throws Exception {
         final Date oldIssueDate = new Date(System.currentTimeMillis() - 10000);
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .jwtID(user.getUri().toString())
-                                                            .issueTime(oldIssueDate)
-                                                            .expirationTime(new Date(oldIssueDate.getTime() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .jwtID(user.getUri().toString())
+                .issueTime(oldIssueDate)
+                .expirationTime(new Date(oldIssueDate.getTime() + SecurityConstants.SESSION_TIMEOUT))
+                .build());
 
         final String result = sut.refreshToken(token);
         final SignedJWT signedJWT = SignedJWT.parse(result);
@@ -245,11 +254,12 @@ class JwtUtilsTest {
     void refreshTokenUpdatesExpirationDate() throws Exception {
         final Date oldIssueDate = new Date();
         final Date oldExpiration = new Date(oldIssueDate.getTime() + 10000);
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .jwtID(user.getUri().toString())
-                                                            .issueTime(oldIssueDate)
-                                                            .expirationTime(oldExpiration)
-                                                            .build());
+        final String token = sign(new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .jwtID(user.getUri().toString())
+                .issueTime(oldIssueDate)
+                .expirationTime(oldExpiration)
+                .build());
 
         final String result = sut.refreshToken(token);
         final SignedJWT signedJWT = SignedJWT.parse(result);
@@ -260,12 +270,15 @@ class JwtUtilsTest {
 
     @Test
     void extractUserInfoThrowsJwtExceptionWhenTokenIsSignedWithInvalidSecret() {
-        final String token = sign(new JWTClaimsSet.Builder().subject(user.getUsername())
-                                                            .jwtID(user.getUri().toString())
-                                                            .issueTime(new Date())
-                                                            .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
-                                                            .build(),
-                                  new SecretKeySpec("differentSecretKeyThatIsAlsoLongEnough".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        final String token = sign(
+                new JWTClaimsSet.Builder()
+                        .subject(user.getUsername())
+                        .jwtID(user.getUri().toString())
+                        .issueTime(new Date())
+                        .expirationTime(new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                        .build(),
+                new SecretKeySpec(
+                        "differentSecretKeyThatIsAlsoLongEnough".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
 
         assertThrows(JwtException.class, () -> sut.extractUserInfo(token));
     }

@@ -21,8 +21,8 @@ public class JwtTypeDelegatingAuthenticationProvider implements AuthenticationPr
     private final AuthenticationProvider defaultProvider;
     private final JwtAuthenticationProvider patJwtAuthenticationProvider;
 
-    public JwtTypeDelegatingAuthenticationProvider(AuthenticationProvider defaultProvider,
-                                                   JwtAuthenticationProvider patJwtAuthenticationProvider) {
+    public JwtTypeDelegatingAuthenticationProvider(
+            AuthenticationProvider defaultProvider, JwtAuthenticationProvider patJwtAuthenticationProvider) {
         this.defaultProvider = defaultProvider;
         this.patJwtAuthenticationProvider = patJwtAuthenticationProvider;
     }
@@ -43,7 +43,8 @@ public class JwtTypeDelegatingAuthenticationProvider implements AuthenticationPr
     private Optional<JOSEObjectType> resolveJwtType(Authentication token) {
         try {
             if (token instanceof BearerTokenAuthenticationToken bearerToken) {
-                return Optional.ofNullable(JWTParser.parse(bearerToken.getToken()).getHeader().getType());
+                return Optional.ofNullable(
+                        JWTParser.parse(bearerToken.getToken()).getHeader().getType());
             }
         } catch (ParseException e) {
             // ignore
@@ -53,6 +54,7 @@ public class JwtTypeDelegatingAuthenticationProvider implements AuthenticationPr
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return BearerTokenAuthenticationToken.class.isAssignableFrom(authentication) || defaultProvider.supports(authentication);
+        return BearerTokenAuthenticationToken.class.isAssignableFrom(authentication)
+                || defaultProvider.supports(authentication);
     }
 }

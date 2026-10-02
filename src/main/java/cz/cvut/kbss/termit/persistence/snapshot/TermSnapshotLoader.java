@@ -36,17 +36,17 @@ public class TermSnapshotLoader extends AssetSnapshotLoader<Term> {
                                                 BIND (?source as ?asset) .
                                                 BIND (?snapshotType as ?type) .
                                                 } ORDER BY DESC(?created)
-                                                """,
-                                        "Snapshot")
-                     .setParameter("snapshotType", snapshotType)
-                     .setParameter("hasCreated", URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
-                     .setParameter("hasAuthor", URI.create(DC.Terms.CREATOR))
-                     .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-                     .setParameter("firstName", URI.create(Vocabulary.s_p_has_first_name))
-                     .setParameter("lastName", URI.create(Vocabulary.s_p_has_surname))
-                     .setParameter("accountName", URI.create(Vocabulary.s_p_has_username))
-                     .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
-                     .setParameter("source", asset).getResultList();
+                                                """, "Snapshot")
+                    .setParameter("snapshotType", snapshotType)
+                    .setParameter("hasCreated", URI.create(Vocabulary.s_p_has_date_and_time_of_creation_of_version))
+                    .setParameter("hasAuthor", URI.create(DC.Terms.CREATOR))
+                    .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
+                    .setParameter("firstName", URI.create(Vocabulary.s_p_has_first_name))
+                    .setParameter("lastName", URI.create(Vocabulary.s_p_has_surname))
+                    .setParameter("accountName", URI.create(Vocabulary.s_p_has_username))
+                    .setParameter("versionOf", URI.create(Vocabulary.s_p_is_version_of))
+                    .setParameter("source", asset)
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

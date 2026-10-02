@@ -38,8 +38,8 @@ public class MultilingualStringSerializer extends StdSerializer<MultilingualStri
     }
 
     @Override
-    public void serialize(MultilingualString multilingualString, JsonGenerator jsonGenerator,
-                          SerializationContext ctxt) throws JacksonException {
+    public void serialize(MultilingualString multilingualString, JsonGenerator jsonGenerator, SerializationContext ctxt)
+            throws JacksonException {
         Objects.requireNonNull(multilingualString);
         jsonGenerator.writeStartObject();
         for (Map.Entry<String, String> entry : multilingualString.getValue().entrySet()) {

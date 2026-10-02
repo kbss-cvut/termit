@@ -18,10 +18,10 @@
 package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -63,18 +62,16 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     @EventListener(value = {VocabularyCreatedEvent.class, EvictCacheEvent.class})
     public void load() {
         this.contexts = new HashMap<>();
-        em.createNativeQuery("SELECT ?v ?g WHERE { " +
-                                     "GRAPH ?g { " +
-                                     "?v a ?type . " +
-                                     "}}")
-          .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-          .getResultStream().forEach(row -> {
-              assert row instanceof Object[];
-              assert ((Object[]) row).length == 2;
-              final Object[] bindingSet = (Object[]) row;
-              final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], k -> new ArrayList<>());
-              ctx.add((URI) bindingSet[1]);
-          });
+        em.createNativeQuery("SELECT ?v ?g WHERE { " + "GRAPH ?g { " + "?v a ?type . " + "}}")
+                .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
+                .getResultStream()
+                .forEach(row -> {
+                    assert row instanceof Object[];
+                    assert ((Object[]) row).length == 2;
+                    final Object[] bindingSet = (Object[]) row;
+                    final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], k -> new ArrayList<>());
+                    ctx.add((URI) bindingSet[1]);
+                });
     }
 
     @Override
@@ -91,8 +88,9 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     @Override
     public URI getVocabularyContext(URI vocabularyUri) {
         if (!contexts.containsKey(vocabularyUri)) {
-            LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
-                      uriToString(vocabularyUri));
+            LOG.trace(
+                    "No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
+                    uriToString(vocabularyUri));
             return vocabularyUri;
         }
         final List<URI> vocabularyContexts = contexts.get(vocabularyUri);

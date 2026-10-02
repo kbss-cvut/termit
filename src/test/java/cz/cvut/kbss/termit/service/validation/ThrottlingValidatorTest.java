@@ -85,10 +85,10 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
         Objects.requireNonNull(vocabulary.getPrimaryLanguage());
         when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         transactional(() -> {
-            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyService,
-                    vocabularyContextMapper, eventPublisher);
-            final Collection<ValidationResult> result = runFuture(
-                    sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
+            final ThrottlingValidator sut =
+                    new ThrottlingValidator(validator, vocabularyService, vocabularyContextMapper, eventPublisher);
+            final Collection<ValidationResult> result =
+                    runFuture(sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
             assertTrue(result.isEmpty());
             verify(validator).validate(List.of(vocabulary.getUri()), vocabulary.getPrimaryLanguage());
         });
@@ -103,8 +103,8 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = generateVocabulary();
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         transactional(() -> {
-            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyService,
-                    vocabularyContextMapper, eventPublisher);
+            final ThrottlingValidator sut =
+                    new ThrottlingValidator(validator, vocabularyService, vocabularyContextMapper, eventPublisher);
             final Collection<URI> iris = Collections.singleton(vocabulary.getUri());
             final Collection<ValidationResult> result;
             try {

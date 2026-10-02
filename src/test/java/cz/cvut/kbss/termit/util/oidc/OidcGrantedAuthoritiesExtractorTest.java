@@ -42,13 +42,13 @@ class OidcGrantedAuthoritiesExtractorTest {
         config.setRoleClaim("roles");
         final List<String> roles = List.of(UserRole.ADMIN.getName(), UserRole.FULL_USER.getName());
         final Jwt token = Jwt.withTokenValue("abcdef12345")
-                             .header("alg", "RS256")
-                             .header("typ", "JWT")
-                             .claim(config.getRoleClaim(), roles)
-                             .issuer("http://localhost:8080/termit")
-                             .subject("termit")
-                             .expiresAt(Utils.timestamp().plusSeconds(300))
-                             .build();
+                .header("alg", "RS256")
+                .header("typ", "JWT")
+                .claim(config.getRoleClaim(), roles)
+                .issuer("http://localhost:8080/termit")
+                .subject("termit")
+                .expiresAt(Utils.timestamp().plusSeconds(300))
+                .build();
 
         final OidcGrantedAuthoritiesExtractor sut = new OidcGrantedAuthoritiesExtractor(config);
         final Collection<SimpleGrantedAuthority> result = sut.convert(token);
@@ -63,13 +63,13 @@ class OidcGrantedAuthoritiesExtractorTest {
         config.setRoleClaim("realm_access.roles");
         final List<String> roles = List.of(UserRole.ADMIN.getName(), UserRole.FULL_USER.getName());
         final Jwt token = Jwt.withTokenValue("abcdef12345")
-                             .header("alg", "RS256")
-                             .header("typ", "JWT")
-                             .claim("realm_access", Map.of("roles", roles))
-                             .issuer("http://localhost:8080/termit")
-                             .subject("termit")
-                             .expiresAt(Utils.timestamp().plusSeconds(300))
-                             .build();
+                .header("alg", "RS256")
+                .header("typ", "JWT")
+                .claim("realm_access", Map.of("roles", roles))
+                .issuer("http://localhost:8080/termit")
+                .subject("termit")
+                .expiresAt(Utils.timestamp().plusSeconds(300))
+                .build();
 
         final OidcGrantedAuthoritiesExtractor sut = new OidcGrantedAuthoritiesExtractor(config);
         final Collection<SimpleGrantedAuthority> result = sut.convert(token);
@@ -83,13 +83,13 @@ class OidcGrantedAuthoritiesExtractorTest {
     void convertThrowsIllegalArgumentExceptionWhenExpectedClaimPathIsNotTraversable() {
         config.setRoleClaim("realm_access.roles.list");
         final Jwt token = Jwt.withTokenValue("abcdef12345")
-                             .header("alg", "RS256")
-                             .header("typ", "JWT")
-                             .claim("realm_access", Map.of("roles", 1235))
-                             .issuer("http://localhost:8080/termit")
-                             .subject("termit")
-                             .expiresAt(Utils.timestamp().plusSeconds(300))
-                             .build();
+                .header("alg", "RS256")
+                .header("typ", "JWT")
+                .claim("realm_access", Map.of("roles", 1235))
+                .issuer("http://localhost:8080/termit")
+                .subject("termit")
+                .expiresAt(Utils.timestamp().plusSeconds(300))
+                .build();
 
         final OidcGrantedAuthoritiesExtractor sut = new OidcGrantedAuthoritiesExtractor(config);
         assertThrows(IllegalArgumentException.class, () -> sut.convert(token));
@@ -99,13 +99,13 @@ class OidcGrantedAuthoritiesExtractorTest {
     void convertThrowsIllegalArgumentExceptionWhenNestedRolesClaimIsNotList() {
         config.setRoleClaim("realm_access.roles.notlist");
         final Jwt token = Jwt.withTokenValue("abcdef12345")
-                             .header("alg", "RS256")
-                             .header("typ", "JWT")
-                             .claim("realm_access", Map.of("roles", Map.of("notlist", UserRole.FULL_USER.getName())))
-                             .issuer("http://localhost:8080/termit")
-                             .subject("termit")
-                             .expiresAt(Utils.timestamp().plusSeconds(300))
-                             .build();
+                .header("alg", "RS256")
+                .header("typ", "JWT")
+                .claim("realm_access", Map.of("roles", Map.of("notlist", UserRole.FULL_USER.getName())))
+                .issuer("http://localhost:8080/termit")
+                .subject("termit")
+                .expiresAt(Utils.timestamp().plusSeconds(300))
+                .build();
 
         final OidcGrantedAuthoritiesExtractor sut = new OidcGrantedAuthoritiesExtractor(config);
         assertThrows(IllegalArgumentException.class, () -> sut.convert(token));

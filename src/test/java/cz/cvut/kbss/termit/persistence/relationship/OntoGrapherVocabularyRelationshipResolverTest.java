@@ -78,11 +78,19 @@ class OntoGrapherVocabularyRelationshipResolverTest extends BaseDaoTestRunner {
             final IRI link = vf.createIRI(Generator.generateUriString());
             conn.begin();
             conn.add(link, RDF.TYPE, vf.createIRI(OG_PREFIX + "link"));
-            conn.add(link, vf.createIRI(OG_PREFIX + "iri"),
-                     vf.createIRI("https://slovník.gov.cz/základní/pojem/má-vlastnost"));
+            conn.add(
+                    link,
+                    vf.createIRI(OG_PREFIX + "iri"),
+                    vf.createIRI("https://slovník.gov.cz/základní/pojem/má-vlastnost"));
             conn.add(link, vf.createIRI(OG_PREFIX + "active"), vf.createLiteral("true"));
-            conn.add(link, vf.createIRI(OG_PREFIX + "source"), vf.createIRI(source.getUri().toString()));
-            conn.add(link, vf.createIRI(OG_PREFIX + "target"), vf.createIRI(target.getUri().toString()));
+            conn.add(
+                    link,
+                    vf.createIRI(OG_PREFIX + "source"),
+                    vf.createIRI(source.getUri().toString()));
+            conn.add(
+                    link,
+                    vf.createIRI(OG_PREFIX + "target"),
+                    vf.createIRI(target.getUri().toString()));
             conn.commit();
         }
     }

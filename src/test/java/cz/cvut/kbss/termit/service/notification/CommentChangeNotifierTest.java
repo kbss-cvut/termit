@@ -99,9 +99,9 @@ class CommentChangeNotifierTest {
         });
         final Instant from = Utils.timestamp().minus(5, ChronoUnit.DAYS);
         final Instant to = Utils.timestamp();
-        when(commentService.findAll(null, from, to)).thenReturn(
-                expected.values().stream().flatMap(Collection::stream).collect(
-                        Collectors.toList()));
+        when(commentService.findAll(null, from, to))
+                .thenReturn(
+                        expected.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
         final Map<Asset<?>, List<Comment>> result = sut.findChangedComments(from, to);
         assertEquals(expected, result);
@@ -111,18 +111,21 @@ class CommentChangeNotifierTest {
 
     @Test
     void resolveRecipientsRetrievesAdminUsers() {
-        final List<UserAccount> users = IntStream.range(0, 10).mapToObj(i -> {
-            final UserAccount user = Generator.generateUserAccount();
-            if (i % 2 == 0) {
-                user.addType(Vocabulary.s_c_administrator);
-            }
-            return user;
-        }).collect(Collectors.toList());
+        final List<UserAccount> users = IntStream.range(0, 10)
+                .mapToObj(i -> {
+                    final UserAccount user = Generator.generateUserAccount();
+                    if (i % 2 == 0) {
+                        user.addType(Vocabulary.s_c_administrator);
+                    }
+                    return user;
+                })
+                .collect(Collectors.toList());
         when(userService.findAll()).thenReturn(users);
 
         final List<User> result = sut.resolveNotificationRecipients(Collections.emptyMap());
-        assertThat(result,
-                   containsSameEntities(users.stream().filter(UserAccount::isAdmin).collect(Collectors.toSet())));
+        assertThat(
+                result,
+                containsSameEntities(users.stream().filter(UserAccount::isAdmin).collect(Collectors.toSet())));
         verify(userService).findAll();
     }
 
@@ -136,9 +139,9 @@ class CommentChangeNotifierTest {
         when(userService.findAll()).thenReturn(Collections.singletonList(admin));
         when(changeRecordService.getAuthors(any(Asset.class))).thenReturn(Collections.singleton(author));
 
-        final List<User> result = sut.resolveNotificationRecipients(
-                Map.of(tOne, Collections.singletonList(Generator.generateComment(null, tOne)),
-                       tTwo, Collections.singletonList(Generator.generateComment(null, tTwo))));
+        final List<User> result = sut.resolveNotificationRecipients(Map.of(
+                tOne, Collections.singletonList(Generator.generateComment(null, tOne)),
+                tTwo, Collections.singletonList(Generator.generateComment(null, tTwo))));
         assertThat(result, hasItems(admin.toUser(), author));
         verify(changeRecordService).getAuthors(new cz.cvut.kbss.termit.model.Vocabulary(tOne.getVocabulary()));
         verify(changeRecordService).getAuthors(new cz.cvut.kbss.termit.model.Vocabulary(tTwo.getVocabulary()));
@@ -175,16 +178,17 @@ class CommentChangeNotifierTest {
         final Comment comment = Generator.generateComment(author.toUser(), term);
         when(termService.find(term.getUri())).thenReturn(Optional.of(term));
         when(changeRecordService.getAuthors(any())).thenReturn(Collections.singleton(author.toUser()));
-        when(commentService.findAll(any(), any(Instant.class), any(Instant.class))).thenReturn(
-                Collections.singletonList(comment));
+        when(commentService.findAll(any(), any(Instant.class), any(Instant.class)))
+                .thenReturn(Collections.singletonList(comment));
         final String link = "http://localhost/termit";
-        when(messageAssetFactory.create(term)).thenReturn(
-                new MessageAssetFactory.MessageAsset(getPrimaryLabel(term), link));
+        when(messageAssetFactory.create(term))
+                .thenReturn(new MessageAssetFactory.MessageAsset(getPrimaryLabel(term), link));
         when(messageComposer.composeMessage(any(), anyMap())).thenReturn("Test message content");
 
         final Optional<Message> result = sut.createCommentChangesMessage(from, to);
         assertTrue(result.isPresent());
-        assertEquals(Collections.singletonList(author.getUsername()), result.get().getRecipients());
+        assertEquals(
+                Collections.singletonList(author.getUsername()), result.get().getRecipients());
         verify(changeRecordService).getAuthors(new cz.cvut.kbss.termit.model.Vocabulary(term.getVocabulary()));
         verify(commentService).findAll(null, from, to);
         final ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
@@ -192,17 +196,19 @@ class CommentChangeNotifierTest {
         final Map<String, Object> variables = captor.getValue();
         assertEquals(LocalDate.ofInstant(from, ZoneId.systemDefault()), variables.get("from"));
         assertEquals(LocalDate.ofInstant(to, ZoneId.systemDefault()), variables.get("to"));
-        assertEquals(Collections.singletonList(new CommentChangeNotifier.AssetWithComments(
+        assertEquals(
+                Collections.singletonList(new CommentChangeNotifier.AssetWithComments(
                         new MessageAssetFactory.MessageAsset(getPrimaryLabel(term), link),
-                             Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)))),
-                     variables.get("commentedAssets"));
+                        Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)))),
+                variables.get("commentedAssets"));
     }
 
     @Test
     void createCommentChangesMessageReturnsEmptyOptionalWhenThereAreNoCommentChanges() {
         final Instant from = Utils.timestamp().minus(7, ChronoUnit.DAYS);
         final Instant to = Utils.timestamp();
-        when(commentService.findAll(any(), any(Instant.class), any(Instant.class))).thenReturn(Collections.emptyList());
+        when(commentService.findAll(any(), any(Instant.class), any(Instant.class)))
+                .thenReturn(Collections.emptyList());
 
         final Optional<Message> result = sut.createCommentChangesMessage(from, to);
         assertTrue(result.isEmpty());

@@ -41,7 +41,10 @@ public class TermInfoWithParents implements TermDescription {
     /**
      * Parent terms from the same vocabulary.
      */
-    @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER, cascade = {CascadeType.DETACH})
+    @OWLObjectProperty(
+            iri = SKOS.BROADER,
+            fetch = FetchType.EAGER,
+            cascade = {CascadeType.DETACH})
     private Set<TermInfoWithParents> parentTerms;
 
     @Types

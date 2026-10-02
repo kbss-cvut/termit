@@ -40,8 +40,8 @@ public class BaseWebSocketController extends BaseController {
 
     protected final SimpMessagingTemplate messagingTemplate;
 
-    protected BaseWebSocketController(IdentifierResolver idResolver, Configuration config,
-                                      SimpMessagingTemplate messagingTemplate) {
+    protected BaseWebSocketController(
+            IdentifierResolver idResolver, Configuration config, SimpMessagingTemplate messagingTemplate) {
         super(idResolver, config);
         this.messagingTemplate = messagingTemplate;
     }
@@ -55,21 +55,28 @@ public class BaseWebSocketController extends BaseController {
      * @param replyHeaders  native headers for the reply
      * @param sourceHeaders original headers containing session id or name of the user
      */
-    protected void sendToSession(@Nonnull String destination, @Nonnull Object payload,
-                                 @Nonnull Map<String, Object> replyHeaders, @Nonnull MessageHeaders sourceHeaders) {
+    protected void sendToSession(
+            @Nonnull String destination,
+            @Nonnull Object payload,
+            @Nonnull Map<String, Object> replyHeaders,
+            @Nonnull MessageHeaders sourceHeaders) {
         getSessionId(sourceHeaders)
-                .ifPresentOrElse(sessionId -> { // session id present
+                .ifPresentOrElse(
+                        sessionId -> { // session id present
                             StompHeaderAccessor headerAccessor = StompHeaderAccessor.create(StompCommand.MESSAGE);
                             // add reply headers as native headers
                             headerAccessor.setHeader(NATIVE_HEADERS, new LinkedMultiValueMap<>(replyHeaders.size()));
-                            replyHeaders.forEach((name, value) -> headerAccessor.addNativeHeader(name, Objects.toString(value)));
+                            replyHeaders.forEach(
+                                    (name, value) -> headerAccessor.addNativeHeader(name, Objects.toString(value)));
                             headerAccessor.setSessionId(sessionId); // pass session id to new headers
                             // send to user session
-                            messagingTemplate.convertAndSendToUser(sessionId, destination, payload, headerAccessor.toMessageHeaders());
+                            messagingTemplate.convertAndSendToUser(
+                                    sessionId, destination, payload, headerAccessor.toMessageHeaders());
                         },
                         // session id not present, send to all user sessions
-                        () -> getUser(sourceHeaders).ifPresent(user -> messagingTemplate.convertAndSendToUser(user, destination, payload, replyHeaders))
-                );
+                        () -> getUser(sourceHeaders)
+                                .ifPresent(user -> messagingTemplate.convertAndSendToUser(
+                                        user, destination, payload, replyHeaders)));
     }
 
     /**
@@ -93,8 +100,9 @@ public class BaseWebSocketController extends BaseController {
     private @Nonnull Optional<String> getUserName(MessageHeaders headers) {
         Principal principal = SimpMessageHeaderAccessor.getUser(headers);
         if (principal != null) {
-            final String name = (principal instanceof DestinationUserNameProvider provider ?
-                    provider.getDestinationUserName() : principal.getName());
+            final String name = (principal instanceof DestinationUserNameProvider provider
+                    ? provider.getDestinationUserName()
+                    : principal.getName());
             return Optional.ofNullable(name);
         }
         return Optional.empty();

@@ -57,7 +57,9 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
         final List<DistributionDto> result = sut.getTermDistribution();
         assertEquals(1, result.size());
         assertEquals(v.getUri(), result.get(0).getResource().getUri());
-        assertEquals(Set.of(Environment.LANGUAGE, "cs"), result.get(0).getResource().getLabel().getLanguages());
+        assertEquals(
+                Set.of(Environment.LANGUAGE, "cs"),
+                result.get(0).getResource().getLabel().getLanguages());
         assertEquals(1, result.get(0).getCount());
     }
 

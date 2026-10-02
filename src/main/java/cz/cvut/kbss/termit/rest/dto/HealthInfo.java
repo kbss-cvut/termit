@@ -61,10 +61,7 @@ public class HealthInfo {
 
     @Override
     public String toString() {
-        return "HealthInfo{" +
-                "status=" + status +
-                ", components=" + components +
-                '}';
+        return "HealthInfo{" + "status=" + status + ", components=" + components + '}';
     }
 
     public static HealthInfo up() {

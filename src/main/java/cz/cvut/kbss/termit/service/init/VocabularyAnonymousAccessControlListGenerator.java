@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.init;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
@@ -31,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.List;
@@ -50,11 +50,11 @@ public class VocabularyAnonymousAccessControlListGenerator {
     private final AccessControlListService aclService;
     private final UserRoleRepositoryService userRoleRepositoryService;
 
-
-    public VocabularyAnonymousAccessControlListGenerator(EntityManager em,
-                                                         VocabularyRepositoryService vocabularyService,
-                                                         AccessControlListService aclService,
-                                                         UserRoleRepositoryService userRoleRepositoryService) {
+    public VocabularyAnonymousAccessControlListGenerator(
+            EntityManager em,
+            VocabularyRepositoryService vocabularyService,
+            AccessControlListService aclService,
+            UserRoleRepositoryService userRoleRepositoryService) {
         this.em = em;
         this.vocabularyService = vocabularyService;
         this.aclService = aclService;
@@ -77,7 +77,8 @@ public class VocabularyAnonymousAccessControlListGenerator {
     @Transactional
     public void generateMissingAccessControlLists() {
         LOG.debug("Generating missing vocabulary access control records for anonymous users.");
-        final UserRole anonymousRole = userRoleRepositoryService.findRequired(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
+        final UserRole anonymousRole =
+                userRoleRepositoryService.findRequired(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         final List<URI> vocabsWithAcl = resolveVocabulariesWithAcl();
         // remove vocabularies that already have anonymous user access record
         vocabsWithAcl.removeAll(resolveVocabulariesWithAnonymousRecord());
@@ -85,12 +86,17 @@ public class VocabularyAnonymousAccessControlListGenerator {
         LOG.trace("Generating anonymous access control records for vocabularies: {}.", vocabsWithAcl);
         vocabsWithAcl.forEach(vUri -> {
             final cz.cvut.kbss.termit.model.Vocabulary v = vocabularyService.findRequired(vUri);
-            aclService.findFor(v).ifPresentOrElse(acl -> {
-                if (hasAnonymous(acl)) return; // skip if already has anonymous access
-                LOG.debug("Generating missing anonymous access control record for vocabulary {}.", v);
-                final AccessLevel accessLevel = shouldAllowAnonymousAccess(acl) ? AccessLevel.READ : AccessLevel.NONE;
-                aclService.addRecord(acl, new RoleAccessControlRecord(accessLevel, anonymousRole));
-            }, () -> LOG.warn("Vocabulary {} is missing an ACL.", v));
+            aclService
+                    .findFor(v)
+                    .ifPresentOrElse(
+                            acl -> {
+                                if (hasAnonymous(acl)) return; // skip if already has anonymous access
+                                LOG.debug("Generating missing anonymous access control record for vocabulary {}.", v);
+                                final AccessLevel accessLevel =
+                                        shouldAllowAnonymousAccess(acl) ? AccessLevel.READ : AccessLevel.NONE;
+                                aclService.addRecord(acl, new RoleAccessControlRecord(accessLevel, anonymousRole));
+                            },
+                            () -> LOG.warn("Vocabulary {} is missing an ACL.", v));
         });
         LOG.trace("Finished generating vocabulary access control records for anonymous users.");
     }
@@ -105,9 +111,9 @@ public class VocabularyAnonymousAccessControlListGenerator {
                             ?hasAcl ?acl .
                          }
                          """, URI.class)
-                 .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
-                 .getResultList();
+                .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
+                .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                .getResultList();
     }
 
     /**
@@ -123,13 +129,13 @@ public class VocabularyAnonymousAccessControlListGenerator {
                              ?hasHolder ?anonymousUser .
                          }
                          """, URI.class)
-                 .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
-                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
-                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_has_access_control_record))
-                 .setParameter("userRoleRecord", URI.create(Vocabulary.s_c_user_role_access_control_record))
-                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_has_access_level_holder))
-                 .setParameter("anonymousUser", URI.create(Vocabulary.s_c_anonymous))
-                 .getResultList();
+                .setParameter("vocabulary", URI.create(SKOS.CONCEPT_SCHEME))
+                .setParameter("hasAcl", URI.create(Vocabulary.s_p_has_access_control_list))
+                .setParameter("hasRecord", URI.create(Vocabulary.s_p_has_access_control_record))
+                .setParameter("userRoleRecord", URI.create(Vocabulary.s_c_user_role_access_control_record))
+                .setParameter("hasHolder", URI.create(Vocabulary.s_p_has_access_level_holder))
+                .setParameter("anonymousUser", URI.create(Vocabulary.s_c_anonymous))
+                .getResultList();
     }
 
     /**
@@ -143,9 +149,9 @@ public class VocabularyAnonymousAccessControlListGenerator {
      * @return true when the ACL contains READ or greater access level for the restricted user
      */
     private boolean shouldAllowAnonymousAccess(AccessControlList acl) {
-        return acl.getRecords().stream().anyMatch(r ->
-                r.getHolder() instanceof UserRole role && isRestricted(role) && r.getAccessLevel()
-                                                                                 .includes(AccessLevel.READ)
-        );
+        return acl.getRecords().stream()
+                .anyMatch(r -> r.getHolder() instanceof UserRole role
+                        && isRestricted(role)
+                        && r.getAccessLevel().includes(AccessLevel.READ));
     }
 }

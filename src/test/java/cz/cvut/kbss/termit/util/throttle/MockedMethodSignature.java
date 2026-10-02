@@ -33,7 +33,8 @@ public class MockedMethodSignature implements MethodSignature {
 
     private String[] parameterNames;
 
-    public MockedMethodSignature(String methodName, Class<?> returnType, Class[] parameterTypes, String[] parameterNames) {
+    public MockedMethodSignature(
+            String methodName, Class<?> returnType, Class[] parameterTypes, String[] parameterNames) {
         this.methodName = methodName;
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;

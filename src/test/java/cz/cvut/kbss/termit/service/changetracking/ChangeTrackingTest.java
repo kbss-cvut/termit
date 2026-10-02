@@ -124,7 +124,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         assertEquals(vocabulary.getUri(), result.get(0).getChangedEntity());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(DC.Terms.TITLE, ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
+        assertEquals(
+                DC.Terms.TITLE,
+                ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
     }
 
     @Test
@@ -144,8 +146,11 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         result.forEach(chr -> {
             assertEquals(vocabulary.getUri(), chr.getChangedEntity());
             assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-            assertThat(((UpdateChangeRecord) chr).getChangedAttribute().toString(), anyOf(equalTo(DC.Terms.TITLE),
-                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary)));
+            assertThat(
+                    ((UpdateChangeRecord) chr).getChangedAttribute().toString(),
+                    anyOf(
+                            equalTo(DC.Terms.TITLE),
+                            equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary)));
         });
     }
 
@@ -167,7 +172,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getChangedEntity());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(SKOS.DEFINITION, ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
+        assertEquals(
+                SKOS.DEFINITION,
+                ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
     }
 
     @Test
@@ -191,7 +198,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getChangedEntity());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(SKOS.BROADER, ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
+        assertEquals(
+                SKOS.BROADER,
+                ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
     }
 
     @Test
@@ -204,8 +213,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
         });
-        final MultilingualString newDefinition = MultilingualString
-                .create("Updated term definition.", Environment.LANGUAGE);
+        final MultilingualString newDefinition =
+                MultilingualString.create("Updated term definition.", Environment.LANGUAGE);
         term.setDefinition(newDefinition);
         // This is normally inferred
         term.setVocabulary(vocabulary.getUri());
@@ -213,8 +222,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
-        assertEquals(Collections.singleton(originalDefinition),
-                ((UpdateChangeRecord) result.get(0)).getOriginalValue());
+        assertEquals(
+                Collections.singleton(originalDefinition), ((UpdateChangeRecord) result.get(0)).getOriginalValue());
         assertEquals(Collections.singleton(newDefinition), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 
@@ -265,7 +274,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term),
+        assertEquals(
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_state_of_term),
                 ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
     }
 
@@ -273,7 +283,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     void deletingTermCreatesDeleteChangeRecord() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        transactional(()-> {
+        transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setVocabulary(vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));

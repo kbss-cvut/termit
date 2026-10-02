@@ -59,14 +59,16 @@ class ReadOnlyVocabularyServiceTest {
 
     @Test
     void findAllReturnsAllVocabulariesTransformedToReadOnlyVersions() {
-        final List<VocabularyDto> vocabularies = IntStream.range(0, 5).mapToObj(
-                                                                  i -> Environment.getDtoMapper().vocabularyToVocabularyDto(Generator.generateVocabularyWithId()))
-                                                          .collect(Collectors.toList());
+        final List<VocabularyDto> vocabularies = IntStream.range(0, 5)
+                .mapToObj(
+                        i -> Environment.getDtoMapper().vocabularyToVocabularyDto(Generator.generateVocabularyWithId()))
+                .collect(Collectors.toList());
         when(vocabularyService.findAll()).thenReturn(vocabularies);
 
         final List<ReadOnlyVocabulary> result = sut.findAll();
         assertEquals(vocabularies.size(), result.size());
-        result.forEach(r -> assertTrue(vocabularies.stream().anyMatch(v -> v.getUri().equals(r.getUri()))));
+        result.forEach(r ->
+                assertTrue(vocabularies.stream().anyMatch(v -> v.getUri().equals(r.getUri()))));
     }
 
     @Test
@@ -88,8 +90,8 @@ class ReadOnlyVocabularyServiceTest {
     @Test
     void getTransitivelyImportedVocabulariesRetrievesImportedVocabulariesFromVocabularyService() {
         final ReadOnlyVocabulary voc = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
-        final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri())
-                                          .collect(Collectors.toSet());
+        final Set<URI> imports =
+                IntStream.range(0, 3).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
         when(vocabularyService.getTransitivelyImportedVocabularies(any())).thenReturn(imports);
 
         final Collection<URI> result = sut.getTransitivelyImportedVocabularies(voc);
@@ -103,8 +105,9 @@ class ReadOnlyVocabularyServiceTest {
     void findSnapshotsRetrievesSnapshotsOfSpecifiedVocabulary() {
         final Vocabulary v = Generator.generateVocabularyWithId();
         final ReadOnlyVocabulary voc = new ReadOnlyVocabulary(v);
-        final List<Snapshot> snapshots = IntStream.range(0, 3).mapToObj(i -> Generator.generateSnapshot(v))
-                                                  .collect(Collectors.toList());
+        final List<Snapshot> snapshots = IntStream.range(0, 3)
+                .mapToObj(i -> Generator.generateSnapshot(v))
+                .collect(Collectors.toList());
         when(vocabularyService.findSnapshots(v)).thenReturn(snapshots);
 
         final List<Snapshot> result = sut.findSnapshots(voc);

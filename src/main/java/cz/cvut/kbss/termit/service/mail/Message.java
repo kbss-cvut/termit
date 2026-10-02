@@ -74,10 +74,7 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message{" +
-                "recipients='" + recipients + '\'' +
-                ", subject='" + subject + '\'' +
-                '}';
+        return "Message{" + "recipients='" + recipients + '\'' + ", subject='" + subject + '\'' + '}';
     }
 
     public static class MessageBuilder {

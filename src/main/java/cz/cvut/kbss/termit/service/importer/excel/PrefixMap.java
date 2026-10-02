@@ -28,8 +28,7 @@ class PrefixMap {
 
     private final Map<String, String> prefixMap = new HashMap<>();
 
-    PrefixMap() {
-    }
+    PrefixMap() {}
 
     PrefixMap(Sheet prefixSheet) {
         for (Row row : prefixSheet) {
@@ -37,12 +36,16 @@ class PrefixMap {
                 continue;
             }
 
-            if (row.getCell(ExcelVocabularyExporter.PREFIX_COLUMN_NUMBER) == null || row.getCell(
-                    ExcelVocabularyExporter.PREFIX_COLUMN_NUMBER).getStringCellValue().isBlank()) {
+            if (row.getCell(ExcelVocabularyExporter.PREFIX_COLUMN_NUMBER) == null
+                    || row.getCell(ExcelVocabularyExporter.PREFIX_COLUMN_NUMBER)
+                            .getStringCellValue()
+                            .isBlank()) {
                 return;
             }
-            final String prefix = row.getCell(ExcelVocabularyExporter.PREFIX_COLUMN_NUMBER).getStringCellValue();
-            final String uri = row.getCell(ExcelVocabularyExporter.NAMESPACE_COLUMN_NUMBER).getStringCellValue();
+            final String prefix =
+                    row.getCell(ExcelVocabularyExporter.PREFIX_COLUMN_NUMBER).getStringCellValue();
+            final String uri =
+                    row.getCell(ExcelVocabularyExporter.NAMESPACE_COLUMN_NUMBER).getStringCellValue();
             prefixMap.put(prefix, uri);
         }
     }

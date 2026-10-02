@@ -93,26 +93,28 @@ public class CommentDao {
      */
     public List<Comment> findAll(Asset<?> asset, Instant from, Instant to) {
         try {
-            final TypedQuery<Comment> query = em.createNativeQuery("SELECT DISTINCT ?c WHERE {" +
-                                                                           "?c a ?type ; " +
-                                                                           "?hasTopic ?asset . " +
-                                                                           " { " +
-                                                                           "?c ?hasCreated ?mod . " +
-                                                                           "FILTER (?mod >= ?from && ?mod < ?to) " +
-                                                                           "} UNION { " +
-                                                                           "?c ?hasModified ?mod . " +
-                                                                           "FILTER (?mod >= ?from && ?mod < ?to) " +
-                                                                           "} } ORDER BY ?mod", Comment.class)
-                                                .setParameter("type", URI.create(Vocabulary.s_c_Comment))
-                                                .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
-                                                .setParameter("hasCreated",URI.create(DC.Terms.CREATED))
-                                                .setParameter("hasModified", URI.create(DC.Terms.MODIFIED));
+            final TypedQuery<Comment> query = em.createNativeQuery(
+                            "SELECT DISTINCT ?c WHERE {" + "?c a ?type ; "
+                                    + "?hasTopic ?asset . "
+                                    + " { "
+                                    + "?c ?hasCreated ?mod . "
+                                    + "FILTER (?mod >= ?from && ?mod < ?to) "
+                                    + "} UNION { "
+                                    + "?c ?hasModified ?mod . "
+                                    + "FILTER (?mod >= ?from && ?mod < ?to) "
+                                    + "} } ORDER BY ?mod",
+                            Comment.class)
+                    .setParameter("type", URI.create(Vocabulary.s_c_Comment))
+                    .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
+                    .setParameter("hasCreated", URI.create(DC.Terms.CREATED))
+                    .setParameter("hasModified", URI.create(DC.Terms.MODIFIED));
             if (asset != null) {
                 query.setParameter("asset", asset);
             }
             return query.setParameter("from", from != null ? from : Constants.EPOCH_TIMESTAMP)
-                        .setParameter("to", to != null ? to : Utils.timestamp())
-                        .setDescriptor(createLoadingDescriptor()).getResultList();
+                    .setParameter("to", to != null ? to : Utils.timestamp())
+                    .setDescriptor(createLoadingDescriptor())
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -177,32 +179,33 @@ public class CommentDao {
 
     private List<Comment> findUniqueLastModifiedEntitiesBy(User author, int limit) {
         return em.createNativeQuery(
-                         "SELECT DISTINCT ?comment WHERE {"
-                                 + "?comment a ?commentType ;"
-                                 + "       ?hasEditor ?editor ;"
-                                 + "       ?hasAsset ?asset ."
-                                 + "    OPTIONAL { ?comment ?hasModificationDate ?modified . }"
-                                 + "    OPTIONAL { ?comment ?hasCreationDate  ?created . }"
-                                 + "    BIND(COALESCE(?modified,?created) AS ?lastModified)"
-                                 + "    { FILTER( ?editor = ?author) } UNION {"
-                                 + "       ?comment2 a ?commentType ;"
-                                 + "       ?hasEditor ?author ;"
-                                 + "       ?hasAsset ?asset ."
-                                 + "       OPTIONAL { ?comment2 ?hasModificationDate ?modified2 . }"
-                                 + "       OPTIONAL { ?comment2 ?hasCreationDate ?created2 . }"
-                                 + "       BIND(COALESCE(?modified2,?created2) AS ?lastModified2)"
-                                 + "       FILTER( ?lastModified2 < ?lastModified )"
-                                 + "     }"
-                                 + "    "
-                                 + "} ORDER BY DESC(?lastModified)", Comment.class)
-                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
-                 .setParameter("hasModificationDate", URI.create(DC.Terms.MODIFIED))
-                 .setParameter("hasCreationDate", URI.create(DC.Terms.CREATED))
-                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
-                 .setParameter("author", author.getUri())
-                 .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
-                 .setMaxResults(limit)
-                 .getResultList();
+                        "SELECT DISTINCT ?comment WHERE {"
+                                + "?comment a ?commentType ;"
+                                + "       ?hasEditor ?editor ;"
+                                + "       ?hasAsset ?asset ."
+                                + "    OPTIONAL { ?comment ?hasModificationDate ?modified . }"
+                                + "    OPTIONAL { ?comment ?hasCreationDate  ?created . }"
+                                + "    BIND(COALESCE(?modified,?created) AS ?lastModified)"
+                                + "    { FILTER( ?editor = ?author) } UNION {"
+                                + "       ?comment2 a ?commentType ;"
+                                + "       ?hasEditor ?author ;"
+                                + "       ?hasAsset ?asset ."
+                                + "       OPTIONAL { ?comment2 ?hasModificationDate ?modified2 . }"
+                                + "       OPTIONAL { ?comment2 ?hasCreationDate ?created2 . }"
+                                + "       BIND(COALESCE(?modified2,?created2) AS ?lastModified2)"
+                                + "       FILTER( ?lastModified2 < ?lastModified )"
+                                + "     }"
+                                + "    "
+                                + "} ORDER BY DESC(?lastModified)",
+                        Comment.class)
+                .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                .setParameter("hasModificationDate", URI.create(DC.Terms.MODIFIED))
+                .setParameter("hasCreationDate", URI.create(DC.Terms.CREATED))
+                .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
+                .setParameter("author", author.getUri())
+                .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
+                .setMaxResults(limit)
+                .getResultList();
     }
 
     /**

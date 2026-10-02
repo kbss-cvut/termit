@@ -77,34 +77,38 @@ class AssetDaoTest extends BaseDaoTestRunner {
     @Test
     void findRecentlyEditedLoadsSpecifiedCountOfRecentlyEditedAssets() {
         enableRdfsInference(em);
-        final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .toList();
+        final List<Vocabulary> vocabularies = IntStream.range(0, 10)
+                .mapToObj(i -> Generator.generateVocabularyWithId())
+                .toList();
         transactional(() -> vocabularies.forEach(em::persist));
-        final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(Collectors.toList());
+        final List<PersistChangeRecord> persistRecords =
+                vocabularies.stream().map(Generator::generatePersistChange).collect(Collectors.toList());
         setOldCreated(persistRecords.subList(0, 5));
-        final List<URI> recent = vocabularies.subList(5, vocabularies.size()).stream().map(Vocabulary::getUri)
-                                             .toList();
+        final List<URI> recent = vocabularies.subList(5, vocabularies.size()).stream()
+                .map(Vocabulary::getUri)
+                .toList();
         transactional(() -> persistRecords.forEach(em::persist));
 
         final Pageable pageSpec = PageRequest.of(0, recent.size() - 2);
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
         assertEquals(pageSpec.getPageSize(), result.getNumberOfElements());
-        assertTrue(recent.containsAll(result.stream().map(RecentlyModifiedAsset::getUri).toList()));
+        assertTrue(recent.containsAll(
+                result.stream().map(RecentlyModifiedAsset::getUri).toList()));
     }
 
     @Test
     void findRecentlyEditedUsesLastModifiedDateWhenAvailable() {
         enableRdfsInference(em);
-        final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .toList();
+        final List<Vocabulary> vocabularies = IntStream.range(0, 10)
+                .mapToObj(i -> Generator.generateVocabularyWithId())
+                .toList();
         transactional(() -> vocabularies.forEach(em::persist));
-        final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(Collectors.toList());
+        final List<PersistChangeRecord> persistRecords =
+                vocabularies.stream().map(Generator::generatePersistChange).collect(Collectors.toList());
         setOldCreated(persistRecords);
         final List<Vocabulary> recent = vocabularies.subList(5, vocabularies.size());
-        final List<UpdateChangeRecord> updateRecords = recent.stream().map(Generator::generateUpdateChange)
-                                                             .toList();
+        final List<UpdateChangeRecord> updateRecords =
+                recent.stream().map(Generator::generateUpdateChange).toList();
         transactional(() -> {
             persistRecords.forEach(em::persist);
             updateRecords.forEach(em::persist);
@@ -115,7 +119,8 @@ class AssetDaoTest extends BaseDaoTestRunner {
         final List<URI> recentUris = recent.stream().map(Vocabulary::getUri).toList();
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
         assertEquals(pageSpec.getPageSize(), result.getNumberOfElements());
-        assertTrue(recentUris.containsAll(result.stream().map(RecentlyModifiedAsset::getUri).toList()));
+        assertTrue(recentUris.containsAll(
+                result.stream().map(RecentlyModifiedAsset::getUri).toList()));
     }
 
     private void setOldCreated(List<PersistChangeRecord> old) {
@@ -150,9 +155,10 @@ class AssetDaoTest extends BaseDaoTestRunner {
             em.persist(term);
             try (RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
-                conn.add(vf.createIRI(document.getUri().toString()),
-                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_document_vocabulary),
-                         vf.createIRI(vocabulary.getUri().toString()));
+                conn.add(
+                        vf.createIRI(document.getUri().toString()),
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_document_vocabulary),
+                        vf.createIRI(vocabulary.getUri().toString()));
             }
         });
         final Map<Asset<?>, AbstractChangeRecord> changes = new HashMap<>();
@@ -165,11 +171,13 @@ class AssetDaoTest extends BaseDaoTestRunner {
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
         assertEquals(changes.size(), result.getNumberOfElements());
         changes.forEach((k, v) -> {
-            final Optional<RecentlyModifiedAsset> rma = result.stream().filter(a -> a.getUri().equals(k.getUri()))
-                                                              .findAny();
+            final Optional<RecentlyModifiedAsset> rma =
+                    result.stream().filter(a -> a.getUri().equals(k.getUri())).findAny();
             assertTrue(rma.isPresent());
             assertEquals(k.getUri(), rma.get().getUri());
-            assertThat(rma.get().getTypes(), hasItem(k.getClass().getAnnotation(OWLClass.class).iri()));
+            assertThat(
+                    rma.get().getTypes(),
+                    hasItem(k.getClass().getAnnotation(OWLClass.class).iri()));
         });
     }
 
@@ -177,24 +185,26 @@ class AssetDaoTest extends BaseDaoTestRunner {
     void findRecentlyEditedByUserReturnsAssetsEditedBySpecifiedUser() {
         enableRdfsInference(em);
         final List<Vocabulary> myVocabularies = IntStream.range(0, 5)
-                                                         .mapToObj(i -> Generator.generateVocabularyWithId())
-                                                         .toList();
-        final List<PersistChangeRecord> persistRecords = myVocabularies.stream().map(Generator::generatePersistChange)
-                                                                       .toList();
+                .mapToObj(i -> Generator.generateVocabularyWithId())
+                .toList();
+        final List<PersistChangeRecord> persistRecords =
+                myVocabularies.stream().map(Generator::generatePersistChange).toList();
         final List<Vocabulary> otherVocabularies = IntStream.range(0, 5)
-                                                            .mapToObj(i -> Generator.generateVocabularyWithId())
-                                                            .toList();
+                .mapToObj(i -> Generator.generateVocabularyWithId())
+                .toList();
         final User otherUser = Generator.generateUserWithId();
         transactional(() -> {
             myVocabularies.forEach(em::persist);
             otherVocabularies.forEach(em::persist);
             em.persist(otherUser);
         });
-        final List<PersistChangeRecord> otherPersistRecords = otherVocabularies.stream().map(r -> {
-            final PersistChangeRecord rec = Generator.generatePersistChange(r);
-            rec.setAuthor(otherUser);
-            return rec;
-        }).toList();
+        final List<PersistChangeRecord> otherPersistRecords = otherVocabularies.stream()
+                .map(r -> {
+                    final PersistChangeRecord rec = Generator.generatePersistChange(r);
+                    rec.setAuthor(otherUser);
+                    return rec;
+                })
+                .toList();
         transactional(() -> {
             persistRecords.forEach(em::persist);
             otherPersistRecords.forEach(em::persist);
@@ -203,9 +213,10 @@ class AssetDaoTest extends BaseDaoTestRunner {
         final Pageable pageSpec = PageRequest.of(0, 3);
         final Page<RecentlyModifiedAsset> result = sut.findLastEditedBy(user, pageSpec);
         assertFalse(result.isEmpty());
-        final Set<URI> mineUris = myVocabularies.stream().map(Vocabulary::getUri).collect(Collectors.toSet());
-        assertTrue(
-                mineUris.containsAll(result.stream().map(RecentlyModifiedAsset::getUri).toList()));
+        final Set<URI> mineUris =
+                myVocabularies.stream().map(Vocabulary::getUri).collect(Collectors.toSet());
+        assertTrue(mineUris.containsAll(
+                result.stream().map(RecentlyModifiedAsset::getUri).toList()));
     }
 
     @Test

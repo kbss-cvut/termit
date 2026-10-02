@@ -72,8 +72,8 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
         while (current.hasParent()) {
             current = current.parent();
             assert current != null;
-            final List<Node> previousSiblings = current.childNodes()
-                                                       .subList(previous.siblingIndex() + 1, current.childNodeSize());
+            final List<Node> previousSiblings =
+                    current.childNodes().subList(previous.siblingIndex() + 1, current.childNodeSize());
             sb.append(extractNodeText(previousSiblings));
             if (sb.length() >= contextLength) {
                 break;

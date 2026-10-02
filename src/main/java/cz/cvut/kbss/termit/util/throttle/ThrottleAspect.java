@@ -153,9 +153,11 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     private final Configuration configuration;
 
     @Autowired
-    public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler,
-                          SynchronousTransactionExecutor transactionExecutor,
-                          LongRunningTasksRegistry longRunningTasksRegistry, Configuration configuration) {
+    public ThrottleAspect(
+            @Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler,
+            SynchronousTransactionExecutor transactionExecutor,
+            LongRunningTasksRegistry longRunningTasksRegistry,
+            Configuration configuration) {
         super(longRunningTasksRegistry);
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
@@ -171,11 +173,15 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     /**
      * Constructor for testing environment
      */
-    protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
-                             Map<Identifier, Instant> lastRun,
-                             NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
-                             Clock clock, SynchronousTransactionExecutor transactionExecutor,
-                             LongRunningTasksRegistry longRunningTasksRegistry, Configuration configuration) {
+    protected ThrottleAspect(
+            Map<Identifier, ThrottledFuture<Object>> throttledFutures,
+            Map<Identifier, Instant> lastRun,
+            NavigableMap<Identifier, Future<Object>> scheduledFutures,
+            TaskScheduler taskScheduler,
+            Clock clock,
+            SynchronousTransactionExecutor transactionExecutor,
+            LongRunningTasksRegistry longRunningTasksRegistry,
+            Configuration configuration) {
         super(longRunningTasksRegistry);
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
@@ -201,8 +207,10 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         final StandardTypeLocator typeLocator = new StandardTypeLocator(loader);
 
         final String basePackage = TermItApplication.class.getPackageName();
-        Arrays.stream(loader.getDefinedPackages()).map(Package::getName).filter(s -> s.indexOf(basePackage) == 0)
-              .forEach(typeLocator::registerImport);
+        Arrays.stream(loader.getDefinedPackages())
+                .map(Package::getName)
+                .filter(s -> s.indexOf(basePackage) == 0)
+                .forEach(typeLocator::registerImport);
 
         standardEvaluationContext.setTypeLocator(typeLocator);
         return standardEvaluationContext;
@@ -224,22 +232,21 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                     Iterator<Map.Entry<Identifier, ThrottledFuture<Object>>> throttledIt =
                             throttledFutures.entrySet().iterator();
 
-                    while(throttledIt.hasNext()) {
+                    while (throttledIt.hasNext()) {
                         final Map.Entry<Identifier, ThrottledFuture<Object>> entry = throttledIt.next();
                         final ThrottledFuture<Object> future = entry.getValue();
                         final Identifier identifier = entry.getKey();
-                        if(future.isRunning() || future.isDone()) continue;
+                        if (future.isRunning() || future.isDone()) continue;
 
                         // cancel the throttled future
                         future.cancel(false);
                         // cancel the scheduled future
-                        Optional.ofNullable(scheduledFutures.get(identifier))
-                                .ifPresent(scheduled -> {
-                                    scheduled.cancel(false);
-                                    if (scheduled.isCancelled()) {
-                                        scheduledFutures.remove(identifier);
-                                    }
-                                });
+                        Optional.ofNullable(scheduledFutures.get(identifier)).ifPresent(scheduled -> {
+                            scheduled.cancel(false);
+                            if (scheduled.isCancelled()) {
+                                scheduledFutures.remove(identifier);
+                            }
+                        });
                         if (future.isCancelled()) {
                             throttledIt.remove();
                         }
@@ -260,8 +267,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      *                                {@link Future}
      * @implNote Around advice configured in {@code spring-aop.xml}
      */
-    public @Nullable Object throttleMethodCall(@Nonnull ProceedingJoinPoint joinPoint,
-                                               @Nonnull Throttle throttleAnnotation) throws Throwable {
+    public @Nullable Object throttleMethodCall(
+            @Nonnull ProceedingJoinPoint joinPoint, @Nonnull Throttle throttleAnnotation) throws Throwable {
 
         // if the current thread is already executing a throttled code, we want to skip further throttling
         if (throttledThreads.contains(Thread.currentThread().getId())) {
@@ -279,8 +286,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return doThrottle(joinPoint, throttleAnnotation);
     }
 
-    private synchronized @Nullable Object doThrottle(@Nonnull ProceedingJoinPoint joinPoint,
-                                                     @Nonnull Throttle throttleAnnotation) throws Throwable {
+    private synchronized @Nullable Object doThrottle(
+            @Nonnull ProceedingJoinPoint joinPoint, @Nonnull Throttle throttleAnnotation) throws Throwable {
 
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
@@ -295,7 +302,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 final Map.Entry<Identifier, Future<Object>> lowerEntry = scheduledFutures.lowerEntry(identifier);
                 if (lowerEntry != null) {
                     final Future<Object> lowerFuture = lowerEntry.getValue();
-                    boolean hasGroupPrefix = identifier.hasGroupPrefix(lowerEntry.getKey().getGroup());
+                    boolean hasGroupPrefix =
+                            identifier.hasGroupPrefix(lowerEntry.getKey().getGroup());
                     if (hasGroupPrefix && !lowerFuture.isDone()) {
                         LOG.trace("Throttling canceled due to scheduled lower task '{}'", lowerEntry.getKey());
                         return ThrottledFuture.canceled();
@@ -306,7 +314,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             }
         }
 
-        // if there is a scheduled task and this throttled instance was executed in the last configuration.getThrottleThreshold()
+        // if there is a scheduled task and this throttled instance was executed in the last
+        // configuration.getThrottleThreshold()
         // cancel the scheduled task
         // -> the execution is further delayed
         Future<Object> oldScheduledFuture = scheduledFutures.get(identifier);
@@ -338,9 +347,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         if (oldScheduledFuture == null || oldThrottledFuture != future || oldScheduledFuture.isDone()) {
             boolean oldFutureIsDone = oldScheduledFuture == null || oldScheduledFuture.isDone();
             if (oldThrottledFuture != future) {
-                oldThrottledFuture.then(ignored -> schedule(identifier, pair.getFirst(),
-                                                            throttleExpired && oldFutureIsDone)
-                );
+                oldThrottledFuture.then(
+                        ignored -> schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone));
                 notifyTaskChanged(oldThrottledFuture); // the old future maybe changed its state
             } else {
                 schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone);
@@ -397,9 +405,10 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      * @throws Throwable when {@code joinPoint.proceed()} throws,
      *                   or {@link ThrottleAspectException} when the method signature from the {@code joinPoint} is invalid.
      */
-    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@Nonnull ProceedingJoinPoint joinPoint,
-                                                                  @Nonnull Identifier identifier,
-                                                                  @Nonnull ThrottledFuture<Object> future)
+    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(
+            @Nonnull ProceedingJoinPoint joinPoint,
+            @Nonnull Identifier identifier,
+            @Nonnull ThrottledFuture<Object> future)
             throws Throwable {
 
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
@@ -433,26 +442,27 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 throw new ThrottleAspectException("Returned value is not a ThrottledFuture");
             }
         } else if (isVoid) {
-            throttledFuture = throttledFuture.update(() -> {
-                try {
-                    return joinPoint.proceed();
-                } catch (Throwable e) {
-                    // exception happened inside throttled method,
-                    // and the method returns null, if we rethrow the exception
-                    // it will be stored inside the future
-                    // and never retrieved (as the method returned null)
-                    LOG.error("Exception thrown during task execution", e);
-                    throw new TermItException(e);
-                }
-            }, List.of());
+            throttledFuture = throttledFuture.update(
+                    () -> {
+                        try {
+                            return joinPoint.proceed();
+                        } catch (Throwable e) {
+                            // exception happened inside throttled method,
+                            // and the method returns null, if we rethrow the exception
+                            // it will be stored inside the future
+                            // and never retrieved (as the method returned null)
+                            LOG.error("Exception thrown during task execution", e);
+                            throw new TermItException(e);
+                        }
+                    },
+                    List.of());
         } else {
-            throw new ThrottleAspectException(
-                    "Invalid return type for " + joinPoint.getSignature() + " annotated with @Throttle, only Future or void allowed!");
+            throw new ThrottleAspectException("Invalid return type for " + joinPoint.getSignature()
+                    + " annotated with @Throttle, only Future or void allowed!");
         }
 
-        final boolean withTransaction = methodSignature.getMethod() != null && methodSignature.getMethod()
-                                                                                              .isAnnotationPresent(
-                                                                                                      Transactional.class);
+        final boolean withTransaction = methodSignature.getMethod() != null
+                && methodSignature.getMethod().isAnnotationPresent(Transactional.class);
 
         // create a task which will be scheduled with executor
         final Runnable toSchedule = createRunnableToSchedule(throttledFuture, identifier, withTransaction);
@@ -465,7 +475,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      */
     private long countRemaining() {
         synchronized (throttledFutures) {
-            return throttledFutures.values().stream().filter(f -> !f.isDone() && !f.isRunning()).count();
+            return throttledFutures.values().stream()
+                    .filter(f -> !f.isDone() && !f.isRunning())
+                    .count();
         }
     }
 
@@ -486,8 +498,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      * @param withTransaction whether the future should be executed in {@link Transactional} context
      * @return {@link Runnable} that executes the future
      */
-    private Runnable createRunnableToSchedule(ThrottledFuture<?> throttledFuture, Identifier identifier,
-                                              boolean withTransaction) {
+    private Runnable createRunnableToSchedule(
+            ThrottledFuture<?> throttledFuture, Identifier identifier, boolean withTransaction) {
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
         return () -> {
             if (throttledFuture.isDone()) {
@@ -497,8 +509,11 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
 
-            LOG.trace("Running throttled task [{} left] [{} running] '{}'", countRemaining() - 1, countRunning(),
-                      identifier);
+            LOG.trace(
+                    "Running throttled task [{} left] [{} running] '{}'",
+                    countRemaining() - 1,
+                    countRunning(),
+                    identifier);
 
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
@@ -520,8 +535,11 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 notifyTaskChanged(throttledFuture); // task done
                 // clear the security context
                 SecurityContextHolder.clearContext();
-                LOG.trace("Finished throttled task [{} left] [{} running] '{}'", countRemaining(), countRunning() - 1,
-                          identifier);
+                LOG.trace(
+                        "Finished throttled task [{} left] [{} running] '{}'",
+                        countRemaining(),
+                        countRunning() - 1,
+                        identifier);
 
                 clearOldFutures();
 
@@ -541,8 +559,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     private void clearOldFutures() {
         // if the last clear was performed less than a threshold ago, skip it for now
         Instant last = lastClear.get();
-        if (last.isAfter(Instant.now(clock).minus(configuration.getThrottleThreshold())
-                                .minus(configuration.getThrottleDiscardThreshold()))) {
+        if (last.isAfter(Instant.now(clock)
+                .minus(configuration.getThrottleThreshold())
+                .minus(configuration.getThrottleDiscardThreshold()))) {
             return;
         }
         if (!lastClear.compareAndSet(last, Instant.now(clock))) {
@@ -551,25 +570,31 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         synchronized (throttledFutures) { // synchronize in the filed declaration order
             synchronized (lastRun) {
                 synchronized (scheduledFutures) {
-                    Stream.of(throttledFutures.keySet().stream(), scheduledFutures.keySet().stream(), lastRun.keySet()
-                                                                                                             .stream())
-                          .flatMap(s -> s).distinct().toList() // ensures safe modification of maps
-                          .forEach(identifier -> {
-                              if (isThresholdExpiredByMoreThan(identifier,
-                                                               configuration.getThrottleDiscardThreshold())) {
-                                  Optional.ofNullable(throttledFutures.get(identifier)).ifPresent(throttled -> {
-                                      if (throttled.isDone()) {
-                                          throttledFutures.remove(identifier);
-                                      }
-                                  });
-                                  Optional.ofNullable(scheduledFutures.get(identifier)).ifPresent(scheduled -> {
-                                      if (scheduled.isDone()) {
-                                          scheduledFutures.remove(identifier);
-                                      }
-                                  });
-                                  lastRun.remove(identifier);
-                              }
-                          });
+                    Stream.of(
+                                    throttledFutures.keySet().stream(),
+                                    scheduledFutures.keySet().stream(),
+                                    lastRun.keySet().stream())
+                            .flatMap(s -> s)
+                            .distinct()
+                            .toList() // ensures safe modification of maps
+                            .forEach(identifier -> {
+                                if (isThresholdExpiredByMoreThan(
+                                        identifier, configuration.getThrottleDiscardThreshold())) {
+                                    Optional.ofNullable(throttledFutures.get(identifier))
+                                            .ifPresent(throttled -> {
+                                                if (throttled.isDone()) {
+                                                    throttledFutures.remove(identifier);
+                                                }
+                                            });
+                                    Optional.ofNullable(scheduledFutures.get(identifier))
+                                            .ifPresent(scheduled -> {
+                                                if (scheduled.isDone()) {
+                                                    scheduledFutures.remove(identifier);
+                                                }
+                                            });
+                                    lastRun.remove(identifier);
+                                }
+                            });
                 }
             }
         }
@@ -583,7 +608,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      */
     private boolean isThresholdExpiredByMoreThan(Identifier identifier, Duration duration) {
         return lastRun.getOrDefault(identifier, Instant.MAX)
-                      .isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()).minus(duration));
+                .isBefore(Instant.now(clock)
+                        .minus(configuration.getThrottleThreshold())
+                        .minus(duration));
     }
 
     /**
@@ -592,7 +619,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      */
     private boolean isThresholdExpired(Identifier identifier) {
         return lastRun.getOrDefault(identifier, Instant.EPOCH)
-                      .isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()));
+                .isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()));
     }
 
     /**
@@ -626,8 +653,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 Future<Object> higherFuture;
                 Identifier higherKey = scheduledFutures.higherKey(new Identifier(throttleAnnotation.getGroup(), ""));
                 while (higherKey != null) {
-                    if (!higherKey.hasGroupPrefix(throttleAnnotation.getGroup()) || higherKey.getGroup()
-                                                                                             .equals(throttleAnnotation.getGroup())) {
+                    if (!higherKey.hasGroupPrefix(throttleAnnotation.getGroup())
+                            || higherKey.getGroup().equals(throttleAnnotation.getGroup())) {
                         break;
                     }
 

@@ -20,10 +20,10 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
 import cz.cvut.kbss.termit.dto.statistics.TermTypeDistributionDto;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
@@ -52,9 +52,11 @@ public class StatisticsDao {
     }
 
     private static RdfsResource initNoType() {
-        final RdfsResource noType = new RdfsResource(URI.create(Vocabulary.ONTOLOGY_IRI_TERMIT + "/bez-typu"),
-                                                     new LangString("Nevyplněno", "cs"), null,
-                                                     SKOS.CONCEPT);
+        final RdfsResource noType = new RdfsResource(
+                URI.create(Vocabulary.ONTOLOGY_IRI_TERMIT + "/bez-typu"),
+                new LangString("Nevyplněno", "cs"),
+                null,
+                SKOS.CONCEPT);
         noType.getLabel().set("en", "No type");
         return noType;
     }
@@ -68,21 +70,19 @@ public class StatisticsDao {
      */
     public List<DistributionDto> getTermDistribution() {
         final String query = Utils.loadQuery("statistics/termDistribution.rq");
-        final List<DistributionDto> result = (List<DistributionDto>) em.createNativeQuery(query).getResultStream()
-                                                                       .map(row -> {
-                                                                           final Object[] bindings = (Object[]) row;
-                                                                           assert bindings.length == 4;
-                                                                           final URI vocabulary = (URI) bindings[0];
-                                                                           final String vocabularyLanguage = (String) bindings[3];
-                                                                           final LangString label = sanitizeLabel(
-                                                                                   bindings[1], vocabularyLanguage);
-                                                                           final BigInteger count = (BigInteger) bindings[2];
-                                                                           return new DistributionDto(
-                                                                                   new RdfsResource(vocabulary, label,
-                                                                                                    null,
-                                                                                                    SKOS.CONCEPT_SCHEME),
-                                                                                   count.intValue());
-                                                                       }).collect(Collectors.toList());
+        final List<DistributionDto> result = (List<DistributionDto>) em.createNativeQuery(query)
+                .getResultStream()
+                .map(row -> {
+                    final Object[] bindings = (Object[]) row;
+                    assert bindings.length == 4;
+                    final URI vocabulary = (URI) bindings[0];
+                    final String vocabularyLanguage = (String) bindings[3];
+                    final LangString label = sanitizeLabel(bindings[1], vocabularyLanguage);
+                    final BigInteger count = (BigInteger) bindings[2];
+                    return new DistributionDto(
+                            new RdfsResource(vocabulary, label, null, SKOS.CONCEPT_SCHEME), count.intValue());
+                })
+                .collect(Collectors.toList());
         consolidateTranslations(result);
         return result;
     }
@@ -92,8 +92,14 @@ public class StatisticsDao {
         final Iterator<DistributionDto> it = result.iterator();
         while (it.hasNext()) {
             final DistributionDto current = it.next();
-            if (previous != null && previous.getResource().getUri().equals(current.getResource().getUri())) {
-                previous.getResource().getLabel().getValue().putAll(current.getResource().getLabel().getValue());
+            if (previous != null
+                    && previous.getResource()
+                            .getUri()
+                            .equals(current.getResource().getUri())) {
+                previous.getResource()
+                        .getLabel()
+                        .getValue()
+                        .putAll(current.getResource().getLabel().getValue());
                 it.remove();
             } else {
                 previous = current;
@@ -119,10 +125,12 @@ public class StatisticsDao {
     public int getAssetCount(@Nonnull CountableAssetType type) {
         Objects.requireNonNull(type);
         if (CountableAssetType.TERM == type) {
-            return em.createNativeQuery(Utils.loadQuery("statistics/termCount.rq"), Integer.class).getSingleResult();
+            return em.createNativeQuery(Utils.loadQuery("statistics/termCount.rq"), Integer.class)
+                    .getSingleResult();
         } else {
             return em.createNativeQuery(Utils.loadQuery("statistics/assetCount.rq"), Integer.class)
-                     .setParameter("assetType", URI.create(type.getTypeUri())).getSingleResult();
+                    .setParameter("assetType", URI.create(type.getTypeUri()))
+                    .getSingleResult();
         }
     }
 
@@ -138,24 +146,22 @@ public class StatisticsDao {
         final Map<URI, RdfsResource> typeMap = types.stream().collect(Collectors.toMap(RdfsResource::getUri, r -> r));
         typeMap.put(NO_TYPE.getUri(), NO_TYPE);
         final List<TermTypeDistributionDto> result = (List<TermTypeDistributionDto>) em.createNativeQuery(query)
-                                                                                       .setParameter("types", types)
-                                                                                       .getResultStream().map(row -> {
+                .setParameter("types", types)
+                .getResultStream()
+                .map(row -> {
                     final Object[] bindings = (Object[]) row;
                     assert bindings.length == 5;
                     final URI vocabulary = (URI) bindings[0];
                     final String vocabularyLanguage = (String) bindings[4];
-                    final LangString label = sanitizeLabel(
-                            bindings[1], vocabularyLanguage);
+                    final LangString label = sanitizeLabel(bindings[1], vocabularyLanguage);
                     final URI type = (URI) bindings[2];
                     final BigInteger count = (BigInteger) bindings[3];
                     final TermTypeDistributionDto res = new TermTypeDistributionDto();
-                    res.setVocabulary(new RdfsResource(vocabulary, label,
-                                                       null,
-                                                       SKOS.CONCEPT_SCHEME));
-                    res.getTypeDistribution().add(new DistributionDto(
-                            typeMap.get(type), count.intValue()));
+                    res.setVocabulary(new RdfsResource(vocabulary, label, null, SKOS.CONCEPT_SCHEME));
+                    res.getTypeDistribution().add(new DistributionDto(typeMap.get(type), count.intValue()));
                     return res;
-                }).collect(Collectors.toList());
+                })
+                .collect(Collectors.toList());
         consolidateTranslationsAndTypes(result);
         return result;
     }
@@ -165,11 +171,23 @@ public class StatisticsDao {
         final Iterator<TermTypeDistributionDto> it = result.iterator();
         while (it.hasNext()) {
             final TermTypeDistributionDto current = it.next();
-            if (previous != null && previous.getVocabulary().getUri().equals(current.getVocabulary().getUri())) {
-                previous.getVocabulary().getLabel().getValue().putAll(current.getVocabulary().getLabel().getValue());
-                if (previous.getTypeDistribution().stream().noneMatch(ddto -> ddto.getResource().getUri().equals(
-                        current.getTypeDistribution().get(0).getResource().getUri()))) {
-                    previous.getTypeDistribution().add(current.getTypeDistribution().get(0));
+            if (previous != null
+                    && previous.getVocabulary()
+                            .getUri()
+                            .equals(current.getVocabulary().getUri())) {
+                previous.getVocabulary()
+                        .getLabel()
+                        .getValue()
+                        .putAll(current.getVocabulary().getLabel().getValue());
+                if (previous.getTypeDistribution().stream()
+                        .noneMatch(ddto -> ddto.getResource()
+                                .getUri()
+                                .equals(current.getTypeDistribution()
+                                        .get(0)
+                                        .getResource()
+                                        .getUri()))) {
+                    previous.getTypeDistribution()
+                            .add(current.getTypeDistribution().get(0));
                 }
                 it.remove();
             } else {

@@ -38,15 +38,15 @@ public class ReturnValueCollectingSimpMessagingTemplate extends SimpMessagingTem
 
     private final Map<UUID, Object> returnedValuesMap;
 
-    public ReturnValueCollectingSimpMessagingTemplate(MessageChannel messageChannel,
-                                                      Map<UUID, Object> returnedValuesMap) {
+    public ReturnValueCollectingSimpMessagingTemplate(
+            MessageChannel messageChannel, Map<UUID, Object> returnedValuesMap) {
         super(messageChannel);
         this.returnedValuesMap = returnedValuesMap;
     }
 
     @Override
-    protected @Nonnull Message<?> doConvert(@Nonnull Object payload, Map<String, Object> headers,
-                                            MessagePostProcessor postProcessor) {
+    protected @Nonnull Message<?> doConvert(
+            @Nonnull Object payload, Map<String, Object> headers, MessagePostProcessor postProcessor) {
         final Message<?> converted = super.doConvert(payload, headers, postProcessor);
 
         UUID id = converted.getHeaders().getId();
@@ -55,6 +55,8 @@ public class ReturnValueCollectingSimpMessagingTemplate extends SimpMessagingTem
         }
 
         returnedValuesMap.put(id, payload);
-        return MessageBuilder.fromMessage(converted).copyHeaders(Map.of(MESSAGE_IDENTIFIER_HEADER, id)).build();
+        return MessageBuilder.fromMessage(converted)
+                .copyHeaders(Map.of(MESSAGE_IDENTIFIER_HEADER, id))
+                .build();
     }
 }

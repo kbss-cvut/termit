@@ -100,8 +100,8 @@ public class TermItException extends RuntimeException {
     @Override
     public String toString() {
         String params = Utils.mapToString(parameters);
-        return super.toString() +
-                (messageId == null ? "" : ", messageId=" + messageId) +
-                (params.isBlank() ? "" : ", parameters=" + params);
+        return super.toString()
+                + (messageId == null ? "" : ", messageId=" + messageId)
+                + (params.isBlank() ? "" : ", parameters=" + params);
     }
 }

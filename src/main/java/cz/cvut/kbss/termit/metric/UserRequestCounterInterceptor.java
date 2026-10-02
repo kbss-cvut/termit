@@ -29,15 +29,18 @@ public class UserRequestCounterInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public boolean preHandle(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response,
-                             @Nonnull Object handler) {
+    public boolean preHandle(
+            @Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull Object handler) {
         if (!request.getRequestURI().contains(Constants.REST_MAPPING_PATH)) {
             return true;
         }
         if (securityUtils.isAuthenticated()) {
             final UserAccount account = securityUtils.getCurrentUser();
-            Counter.builder("app.user.requests").description("HTTP requests per user")
-                   .tag("user", account.getUsername()).register(meterRegistry).increment();
+            Counter.builder("app.user.requests")
+                    .description("HTTP requests per user")
+                    .tag("user", account.getUsername())
+                    .register(meterRegistry)
+                    .increment();
         }
         return true;
     }

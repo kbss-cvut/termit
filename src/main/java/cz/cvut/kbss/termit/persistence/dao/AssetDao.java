@@ -67,36 +67,36 @@ public class AssetDao {
         try {
             final List<AssetWithType> recentlyModifiedUniqueAssets = findUniqueLastModifiedEntities(pageSpec, null);
             return new PageImpl<>(recentlyModifiedUniqueAssets.stream()
-                                                              .map(asset -> getRecentlyModifiedAsset(asset, null))
-                                                              .filter(Optional::isPresent)
-                                                              .map(Optional::get)
-                                                              .collect(Collectors.toList()));
+                    .map(asset -> getRecentlyModifiedAsset(asset, null))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
     }
 
     private Optional<RecentlyModifiedAsset> getRecentlyModifiedAsset(AssetWithType asset, User author) {
-        final Query query = em
-                .createNativeQuery(
-                        "SELECT DISTINCT ?entity ?label ?modified ?modifiedBy ?vocabulary ?type ?changeType WHERE {" +
-                                "?x a ?change ;" +
-                                "   a ?chType ;" +
-                                "?hasModifiedEntity ?ent ;" +
-                                "?hasEditor ?author ;" +
-                                "?hasModificationDate ?modified ." +
-                                "?ent ?hasLabel ?label . " +
-                                "BIND (?languageVal as ?language) " +
-                                insertVocabularyPattern(asset) +
-                                insertLanguagePattern("?ent") +
-                                "BIND (?ent as ?entity)" +
-                                "BIND (?author as ?modifiedBy)" +
-                                "FILTER (?chType != ?change)" +
-                                "FILTER (?hasLabel in (?labelProperties))" +
-                                "BIND (?assetType as ?type)" +
-                                "BIND (IF(?chType = ?persist, ?persist, ?update) as ?changeType)" +
-                                "FILTER (lang(?label) = ?language || lang(?label) = \"\")" +
-                                "} ORDER BY DESC(?modified)", "RecentlyModifiedAsset")
+        final Query query = em.createNativeQuery(
+                        "SELECT DISTINCT ?entity ?label ?modified ?modifiedBy ?vocabulary ?type ?changeType WHERE {"
+                                + "?x a ?change ;"
+                                + "   a ?chType ;"
+                                + "?hasModifiedEntity ?ent ;"
+                                + "?hasEditor ?author ;"
+                                + "?hasModificationDate ?modified ."
+                                + "?ent ?hasLabel ?label . "
+                                + "BIND (?languageVal as ?language) "
+                                + insertVocabularyPattern(asset)
+                                + insertLanguagePattern("?ent")
+                                + "BIND (?ent as ?entity)"
+                                + "BIND (?author as ?modifiedBy)"
+                                + "FILTER (?chType != ?change)"
+                                + "FILTER (?hasLabel in (?labelProperties))"
+                                + "BIND (?assetType as ?type)"
+                                + "BIND (IF(?chType = ?persist, ?persist, ?update) as ?changeType)"
+                                + "FILTER (lang(?label) = ?language || lang(?label) = \"\")"
+                                + "} ORDER BY DESC(?modified)",
+                        "RecentlyModifiedAsset")
                 .setParameter("ent", asset.uri)
                 .setParameter("assetType", asset.type)
                 .setParameter("change", URI.create(Vocabulary.s_c_change))
@@ -142,7 +142,7 @@ public class AssetDao {
                 break;
             case Vocabulary.s_c_file:
                 query.setParameter("inDocument", URI.create(Vocabulary.s_p_is_part_of_document))
-                     .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_has_document_vocabulary));
+                        .setParameter("hasVocabulary", URI.create(Vocabulary.s_p_has_document_vocabulary));
                 break;
             default:
                 break;
@@ -151,37 +151,40 @@ public class AssetDao {
 
     List<AssetWithType> findUniqueLastModifiedEntities(Pageable pageSpec, User author) {
         final int offset = (int) pageSpec.getOffset();
-        final Query query = em.createNativeQuery("SELECT DISTINCT ?entity ?type WHERE {" +
-                                                         "?x ?hasModifiedEntity ?entity . " +
-                                                         "?entity a ?type ." +
-                                                         "{ SELECT ?x WHERE { " +
-                                                         "?x a ?change ; " +
-                                                         "?hasModificationDate ?modified ; " +
-                                                         "?hasEditor ?author . " +
-                                                         "} ORDER BY DESC(?modified) } " +
-                                                         "FILTER (?type IN (?assetTypes))" +
-                                                         "}")
-                              .setParameter("change", URI.create(Vocabulary.s_c_change))
-                              .setParameter("hasModificationDate",
-                                            URI.create(DC.Terms.MODIFIED))
-                              .setParameter("hasModifiedEntity",
-                                            URI.create(Vocabulary.s_p_has_changed_entity))
-                              .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_editor))
-                              .setParameter("assetTypes",
-                                            Arrays.asList(URI.create(SKOS.CONCEPT), URI.create(SKOS.CONCEPT_SCHEME),
-                                                          URI.create(Vocabulary.s_c_document),
-                                                          URI.create(Vocabulary.s_c_file)))
-                              .setFirstResult(offset)
-                              .setMaxResults(pageSpec.getPageSize());
+        final Query query = em.createNativeQuery(
+                        "SELECT DISTINCT ?entity ?type WHERE {" + "?x ?hasModifiedEntity ?entity . "
+                                + "?entity a ?type ."
+                                + "{ SELECT ?x WHERE { "
+                                + "?x a ?change ; "
+                                + "?hasModificationDate ?modified ; "
+                                + "?hasEditor ?author . "
+                                + "} ORDER BY DESC(?modified) } "
+                                + "FILTER (?type IN (?assetTypes))"
+                                + "}")
+                .setParameter("change", URI.create(Vocabulary.s_c_change))
+                .setParameter("hasModificationDate", URI.create(DC.Terms.MODIFIED))
+                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
+                .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_editor))
+                .setParameter(
+                        "assetTypes",
+                        Arrays.asList(
+                                URI.create(SKOS.CONCEPT),
+                                URI.create(SKOS.CONCEPT_SCHEME),
+                                URI.create(Vocabulary.s_c_document),
+                                URI.create(Vocabulary.s_c_file)))
+                .setFirstResult(offset)
+                .setMaxResults(pageSpec.getPageSize());
         if (author != null) {
             query.setParameter("author", author);
         }
-        return (List<AssetWithType>) query.getResultStream().map((row) -> {
-            final Object[] r = (Object[]) row;
-            assert r.length == 2;
-            assert r[0] instanceof URI && r[1] instanceof URI;
-            return new AssetWithType((URI) r[0], (URI) r[1]);
-        }).collect(Collectors.toList());
+        return (List<AssetWithType>) query.getResultStream()
+                .map((row) -> {
+                    final Object[] r = (Object[]) row;
+                    assert r.length == 2;
+                    assert r[0] instanceof URI && r[1] instanceof URI;
+                    return new AssetWithType((URI) r[0], (URI) r[1]);
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -196,15 +199,14 @@ public class AssetDao {
         try {
             final List<AssetWithType> recentlyModifiedUniqueAssets = findUniqueLastModifiedEntities(pageSpec, author);
             return new PageImpl<>(recentlyModifiedUniqueAssets.stream()
-                                                              .map(asset -> getRecentlyModifiedAsset(asset, author))
-                                                              .filter(Optional::isPresent)
-                                                              .map(Optional::get)
-                                                              .collect(Collectors.toList()));
+                    .map(asset -> getRecentlyModifiedAsset(asset, author))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
     }
 
-    private record AssetWithType(URI uri, URI type) {
-    }
+    private record AssetWithType(URI uri, URI type) {}
 }

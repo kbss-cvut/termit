@@ -47,20 +47,16 @@ public class PasswordChangeNotifier {
 
     private String buildPasswordResetLink(PasswordChangeRequest request) {
         return UriComponentsBuilder.fromUriString(config.getUrl())
-                                   .fragment("/reset-password/" +
-                                                     request.getToken() + "/" +
-                                                     URLEncoder.encode(request.getUri().toString(),
-                                                                       StandardCharsets.UTF_8)
-                                   ).toUriString();
+                .fragment("/reset-password/" + request.getToken() + "/"
+                        + URLEncoder.encode(request.getUri().toString(), StandardCharsets.UTF_8))
+                .toUriString();
     }
 
     private String buildCreatePasswordLink(PasswordChangeRequest request) {
         return UriComponentsBuilder.fromUriString(config.getUrl())
-                                   .fragment("/create-password/" +
-                                           request.getToken() + "/" +
-                                           URLEncoder.encode(request.getUri().toString(),
-                                                   StandardCharsets.UTF_8)
-                                   ).toUriString();
+                .fragment("/create-password/" + request.getToken() + "/"
+                        + URLEncoder.encode(request.getUri().toString(), StandardCharsets.UTF_8))
+                .toUriString();
     }
 
     /**
@@ -75,13 +71,12 @@ public class PasswordChangeNotifier {
         Map<String, Object> variables = Map.of(
                 "resetLink", frontendLink,
                 "username", request.getUserAccount().getUsername(),
-                "validity", config.getSecurity().getPasswordChangeRequestValidity()
-        );
+                "validity", config.getSecurity().getPasswordChangeRequestValidity());
         return Message.to(request.getUserAccount().getUsername())
-                      .content(messageComposer.composeMessage(templateName, variables))
-                      .subject(new MessageFormatter(config.getPersistence().getLanguage()).formatMessage(
-                              "password-change.email.subject"))
-                      .build();
+                .content(messageComposer.composeMessage(templateName, variables))
+                .subject(new MessageFormatter(config.getPersistence().getLanguage())
+                        .formatMessage("password-change.email.subject"))
+                .build();
     }
 
     public void sendPasswordResetEmail(PasswordChangeRequest request) {

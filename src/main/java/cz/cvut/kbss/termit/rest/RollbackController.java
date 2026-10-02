@@ -36,24 +36,27 @@ public class RollbackController extends BaseController {
     private final ChangeRollbackService changeRollbackService;
 
     @Autowired
-    public RollbackController(IdentifierResolver idResolver, Configuration config,
-                              ChangeRollbackService changeRollbackService) {
+    public RollbackController(
+            IdentifierResolver idResolver, Configuration config, ChangeRollbackService changeRollbackService) {
         super(idResolver, config);
         this.changeRollbackService = changeRollbackService;
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Rolls back the specified update change record.")
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Rolls back the specified update change record.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
-            @ApiResponse(responseCode = "404", description = "Update change record not found."),
+        @ApiResponse(responseCode = "204", description = "Change successfully rolled back."),
+        @ApiResponse(responseCode = "404", description = "Update change record not found."),
     })
     @PostMapping("/{localName}/rollback")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void rollback(@Parameter(description = "Local name of the update change record to roll back.")
-                         @PathVariable String localName,
-                         @Parameter(description = "Change record identifier namespace")
-                         @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+    public void rollback(
+            @Parameter(description = "Local name of the update change record to roll back.") @PathVariable
+                    String localName,
+            @Parameter(description = "Change record identifier namespace")
+                    @RequestParam(name = Constants.QueryParams.NAMESPACE)
+                    String namespace) {
         final URI recordUri = resolveIdentifier(namespace, localName);
         final UpdateChangeRecord record = changeRollbackService.findUpdateRecord(recordUri);
         changeRollbackService.rollback(record);

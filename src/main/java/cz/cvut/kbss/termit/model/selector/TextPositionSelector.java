@@ -46,8 +46,7 @@ public class TextPositionSelector extends Selector {
     @OWLDataProperty(iri = Vocabulary.s_p_has_end_position)
     private Integer end;
 
-    public TextPositionSelector() {
-    }
+    public TextPositionSelector() {}
 
     public TextPositionSelector(@NotNull Integer start, @NotNull Integer end) {
         this.start = start;
@@ -83,8 +82,7 @@ public class TextPositionSelector extends Selector {
         if (!(o instanceof TextPositionSelector selector)) {
             return false;
         }
-        return Objects.equals(start, selector.start) &&
-                Objects.equals(end, selector.end);
+        return Objects.equals(start, selector.start) && Objects.equals(end, selector.end);
     }
 
     @Override
@@ -94,9 +92,6 @@ public class TextPositionSelector extends Selector {
 
     @Override
     public String toString() {
-        return "TextPositionSelector{" +
-                "start=" + start +
-                ", end=" + end +
-                "} " + super.toString();
+        return "TextPositionSelector{" + "start=" + start + ", end=" + end + "} " + super.toString();
     }
 }

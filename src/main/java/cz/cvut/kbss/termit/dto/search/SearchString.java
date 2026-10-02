@@ -9,5 +9,5 @@ import jakarta.annotation.Nullable;
  * @param searchString String to search by, possibly empty, but should not be {@code null}
  * @param language     Language for the search string, can be {@code null}
  */
-public record SearchString(@Nonnull String searchString, @Nullable String language) {
-}
+public record SearchString(
+        @Nonnull String searchString, @Nullable String language) {}

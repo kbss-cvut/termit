@@ -69,7 +69,7 @@ public class TermOccurrenceSaver {
         if (occurrence.getTerm().equals(source.getUri())) {
             return;
         }
-        if(!termOccurrenceDao.exists(occurrence.getUri())) {
+        if (!termOccurrenceDao.exists(occurrence.getUri())) {
             termOccurrenceDao.persist(occurrence);
         } else {
             LOG.debug("Occurrence already exists, skipping: {}", occurrence);
@@ -87,8 +87,8 @@ public class TermOccurrenceSaver {
      * @param toSave   the queue with occurrences to save
      */
     @Transactional
-    public void saveFromQueue(final Asset<?> source, final AtomicBoolean finished,
-                              final BlockingQueue<TermOccurrence> toSave) {
+    public void saveFromQueue(
+            final Asset<?> source, final AtomicBoolean finished, final BlockingQueue<TermOccurrence> toSave) {
         LOG.debug("Saving term occurrences for asset {}.", source);
         removeAll(source);
         TermOccurrence occurrence;

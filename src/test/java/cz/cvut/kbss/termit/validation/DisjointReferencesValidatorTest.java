@@ -59,7 +59,7 @@ class DisjointReferencesValidatorTest {
     @BeforeEach
     void setUp() throws Exception {
         MultilingualStringPrimaryNotBlankValidatorTest.resetStaticReflectionCache();
-        when(annotationInstance.value()).thenReturn(new String[]{"parentTerms", "related"});
+        when(annotationInstance.value()).thenReturn(new String[] {"parentTerms", "related"});
         sut.initialize(annotationInstance);
     }
 
@@ -88,8 +88,7 @@ class DisjointReferencesValidatorTest {
 
         assertFalse(sut.isValid(term, validatorContext));
         verify(validatorContext).disableDefaultConstraintViolation();
-        verify(validatorContext.buildConstraintViolationWithTemplate(any()))
-                .addPropertyNode("related");
+        verify(validatorContext.buildConstraintViolationWithTemplate(any())).addPropertyNode("related");
     }
 
     @Test
@@ -115,7 +114,7 @@ class DisjointReferencesValidatorTest {
         term.setRelatedMatch(Set.of(shared));
 
         reset(annotationInstance);
-        when(annotationInstance.value()).thenReturn(new String[]{"parentTerms", "relatedMatch"});
+        when(annotationInstance.value()).thenReturn(new String[] {"parentTerms", "relatedMatch"});
         sut.initialize(annotationInstance);
 
         assertFalse(sut.isValid(term, validatorContext));
@@ -126,7 +125,7 @@ class DisjointReferencesValidatorTest {
         // Configure the validator to inspect the same singular HasIdentifier field twice,
         // exercising the singular-value branch of the extractor.
         reset(annotationInstance);
-        when(annotationInstance.value()).thenReturn(new String[]{"definitionSource", "definitionSource"});
+        when(annotationInstance.value()).thenReturn(new String[] {"definitionSource", "definitionSource"});
         sut.initialize(annotationInstance);
 
         final Term term = Generator.generateTermWithId();
@@ -141,7 +140,7 @@ class DisjointReferencesValidatorTest {
     @Test
     void isValidThrowsIllegalArgumentExceptionForUnsupportedFieldType() {
         reset(annotationInstance);
-        when(annotationInstance.value()).thenReturn(new String[]{"description"});
+        when(annotationInstance.value()).thenReturn(new String[] {"description"});
         sut.initialize(annotationInstance);
 
         final Term term = Generator.generateTermWithId();
@@ -152,11 +151,11 @@ class DisjointReferencesValidatorTest {
     @Test
     void isValidThrowsIllegalArgumentExceptionWhenFieldDoesNotExist() {
         reset(annotationInstance);
-        when(annotationInstance.value()).thenReturn(new String[]{"nonExistent"});
+        when(annotationInstance.value()).thenReturn(new String[] {"nonExistent"});
         sut.initialize(annotationInstance);
 
-        assertThrows(IllegalArgumentException.class,
-                     () -> sut.isValid(Generator.generateTermWithId(), validatorContext));
+        assertThrows(
+                IllegalArgumentException.class, () -> sut.isValid(Generator.generateTermWithId(), validatorContext));
     }
 
     @Test

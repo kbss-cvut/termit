@@ -41,17 +41,18 @@ import java.util.Set;
 /**
  * Representation of any RDFS resource.
  */
-@SparqlResultSetMapping(name = "RdfsResource", classes = {@ConstructorResult(targetClass = RdfsResource.class,
-                                                                             variables = {
-                                                                                     @VariableResult(name = "x",
-                                                                                                     type = URI.class),
-                                                                                     @VariableResult(name = "label",
-                                                                                                     type = LangString.class),
-                                                                                     @VariableResult(name = "comment",
-                                                                                                     type = LangString.class),
-                                                                                     @VariableResult(name = "type",
-                                                                                                     type = String.class)
-                                                                             })})
+@SparqlResultSetMapping(
+        name = "RdfsResource",
+        classes = {
+            @ConstructorResult(
+                    targetClass = RdfsResource.class,
+                    variables = {
+                        @VariableResult(name = "x", type = URI.class),
+                        @VariableResult(name = "label", type = LangString.class),
+                        @VariableResult(name = "comment", type = LangString.class),
+                        @VariableResult(name = "type", type = String.class)
+                    })
+        })
 @OWLClass(iri = RDFS.RESOURCE)
 public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
 
@@ -67,16 +68,17 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
     @Types
     private Set<String> types;
 
-    public RdfsResource() {
-    }
+    public RdfsResource() {}
 
     public RdfsResource(URI uri, LangString label, LangString comment, String type) {
         this.uri = uri;
         if (label != null) {
-            this.label = MultilingualString.create(label.getValue(), label.getLanguage().orElse(null));
+            this.label = MultilingualString.create(
+                    label.getValue(), label.getLanguage().orElse(null));
         }
         if (comment != null) {
-            this.comment = MultilingualString.create(comment.getValue(), comment.getLanguage().orElse(null));
+            this.comment = MultilingualString.create(
+                    comment.getValue(), comment.getLanguage().orElse(null));
         }
         this.types = new HashSet<>(Collections.singleton(type));
     }
@@ -142,9 +144,7 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
         if (!(o instanceof RdfsResource that)) {
             return false;
         }
-        return Objects.equals(uri, that.uri) &&
-                Objects.equals(label, that.label) &&
-                Objects.equals(types, that.types);
+        return Objects.equals(uri, that.uri) && Objects.equals(label, that.label) && Objects.equals(types, that.types);
     }
 
     @Override
@@ -154,10 +154,6 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
 
     @Override
     public String toString() {
-        return "RdfsResource{" +
-                Utils.uriToString(uri) +
-                ", label=" + label +
-                ", types=" + types +
-                '}';
+        return "RdfsResource{" + Utils.uriToString(uri) + ", label=" + label + ", types=" + types + '}';
     }
 }

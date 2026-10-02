@@ -127,8 +127,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllReturnsVocabulariesOrderedByName() {
-        final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+        final List<Vocabulary> vocabularies = IntStream.range(0, 5)
+                .mapToObj(i -> Generator.generateVocabularyWithId())
+                .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
@@ -299,7 +300,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void refreshLastModifiedUpdatesLastModifiedTimestampToCurrentDateTime() throws Exception {
         final long before = sut.getLastModified();
-        Thread.sleep(100);  // force time to move on
+        Thread.sleep(100); // force time to move on
         sut.refreshLastModified(new RefreshLastModifiedEvent(this));
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
@@ -322,8 +323,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
-                                                      .filter(AssetPersistEvent.class::isInstance)
-                                                      .map(AssetPersistEvent.class::cast).findFirst();
+                .filter(AssetPersistEvent.class::isInstance)
+                .map(AssetPersistEvent.class::cast)
+                .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(voc, evt.get().getAsset());
     }
@@ -364,8 +366,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
-                                                     .filter(AssetUpdateEvent.class::isInstance)
-                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+                .filter(AssetUpdateEvent.class::isInstance)
+                .map(AssetUpdateEvent.class::cast)
+                .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(voc, evt.get().getAsset());
     }
@@ -396,71 +399,65 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Map<LocalDate, Integer> updates = resolveExpectedUpdates(oneChanges, twoChanges);
 
         final List<AggregatedChangeInfo> result = sut.getChangesOfContent(vocabulary);
-        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity))
-              .forEach(r -> {
-                  assertTrue(persists.containsKey(r.getDate()));
-                  assertEquals(persists.get(r.getDate()), r.getCount());
-              });
-        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_update_of_entity))
-              .forEach(r -> {
-                  assertTrue(updates.containsKey(r.getDate()));
-                  assertEquals(updates.get(r.getDate()), r.getCount());
-              });
+        result.stream()
+                .filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_creation_of_entity))
+                .forEach(r -> {
+                    assertTrue(persists.containsKey(r.getDate()));
+                    assertEquals(persists.get(r.getDate()), r.getCount());
+                });
+        result.stream()
+                .filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_update_of_entity))
+                .forEach(r -> {
+                    assertTrue(updates.containsKey(r.getDate()));
+                    assertEquals(updates.get(r.getDate()), r.getCount());
+                });
     }
 
-    private Map<LocalDate, Integer> resolveExpectedPersists(List<AbstractChangeRecord> oneChanges,
-                                                            List<AbstractChangeRecord> twoChanges) {
+    private Map<LocalDate, Integer> resolveExpectedPersists(
+            List<AbstractChangeRecord> oneChanges, List<AbstractChangeRecord> twoChanges) {
         final Map<LocalDate, Integer> persists = new HashMap<>();
         // Expect at most one persist record
         removeDuplicateDailyRecords(oneChanges, PersistChangeRecord.class).stream()
-                                                                          .filter(ch -> ch instanceof PersistChangeRecord)
-                                                                          .forEach(ch -> persists.put(
-                                                                                  LocalDate.ofInstant(ch.getTimestamp(),
-                                                                                                      ZoneId.systemDefault()),
-                                                                                  1));
+                .filter(ch -> ch instanceof PersistChangeRecord)
+                .forEach(ch -> persists.put(LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()), 1));
         removeDuplicateDailyRecords(twoChanges, PersistChangeRecord.class).stream()
-                                                                          .filter(ch -> ch instanceof PersistChangeRecord)
-                                                                          .forEach(ch -> persists.compute(
-                                                                                  LocalDate.ofInstant(ch.getTimestamp(),
-                                                                                                      ZoneId.systemDefault()),
-                                                                                  (k, v) -> v == null ? 1 : 2));
+                .filter(ch -> ch instanceof PersistChangeRecord)
+                .forEach(ch -> persists.compute(
+                        LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()), (k, v) -> v == null ? 1 : 2));
         return persists;
     }
 
     /**
      * Ensures there is at most one change record per day.
      */
-    private Collection<AbstractChangeRecord> removeDuplicateDailyRecords(Collection<AbstractChangeRecord> records,
-                                                                         Class<? extends AbstractChangeRecord> type) {
+    private Collection<AbstractChangeRecord> removeDuplicateDailyRecords(
+            Collection<AbstractChangeRecord> records, Class<? extends AbstractChangeRecord> type) {
         final Map<LocalDate, AbstractChangeRecord> map = new HashMap<>();
-        records.stream().filter(type::isInstance)
-               .forEach(r -> map.put(LocalDate.ofInstant(r.getTimestamp(), ZoneId.systemDefault()), r));
+        records.stream()
+                .filter(type::isInstance)
+                .forEach(r -> map.put(LocalDate.ofInstant(r.getTimestamp(), ZoneId.systemDefault()), r));
         return map.values();
     }
 
-    private Map<LocalDate, Integer> resolveExpectedUpdates(List<AbstractChangeRecord> oneChanges,
-                                                           List<AbstractChangeRecord> twoChanges) {
+    private Map<LocalDate, Integer> resolveExpectedUpdates(
+            List<AbstractChangeRecord> oneChanges, List<AbstractChangeRecord> twoChanges) {
         final Map<LocalDate, Integer> updates = new HashMap<>();
         removeDuplicateDailyRecords(oneChanges, UpdateChangeRecord.class).stream()
-                                                                         .filter(ch -> ch instanceof UpdateChangeRecord)
-                                                                         .forEach(ch -> updates.put(
-                                                                                 LocalDate.ofInstant(ch.getTimestamp(),
-                                                                                                     ZoneId.systemDefault()),
-                                                                                 1));
+                .filter(ch -> ch instanceof UpdateChangeRecord)
+                .forEach(ch -> updates.put(LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()), 1));
         removeDuplicateDailyRecords(twoChanges, UpdateChangeRecord.class).stream()
-                                                                         .filter(ch -> ch instanceof UpdateChangeRecord)
-                                                                         .forEach(ch -> updates.compute(
-                                                                                 LocalDate.ofInstant(ch.getTimestamp(),
-                                                                                                     ZoneId.systemDefault()),
-                                                                                 (k, v) -> v == null ? 1 : 2));
+                .filter(ch -> ch instanceof UpdateChangeRecord)
+                .forEach(ch -> updates.compute(
+                        LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()), (k, v) -> v == null ? 1 : 2));
         return updates;
     }
 
     @Test
     void getTermCountRetrievesNumberOfTermsInVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .toList();
+        final List<Term> terms = IntStream.range(0, 10)
+                .mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                .toList();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
@@ -480,10 +477,13 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, descriptor));
-        final List<Vocabulary> snapshots = IntStream.range(0, 5).mapToObj(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(i * 2L);
-            return generateSnapshotStub(vocabulary, timestamp);
-        }).collect(Collectors.toList());
+        final List<Vocabulary> snapshots = IntStream.range(0, 5)
+                .mapToObj(i -> {
+                    final Instant timestamp =
+                            Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(i * 2L);
+                    return generateSnapshotStub(vocabulary, timestamp);
+                })
+                .collect(Collectors.toList());
 
         final List<Snapshot> result = sut.findSnapshots(vocabulary);
         assertEquals(snapshots.size(), result.size());
@@ -505,13 +505,21 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 final ValueFactory vf = connection.getValueFactory();
                 final IRI stubIri = vf.createIRI(stub.getUri().toString());
                 connection.begin();
-                connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
-                               vf.createIRI(vocabulary.getUri().toString()), stubIri);
-                connection.add(stubIri,
-                               vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version),
-                               vf.createLiteral(Date.from(timestamp)), stubIri);
-                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary),
-                               stubIri);
+                connection.add(
+                        stubIri,
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
+                        vf.createIRI(vocabulary.getUri().toString()),
+                        stubIri);
+                connection.add(
+                        stubIri,
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version),
+                        vf.createLiteral(Date.from(timestamp)),
+                        stubIri);
+                connection.add(
+                        stubIri,
+                        RDF.TYPE,
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary),
+                        stubIri);
                 connection.commit();
             }
         });
@@ -548,12 +556,13 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, descriptor));
         IntStream.range(0, 5).forEach(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-                                             .minus((i + 1) * 2L, ChronoUnit.HOURS);
+            final Instant timestamp =
+                    Instant.now().truncatedTo(ChronoUnit.SECONDS).minus((i + 1) * 2L, ChronoUnit.HOURS);
             generateSnapshotStub(vocabulary, timestamp);
         });
 
-        final Optional<Vocabulary> result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.DAYS));
+        final Optional<Vocabulary> result =
+                sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.DAYS));
         assertNotNull(result);
         assertFalse(result.isPresent());
     }
@@ -568,7 +577,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         final List<Vocabulary> result = sut.findAll();
         assertThat(result, hasItem(vocabulary));
-        assertTrue(result.stream().noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)));
+        assertTrue(result.stream()
+                .noneMatch(v -> v.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)));
     }
 
     @Test
@@ -608,8 +618,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void removeVocabularyRemovesVocabularyAndAllTermsWithoutDocument() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .toList();
+        final List<Term> terms = IntStream.range(0, 10)
+                .mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                .toList();
         final Document doc = Generator.generateDocumentWithId();
         vocabulary.setDocument(doc);
         transactional(() -> {
@@ -622,29 +633,31 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final String query = "ASK { ?x a ?type }";
         // vocabulary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
-                      .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-                      .getSingleResult());
+                .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
+                .getSingleResult());
 
         // all terms removed
-        assertFalse(em.createNativeQuery(query, Boolean.class).setParameter("type", URI.create(SKOS.CONCEPT))
-                      .getSingleResult());
+        assertFalse(em.createNativeQuery(query, Boolean.class)
+                .setParameter("type", URI.create(SKOS.CONCEPT))
+                .getSingleResult());
 
         // document not removed
         assertTrue(em.createNativeQuery(query, Boolean.class)
-                     .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_document))
-                     .getSingleResult());
+                .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_document))
+                .getSingleResult());
 
         // vocabulary removed from cache
-        assertFalse(em.getEntityManagerFactory().getCache().contains(Vocabulary.class, vocabulary.getUri(),
-                                                                     descriptorFactory.vocabularyDescriptor(
-                                                                             vocabulary)));
+        assertFalse(em.getEntityManagerFactory()
+                .getCache()
+                .contains(Vocabulary.class, vocabulary.getUri(), descriptorFactory.vocabularyDescriptor(vocabulary)));
     }
 
     @Test
     void removePublishesEventAndDropsGraph() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .toList();
+        final List<Term> terms = IntStream.range(0, 10)
+                .mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                .toList();
         final Document doc = Generator.generateDocumentWithId();
         vocabulary.setDocument(doc);
         transactional(() -> {
@@ -654,26 +667,26 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
 
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
-                      .setParameter("vocabulary", vocabulary.getUri())
-                      .getSingleResult());
+                .setParameter("vocabulary", vocabulary.getUri())
+                .getSingleResult());
 
         transactional(() -> sut.remove(vocabulary));
 
         ArgumentCaptor<VocabularyEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(eventCaptor.capture());
 
-        VocabularyWillBeRemovedEvent event = (VocabularyWillBeRemovedEvent) eventCaptor
-                .getAllValues().stream()
+        VocabularyWillBeRemovedEvent event = (VocabularyWillBeRemovedEvent) eventCaptor.getAllValues().stream()
                 .filter(e -> e instanceof VocabularyWillBeRemovedEvent)
-                .findAny().orElseThrow();
-        
+                .findAny()
+                .orElseThrow();
+
         assertNotNull(event);
 
         assertEquals(event.getVocabularyIri(), vocabulary.getUri());
 
         assertFalse(em.createNativeQuery("ASK WHERE{ GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
-                      .setParameter("vocabulary", vocabulary.getUri())
-                      .getSingleResult());
+                .setParameter("vocabulary", vocabulary.getUri())
+                .getSingleResult());
     }
 
     @Test
@@ -687,8 +700,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertNotNull(result);
         assertNotNull(result.getDocument());
         assertEquals(document, result.getDocument());
-        assertEquals(document,
-                     em.find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(instance)));
+        assertEquals(
+                document, em.find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(instance)));
     }
 
     @Test
@@ -711,10 +724,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                                        ?vocabulary ?relation ?secondVocabulary .
                                    }
                                    """, Boolean.class)
-                           .setParameter("vocabulary", vocabulary.getUri())
-                           .setParameter("secondVocabulary", secondVocabulary.getUri())
-                           .setParameter("vocabularyType", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
-                           .setParameter("relation", relation).getSingleResult();
+                .setParameter("vocabulary", vocabulary.getUri())
+                .setParameter("secondVocabulary", secondVocabulary.getUri())
+                .setParameter(
+                        "vocabularyType", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
+                .setParameter("relation", relation)
+                .getSingleResult();
 
         assertTrue(result);
     }
@@ -793,7 +808,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Vocabulary vocabulary2 = Generator.generateVocabularyWithId();
         vocabulary2.setPrimaryLanguage(lang);
-        transactional(()->{
+        transactional(() -> {
             em.persist(vocabulary);
             em.persist(vocabulary2);
         });
@@ -807,7 +822,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void getPreferredNamespaceReturnsStoredVocabularyNamespace() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final String namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/') + 1);
+        final String namespace = vocabulary
+                .getUri()
+                .toString()
+                .substring(0, vocabulary.getUri().toString().lastIndexOf('/') + 1);
         vocabulary.setPreferredNamespaceUri(namespace);
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, descriptor));

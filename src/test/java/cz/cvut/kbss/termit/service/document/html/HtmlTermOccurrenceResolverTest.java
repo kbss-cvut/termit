@@ -148,8 +148,8 @@ class HtmlTermOccurrenceResolverTest {
     void findTermOccurrencesHandlesInvalidScoreInRdfa() {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
-        final InputStream is = cz.cvut.kbss.termit.environment.Environment
-                .loadFile("data/rdfa-simple-invalid-score.html");
+        final InputStream is =
+                cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple-invalid-score.html");
         sut.parseContent(is, file);
         sut.findTermOccurrences(to -> assertNull(to.getScore()));
     }
@@ -172,7 +172,6 @@ class HtmlTermOccurrenceResolverTest {
             assertThat(to.getUri().toString(), endsWith("1"));
         });
         assertEquals(1, resultSize.get());
-
     }
 
     @Test
@@ -225,16 +224,13 @@ class HtmlTermOccurrenceResolverTest {
         final List<TermOccurrence> result = new ArrayList<>();
         sut.findTermOccurrences(result::add);
         final Optional<TermOccurrence> matchingExisting = result.stream()
-                                                                .filter(to -> Stream.of(quoteSelector, posSelector)
-                                                                                    .anyMatch(sel -> to.getTarget()
-                                                                                                       .getSelectors()
-                                                                                                       .contains(
-                                                                                                               sel)))
-                                                                .findFirst();
+                .filter(to -> Stream.of(quoteSelector, posSelector)
+                        .anyMatch(sel -> to.getTarget().getSelectors().contains(sel)))
+                .findFirst();
         assertTrue(matchingExisting.isPresent());
         final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
-        final Elements addedAnnotation = resultDoc.select(
-                "span[about=" + matchingExisting.get().resolveElementAbout() + "]");
+        final Elements addedAnnotation =
+                resultDoc.select("span[about=" + matchingExisting.get().resolveElementAbout() + "]");
         assertFalse(addedAnnotation.isEmpty());
     }
 
@@ -253,12 +249,10 @@ class HtmlTermOccurrenceResolverTest {
 
         final List<TermOccurrence> result = new ArrayList<>();
         sut.findTermOccurrences(result::add);
-        final Optional<TermOccurrence> existingCopy = result.stream().filter(to -> Stream.of(quoteSelector, posSelector)
-                                                                                         .anyMatch(sel -> to.getTarget()
-                                                                                                            .getSelectors()
-                                                                                                            .contains(
-                                                                                                                    sel)))
-                                                            .findFirst();
+        final Optional<TermOccurrence> existingCopy = result.stream()
+                .filter(to -> Stream.of(quoteSelector, posSelector)
+                        .anyMatch(sel -> to.getTarget().getSelectors().contains(sel)))
+                .findFirst();
         assertTrue(existingCopy.isPresent());
         assertNotEquals(existing.getUri(), existingCopy.get().getUri());
     }
@@ -289,7 +283,8 @@ class HtmlTermOccurrenceResolverTest {
     @Test
     void findTermOccurrencesReplacesTwoSuggestedOccurrencesWithSingleExistingApprovedOccurrence() throws Exception {
         when(termService.exists(TERM_URI)).thenReturn(true);
-        when(termService.exists(URI.create("http://onto.fel.cvut.cz/ontologies/mpp/domains/plan"))).thenReturn(true);
+        when(termService.exists(URI.create("http://onto.fel.cvut.cz/ontologies/mpp/domains/plan")))
+                .thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
         existing.setUri(URI.create(TermOccurrence_.entityClassIRI + "/r2d2"));
@@ -305,11 +300,12 @@ class HtmlTermOccurrenceResolverTest {
         final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
         assertEquals(1, resultDoc.select("span[about]").size());
         assertTrue(result.stream()
-                         .anyMatch(r -> !r.isSuggested() && r.getTarget().getSelectors().contains(quoteSelector)));
+                .anyMatch(r -> !r.isSuggested() && r.getTarget().getSelectors().contains(quoteSelector)));
     }
 
     @Test
-    void findTermOccurrencesResolvesExistingApprovedOccurrenceInContentWithTwoOccurrencesOfSameTermInOneParent() throws Exception {
+    void findTermOccurrencesResolvesExistingApprovedOccurrenceInContentWithTwoOccurrencesOfSameTermInOneParent()
+            throws Exception {
         config.getTextAnalysis().setTextQuoteSelectorContextLength(8);
         this.selectorGenerators = new HtmlSelectorGenerators(config);
         this.sut = new HtmlTermOccurrenceResolver(termService, selectorGenerators, documentManager, config);
@@ -325,7 +321,9 @@ class HtmlTermOccurrenceResolverTest {
 
         final List<TermOccurrence> result = new ArrayList<>();
         sut.findTermOccurrences(result::add);
-        assertTrue(result.stream().filter(to -> !to.isSuggested()).noneMatch(to -> Objects.equals(to.getUri(), existing.getUri())));
+        assertTrue(result.stream()
+                .filter(to -> !to.isSuggested())
+                .noneMatch(to -> Objects.equals(to.getUri(), existing.getUri())));
         final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
         final Element elem = resultDoc.select("span[about]").first();
         assertNotNull(elem);

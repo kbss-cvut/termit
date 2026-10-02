@@ -44,6 +44,6 @@ public class AccessControlListCacheKeyGenerator implements KeyGenerator {
         assert params.length == 1 && params[0] instanceof AccessControlList;
         final AccessControlList acl = (AccessControlList) params[0];
         return aclDao.resolveSubjectOf(acl)
-                     .orElseThrow(() -> new NotFoundException("Subject of ACL " + acl + " not found."));
+                .orElseThrow(() -> new NotFoundException("Subject of ACL " + acl + " not found."));
     }
 }

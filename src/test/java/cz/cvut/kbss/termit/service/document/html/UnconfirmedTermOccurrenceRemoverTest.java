@@ -53,7 +53,7 @@ class UnconfirmedTermOccurrenceRemoverTest {
         }
         final TypeAwareResource result = new UnconfirmedTermOccurrenceRemover().removeUnconfirmedOccurrences(input);
         final Document doc = Jsoup.parse(result.getInputStream(), StandardCharsets.UTF_8.name(), "");
-        assertFalse(
-                doc.select("span[resource='http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan']").isEmpty());
+        assertFalse(doc.select("span[resource='http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan']")
+                .isEmpty());
     }
 }

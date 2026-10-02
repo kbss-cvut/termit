@@ -50,14 +50,16 @@ class ExternalServiceValidatorTest {
     void validatePassesContextUrisAndLanguageAsRequestParamsToExternalService() {
         final List<URI> contexts = List.of(Generator.generateUri(), Generator.generateUri());
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.addAll("vocabularyContextIri", contexts.stream().map(URI::toString).toList());
+        params.addAll(
+                "vocabularyContextIri", contexts.stream().map(URI::toString).toList());
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
-        mockServer.expect(requestTo(SERVICE_URL))
-                  .andExpect(method(HttpMethod.POST))
-                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                  .andExpect(content().formData(params))
-                  .andRespond(withSuccess("{\"conforms\": true}", MediaType.APPLICATION_JSON));
+        mockServer
+                .expect(requestTo(SERVICE_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(content().formData(params))
+                .andRespond(withSuccess("{\"conforms\": true}", MediaType.APPLICATION_JSON));
         sut.validate(contexts, Environment.LANGUAGE);
         mockServer.verify();
     }
@@ -69,11 +71,12 @@ class ExternalServiceValidatorTest {
         params.addAll("vocabularyContextIri", List.of(context.toString()));
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
-        mockServer.expect(requestTo(SERVICE_URL))
-                  .andExpect(method(HttpMethod.POST))
-                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                  .andExpect(content().formData(params))
-                  .andRespond(withSuccess("""
+        mockServer
+                .expect(requestTo(SERVICE_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(content().formData(params))
+                .andRespond(withSuccess("""
                                                   {
                                                     "conforms": false,
                                                     "results": [
@@ -91,11 +94,16 @@ class ExternalServiceValidatorTest {
                                                   """, MediaType.APPLICATION_JSON));
         final List<ValidationResult> result = sut.validate(List.of(context), Environment.LANGUAGE);
         assertEquals(1, result.size());
-        assertEquals(URI.create("http://www.w3.org/ns/shacl#Warning"), result.get(0).getSeverity());
-        assertEquals(URI.create("http://onto.fel.cvut.cz/ontologies/slovnik/test/term/test"),
-                     result.get(0).getTermUri());
-        assertEquals("The term does not have a source.", result.get(0).getMessage().get("en"));
-        assertEquals(URI.create("https://slovník.gov.cz/jazyk/obecný/g13"), result.get(0).getIssueCauseUri());
+        assertEquals(
+                URI.create("http://www.w3.org/ns/shacl#Warning"), result.get(0).getSeverity());
+        assertEquals(
+                URI.create("http://onto.fel.cvut.cz/ontologies/slovnik/test/term/test"),
+                result.get(0).getTermUri());
+        assertEquals(
+                "The term does not have a source.", result.get(0).getMessage().get("en"));
+        assertEquals(
+                URI.create("https://slovník.gov.cz/jazyk/obecný/g13"),
+                result.get(0).getIssueCauseUri());
         mockServer.verify();
     }
 
@@ -106,11 +114,12 @@ class ExternalServiceValidatorTest {
         params.addAll("vocabularyContextIri", List.of(context.toString()));
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
-        mockServer.expect(requestTo(SERVICE_URL))
-                  .andExpect(method(HttpMethod.POST))
-                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                  .andExpect(content().formData(params))
-                  .andRespond(withSuccess("""
+        mockServer
+                .expect(requestTo(SERVICE_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(content().formData(params))
+                .andRespond(withSuccess("""
                                                   {
                                                     "conforms": true
                                                   }
@@ -127,11 +136,12 @@ class ExternalServiceValidatorTest {
         params.addAll("vocabularyContextIri", List.of(context.toString()));
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
-        mockServer.expect(requestTo(SERVICE_URL))
-                  .andExpect(method(HttpMethod.POST))
-                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                  .andExpect(content().formData(params))
-                  .andRespond(withStatus(HttpStatus.PAYLOAD_TOO_LARGE));
+        mockServer
+                .expect(requestTo(SERVICE_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(content().formData(params))
+                .andRespond(withStatus(HttpStatus.PAYLOAD_TOO_LARGE));
         assertThrows(TooLargeToValidateException.class, () -> sut.validate(List.of(context), Environment.LANGUAGE));
     }
 
@@ -142,11 +152,12 @@ class ExternalServiceValidatorTest {
         params.addAll("vocabularyContextIri", List.of(context.toString()));
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
-        mockServer.expect(ExpectedCount.once(), requestTo(SERVICE_URL))
-                  .andExpect(method(HttpMethod.POST))
-                  .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                  .andExpect(content().formData(params))
-                  .andRespond(withStatus(HttpStatus.PAYLOAD_TOO_LARGE));
+        mockServer
+                .expect(ExpectedCount.once(), requestTo(SERVICE_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(content().formData(params))
+                .andRespond(withStatus(HttpStatus.PAYLOAD_TOO_LARGE));
         assertThrows(TooLargeToValidateException.class, () -> sut.validate(List.of(context), Environment.LANGUAGE));
         assertThrows(TooLargeToValidateException.class, () -> sut.validate(List.of(context), Environment.LANGUAGE));
     }

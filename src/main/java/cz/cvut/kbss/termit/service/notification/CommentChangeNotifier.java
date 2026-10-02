@@ -69,9 +69,13 @@ public class CommentChangeNotifier {
 
     private final MessageComposer messageComposer;
 
-    public CommentChangeNotifier(CommentService commentService, TermService termService, UserService userService,
-                                 ChangeRecordService changeRecordService,
-                                 MessageAssetFactory messageAssetFactory, MessageComposer messageComposer) {
+    public CommentChangeNotifier(
+            CommentService commentService,
+            TermService termService,
+            UserService userService,
+            ChangeRecordService changeRecordService,
+            MessageAssetFactory messageAssetFactory,
+            MessageComposer messageComposer) {
         this.commentService = commentService;
         this.termService = termService;
         this.userService = userService;
@@ -96,21 +100,20 @@ public class CommentChangeNotifier {
         }
         final Map<String, Object> variables = new HashMap<>();
         final List<AssetWithComments> assetsWithComments = comments.entrySet().stream()
-                                                                   .map(e -> new AssetWithComments(
-                                                                           messageAssetFactory.create(e.getKey()),
-                                                                           e.getValue().stream()
-                                                                            .map(CommentForMessage::new)
-                                                                            .collect(Collectors.toList())))
-                                                                   .sorted(Comparator.comparing(
-                                                                           AssetWithComments::getAsset))
-                                                                   .collect(Collectors.toList());
+                .map(e -> new AssetWithComments(
+                        messageAssetFactory.create(e.getKey()),
+                        e.getValue().stream().map(CommentForMessage::new).collect(Collectors.toList())))
+                .sorted(Comparator.comparing(AssetWithComments::getAsset))
+                .collect(Collectors.toList());
         variables.put("from", LocalDate.ofInstant(from, ZoneId.systemDefault()));
         variables.put("to", LocalDate.ofInstant(to, ZoneId.systemDefault()));
         variables.put("commentedAssets", assetsWithComments);
-        return Optional.of(Message.to(resolveNotificationRecipients(comments).stream().map(
-                              User::getUsername).toArray(String[]::new))
-                      .content(messageComposer.composeMessage(COMMENT_CHANGES_TEMPLATE, variables))
-                      .subject("TermIt News").build());
+        return Optional.of(Message.to(resolveNotificationRecipients(comments).stream()
+                        .map(User::getUsername)
+                        .toArray(String[]::new))
+                .content(messageComposer.composeMessage(COMMENT_CHANGES_TEMPLATE, variables))
+                .subject("TermIt News")
+                .build());
     }
 
     /**
@@ -156,21 +159,28 @@ public class CommentChangeNotifier {
      */
     List<User> resolveNotificationRecipients(Map<Asset<?>, List<Comment>> commentChanges) {
         LOG.debug("Gathering notification recipients.");
-        final Set<UserAccount> admins = userService.findAll().stream().filter(UserAccount::isAdmin)
-                                                   .collect(Collectors.toSet());
+        final Set<UserAccount> admins =
+                userService.findAll().stream().filter(UserAccount::isAdmin).collect(Collectors.toSet());
         admins.addAll(resolveTermVocabularyAuthors(commentChanges));
         LOG.trace(
                 "Found the following potential recipients: {}. Filtering out inactive users and invalid email addresses.",
                 admins.stream().map(UserAccount::getUsername).collect(Collectors.toList()));
-        return admins.stream().filter(u -> u.isEnabled() && Utils.isValidEmail(u.getUsername()))
-                     .map(UserAccount::toUser).collect(Collectors.toList());
+        return admins.stream()
+                .filter(u -> u.isEnabled() && Utils.isValidEmail(u.getUsername()))
+                .map(UserAccount::toUser)
+                .collect(Collectors.toList());
     }
 
     private Set<UserAccount> resolveTermVocabularyAuthors(Map<Asset<?>, List<Comment>> commentChanges) {
-        final Set<URI> vocabularyUris = commentChanges.keySet().stream().filter(a -> a instanceof Term)
-                                                      .map(a -> ((Term) a).getVocabulary()).collect(Collectors.toSet());
-        return vocabularyUris.stream().map(vUri -> changeRecordService.getAuthors(new Vocabulary(vUri)))
-                             .flatMap(Collection::stream).map(User::toUserAccount).collect(Collectors.toSet());
+        final Set<URI> vocabularyUris = commentChanges.keySet().stream()
+                .filter(a -> a instanceof Term)
+                .map(a -> ((Term) a).getVocabulary())
+                .collect(Collectors.toSet());
+        return vocabularyUris.stream()
+                .map(vUri -> changeRecordService.getAuthors(new Vocabulary(vUri)))
+                .flatMap(Collection::stream)
+                .map(User::toUserAccount)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -223,14 +233,15 @@ public class CommentChangeNotifier {
         private final String content;
 
         public enum OperationType {
-            CREATE, UPDATE
+            CREATE,
+            UPDATE
         }
 
         CommentForMessage(Comment comment) {
             this.operation = comment.getModified() != null ? OperationType.UPDATE : OperationType.CREATE;
             this.author = comment.getAuthor().getFullName();
-            this.lastModified = (comment.getModified() != null ? comment.getModified() :
-                                 comment.getCreated()).truncatedTo(ChronoUnit.SECONDS);
+            this.lastModified = (comment.getModified() != null ? comment.getModified() : comment.getCreated())
+                    .truncatedTo(ChronoUnit.SECONDS);
             this.content = comment.getContent();
         }
 
@@ -259,8 +270,10 @@ public class CommentChangeNotifier {
                 return false;
             }
             CommentForMessage that = (CommentForMessage) o;
-            return operation == that.operation && author.equals(that.author) && lastModified.equals(
-                    that.lastModified) && content.equals(that.content);
+            return operation == that.operation
+                    && author.equals(that.author)
+                    && lastModified.equals(that.lastModified)
+                    && content.equals(that.content);
         }
 
         @Override

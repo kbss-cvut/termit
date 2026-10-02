@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
 @Tag(name = "Password reset", description = "User forgotten password reset API")
 @RestController
@@ -56,8 +55,8 @@ public class PasswordChangeController {
 
     @Operation(description = "Requests a password reset for the specified username.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Password reset request accepted, email sent"),
-            @ApiResponse(responseCode = "404", description = "User with the specified username not found.")
+        @ApiResponse(responseCode = "204", description = "Password reset request accepted, email sent"),
+        @ApiResponse(responseCode = "404", description = "User with the specified username not found.")
     })
     @PreAuthorize("permitAll()")
     @PostMapping(consumes = {MediaType.TEXT_PLAIN_VALUE})
@@ -70,14 +69,14 @@ public class PasswordChangeController {
 
     @Operation(description = "Changes the password for the specified user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Password changed"),
-            @ApiResponse(responseCode = "409", description = "Invalid or expired token")
+        @ApiResponse(responseCode = "204", description = "Password changed"),
+        @ApiResponse(responseCode = "409", description = "Invalid or expired token")
     })
     @PreAuthorize("permitAll()")
     @PutMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> changePassword(
-            @Parameter(
-                    description = "Token with URI for password reset") @RequestBody PasswordChangeDto passwordChangeDto) {
+            @Parameter(description = "Token with URI for password reset") @RequestBody
+                    PasswordChangeDto passwordChangeDto) {
         LOG.info("Password change requested with token {}", passwordChangeDto.getToken());
         userService.changePassword(passwordChangeDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

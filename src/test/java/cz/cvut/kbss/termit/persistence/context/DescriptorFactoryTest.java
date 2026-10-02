@@ -83,18 +83,23 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         term.addParentTerm(parent);
         final Descriptor result = sut.termDescriptor(term);
         assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
+        assertFalse(result.getAttributeDescriptor(parentFieldSpec)
+                .getSingleContext()
+                .isPresent());
     }
 
     @Test
-    void termDescriptorCreatesDescriptorWithExactMatchesContextSetToDefaultToAllowExactMatchesFromMultipleVocabularies() {
+    void
+            termDescriptorCreatesDescriptorWithExactMatchesContextSetToDefaultToAllowExactMatchesFromMultipleVocabularies() {
         final TermInfo exactMatch = Generator.generateTermInfoWithId();
         final URI parentVocabulary = Generator.generateUri();
         exactMatch.setVocabulary(parentVocabulary);
         term.addExactMatch(exactMatch);
         final Descriptor result = sut.termDescriptor(term);
         assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
+        assertFalse(result.getAttributeDescriptor(parentFieldSpec)
+                .getSingleContext()
+                .isPresent());
     }
 
     @Test

@@ -66,12 +66,12 @@ class TermOccurrenceAuthorizationServiceTest {
     @Test
     void canModifyResolvesTermVocabularyAndChecksIfUserCanModifyItWhenTermOccurrenceIsDefinitional() {
         final URI vocabularyUri = Generator.generateUri();
-        final TermOccurrence to = new TermDefinitionalOccurrence(Generator.generateUri(),
-                                                                 new DefinitionalOccurrenceTarget(
-                                                                         Generator.generateTermWithId(vocabularyUri)));
+        final TermOccurrence to = new TermDefinitionalOccurrence(
+                Generator.generateUri(), new DefinitionalOccurrenceTarget(Generator.generateTermWithId(vocabularyUri)));
         to.setUri(Generator.generateUri());
         when(termService.findTermVocabulary(to.getTarget().getSource())).thenReturn(Optional.of(vocabularyUri));
-        when(vocabularyAuthorizationService.canModify(new Vocabulary(vocabularyUri))).thenReturn(true);
+        when(vocabularyAuthorizationService.canModify(new Vocabulary(vocabularyUri)))
+                .thenReturn(true);
         when(toDao.find(to.getUri())).thenReturn(Optional.of(to));
 
         assertTrue(sut.canModify(to.getUri()));

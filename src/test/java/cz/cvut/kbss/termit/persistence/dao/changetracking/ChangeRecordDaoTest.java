@@ -102,9 +102,9 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final AbstractChangeRecord result = em.find(AbstractChangeRecord.class, record.getUri());
         assertNotNull(result);
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?changeRecord . } }", Boolean.class)
-                     .setParameter("g", contextResolver.resolveChangeTrackingContext(vocabulary))
-                     .setParameter("x", record.getUri())
-                     .getSingleResult());
+                .setParameter("g", contextResolver.resolveChangeTrackingContext(vocabulary))
+                .setParameter("x", record.getUri())
+                .getSingleResult());
     }
 
     private PersistChangeRecord generatePersistRecord(Instant timestamp, URI changedObject) {
@@ -132,9 +132,9 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(vocabulary);
             em.persist(asset, persistDescriptor(vocabulary.getUri()));
         });
-        final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
-                i -> generateUpdateRecord(Utils.timestamp().minusSeconds(i * 10L),
-                                          asset.getUri())).collect(Collectors.toList());
+        final List<AbstractChangeRecord> records = IntStream.range(0, 5)
+                .mapToObj(i -> generateUpdateRecord(Utils.timestamp().minusSeconds(i * 10L), asset.getUri()))
+                .collect(Collectors.toList());
         final URI changeContext = contextResolver.resolveChangeTrackingContext(vocabulary);
         transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(changeContext))));
 
@@ -145,8 +145,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
     private Descriptor persistDescriptor(URI context) {
         final EntityDescriptor descriptor = new EntityDescriptor(context);
-        descriptor.addAttributeDescriptor(em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"),
-                                          new EntityDescriptor());
+        descriptor.addAttributeDescriptor(
+                em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"), new EntityDescriptor());
         return descriptor;
     }
 
@@ -154,9 +154,9 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     void findAllReturnsChangeRecordsOrderedByTimestampDescending() {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId(vocabulary.getUri());
-        final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
-                i -> generateUpdateRecord(Utils.timestamp().plusSeconds(i * 10L),
-                                          asset.getUri())).collect(Collectors.toList());
+        final List<AbstractChangeRecord> records = IntStream.range(0, 5)
+                .mapToObj(i -> generateUpdateRecord(Utils.timestamp().plusSeconds(i * 10L), asset.getUri()))
+                .collect(Collectors.toList());
         final URI changeContext = contextResolver.resolveChangeTrackingContext(vocabulary);
         transactional(() -> {
             em.persist(vocabulary);
@@ -178,7 +178,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         rOne.setChangedAttribute(URI.create(SKOS.PREF_LABEL));
         final UpdateChangeRecord rTwo = generateUpdateRecord(now, asset.getUri());
         rTwo.setChangedAttribute(URI.create(SKOS.DEFINITION));
-        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
+        final Descriptor changeContextDescriptor =
+                persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         transactional(() -> {
             em.persist(vocabulary);
             em.persist(asset, persistDescriptor(vocabulary.getUri()));
@@ -189,8 +190,12 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         assertEquals(2, result.size());
         result.forEach(r -> assertThat(r, instanceOf(UpdateChangeRecord.class)));
-        assertEquals(SKOS.DEFINITION, ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
-        assertEquals(SKOS.PREF_LABEL, ((UpdateChangeRecord) result.get(1)).getChangedAttribute().toString());
+        assertEquals(
+                SKOS.DEFINITION,
+                ((UpdateChangeRecord) result.get(0)).getChangedAttribute().toString());
+        assertEquals(
+                SKOS.PREF_LABEL,
+                ((UpdateChangeRecord) result.get(1)).getChangedAttribute().toString());
     }
 
     @Test
@@ -255,7 +260,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
                 continue;
             }
             final String lang = ms.getLanguages().iterator().next();
-            final Optional<MultilingualString> existing = target.stream().filter(e -> !e.contains(lang)).findFirst();
+            final Optional<MultilingualString> existing =
+                    target.stream().filter(e -> !e.contains(lang)).findFirst();
             if (existing.isPresent()) {
                 existing.get().set(lang, ms.get(lang));
             } else {
@@ -271,7 +277,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final Term asset = Generator.generateTermWithId(vocabulary.getUri());
         final AbstractChangeRecord persistRecord = generatePersistRecord(Utils.timestamp(), asset.getUri());
         final User editor = Generator.generateUserWithId();
-        final AbstractChangeRecord anotherPersistRecord = generatePersistRecord(Utils.timestamp(), Generator.generateUri());
+        final AbstractChangeRecord anotherPersistRecord =
+                generatePersistRecord(Utils.timestamp(), Generator.generateUri());
         anotherPersistRecord.setAuthor(editor);
         final AbstractChangeRecord updateRecord = generateUpdateRecord(Utils.timestamp(), asset.getUri());
         updateRecord.setAuthor(editor);
@@ -300,7 +307,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final List<AbstractChangeRecord> vocabularyChanges = Generator.generateChangeRecords(vocabulary, author);
 
-        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
+        final Descriptor changeContextDescriptor =
+                persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -309,8 +317,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, vocabularyDescriptor);
 
             Stream.of(firstChanges, secondChanges, vocabularyChanges)
-                  .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, changeContextDescriptor));
+                    .flatMap(Collection::stream)
+                    .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -318,16 +326,23 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final int recordsCount = firstChanges.size() + secondChanges.size();
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
+        final List<AbstractChangeRecord> contentChanges =
+                sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordsCount, contentChanges.size());
-        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
-        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
-        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        final long persistCount = contentChanges.stream()
+                .filter(ch -> ch instanceof PersistChangeRecord)
+                .count();
+        final long updatesCount = contentChanges.stream()
+                .filter(ch -> ch instanceof UpdateChangeRecord)
+                .count();
+        final long deleteCount = contentChanges.stream()
+                .filter(ch -> ch instanceof DeleteChangeRecord)
+                .count();
         // check that all changes are related to the first or the second term
         assertTrue(contentChanges.stream()
-                                 .allMatch(ch -> firstTerm.getUri().equals(ch.getChangedEntity()) ||
-                                         secondTerm.getUri().equals(ch.getChangedEntity())));
+                .allMatch(ch -> firstTerm.getUri().equals(ch.getChangedEntity())
+                        || secondTerm.getUri().equals(ch.getChangedEntity())));
         assertEquals(2, persistCount);
         assertEquals(recordsCount - 2, updatesCount); // -2 persist records
         assertEquals(0, deleteCount);
@@ -353,7 +368,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final List<AbstractChangeRecord> secondChanges = Generator.generateChangeRecords(secondTerm, author);
         final List<AbstractChangeRecord> thirdChanges = Generator.generateChangeRecords(thirdTerm, author);
 
-        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
+        final Descriptor changeContextDescriptor =
+                persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -364,8 +380,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(thirdTerm, vocabularyDescriptor);
 
             Stream.of(firstChanges, secondChanges, thirdChanges)
-                  .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, changeContextDescriptor));
+                    .flatMap(Collection::stream)
+                    .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -375,17 +391,23 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final int recordsCount = firstChanges.size() + secondChanges.size();
         final Pageable pageable = Pageable.ofSize(recordsCount * 2);
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
+        final List<AbstractChangeRecord> contentChanges =
+                sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordsCount, contentChanges.size());
-        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
-        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
-        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        final long persistCount = contentChanges.stream()
+                .filter(ch -> ch instanceof PersistChangeRecord)
+                .count();
+        final long updatesCount = contentChanges.stream()
+                .filter(ch -> ch instanceof UpdateChangeRecord)
+                .count();
+        final long deleteCount = contentChanges.stream()
+                .filter(ch -> ch instanceof DeleteChangeRecord)
+                .count();
         assertEquals(2, persistCount);
         assertEquals(recordsCount - 2, updatesCount); // -2 persist records
         assertEquals(0, deleteCount);
     }
-
 
     @Test
     void findAllRelatedToTypeReturnsRecordsOfExistingTermFilteredByChangedAttributeName() {
@@ -403,22 +425,24 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final URI anotherChangedAttribute = URI.create(RDFS.LABEL);
         final String changedAttributeName = "definition";
 
-        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
+        final Descriptor changeContextDescriptor =
+                persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         // randomize changed attributes
-        Stream.of(firstChanges, secondChanges).flatMap(Collection::stream)
-              .filter(r -> r instanceof UpdateChangeRecord)
-              .map(r -> (UpdateChangeRecord) r)
-              .forEach(r -> {
-                  // ensuring at least one has the "changedAttribute"
-                  if(random.nextBoolean() || recordCount.get() == 0) {
-                      r.setChangedAttribute(changedAttribute);
-                      recordCount.incrementAndGet();
-                  } else {
-                      r.setChangedAttribute(anotherChangedAttribute);
-                  }
-              });
+        Stream.of(firstChanges, secondChanges)
+                .flatMap(Collection::stream)
+                .filter(r -> r instanceof UpdateChangeRecord)
+                .map(r -> (UpdateChangeRecord) r)
+                .forEach(r -> {
+                    // ensuring at least one has the "changedAttribute"
+                    if (random.nextBoolean() || recordCount.get() == 0) {
+                        r.setChangedAttribute(changedAttribute);
+                        recordCount.incrementAndGet();
+                    } else {
+                        r.setChangedAttribute(anotherChangedAttribute);
+                    }
+                });
 
         transactional(() -> {
             em.persist(vocabulary);
@@ -427,8 +451,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, vocabularyDescriptor);
 
             Stream.of(firstChanges, secondChanges)
-                  .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, changeContextDescriptor));
+                    .flatMap(Collection::stream)
+                    .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -436,12 +460,19 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
+        final List<AbstractChangeRecord> contentChanges =
+                sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordCount.get(), contentChanges.size());
-        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
-        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
-        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        final long persistCount = contentChanges.stream()
+                .filter(ch -> ch instanceof PersistChangeRecord)
+                .count();
+        final long updatesCount = contentChanges.stream()
+                .filter(ch -> ch instanceof UpdateChangeRecord)
+                .count();
+        final long deleteCount = contentChanges.stream()
+                .filter(ch -> ch instanceof DeleteChangeRecord)
+                .count();
         assertEquals(0, persistCount);
         assertEquals(recordCount.get(), updatesCount);
         assertEquals(0, deleteCount);
@@ -469,7 +500,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         firstChanges.add(Generator.generateUpdateChange(firstTerm));
         secondChanges.add(Generator.generateUpdateChange(secondTerm));
 
-        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
+        final Descriptor changeContextDescriptor =
+                persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -479,34 +511,40 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, vocabularyDescriptor);
 
             Stream.of(firstChanges, secondChanges)
-                  .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, changeContextDescriptor));
+                    .flatMap(Collection::stream)
+                    .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         // full name without first two and last two characters
-        filter.setAuthorName(anotherAuthor.getFullName().substring(2, anotherAuthor.getFullName().length() - 2));
+        filter.setAuthorName(anotherAuthor
+                .getFullName()
+                .substring(2, anotherAuthor.getFullName().length() - 2));
 
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
+        final List<AbstractChangeRecord> contentChanges =
+                sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordCount, contentChanges.size());
-        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
-        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
-        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        final long persistCount = contentChanges.stream()
+                .filter(ch -> ch instanceof PersistChangeRecord)
+                .count();
+        final long updatesCount = contentChanges.stream()
+                .filter(ch -> ch instanceof UpdateChangeRecord)
+                .count();
+        final long deleteCount = contentChanges.stream()
+                .filter(ch -> ch instanceof DeleteChangeRecord)
+                .count();
         assertEquals(0, persistCount);
         assertEquals(recordCount, updatesCount);
         assertEquals(0, deleteCount);
     }
 
     @ParameterizedTest
-    @ValueSource(classes = {
-            UpdateChangeRecord.class,
-            PersistChangeRecord.class,
-            DeleteChangeRecord.class
-    })
-    void findAllRelatedToTypeReturnsRecordsOfExistingTermFilteredByChangeType(Class<? extends AbstractChangeRecord> typeClass) {
+    @ValueSource(classes = {UpdateChangeRecord.class, PersistChangeRecord.class, DeleteChangeRecord.class})
+    void findAllRelatedToTypeReturnsRecordsOfExistingTermFilteredByChangeType(
+            Class<? extends AbstractChangeRecord> typeClass) {
         enableRdfsInference(em);
         final URI typeUri = URI.create(typeClass.getAnnotation(OWLClass.class).iri());
 
@@ -521,9 +559,13 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         deleteChangeRecord.setAuthor(author);
         deleteChangeRecord.setLabel(secondTerm.getLabel());
 
-        final int recordCount = (int) Stream.of(firstChanges, secondChanges, List.of(deleteChangeRecord)).flatMap(List::stream).filter(typeClass::isInstance).count();
+        final int recordCount = (int) Stream.of(firstChanges, secondChanges, List.of(deleteChangeRecord))
+                .flatMap(List::stream)
+                .filter(typeClass::isInstance)
+                .count();
 
-        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
+        final Descriptor changeContextDescriptor =
+                persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -533,8 +575,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, vocabularyDescriptor);
 
             Stream.of(firstChanges, secondChanges, List.of(deleteChangeRecord))
-                  .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, changeContextDescriptor));
+                    .flatMap(Collection::stream)
+                    .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -543,7 +585,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
+        final List<AbstractChangeRecord> contentChanges =
+                sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordCount, contentChanges.size());
         assertTrue(contentChanges.stream().allMatch(typeClass::isInstance));

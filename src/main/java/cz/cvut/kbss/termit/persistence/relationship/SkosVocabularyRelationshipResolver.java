@@ -58,10 +58,10 @@ class SkosVocabularyRelationshipResolver implements VocabularyRelationshipResolv
                                                               FILTER (?v != ?vocabulary)
                                                               FILTER (?y IN (?cascadingRelationships))
                                                           }""", URI.class)
-                               .setParameter("term", URI.create(SKOS.CONCEPT))
-                               .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
-                               .setParameter("vocabulary", vocabulary)
-                               .setParameter("cascadingRelationships", Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS)
-                               .getResultList());
+                .setParameter("term", URI.create(SKOS.CONCEPT))
+                .setParameter("inVocabulary", URI.create(SKOS.IN_SCHEME))
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("cascadingRelationships", Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS)
+                .getResultList());
     }
 }

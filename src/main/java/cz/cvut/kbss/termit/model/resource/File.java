@@ -112,9 +112,10 @@ public class File extends Resource implements SupportsStorage {
 
     @Override
     public String toString() {
-        return "File{" +
-                super.toString() + (language != null ? "@" + language : "") +
-                (document != null ? ", document=<" + document.getUri() + ">" : "") + '}';
+        return "File{" + super.toString()
+                + (language != null ? "@" + language : "")
+                + (document != null ? ", document=<" + document.getUri() + ">" : "")
+                + '}';
     }
 
     /**
@@ -138,7 +139,8 @@ public class File extends Resource implements SupportsStorage {
                 throw new IllegalStateException("Missing file name or URI required for directory name resolution.");
             }
             final int dotIndex = getLabel().indexOf('.');
-            final String labelPart = dotIndex > 0 ? getLabel().substring(0, getLabel().indexOf('.')) : getLabel();
+            final String labelPart =
+                    dotIndex > 0 ? getLabel().substring(0, getLabel().indexOf('.')) : getLabel();
             return IdentifierResolver.normalizeToAscii(labelPart) + '_' + getUri().hashCode();
         }
     }

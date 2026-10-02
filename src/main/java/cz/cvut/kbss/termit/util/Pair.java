@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.util;
 
-
 import jakarta.annotation.Nonnull;
 
 import java.util.Objects;
@@ -43,10 +42,7 @@ public class Pair<T, V> {
 
     @Override
     public String toString() {
-        return "Pair{" +
-                first +
-                " - " + second +
-                '}';
+        return "Pair{" + first + " - " + second + '}';
     }
 
     /**
@@ -82,4 +78,3 @@ public class Pair<T, V> {
         }
     }
 }
-

@@ -43,13 +43,12 @@ public class ScheduledDocumentBackupManagerTest extends BaseDocumentTestRunner {
         transactional(() -> em.persist(document));
 
         // generate files with different modified timestamps
-        Generator.generateDocumentFilesWithBackupTimestamps(document)
-                .forEach(file -> {
-                    transactional(() -> em.persist(file));
-                    if (file.getModified().isAfter(file.getLastBackup())) {
-                        modifiedAfterBackup.add(file);
-                    }
-                });
+        Generator.generateDocumentFilesWithBackupTimestamps(document).forEach(file -> {
+            transactional(() -> em.persist(file));
+            if (file.getModified().isAfter(file.getLastBackup())) {
+                modifiedAfterBackup.add(file);
+            }
+        });
     }
 
     @Test
@@ -57,7 +56,8 @@ public class ScheduledDocumentBackupManagerTest extends BaseDocumentTestRunner {
         doNothing().when(backupManager).createBackup(any(), any());
         sut.backupModifiedDocuments();
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        verify(backupManager, times(modifiedAfterBackup.size())).createBackup(fileCaptor.capture(), eq(BackupReason.SCHEDULED));
+        verify(backupManager, times(modifiedAfterBackup.size()))
+                .createBackup(fileCaptor.capture(), eq(BackupReason.SCHEDULED));
         List<File> files = fileCaptor.getAllValues();
         assertFalse(files.isEmpty());
         assertEquals(modifiedAfterBackup.size(), files.size());

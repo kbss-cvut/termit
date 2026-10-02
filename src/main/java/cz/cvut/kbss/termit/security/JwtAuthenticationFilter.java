@@ -43,11 +43,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     @Override
-    protected void successfulAuthentication(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response,
-                                            @Nonnull FilterChain chain,
-                                            Authentication authResult) throws IOException, ServletException {
-        final String token = jwtUtils
-                .generateToken(((TermItUserDetails) authResult.getPrincipal()).getUser(), authResult.getAuthorities());
+    protected void successfulAuthentication(
+            @Nonnull HttpServletRequest request,
+            @Nonnull HttpServletResponse response,
+            @Nonnull FilterChain chain,
+            Authentication authResult)
+            throws IOException, ServletException {
+        final String token = jwtUtils.generateToken(
+                ((TermItUserDetails) authResult.getPrincipal()).getUser(), authResult.getAuthorities());
         RestUtils.setAuthHeader(response, token);
         super.successfulAuthentication(request, response, chain, authResult);
     }

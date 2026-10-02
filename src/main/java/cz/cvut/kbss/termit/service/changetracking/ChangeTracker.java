@@ -60,8 +60,11 @@ public class ChangeTracker {
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public ChangeTracker(ChangeCalculator changeCalculator, ChangeRecordDao changeRecordDao,
-                         ChangeTrackingHelperDao helperDao, SecurityUtils securityUtils) {
+    public ChangeTracker(
+            ChangeCalculator changeCalculator,
+            ChangeRecordDao changeRecordDao,
+            ChangeTrackingHelperDao helperDao,
+            SecurityUtils securityUtils) {
         this.changeCalculator = changeCalculator;
         this.changeRecordDao = changeRecordDao;
         this.helperDao = helperDao;
@@ -87,8 +90,9 @@ public class ChangeTracker {
             return;
         }
         LOG.trace("Recording update of asset {}.", update);
-        LOG.trace("Found changes to attributes: {}", changes.stream().map(ch -> ch.getChangedAttribute().toString())
-                                                            .collect(Collectors.joining(", ")));
+        LOG.trace(
+                "Found changes to attributes: {}",
+                changes.stream().map(ch -> ch.getChangedAttribute().toString()).collect(Collectors.joining(", ")));
         changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);

@@ -49,8 +49,7 @@ public abstract class OccurrenceTarget extends AbstractEntity implements Copyabl
     @OWLObjectProperty(iri = Vocabulary.s_p_has_selector, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Selector> selectors;
 
-    public OccurrenceTarget() {
-    }
+    public OccurrenceTarget() {}
 
     public OccurrenceTarget(Asset<?> source) {
         this.source = Objects.requireNonNull(source).getUri();
@@ -74,9 +73,9 @@ public abstract class OccurrenceTarget extends AbstractEntity implements Copyabl
 
     @Override
     public String toString() {
-        return "OccurrenceTarget{<" + getUri() +
-                ">, source=<" + source +
-                ">, selectors=" + selectors +
-                "} " + super.toString();
+        return "OccurrenceTarget{<" + getUri() + ">, source=<"
+                + source + ">, selectors="
+                + selectors + "} "
+                + super.toString();
     }
 }

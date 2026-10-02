@@ -34,7 +34,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
-    private static final String BACKUP_REASON_VALUES_METHOD_SIGNATURE = "cz.cvut.kbss.termit.service.document.backup.BackupReason#values()";
+    private static final String BACKUP_REASON_VALUES_METHOD_SIGNATURE =
+            "cz.cvut.kbss.termit.service.document.backup.BackupReason#values()";
     private DocumentBackupManager sut;
 
     @MockitoBean
@@ -66,8 +67,8 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         final java.io.File docDir = physicalFile.getParentFile();
-        final java.io.File withoutExtension = new java.io.File(
-                docDir.getAbsolutePath() + java.io.File.separator + "withoutExtension");
+        final java.io.File withoutExtension =
+                new java.io.File(docDir.getAbsolutePath() + java.io.File.separator + "withoutExtension");
         withoutExtension.deleteOnExit();
         Files.copy(physicalFile.toPath(), withoutExtension.toPath());
         file.setLabel(withoutExtension.getName());
@@ -119,9 +120,10 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         assertEquals(2, docDir.listFiles().length);
         // check that there is a backup with a name ending with the given reason
         String backupName = Arrays.stream(docDir.listFiles())
-              .map(java.io.File::getName)
-              .filter(name -> !name.endsWith("html"))
-              .findAny().orElseThrow();
+                .map(java.io.File::getName)
+                .filter(name -> !name.endsWith("html"))
+                .findAny()
+                .orElseThrow();
         assertThat(backupName, endsWith("bz2"));
     }
 
@@ -142,7 +144,8 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
                 .map(java.io.File::getName)
                 .filter(name -> !name.endsWith(".html"))
                 .map(name -> name.substring(0, name.lastIndexOf('.'))) // strip file format
-                .findAny().orElseThrow();
+                .findAny()
+                .orElseThrow();
         assertThat(backupName, endsWith(reason.name()));
     }
 
@@ -157,10 +160,9 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
         final List<java.io.File> files = createTestBackups(file);
         final java.io.File expected = files.get(Generator.randomIndex(files));
         int separatorIndex = expected.getName().indexOf(DocumentFileUtils.BACKUP_NAME_SEPARATOR) + 1;
-        final String strBackupTimestamp = expected.getName().substring(separatorIndex, separatorIndex +
-                DocumentFileUtils.BACKUP_TIMESTAMP_LENGTH);
-        final TemporalAccessor backupTimestamp = DocumentFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(
-                strBackupTimestamp);
+        final String strBackupTimestamp = expected.getName()
+                .substring(separatorIndex, separatorIndex + DocumentFileUtils.BACKUP_TIMESTAMP_LENGTH);
+        final TemporalAccessor backupTimestamp = DocumentFileUtils.BACKUP_TIMESTAMP_FORMAT.parse(strBackupTimestamp);
         final Instant timestamp = Instant.from(backupTimestamp).minusSeconds(5);
 
         final BackupFile result = sut.getBackup(file, timestamp);
@@ -168,7 +170,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     }
 
     @Test
-    void getBackupReturnsOldestBackupWhenTimestampIsEpoch()  throws Exception {
+    void getBackupReturnsOldestBackupWhenTimestampIsEpoch() throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
@@ -218,8 +220,7 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
     }
 
     @Test
-    void getBackupThrowsNotFoundExceptionWhenFileDoesNotExistInParentDocumentDirectoryOnFileSystem()
-            throws Exception {
+    void getBackupThrowsNotFoundExceptionWhenFileDoesNotExistInParentDocumentDirectoryOnFileSystem() throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
@@ -242,10 +243,11 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
-        final String newPath = path + DocumentFileUtils.BACKUP_NAME_SEPARATOR +
-                DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
-                                 .withZone(ZoneId.systemDefault())
-                                 .format(now.plusSeconds(10));
+        final String newPath = path
+                + DocumentFileUtils.BACKUP_NAME_SEPARATOR
+                + DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
+                        .withZone(ZoneId.systemDefault())
+                        .format(now.plusSeconds(10));
         assertEquals(path, newPath.substring(0, path.length()));
         final java.io.File backup = new java.io.File(newPath);
         Files.copy(physicalFile.toPath(), backup.toPath());
@@ -266,10 +268,11 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
-        final String newPath = path + DocumentFileUtils.BACKUP_NAME_SEPARATOR +
-                DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_SSS")
-                                 .withZone(ZoneId.systemDefault())
-                                 .format(now.plusSeconds(10));
+        final String newPath = path
+                + DocumentFileUtils.BACKUP_NAME_SEPARATOR
+                + DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_SSS")
+                        .withZone(ZoneId.systemDefault())
+                        .format(now.plusSeconds(10));
         final java.io.File backup = new java.io.File(newPath);
         Files.copy(physicalFile.toPath(), backup.toPath());
         backup.deleteOnExit();
@@ -287,10 +290,11 @@ public class DocumentBackupManagerTest extends BaseDocumentTestRunner {
 
         final String path = physicalFile.getAbsolutePath();
         // Legacy pattern used multiple millis places
-        final String newPath = path + DocumentFileUtils.BACKUP_NAME_SEPARATOR +
-                DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss")
-                                 .withZone(ZoneId.systemDefault())
-                                 .format(Instant.now().minusSeconds(10));
+        final String newPath = path
+                + DocumentFileUtils.BACKUP_NAME_SEPARATOR
+                + DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss")
+                        .withZone(ZoneId.systemDefault())
+                        .format(Instant.now().minusSeconds(10));
         final java.io.File backup = new java.io.File(newPath);
         Files.copy(physicalFile.toPath(), backup.toPath());
         backup.deleteOnExit();

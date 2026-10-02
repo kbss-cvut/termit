@@ -45,9 +45,11 @@ public class VocabularyValidationFinishedEvent extends VocabularyEvent {
      * @param vocabularyIris IRI of the vocabulary on which the validation was triggered.
      * @param validationResults results of the validation
      */
-    public VocabularyValidationFinishedEvent(@Nonnull Object source, @Nonnull URI originVocabularyIri,
-                                             @Nonnull Collection<URI> vocabularyIris,
-                                             @Nonnull List<ValidationResult> validationResults) {
+    public VocabularyValidationFinishedEvent(
+            @Nonnull Object source,
+            @Nonnull URI originVocabularyIri,
+            @Nonnull Collection<URI> vocabularyIris,
+            @Nonnull List<ValidationResult> validationResults) {
         super(source, originVocabularyIri);
         // defensive copy
         this.vocabularyIris = new ArrayList<>(vocabularyIris);
