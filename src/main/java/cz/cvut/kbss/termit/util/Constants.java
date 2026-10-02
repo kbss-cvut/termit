@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import org.eclipse.rdf4j.model.vocabulary.RDF4J;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -190,6 +191,8 @@ public class Constants {
      * Prefix used for naming lucene connectors indexing definitions.
      */
     public static final String LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX = LUCENE_INSTANCE_NS + "termit_defcomIndex_";
+
+    public static final URI DEFAULT_GRAPH = URI.create(RDF4J.NIL.stringValue());
 
     private Constants() {
         throw new AssertionError();
