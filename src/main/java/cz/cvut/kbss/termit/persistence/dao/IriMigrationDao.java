@@ -4,17 +4,26 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Vocabulary_;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Repository;
+
+import java.net.URI;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Repository
 public class IriMigrationDao {
     private static final String QUERY_DIR = "iri-migration/";
     private final EntityManager em;
+    private final DescriptorFactory descriptorFactory;
 
-    public IriMigrationDao(EntityManager em) {
+    public IriMigrationDao(EntityManager em, DescriptorFactory descriptorFactory) {
         this.em = em;
+        this.descriptorFactory = descriptorFactory;
     }
 
     /**
@@ -45,6 +54,89 @@ public class IriMigrationDao {
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to migrate identifier: " + iris, e);
         }
+    }
+
+    /**
+     * Retrieves all types of the given entity.
+     *
+     * @param entityUri the entity identifier
+     * @return the stream of distinct types of the entity
+     */
+    public Stream<URI> getEntityTypes(URI entityUri) {
+        Objects.requireNonNull(entityUri);
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?type WHERE { ?entity a ?type }", URI.class)
+                    .setParameter("entity", entityUri)
+                    .getResultStream();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to load entity types: " + Utils.uriToString(entityUri), e);
+        }
+    }
+
+    /**
+     * Moves the {@code originalGraph} to the {@code newGraph} if the original Graph exists.
+     * Does nothing if the {@code originalGraph} does not exist.
+     *
+     * @param originalGraph the original graph to move
+     * @param newGraph the destination where the original graph should be moved
+     */
+    public void moveGraph(URI originalGraph, URI newGraph) {
+        Objects.requireNonNull(originalGraph);
+        Objects.requireNonNull(newGraph);
+        try {
+            em.createNativeQuery("MOVE SILENT GRAPH ?original TO ?new")
+              .setParameter("original", originalGraph)
+              .setParameter("new", newGraph)
+              .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to move graph " +
+                    Utils.uriToString(originalGraph) + " to " + Utils.uriToString(newGraph), e);
+        }
+    }
+
+    public void setVocabularyPreferredNamespace(URI vocabularyUri, String preferredNamespace) {
+        Objects.requireNonNull(vocabularyUri);
+        Objects.requireNonNull(preferredNamespace);
+        try {
+            em.createNativeQuery("""
+                DELETE {
+                    GRAPH ?vocabulary {
+                        ?vocabulary ?hasNamespace ?originalNamespace
+                    }
+                } INSERT {
+                    GRAPH ?vocabulary {
+                        ?vocabulary ?hasNamespace ?preferredNamespace
+                    }
+                } WHERE {
+                    OPTIONAL {
+                        GRAPH ?vocabulary {
+                            ?vocabulary ?hasNamespace ?originalNamespace
+                        }
+                    }
+                }
+            """)
+                    .setParameter("vocabulary", vocabularyUri)
+                    .setParameter("preferredNamespace", preferredNamespace)
+                    .setParameter("hasNamespace", Vocabulary_.preferredNamespaceUriPropertyIRI)
+                    .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to set vocabulary preferred namespace: " + preferredNamespace, e);
+        }
+    }
+
+    public Stream<URI> findAllTerms(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            return em.createQuery("SELECT term FROM Term term WHERE term.vocabulary = :vocabulary", URI.class)
+                    .setParameter("vocabulary", vocabularyUri)
+                    .getResultStream();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find all terms for vocabulary: " + Utils.uriToString(vocabularyUri), e);
+        }
+    }
+
+    public void detach(Asset<?> entity) {
+        em.detach(entity);
     }
 
     /**

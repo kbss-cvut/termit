@@ -1,0 +1,22 @@
+package cz.cvut.kbss.termit.dto;
+
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+
+import java.net.URI;
+
+public class IriMigrationParams {
+    private final URI preferredNamespaceUri;
+
+    public IriMigrationParams(URI preferredNamespaceUri) {
+        if (preferredNamespaceUri != null) {
+            final String terminatedNamespace = IdentifierResolver.ensureNamespaceSeparatorTermination(preferredNamespaceUri.toString());
+            this.preferredNamespaceUri = URI.create(terminatedNamespace);
+        } else {
+            this.preferredNamespaceUri = null;
+        }
+    }
+
+    public URI getPreferredNamespaceUri() {
+        return preferredNamespaceUri;
+    }
+}
