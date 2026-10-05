@@ -5,8 +5,6 @@ import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.Vocabulary_;
-import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Repository;
@@ -17,23 +15,10 @@ import java.util.stream.Stream;
 
 @Repository
 public class IriMigrationDao {
-    private static final String QUERY_DIR = "iri-migration/";
     private final EntityManager em;
-    private final DescriptorFactory descriptorFactory;
 
-    public IriMigrationDao(EntityManager em, DescriptorFactory descriptorFactory) {
+    public IriMigrationDao(EntityManager em) {
         this.em = em;
-        this.descriptorFactory = descriptorFactory;
-    }
-
-    /**
-     * Loads named query from {@code .rq} file located in {@link #QUERY_DIR query directory}.
-     *
-     * @param name the name of the query file without extension
-     * @return Contents of the query file
-     */
-    private static String loadQuery(String name) {
-        return Utils.loadQuery(QUERY_DIR + name + ".rq");
     }
 
     /**
@@ -45,7 +30,7 @@ public class IriMigrationDao {
      */
     public void migrateIdentifier(IriMigrationPair iris) {
         try {
-            Query query = em.createNativeQuery(loadQuery("identifierMigration"));
+            Query query = em.createNativeQuery(Utils.loadQuery("identifierMigration.rq"));
             bind(query, iris);
             query.executeUpdate(); // execute for all named graphs
 
@@ -91,36 +76,6 @@ public class IriMigrationDao {
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to move graph " +
                     Utils.uriToString(originalGraph) + " to " + Utils.uriToString(newGraph), e);
-        }
-    }
-
-    public void setVocabularyPreferredNamespace(URI vocabularyUri, String preferredNamespace) {
-        Objects.requireNonNull(vocabularyUri);
-        Objects.requireNonNull(preferredNamespace);
-        try {
-            em.createNativeQuery("""
-                DELETE {
-                    GRAPH ?vocabulary {
-                        ?vocabulary ?hasNamespace ?originalNamespace
-                    }
-                } INSERT {
-                    GRAPH ?vocabulary {
-                        ?vocabulary ?hasNamespace ?preferredNamespace
-                    }
-                } WHERE {
-                    OPTIONAL {
-                        GRAPH ?vocabulary {
-                            ?vocabulary ?hasNamespace ?originalNamespace
-                        }
-                    }
-                }
-            """)
-                    .setParameter("vocabulary", vocabularyUri)
-                    .setParameter("preferredNamespace", preferredNamespace)
-                    .setParameter("hasNamespace", Vocabulary_.preferredNamespaceUriPropertyIRI)
-                    .executeUpdate();
-        } catch (RuntimeException e) {
-            throw new PersistenceException("Failed to set vocabulary preferred namespace: " + preferredNamespace, e);
         }
     }
 
