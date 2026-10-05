@@ -4,7 +4,9 @@ import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -29,17 +31,20 @@ public class IriMigrationRepositoryService {
     private final TermRepositoryService termRepositoryService;
     private final VocabularyRepositoryService vocabularyRepositoryService;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
+    private final ChangeRecordDao changeRecordDao;
 
     public IriMigrationRepositoryService(IriMigrationDao iriMigrationDao,
                                          ChangeTrackingContextResolver changeTrackingContextResolver,
                                          TermRepositoryService termRepositoryService,
                                          VocabularyRepositoryService vocabularyRepositoryService,
-                                         VocabularyNamespaceResolver vocabularyNamespaceResolver) {
+                                         VocabularyNamespaceResolver vocabularyNamespaceResolver,
+                                         ChangeRecordDao changeRecordDao) {
         this.iriMigrationDao = iriMigrationDao;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
         this.termRepositoryService = termRepositoryService;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
+        this.changeRecordDao = changeRecordDao;
     }
 
     /**
@@ -68,10 +73,17 @@ public class IriMigrationRepositoryService {
                 iriMigrationDao,
                 changeTrackingContextResolver,
                 vocabularyNamespaceResolver,
+                vocabularyRepositoryService,
                 changedAsset,
                 migrationType,
                 iris,
                 params).run();
+        createChangeRecord(iris, changedAsset);
+    }
+
+    private void createChangeRecord(IriMigrationPair iris, Asset<?> changedAsset) {
+        IdentifierChangeRecord record = new IdentifierChangeRecord();
+        // TODO: fill record and persist
     }
 
     private Asset<?> getChangedAsset(IriMigrationPair pair, IriMigrationType migrationType) {

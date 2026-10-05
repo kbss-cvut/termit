@@ -29,10 +29,12 @@ WHERE {
 
     FILTER (
         # Prevent snapshot modification
+        # ?graph must not be a version of vocabulary
         NOT EXISTS { GRAPH ?graph { ?graph a dd:version-of-vocabulary } }
         ||
-        # Unless rewiring the is-version-of-* relation (is-version-of-vocabulary, is-version-of-term)
-        EXISTS { ?predicate rdfs:subPropertyOf* dd:is-version-of }
+        # Unless rewiring the is-version-of-* relation
+        # ?graph can be version of vocabulary if ?predicate is version-of-*
+        (?predicate IN (dd:is-version-of-vocabulary, dd:is-version-of-term))
     )
 
     # bind new values replacing the original IRI

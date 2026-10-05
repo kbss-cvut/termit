@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nullable;
 
@@ -27,6 +28,7 @@ public class IriMigrationAction implements Runnable {
     private final IriMigrationDao iriMigrationDao;
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
+    private final VocabularyRepositoryService vocabularyRepositoryService;
 
     @Nullable
     private final Asset<?> changedAsset;
@@ -38,6 +40,7 @@ public class IriMigrationAction implements Runnable {
                        IriMigrationDao iriMigrationDao,
                        ChangeTrackingContextResolver changeTrackingContextResolver,
                        VocabularyNamespaceResolver vocabularyNamespaceResolver,
+                       VocabularyRepositoryService vocabularyRepositoryService,
                        @Nullable Asset<?> changedAsset,
                        IriMigrationType migrationType,
                        IriMigrationPair iris,
@@ -46,6 +49,7 @@ public class IriMigrationAction implements Runnable {
         this.iriMigrationDao = Objects.requireNonNull(iriMigrationDao);
         this.changeTrackingContextResolver = Objects.requireNonNull(changeTrackingContextResolver);
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
+        this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.changedAsset = changedAsset;
         iriMigrationDao.detach(changedAsset);
         this.migrationType = Objects.requireNonNull(migrationType);
@@ -60,7 +64,6 @@ public class IriMigrationAction implements Runnable {
     public void run() {
         validateMigration();
         iriMigrationDao.migrateIdentifier(iris); // replace every identifier occurrence
-        // TODO: well but this is going to change even custom attributes in the change records and their values...
         migrateChangeRecordsGraph();
         migrateOccurrenceGraph();
         migrateVocabularyNamespace(params.getPreferredNamespaceUri().toString());
@@ -140,16 +143,19 @@ public class IriMigrationAction implements Runnable {
             // new namespace is the same as the current one
             return;
         }
+        final String originalNamespace = vocabulary.getPreferredNamespaceUri();
 
         // we are already after the IRI migration, using new IRI
-        iriMigrationDao.setVocabularyPreferredNamespace(iris.newIri(), newNamespace);
-        migrateAllTerms(vocabulary.getPreferredNamespaceUri(), newNamespace);
+        final Vocabulary migratedVocabulary = vocabularyRepositoryService.findRequired(iris.newIri());
+        migratedVocabulary.setPreferredNamespaceUri(newNamespace);
+        vocabularyRepositoryService.update(migratedVocabulary);
+        migrateAllTerms(originalNamespace, newNamespace);
     }
 
     private void migrateAllTerms(final String originalNamespace, final String newNamespace) {
-        assert changedAsset instanceof Vocabulary;
+        assert migrationType == IriMigrationType.VOCABULARY;
         final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
-        iriMigrationDao.findAllTerms(changedAsset.getUri())
+        iriMigrationDao.findAllTerms(iris.newIri())
                 .map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
                 .filter(Objects::nonNull)
                 .forEach(termMigration ->
