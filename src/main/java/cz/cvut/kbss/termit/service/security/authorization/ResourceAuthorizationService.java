@@ -67,4 +67,14 @@ public class ResourceAuthorizationService implements AssetAuthorizationService<R
     public boolean canRemove(Resource asset) {
         return resolveVocabulary(asset).map(vocabularyAuthorizationService::canRemoveFiles).orElse(true);
     }
+
+    /**
+     * Identifier migration is not allowed for Documents and Files.
+     *
+     * @return {@code false}
+     */
+    @Override
+    public boolean canMigrateIdentifier(Resource asset) {
+        return false;
+    }
 }

@@ -7,7 +7,9 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
@@ -29,6 +31,7 @@ public class IriMigrationAction implements Runnable {
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
     private final VocabularyRepositoryService vocabularyRepositoryService;
+    private final ChangeRecordDao changeRecordDao;
 
     @Nullable
     private final Asset<?> changedAsset;
@@ -40,7 +43,7 @@ public class IriMigrationAction implements Runnable {
                        IriMigrationDao iriMigrationDao,
                        ChangeTrackingContextResolver changeTrackingContextResolver,
                        VocabularyNamespaceResolver vocabularyNamespaceResolver,
-                       VocabularyRepositoryService vocabularyRepositoryService,
+                       VocabularyRepositoryService vocabularyRepositoryService, ChangeRecordDao changeRecordDao,
                        @Nullable Asset<?> changedAsset,
                        IriMigrationType migrationType,
                        IriMigrationPair iris,
@@ -50,6 +53,7 @@ public class IriMigrationAction implements Runnable {
         this.changeTrackingContextResolver = Objects.requireNonNull(changeTrackingContextResolver);
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
+        this.changeRecordDao = changeRecordDao;
         this.changedAsset = changedAsset;
         iriMigrationDao.detach(changedAsset);
         this.migrationType = Objects.requireNonNull(migrationType);
@@ -66,7 +70,10 @@ public class IriMigrationAction implements Runnable {
         iriMigrationDao.migrateIdentifier(iris); // replace every identifier occurrence
         migrateChangeRecordsGraph();
         migrateOccurrenceGraph();
-        migrateVocabularyNamespace(params.getPreferredNamespaceUri().toString());
+        createChangeRecord();
+        migrateVocabularyNamespace(params.preferredNamespaceUri());
+        // changes to entity identifiers and graph identifiers were made
+        iriMigrationDao.evictCache();
     }
 
     private void ensureNotExists(URI resource) {
@@ -132,10 +139,12 @@ public class IriMigrationAction implements Runnable {
         iriMigrationDao.moveGraph(originalGraph, newGraph);
     }
 
-    private void migrateVocabularyNamespace(final String newNamespace) {
-        if (newNamespace == null || migrationType != IriMigrationType.VOCABULARY) {
+    private void migrateVocabularyNamespace(final URI newNamespaceUri) {
+        if (newNamespaceUri == null || migrationType != IriMigrationType.VOCABULARY) {
             return;
         }
+        final String newNamespace = newNamespaceUri.toString();
+
         assert changedAsset instanceof Vocabulary;
         final Vocabulary vocabulary = (Vocabulary) changedAsset;
 
@@ -160,7 +169,8 @@ public class IriMigrationAction implements Runnable {
                 .filter(Objects::nonNull)
                 .forEach(termMigration ->
                         // calling internal to stay in the same transaction
-                        iriMigrationRepositoryService.migrateIdentifierInternal(termMigration, termMigrationParams));
+                        iriMigrationRepositoryService.migrateIdentifierInternal(termMigration, IriMigrationType.TERM,
+                                                                                termMigrationParams));
     }
 
     private static IriMigrationPair mapTermUri(URI originalTermUri, String originalNamespace, String newNamespace) {
@@ -178,5 +188,10 @@ public class IriMigrationAction implements Runnable {
                 originalTermUri,
                 URI.create(newTermUriStr)
         );
+    }
+
+    private void createChangeRecord() {
+        IdentifierChangeRecord record = new IdentifierChangeRecord();
+        // TODO: fill record and persist
     }
 }

@@ -74,4 +74,13 @@ public interface AssetAuthorizationService<T extends Asset<?>> {
      * @return {@code true} if the current user can remove the specified asset, {@code false} otherwise
      */
     boolean canRemove(T asset);
+
+    /**
+     * Checks whether the current user can migrate the identiifer of the specified asset.
+     *
+     * @param asset Resource access to which is to be authorized
+     * @return {@code true} if the current user can migrate the identifier of the specified asset,
+     *         {@code false} otherwise
+     */
+    boolean canMigrateIdentifier(T asset);
 }

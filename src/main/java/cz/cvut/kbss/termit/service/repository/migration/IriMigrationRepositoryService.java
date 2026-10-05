@@ -2,9 +2,8 @@ package cz.cvut.kbss.termit.service.repository.migration;
 
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
-import cz.cvut.kbss.termit.exception.InvalidParameterException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
@@ -16,8 +15,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Objects;
 
 /**
  * Service capable of migrating IRIs of supported entities.
@@ -52,20 +49,23 @@ public class IriMigrationRepositoryService {
      * The operation is performed asynchronously within a standalone transaction.
      *
      * @param iriMigrationPair The pair of IRIs to migrate
+     * @param migrationType the expected type of the entity with the original IRI
      * @param params additional parameters to customize the migration process
+     * @throws NotFoundException when the entity with the original IRI and the expected type does not exist
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void migrateIdentifier(IriMigrationPair iriMigrationPair, IriMigrationParams params) {
-        migrateIdentifierInternal(iriMigrationPair, params);
+    public void migrateIdentifier(IriMigrationPair iriMigrationPair, IriMigrationType migrationType,
+                                  IriMigrationParams params) {
+        migrateIdentifierInternal(iriMigrationPair, migrationType, params);
     }
 
     /**
-     * @see #migrateIdentifier(IriMigrationPair, IriMigrationParams)
+     * @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams)
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    void migrateIdentifierInternal(IriMigrationPair iris, IriMigrationParams params) {
-        final IriMigrationType migrationType = getMigrationType(iris);
+    void migrateIdentifierInternal(IriMigrationPair iris, IriMigrationType migrationType, IriMigrationParams params) {
+        ensureExists(iris, migrationType);
         final Asset<?> changedAsset = getChangedAsset(iris, migrationType);
 
         new IriMigrationAction(
@@ -74,16 +74,11 @@ public class IriMigrationRepositoryService {
                 changeTrackingContextResolver,
                 vocabularyNamespaceResolver,
                 vocabularyRepositoryService,
+                changeRecordDao,
                 changedAsset,
                 migrationType,
                 iris,
                 params).run();
-        createChangeRecord(iris, changedAsset);
-    }
-
-    private void createChangeRecord(IriMigrationPair iris, Asset<?> changedAsset) {
-        IdentifierChangeRecord record = new IdentifierChangeRecord();
-        // TODO: fill record and persist
     }
 
     private Asset<?> getChangedAsset(IriMigrationPair pair, IriMigrationType migrationType) {
@@ -94,13 +89,13 @@ public class IriMigrationRepositoryService {
         };
     }
 
-    private IriMigrationType getMigrationType(IriMigrationPair iris) {
-        return iriMigrationDao.getEntityTypes(iris.originalIri())
-                                                                  .map(IriMigrationType::fromEntityType)
-                                                                  .filter(Objects::nonNull)
-                                                                  .findAny()
-                .orElseThrow(() ->
-                        new InvalidParameterException("Identifier migration of the given entity is not allowed: " +
-                                Utils.uriToString(iris.originalIri())));
+    /**
+     * Ensures that the entity with the original IRI exists and is of the type expected by the migration type.
+     */
+    private void ensureExists(IriMigrationPair iris, IriMigrationType migrationType) {
+        if (iriMigrationDao.getEntityTypes(iris.originalIri()).noneMatch(migrationType.getEntityType()::equals)) {
+            throw new NotFoundException("Entity " + Utils.uriToString(iris.originalIri()) + " of type " +
+                    Utils.uriToString(migrationType.getEntityType()) + " not found.");
+        }
     }
 }
