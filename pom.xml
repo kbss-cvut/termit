@@ -528,6 +528,8 @@
                         <importOrder>
                             <order>,javax,jakarta,java,\#</order>
                         </importOrder>
+                        <removeUnusedImports/>
+                        <forbidWildcardImports/>
                     </java>
                 </configuration>
             </plugin>
