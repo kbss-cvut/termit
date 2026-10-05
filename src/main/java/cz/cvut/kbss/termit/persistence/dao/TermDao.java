@@ -1372,8 +1372,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                 return new PageImpl<>(List.of(), pageable, totalCount);
             }
 
-            final List<Statement> statements = findReferencesInternal(term, pageable, totalCount);
-            return new PageImpl<>(statements, pageable, totalCount);
+            return findReferencesInternal(term, pageable, totalCount);
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
         }
@@ -1401,9 +1400,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param term the term to which references should be found
      * @param pageable page spec
-     * @return the list of statements referencing the term as object
+     * @param totalCount the total (unpaged) count of all references
+     * @return the page of statements referencing the term as object
      */
-    private List<Statement> findReferencesInternal(AbstractTerm term, Pageable pageable, long totalCount) {
+    private Page<Statement> findReferencesInternal(AbstractTerm term, Pageable pageable, long totalCount) {
         // On purpose not using auto-closable with try statement to prevent closing the connection here
         // the connection is managed by Entity Manager
         final RepositoryConnection con = em.unwrap(RepositoryConnection.class);
@@ -1433,7 +1433,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                 ));
             }
         }
-        return statements;
+        return new PageImpl<>(statements, pageable, totalCount);
     }
 
     /**
