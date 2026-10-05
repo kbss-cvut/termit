@@ -192,6 +192,11 @@ public class Constants {
      */
     public static final String LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX = LUCENE_INSTANCE_NS + "termit_defcomIndex_";
 
+    /**
+     * Default SPARQL RDF4J repository graph
+     *
+     * @see RDF4J#NIL
+     */
     public static final URI DEFAULT_GRAPH = URI.create(RDF4J.NIL.stringValue());
 
     private Constants() {

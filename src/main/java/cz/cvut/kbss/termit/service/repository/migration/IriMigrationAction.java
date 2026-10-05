@@ -1,0 +1,176 @@
+package cz.cvut.kbss.termit.service.repository.migration;
+
+import cz.cvut.kbss.termit.dto.IriMigrationPair;
+import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
+import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
+import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nullable;
+
+import java.net.URI;
+import java.util.Objects;
+
+/**
+ * Class whose instance is representing a single IRI migration.
+ *
+ * @implNote A helper class for eliminating excessive method parameters and referencing class fields instead.
+ * @see IriMigrationRepositoryService
+ */
+public class IriMigrationAction implements Runnable {
+    private final IriMigrationRepositoryService iriMigrationRepositoryService;
+    private final IriMigrationDao iriMigrationDao;
+    private final ChangeTrackingContextResolver changeTrackingContextResolver;
+    private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
+
+    @Nullable
+    private final Asset<?> changedAsset;
+    private final IriMigrationType migrationType;
+    private final IriMigrationPair iris;
+    private final IriMigrationParams params;
+
+    IriMigrationAction(IriMigrationRepositoryService iriMigrationRepositoryService,
+                       IriMigrationDao iriMigrationDao,
+                       ChangeTrackingContextResolver changeTrackingContextResolver,
+                       VocabularyNamespaceResolver vocabularyNamespaceResolver,
+                       @Nullable Asset<?> changedAsset,
+                       IriMigrationType migrationType,
+                       IriMigrationPair iris,
+                       IriMigrationParams params) {
+        this.iriMigrationRepositoryService = iriMigrationRepositoryService;
+        this.iriMigrationDao = Objects.requireNonNull(iriMigrationDao);
+        this.changeTrackingContextResolver = Objects.requireNonNull(changeTrackingContextResolver);
+        this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
+        this.changedAsset = changedAsset;
+        iriMigrationDao.detach(changedAsset);
+        this.migrationType = Objects.requireNonNull(migrationType);
+        this.iris = Objects.requireNonNull(iris);
+        this.params = Objects.requireNonNull(params);
+    }
+
+    /**
+     * Perform the migration
+     */
+    @Override
+    public void run() {
+        validateMigration();
+        iriMigrationDao.migrateIdentifier(iris); // replace every identifier occurrence
+        // TODO: well but this is going to change even custom attributes in the change records and their values...
+        migrateChangeRecordsGraph();
+        migrateOccurrenceGraph();
+        migrateVocabularyNamespace(params.getPreferredNamespaceUri().toString());
+    }
+
+    private void ensureNotExists(URI resource) {
+        if (iriMigrationDao.getEntityTypes(resource).findAny().isPresent()) {
+            throw new InvalidParameterException("Resource " + Utils.uriToString(resource) + " already exists!");
+        }
+    }
+
+    private void validateMigration() {
+        ensureNotExists(iris.newIri());
+        switch (migrationType) {
+            case TERM -> validateTermMigration();
+            case VOCABULARY -> validateVocabularyMigration();
+            case CUSTOM_ATTRIBUTE -> {/* no validation */}
+        }
+    }
+
+    private void validateVocabularyMigration() {
+        if (!(changedAsset instanceof Vocabulary) || !changedAsset.getUri().equals(iris.originalIri())) {
+            throw new InvalidParameterException("Changed asset is not expected Vocabulary!");
+        }
+    }
+
+    private void validateTermMigration() {
+        if (!(changedAsset instanceof Term term) || !changedAsset.getUri().equals(iris.originalIri())) {
+            throw new InvalidParameterException("Changed asset is not expected Term!");
+        }
+
+        // ensure the new term IRI is inside vocabulary namespace
+        final String vocabularyNamespace = vocabularyNamespaceResolver.resolveNamespace(term.getVocabulary());
+        if (!term.getUri().toString().startsWith(vocabularyNamespace)) {
+            throw new InvalidParameterException("New Term IRI " + Utils.uriToString(term.getUri()) +
+                    " does not start with Vocabulary namespace <" + vocabularyNamespace + ">");
+        }
+    }
+
+    /**
+     * Moves occurrence graph to the new IRI if there is an occurrence graph for the original IRI.
+     * 
+     * @see TermOccurrence#resolveContext(URI) 
+     */
+    private void migrateOccurrenceGraph() {
+        URI originalGraph = TermOccurrence.resolveContext(iris.originalIri());
+        URI newGraph = TermOccurrence.resolveContext(iris.newIri());
+        iriMigrationDao.moveGraph(originalGraph, newGraph);
+    }
+
+    /**
+     * For {@link IriMigrationType#VOCABULARY} moves the change tracking context to the new IRI
+     *
+     * @see ChangeTrackingContextResolver#resolveChangeTrackingContext(Asset)
+     */
+    private void migrateChangeRecordsGraph() {
+        if (migrationType != IriMigrationType.VOCABULARY) {
+            return;
+        }
+
+        assert changedAsset instanceof Vocabulary;
+        URI originalGraph = changeTrackingContextResolver.resolveChangeTrackingContext(changedAsset);
+        changedAsset.setUri(iris.newIri()); // temporarily set new URI so that correct tracking context is resolved
+        URI newGraph = changeTrackingContextResolver.resolveChangeTrackingContext(changedAsset);
+        changedAsset.setUri(iris.originalIri());
+        iriMigrationDao.moveGraph(originalGraph, newGraph);
+    }
+
+    private void migrateVocabularyNamespace(final String newNamespace) {
+        if (newNamespace == null || migrationType != IriMigrationType.VOCABULARY) {
+            return;
+        }
+        assert changedAsset instanceof Vocabulary;
+        final Vocabulary vocabulary = (Vocabulary) changedAsset;
+
+        if (vocabulary.getPreferredNamespaceUri().equals(newNamespace)) {
+            // new namespace is the same as the current one
+            return;
+        }
+
+        // we are already after the IRI migration, using new IRI
+        iriMigrationDao.setVocabularyPreferredNamespace(iris.newIri(), newNamespace);
+        migrateAllTerms(vocabulary.getPreferredNamespaceUri(), newNamespace);
+    }
+
+    private void migrateAllTerms(final String originalNamespace, final String newNamespace) {
+        assert changedAsset instanceof Vocabulary;
+        final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
+        iriMigrationDao.findAllTerms(changedAsset.getUri())
+                .map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
+                .filter(Objects::nonNull)
+                .forEach(termMigration ->
+                        // calling internal to stay in the same transaction
+                        iriMigrationRepositoryService.migrateIdentifierInternal(termMigration, termMigrationParams));
+    }
+
+    private static IriMigrationPair mapTermUri(URI originalTermUri, String originalNamespace, String newNamespace) {
+        final String originalTermUriStr = originalTermUri.toString();
+        if (originalTermUriStr.startsWith(newNamespace)) {
+            // already correct namespace
+            return null;
+        }
+        if (!originalTermUriStr.startsWith(originalNamespace)) {
+            throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri) +
+                    " is not in vocabulary namespace " + originalNamespace);
+        }
+        final String newTermUriStr = newNamespace + originalTermUriStr.substring(0, originalNamespace.length());
+        return new IriMigrationPair(
+                originalTermUri,
+                URI.create(newTermUriStr)
+        );
+    }
+}

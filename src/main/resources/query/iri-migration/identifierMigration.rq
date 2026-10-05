@@ -29,7 +29,8 @@ WHERE {
 
     FILTER (
         # Prevent snapshot modification
-        NOT EXISTS { GRAPH ?graph { ?graph a dd:version-of-vocabulary } } ||
+        NOT EXISTS { GRAPH ?graph { ?graph a dd:version-of-vocabulary } }
+        ||
         # Unless rewiring the is-version-of-* relation (is-version-of-vocabulary, is-version-of-term)
         EXISTS { ?predicate rdfs:subPropertyOf* dd:is-version-of }
     )
@@ -55,4 +56,6 @@ WHERE {
             ?object)
     AS ?newObject
     )
+
+
 }
