@@ -92,7 +92,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
      * {@code skos:hasTopConcept} relations are excluded
      * @implNote Bindings are required in {@link #countReferences(AbstractTerm)},
-     *           {@link #findReferencesInternal(AbstractTerm, Pageable)}, {@link #removeReferencesTo(AbstractTerm)}
+     *           {@link #findReferencesInternal(AbstractTerm, Pageable, long)}, {@link #removeReferencesTo(AbstractTerm)}
      *           and {@link #referencesToTermExist(AbstractTerm)}
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
@@ -1372,7 +1372,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                 return new PageImpl<>(List.of(), pageable, totalCount);
             }
 
-            final List<Statement> statements = findReferencesInternal(term, pageable);
+            final List<Statement> statements = findReferencesInternal(term, pageable, totalCount);
             return new PageImpl<>(statements, pageable, totalCount);
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
@@ -1389,7 +1389,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             return em.createNativeQuery("SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE, Long.class)
                     .setParameter("term", term.getUri())
-                    .setParameter("versionOfVocabulary", cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary)
+                    .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to count references to term " + Utils.uriToString(term.getUri()), e);
@@ -1403,7 +1403,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @param pageable page spec
      * @return the list of statements referencing the term as object
      */
-    private List<Statement> findReferencesInternal(AbstractTerm term, Pageable pageable) {
+    private List<Statement> findReferencesInternal(AbstractTerm term, Pageable pageable, long totalCount) {
         // On purpose not using auto-closable with try statement to prevent closing the connection here
         // the connection is managed by Entity Manager
         final RepositoryConnection con = em.unwrap(RepositoryConnection.class);
@@ -1420,7 +1420,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
         query.setIncludeInferred(false);
 
-        final List<Statement> statements = new ArrayList<>(pageable.getPageSize());
+        final int statementCount = (int) Math.min(pageable.getPageSize(), totalCount);
+        final List<Statement> statements = new ArrayList<>(statementCount);
         try (TupleQueryResult result = query.evaluate()) {
             while (result.hasNext()) {
                 final BindingSet bindings = result.next();
