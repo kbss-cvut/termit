@@ -1642,7 +1642,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         persistVocabularySnapshotType(snapshotUri, vocabulary.getUri());
 
         readOnlyTransactional(() -> {
-            final var result = sut.findReferences(term, PageRequest.of(0, 10));
+            final var result = sut.findReferences(term, PageRequest.of(0, 1));
 
             assertEquals(1, result.getContent().size());
             assertEquals(1, result.getTotalElements());
@@ -1764,6 +1764,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 final IRI context = Values.iri(snapshotUri.toString());
                 conn.add(snapshot, RDF.TYPE, Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary),
                         context);
+                conn.add(snapshot, RDF.TYPE, Values.iri(SKOS.CONCEPT_SCHEME), context);
                 conn.add(snapshot,
                         Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
                         Values.iri(vocabulary.toString()), context);
