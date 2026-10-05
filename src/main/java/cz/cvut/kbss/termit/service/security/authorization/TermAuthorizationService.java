@@ -146,4 +146,16 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
             }
         });
     }
+
+    /**
+     * Checks whether the current user can migrate the identiifer of the specified asset.
+     *
+     * @param asset Resource access to which is to be authorized
+     * @return {@code true} if the current user can migrate the identifier of the specified asset,
+     * {@code false} otherwise
+     */
+    @Override
+    public boolean canMigrateIdentifier(AbstractTerm asset) {
+        return vocabularyAuthorizationService.canMigrateIdentifier(getVocabulary(asset));
+    }
 }

@@ -104,4 +104,8 @@ public class IriMigrationDao {
         query.setParameter("originalIri", iris.originalIri())
              .setParameter("newIri", iris.newIri());
     }
+
+    public void evictCache() {
+        em.getEntityManagerFactory().getCache().evictAll();
+    }
 }

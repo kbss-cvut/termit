@@ -205,4 +205,18 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         return vocabularyRepositoryService.findAll().stream()
                                           .filter(this::canRead).toList();
     }
+
+    /**
+     * Checks whether the current user can migrate the identiifer of the specified asset.
+     *
+     * @param asset Resource access to which is to be authorized
+     * @return {@code true} if the current user can migrate the identifier of the specified asset,
+     * {@code false} otherwise
+     */
+    @Override
+    public boolean canMigrateIdentifier(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = securityUtils.getCurrentUser();
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset);
+    }
 }

@@ -24,17 +24,4 @@ public enum IriMigrationType {
     public URI getEntityType() {
         return entityType;
     }
-
-    /**
-     * Resolves {@link IriMigrationType} by the entity type IRI
-     *
-     * @param entityType the IRI of the entity type
-     * @return Resolved {@link IriMigrationType} or {@code null}
-     */
-    public static IriMigrationType fromEntityType(URI entityType) {
-        for (IriMigrationType type : IriMigrationType.values()) {
-            if (type.entityType.equals(entityType)) return type;
-        }
-        return null;
-    }
 }

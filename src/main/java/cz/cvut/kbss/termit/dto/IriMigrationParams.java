@@ -4,9 +4,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 
 import java.net.URI;
 
-public class IriMigrationParams {
-    private final URI preferredNamespaceUri;
-
+public record IriMigrationParams(URI preferredNamespaceUri) {
     public IriMigrationParams(URI preferredNamespaceUri) {
         if (preferredNamespaceUri != null) {
             final String terminatedNamespace = IdentifierResolver.ensureNamespaceSeparatorTermination(preferredNamespaceUri.toString());
@@ -14,9 +12,5 @@ public class IriMigrationParams {
         } else {
             this.preferredNamespaceUri = null;
         }
-    }
-
-    public URI getPreferredNamespaceUri() {
-        return preferredNamespaceUri;
     }
 }
