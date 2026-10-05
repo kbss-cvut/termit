@@ -1599,6 +1599,28 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     }
 
     @Test
+    void findReferencesReturnsResultsWhenMaxIntegerPageSizeIsRequested() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        addTermsAndSave(List.of(term), vocabulary);
+
+        final Statement expected = statement(
+                Values.iri(Environment.BASE_URI + "/term/source-1"),
+                Values.iri(SKOS.BROADER),
+                Values.iri(term.getUri().toString()),
+                Values.iri(vocabulary.getUri().toString())
+        );
+        withStatements(vocabulary.getUri(), expected);
+
+        readOnlyTransactional(() -> {
+            // Pre-allocating the result list by page size used to cause OutOfMemoryError
+            final Page<Statement> result = sut.findReferences(term, PageRequest.of(0, Integer.MAX_VALUE));
+
+            assertEquals(1, result.getTotalElements());
+            assertEquals(List.of(expected), result.getContent());
+        });
+    }
+
+    @Test
     void findReferencesExcludesStatementsFromVocabularySnapshotGraphs() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         addTermsAndSave(List.of(term), vocabulary);
