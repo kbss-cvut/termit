@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.IriMigrationService;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationType;
@@ -44,7 +45,7 @@ public class MigrationController {
             @ApiResponse(responseCode = "403", description = "Not authorized to modify the migrated asset."),
             @ApiResponse(responseCode = "404",
                          description = "Asset with the original identifier and the specified type not found."),
-            @ApiResponse(responseCode = "400", description = "Invalid migration parameters supplied.")
+            @ApiResponse(responseCode = "422", description = "Invalid migration parameters supplied.")
     })
     @PostMapping("/identifier")
     public ResponseEntity<Void> migrateIdentifier(
@@ -62,8 +63,16 @@ public class MigrationController {
                        example = MigrationControllerDoc.PREFERRED_NAMESPACE_EXAMPLE)
             @RequestParam(name = "preferredNamespace", required = false) URI preferredNamespace) {
         final IriMigrationPair iris = new IriMigrationPair(originalIri, newIri);
-        iriMigrationService.migrateIdentifier(iris, migrationType, new IriMigrationParams(preferredNamespace));
+        final IriMigrationParams params = new IriMigrationParams(preferredNamespace);
+        validateParameters(iris, migrationType, params);
+        iriMigrationService.migrateIdentifier(iris, migrationType, params);
         return ResponseEntity.accepted().build();
+    }
+
+    private static void validateParameters(IriMigrationPair pair, IriMigrationType migrationType, IriMigrationParams params) {
+        if (params.preferredNamespaceUri() != null && migrationType != IriMigrationType.VOCABULARY) {
+            throw new InvalidParameterException("Preferred namespace uri is not supported by migration type " + migrationType.name());
+        }
     }
 
     private static final class MigrationControllerDoc {
