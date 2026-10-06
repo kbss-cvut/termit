@@ -20,6 +20,7 @@ import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -114,9 +115,11 @@ public class IriMigrationAction implements Runnable {
         }
 
         // ensure the new term IRI is inside vocabulary namespace
-        final String vocabularyNamespace = vocabularyNamespaceResolver.resolveNamespace(term.getVocabulary());
-        if (!term.getUri().toString().startsWith(vocabularyNamespace)) {
-            throw new InvalidParameterException("New Term IRI " + Utils.uriToString(term.getUri())
+        final String vocabularyNamespace = Optional.ofNullable(params.preferredNamespaceUri())
+                .map(URI::toString)
+                .orElseGet(() -> vocabularyNamespaceResolver.resolveNamespace(term.getVocabulary()));
+        if (!iris.newIri().toString().startsWith(vocabularyNamespace)) {
+            throw new InvalidParameterException("New Term IRI " + Utils.uriToString(iris.newIri())
                     + " does not start with Vocabulary namespace <" + vocabularyNamespace + ">");
         }
     }
@@ -186,14 +189,13 @@ public class IriMigrationAction implements Runnable {
         assert changedAsset instanceof Vocabulary;
         LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(changedAsset.getUri()));
         assert migrationType == IriMigrationType.VOCABULARY;
-        final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
         try (Stream<URI> terms = iriMigrationDao.findAllTerms(changedAsset.getUri())) {
             terms.map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
                     .filter(Objects::nonNull)
                     .forEach(termMigration ->
                             // calling internal to stay in the same transaction
                             iriMigrationRepositoryService.migrateIdentifierInternal(
-                                    termMigration, IriMigrationType.TERM, termMigrationParams));
+                                    termMigration, IriMigrationType.TERM, params));
         }
     }
 
