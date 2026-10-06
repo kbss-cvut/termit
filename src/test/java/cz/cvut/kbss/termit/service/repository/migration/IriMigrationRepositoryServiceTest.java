@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.repository.migration;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
@@ -9,12 +10,17 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
+import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
+import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -47,6 +53,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,6 +76,12 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private DataRepositoryService dataService;
+
+    @Autowired
+    private ResourceDao resourceDao;
+
+    @Autowired
+    private TermOccurrenceDao termOccurrenceDao;
 
     @MockitoSpyBean
     private IriMigrationDao iriMigrationDao;
@@ -149,8 +162,31 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         return attribute;
     }
 
+    /** Generates a file entity stored in the context of the vocabulary */
+    private File generateFile(Vocabulary vocabulary) {
+        final File file = Generator.generateFileWithId("test.html");
+        transactional(() -> resourceDao.persist(file, vocabulary));
+        return file;
+    }
+
+    /**
+     * Generates and persists an occurrence of the term in the target ({@link File} content or {@link Term} definition),
+     * the occurrence is stored in the occurrence context of the target.
+     *
+     * @see TermOccurrence#resolveContext(URI)
+     */
+    private TermOccurrence generateTermOccurrence(Term term, Asset<?> target) {
+        final TermOccurrence occurrence = Generator.generateTermOccurrence(term, target, false);
+        transactional(() -> termOccurrenceDao.persist(occurrence));
+        return occurrence;
+    }
+
     private IriMigrationPair iriMigration(URI originalIri) {
-        return new IriMigrationPair(originalIri, Generator.generateUri());
+        final URI randomUri = Generator.generateUri();
+        final String namespace = vocabularyA.getPreferredNamespaceUri();
+        final String randomFragment = IdentifierResolver.extractIdentifierFragment(randomUri);
+
+        return new IriMigrationPair(originalIri, URI.create(namespace + randomFragment));
     }
 
     @ParameterizedTest
@@ -305,9 +341,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
 
-        System.out.println(termsA.getFirst().getUri());
         sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
-        System.out.println(termsA.getFirst().getUri());
 
         verify(iriMigrationDao, times(1 + termsA.size())).migrateIdentifier(any());
 
@@ -339,6 +373,84 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         IriMigrationParams params = new IriMigrationParams();
 
         assertThrows(IllegalTransactionStateException.class, () -> sut.migrateIdentifierInternal(iris, type, params));
+    }
+
+    @Test
+    void migrateIdentifierMigratesOccurrenceOfTheTermInDocument() {
+        final Term toMigrate = termsA.getFirst();
+        final File file = generateFile(vocabularyA);
+        migrateTermAndAssertOccurrenceMigrated(toMigrate, file);
+    }
+
+    @Test
+    void migrateIdentifierMigratesOccurrenceOfTheTermInDefinition() {
+        final Term toMigrate = termsA.getFirst();
+        final Term definedTerm = termsB.getFirst();
+        migrateTermAndAssertOccurrenceMigrated(toMigrate, definedTerm);
+    }
+
+    /**
+     * Generates an occurrence of the {@code toMigrate} term, migrates the term, and asserts the occurrence remained in
+     * the same graph and references the migrated term.
+     *
+     * @param toMigrate the term whose occurrence should be generated and asserted after migration
+     * @param occurrenceTarget the target of the occurrence
+     */
+    void migrateTermAndAssertOccurrenceMigrated(Term toMigrate, Asset<?> occurrenceTarget) {
+        final TermOccurrence occurrence = generateTermOccurrence(toMigrate, occurrenceTarget);
+        final URI occurrenceGraph = TermOccurrence.resolveContext(occurrenceTarget.getUri());
+        assertEquals(occurrence.resolveContext(), occurrenceGraph);
+
+        assertTrue(askGraphExists(occurrenceGraph));
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params);
+
+        // the occurrence must remain in the graph of its target
+        final TermOccurrence migratedOcc = findOccurrence(occurrence.getUri(), occurrenceGraph);
+
+        assertEquals(iris.newIri(), migratedOcc.getTerm(), "Occurrence does not reference the migrated term!");
+        assertEquals(occurrenceTarget.getUri(), migratedOcc.getTarget().getSource());
+    }
+
+    @Test
+    void migrateIdentifierMigratesTermOccurrenceGraph() {
+        final Term toMigrate = termsA.getFirst();
+        final Term occurring = termsB.getFirst();
+
+        // occurrence of another term in the definition of the migrated term
+        final TermOccurrence occurrence = generateTermOccurrence(occurring, toMigrate);
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        final URI originalGraph = TermOccurrence.resolveContext(iris.originalIri());
+        final URI newGraph = TermOccurrence.resolveContext(iris.newIri());
+
+        assertTrue(askGraphExists(originalGraph));
+        assertFalse(askGraphExists(newGraph));
+
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params);
+
+        assertFalse(askGraphExists(originalGraph), "Old occurrence graph was not migrated!");
+        assertTrue(askGraphExists(newGraph), "New occurrence graph does not exist!");
+
+        final TermOccurrence migrated = findOccurrence(occurrence.getUri(), newGraph);
+
+        assertEquals(occurring.getUri(), migrated.getTerm(), "Occurring term was changed!");
+        assertEquals(iris.newIri(), migrated.getTarget().getSource(), "Occurrence target is not the migrated term!");
+    }
+
+    /** Finds the occurrence in the specified graph, fails when the graph does not contain the occurrence. */
+    private TermOccurrence findOccurrence(URI occurrence, URI graph) {
+        Objects.requireNonNull(occurrence);
+        Objects.requireNonNull(graph);
+        final TermOccurrence result =
+                readOnlyTransactional(() -> em.find(TermOccurrence.class, occurrence, new EntityDescriptor(graph)));
+        assertNotNull(result, "Occurrence not found in graph " + Utils.uriToString(graph));
+        return result;
     }
 
     private boolean askGraphExists(URI graph) {
