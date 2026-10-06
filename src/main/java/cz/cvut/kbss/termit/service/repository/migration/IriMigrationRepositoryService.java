@@ -4,17 +4,23 @@ import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 /**
  * Service capable of migrating IRIs of supported entities.
@@ -23,25 +29,28 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class IriMigrationRepositoryService {
+    private static final Logger LOG = LoggerFactory.getLogger(IriMigrationRepositoryService.class);
     private final IriMigrationDao iriMigrationDao;
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
     private final TermRepositoryService termRepositoryService;
     private final VocabularyRepositoryService vocabularyRepositoryService;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
     private final ChangeRecordDao changeRecordDao;
+    private final SecurityUtils securityUtils;
 
     public IriMigrationRepositoryService(IriMigrationDao iriMigrationDao,
                                          ChangeTrackingContextResolver changeTrackingContextResolver,
                                          TermRepositoryService termRepositoryService,
                                          VocabularyRepositoryService vocabularyRepositoryService,
                                          VocabularyNamespaceResolver vocabularyNamespaceResolver,
-                                         ChangeRecordDao changeRecordDao) {
+                                         ChangeRecordDao changeRecordDao, SecurityUtils securityUtils) {
         this.iriMigrationDao = iriMigrationDao;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
         this.termRepositoryService = termRepositoryService;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.changeRecordDao = changeRecordDao;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -79,6 +88,7 @@ public class IriMigrationRepositoryService {
                 migrationType,
                 iris,
                 params).run();
+        createChangeRecord(iris, changedAsset);
     }
 
     private Asset<?> getChangedAsset(IriMigrationPair pair, IriMigrationType migrationType) {
@@ -97,5 +107,22 @@ public class IriMigrationRepositoryService {
             throw new NotFoundException("Entity " + Utils.uriToString(iris.originalIri()) + " of type " +
                     Utils.uriToString(migrationType.getEntityType()) + " not found.");
         }
+    }
+
+    private void createChangeRecord(IriMigrationPair iris, Asset<?> changedAsset) {
+        if (changedAsset == null) {
+            LOG.debug("Skipping identifier migration change record creation for migration: {}", iris);
+            return;
+        }
+
+        IdentifierChangeRecord record = new IdentifierChangeRecord();
+        // the record must be associated with the new (current) entity identifier
+        record.setChangedEntity(iris.newIri());
+        record.setTimestamp(Instant.now());
+        record.setAuthor(securityUtils.getCurrentUser().toUser());
+        record.setOriginalIdentifier(iris.originalIri());
+
+//        changeRecordDao.persist(record, changedAsset);
+        // TODO: persist
     }
 }

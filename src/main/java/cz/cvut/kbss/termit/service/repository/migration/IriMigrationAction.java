@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
@@ -15,6 +14,8 @@ import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Objects;
@@ -26,12 +27,12 @@ import java.util.Objects;
  * @see IriMigrationRepositoryService
  */
 public class IriMigrationAction implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(IriMigrationAction.class);
     private final IriMigrationRepositoryService iriMigrationRepositoryService;
     private final IriMigrationDao iriMigrationDao;
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
     private final VocabularyRepositoryService vocabularyRepositoryService;
-    private final ChangeRecordDao changeRecordDao;
 
     @Nullable
     private final Asset<?> changedAsset;
@@ -53,7 +54,6 @@ public class IriMigrationAction implements Runnable {
         this.changeTrackingContextResolver = Objects.requireNonNull(changeTrackingContextResolver);
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
-        this.changeRecordDao = changeRecordDao;
         this.changedAsset = changedAsset;
         iriMigrationDao.detach(changedAsset);
         this.migrationType = Objects.requireNonNull(migrationType);
@@ -66,11 +66,12 @@ public class IriMigrationAction implements Runnable {
      */
     @Override
     public void run() {
+        LOG.trace("Executing IRI migration: {}", iris);
         validateMigration();
         iriMigrationDao.migrateIdentifier(iris); // replace every identifier occurrence
+        LOG.trace("Migrating graphs after IRI migration: {}", iris);
         migrateChangeRecordsGraph();
         migrateOccurrenceGraph();
-        createChangeRecord();
         migrateVocabularyNamespace(params.preferredNamespaceUri());
         // changes to entity identifiers and graph identifiers were made
         iriMigrationDao.evictCache();
@@ -154,6 +155,8 @@ public class IriMigrationAction implements Runnable {
         }
         final String originalNamespace = vocabulary.getPreferredNamespaceUri();
 
+        LOG.info("Migrating vocabulary namespace '{}' -> '{}'", originalNamespace, newNamespace);
+
         // we are already after the IRI migration, using new IRI
         final Vocabulary migratedVocabulary = vocabularyRepositoryService.findRequired(iris.newIri());
         migratedVocabulary.setPreferredNamespaceUri(newNamespace);
@@ -162,6 +165,7 @@ public class IriMigrationAction implements Runnable {
     }
 
     private void migrateAllTerms(final String originalNamespace, final String newNamespace) {
+        LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(iris.newIri()));
         assert migrationType == IriMigrationType.VOCABULARY;
         final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
         iriMigrationDao.findAllTerms(iris.newIri())
@@ -188,10 +192,5 @@ public class IriMigrationAction implements Runnable {
                 originalTermUri,
                 URI.create(newTermUriStr)
         );
-    }
-
-    private void createChangeRecord() {
-        IdentifierChangeRecord record = new IdentifierChangeRecord();
-        // TODO: fill record and persist
     }
 }
