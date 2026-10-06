@@ -606,19 +606,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertEquals(term, evt.get().getAsset());
     }
 
-    @Test
-    void findAllRootsReturnsOnlyTermsWithMatchingLabelLanguage() {
-        final List<Term> terms = generateTerms(5);
-        final Term foreignLabelTerm = Generator.generateTermWithId();
-        final List<Term> allTerms = new ArrayList<>(terms);
-        allTerms.add(foreignLabelTerm);
-        addTermsAndSave(allTerms, vocabulary);
-        transactional(() -> insertForeignLabel(foreignLabelTerm));
-
-        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
-        assertEquals(toDtos(terms), result);
-    }
-
     private void insertForeignLabel(Term term) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
@@ -632,7 +619,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     }
 
     @Test
-    void findAllReturnsOnlyTermsWithMatchingLanguageLabel() {
+    void findAllReturnsAllTermsAndSortsMatchingLanguageFirst() {
         final List<Term> terms = generateTerms(5);
         final Term foreignLabelTerm = Generator.generateTermWithId();
         final List<Term> allTerms = new ArrayList<>(terms);
@@ -641,7 +628,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> insertForeignLabel(foreignLabelTerm));
 
         final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
-        assertEquals(terms, result);
+
+        assertEquals(6, result.size());
+        assertEquals(foreignLabelTerm.getUri(), result.get(5).getUri());
     }
 
     @Test
