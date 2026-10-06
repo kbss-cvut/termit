@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import java.net.URI;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -83,13 +84,16 @@ class MigrationControllerTest extends BaseControllerTestRunner {
     void migrateIdentifierThrowsUnprocessableContentWhenNamespaceIsSpecifiedForNonVocabularyMigrationType(
             IriMigrationType type) throws Exception {
         final URI preferredNamespace = URI.create(newIri + "/pojem/");
+        doCallRealMethod().when(iriMigrationService).migrateIdentifier(any(), any(), any());
+
         mockMvc.perform(post(PATH)
                         .param("originalIri", originalIri.toString())
                         .param("newIri", newIri.toString())
                         .param("type", type.name())
                         .param("preferredNamespace", preferredNamespace.toString()))
                 .andExpect(status().isUnprocessableContent());
-        verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
+
+        verify(iriMigrationService).migrateIdentifier(any(), any(), any());
     }
 
     @Test

@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -153,5 +154,14 @@ class IriMigrationServiceTest {
                 AuthorizationException.class,
                 () -> sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params));
         verify(repositoryService, never()).migrateIdentifier(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IriMigrationType.class, names = "VOCABULARY", mode = EnumSource.Mode.EXCLUDE)
+    void migrateIdentifierThrowsWhenNewNamespaceIsProvidedForNonVocabularyMigration(IriMigrationType migrationType) {
+        final IriMigrationPair iris = new IriMigrationPair(Generator.generateUri(), Generator.generateUri());
+        final IriMigrationParams params = new IriMigrationParams(Generator.generateUri());
+
+        assertThrows(InvalidParameterException.class, () -> sut.migrateIdentifier(iris, migrationType, params));
     }
 }
