@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.repository.migration;
 
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
@@ -15,6 +16,7 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,6 +39,7 @@ public class IriMigrationRepositoryService {
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
     private final ChangeRecordDao changeRecordDao;
     private final SecurityUtils securityUtils;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public IriMigrationRepositoryService(
             IriMigrationDao iriMigrationDao,
@@ -45,7 +48,8 @@ public class IriMigrationRepositoryService {
             VocabularyRepositoryService vocabularyRepositoryService,
             VocabularyNamespaceResolver vocabularyNamespaceResolver,
             ChangeRecordDao changeRecordDao,
-            SecurityUtils securityUtils) {
+            SecurityUtils securityUtils,
+            ApplicationEventPublisher applicationEventPublisher) {
         this.iriMigrationDao = iriMigrationDao;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
         this.termRepositoryService = termRepositoryService;
@@ -53,6 +57,7 @@ public class IriMigrationRepositoryService {
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.changeRecordDao = changeRecordDao;
         this.securityUtils = securityUtils;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -69,6 +74,8 @@ public class IriMigrationRepositoryService {
     public void migrateIdentifier(
             IriMigrationPair iriMigrationPair, IriMigrationType migrationType, IriMigrationParams params) {
         migrateIdentifierInternal(iriMigrationPair, migrationType, params);
+        LOG.debug("Evicting all application caches, Identifier migrated {}", iriMigrationPair);
+        applicationEventPublisher.publishEvent(new EvictCacheEvent(this));
     }
 
     /** @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams) */
@@ -102,7 +109,7 @@ public class IriMigrationRepositoryService {
 
     /** Ensures that the entity with the original IRI exists and is of the type expected by the migration type. */
     private void ensureExists(IriMigrationPair iris, IriMigrationType migrationType) {
-        if (iriMigrationDao.getEntityTypes(iris.originalIri()).noneMatch(migrationType.getEntityType()::equals)) {
+        if (!iriMigrationDao.getEntityTypes(iris.originalIri()).contains(migrationType.getEntityType())) {
             throw new NotFoundException("Entity " + Utils.uriToString(iris.originalIri()) + " of type "
                     + Utils.uriToString(migrationType.getEntityType()) + " not found.");
         }

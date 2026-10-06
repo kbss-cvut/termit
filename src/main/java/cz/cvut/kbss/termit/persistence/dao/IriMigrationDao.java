@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -45,14 +46,14 @@ public class IriMigrationDao {
      * Retrieves all types of the given entity.
      *
      * @param entityUri the entity identifier
-     * @return the stream of distinct types of the entity
+     * @return the list of distinct types of the entity
      */
-    public Stream<URI> getEntityTypes(URI entityUri) {
+    public List<URI> getEntityTypes(URI entityUri) {
         Objects.requireNonNull(entityUri);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?type WHERE { ?entity a ?type }", URI.class)
                     .setParameter("entity", entityUri)
-                    .getResultStream();
+                    .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to load entity types: " + Utils.uriToString(entityUri), e);
         }
