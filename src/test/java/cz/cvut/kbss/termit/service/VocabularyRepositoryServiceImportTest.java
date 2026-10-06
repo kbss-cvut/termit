@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporters;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
@@ -35,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -49,6 +51,9 @@ class VocabularyRepositoryServiceImportTest {
     @Mock
     private VocabularyImporters importer;
 
+    @Mock
+    private VocabularyDao dao;
+
     @InjectMocks
     private VocabularyRepositoryService sut;
 
@@ -60,6 +65,7 @@ class VocabularyRepositoryServiceImportTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         when(importer.importVocabulary(any(VocabularyImporter.ImportConfiguration.class),
                                        any(VocabularyImporter.ImportInput.class))).thenReturn(vocabulary);
+        when(dao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final Vocabulary result = sut.importVocabulary(vocabulary.getUri(), input);
         final ArgumentCaptor<VocabularyImporter.ImportInput> captor = ArgumentCaptor.forClass(
                 VocabularyImporter.ImportInput.class);

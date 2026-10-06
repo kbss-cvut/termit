@@ -21,11 +21,13 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchString;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
+import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -50,6 +52,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Tag(name = "Search", description = "Search API")
 @RestController
@@ -58,11 +61,17 @@ import java.util.Set;
 public class SearchController extends BaseController {
 
     private final SearchService searchService;
+    private final TermService termService;
 
     @Autowired
-    public SearchController(IdentifierResolver idResolver, Configuration config, SearchService searchService) {
+    public SearchController(
+            IdentifierResolver idResolver,
+            Configuration config,
+            SearchService searchService,
+            TermService termService) {
         super(idResolver, config);
         this.searchService = searchService;
+        this.termService = termService;
     }
 
     @Operation(description = "Runs full-text search over asset labels, definitions and descriptions.")
@@ -102,6 +111,7 @@ public class SearchController extends BaseController {
      * @param language     Language for full-text search, optional.
      * @param pageSize     Page size for pagination, optional.
      * @param pageNo       Page number for pagination, optional.
+     * @param full         Whether to return fully populated term entities, optional.
      * @param searchParams Search parameters for faceted filtering, optional.
      * @return List of search results matching the full-text search and faceted filtering criteria.
      */
@@ -110,7 +120,7 @@ public class SearchController extends BaseController {
     @PreAuthorize("permitAll()")
     @PostMapping(value = "/advanced", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
                  consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<List<SearchResult>> advancedSearch(
+    public ResponseEntity<?> advancedSearch(
             @Parameter(description = "Search string.")
             @RequestParam(name = "searchString", required = false, defaultValue = "") String searchString,
             @Parameter(description = "Search language.")
@@ -119,11 +129,23 @@ public class SearchController extends BaseController {
             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
+            @Parameter(description = "Whether to return fully populated term entities.")
+            @RequestParam(name = "full", required = false, defaultValue = "false") boolean full,
             @Parameter(description = "Search parameters.")
             @RequestBody Collection<SearchParam> searchParams) {
         final Page<SearchResult> result = searchService.advancedSearch(new SearchString(searchString, language),
                                                                        searchParams,
                                                                        RestUtils.createPageRequest(pageSize, pageNo));
+        if (full) {
+            Set<URI> matchingUris = result.getContent().stream()
+                    .map(SearchResult::getUri)
+                    .collect(Collectors.toSet());
+            List<Term> detailedTerms = termService.findAllFullByUris(matchingUris);
+
+            return ResponseEntity.ok()
+                    .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
+                    .body(detailedTerms);
+        }
         return ResponseEntity.ok()
                              .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                              .body(result.getContent());

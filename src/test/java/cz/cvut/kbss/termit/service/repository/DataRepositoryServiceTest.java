@@ -11,7 +11,6 @@ import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +22,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -33,6 +33,8 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -120,6 +122,16 @@ class DataRepositoryServiceTest {
     }
 
     @Test
+    void findCustomAttributeReturnsMatchingAttribute() {
+        final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
+        when(dataDao.findCustomAttribute(uri)).thenReturn(Optional.of(attribute));
+
+        assertEquals(Optional.of(attribute), sut.findCustomAttribute(uri));
+    }
+
+    @Test
     void updateCustomAttributeUpdatesLabelAndDescriptionOfExistingCustomAttribute() {
         final CustomAttribute existing = new CustomAttribute(Generator.generateUri(),
                                                              MultilingualString.create("Attribute one", "en"),
@@ -140,5 +152,52 @@ class DataRepositoryServiceTest {
         assertEquals(updated.getDomain(), existing.getDomain());
         assertEquals(updated.getRange(), existing.getRange());
         assertEquals(updated.getAnnotatedRelationships(), existing.getAnnotatedRelationships());
+    }
+
+    @Test
+    void removeCustomAttributeKeepsUsagesWhenRemoveUsagesIsFalse() {
+        final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
+
+        when(dataDao.findCustomAttribute(uri))
+                .thenReturn(Optional.of(attribute));
+
+        sut.removeCustomAttribute(uri, false);
+
+        verify(dataDao, never()).removeAllCustomAttributeUsages(any());
+        verify(dataDao).removeCustomAttribute(attribute);
+    }
+
+    @Test
+    void removeCustomAttributeRemovesAllUsagesAndCustomAttribute() {
+        final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
+
+        when(dataDao.findCustomAttribute(uri))
+                .thenReturn(Optional.of(attribute));
+
+        sut.removeCustomAttribute(uri, true);
+
+        verify(dataDao).removeAllCustomAttributeUsages(attribute);
+        verify(dataDao).removeCustomAttribute(attribute);
+    }
+
+    @Test
+    void removeCustomAttributeEvictsCacheForAffectedContexts() {
+        final List<URI> affectedContexts = List.of(Generator.generateUri(), Generator.generateUri());
+        final URI uri = Generator.generateUri();
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uri);
+
+        when(dataDao.findCustomAttribute(uri))
+                .thenReturn(Optional.of(attribute));
+        when(dataDao.findCustomAttributeUsageContexts(attribute))
+                .thenReturn(affectedContexts);
+
+        sut.removeCustomAttribute(uri, true);
+
+        verify(dataDao).evictCacheForContexts(affectedContexts);
     }
 }

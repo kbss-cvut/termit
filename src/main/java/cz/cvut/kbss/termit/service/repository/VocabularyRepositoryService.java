@@ -54,6 +54,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
@@ -220,16 +221,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
         Objects.requireNonNull(file);
-        try {
-            String contentType = Utils.resolveContentType(file);
-            return importers.importVocabulary(
-                    new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument),
-                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
-        } catch (VocabularyImportException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage());
-        }
+        return importVocabularyFromFile(
+                new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument),
+                file);
     }
 
     @CacheEvict(allEntries = true, cacheNames = "vocabularies")
@@ -237,16 +231,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(file);
-        try {
-            String contentType = Utils.resolveContentType(file);
-            return importers.importVocabulary(
-                    new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
-                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
-        } catch (VocabularyImportException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
-        }
+        return importVocabularyFromFile(
+                new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
+                file);
     }
 
     @CacheEvict(allEntries = true, cacheNames = "vocabularies")
@@ -254,10 +241,36 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary importVocabulary(URI vocabularyIri, String contentType, InputStream inputStream) {
         Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(inputStream);
+        return importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
+                new VocabularyImporter.ImportInput(contentType, inputStream));
+    }
+
+    private Vocabulary importVocabularyFromFile(VocabularyImporter.ImportConfiguration configuration, MultipartFile file) {
         try {
-            return importers.importVocabulary(
-                    new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
-                    new VocabularyImporter.ImportInput(contentType, inputStream));
+            String contentType = Utils.resolveContentType(file);
+            return importVocabulary(
+                    configuration,
+                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
+        } catch (IOException e) {
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Imports the vocabulary with the given configuration and input and evicts JOPA cache for the imported vocabualry.
+     *
+     * @param configuration the import configuration
+     * @param input the import config
+     * @see #importers#importVocabulary(VocabularyImporter.ImportConfiguration, VocabularyImporter.ImportInput)
+     * @return The imported vocabualry
+     */
+    private Vocabulary importVocabulary(VocabularyImporter.ImportConfiguration configuration, VocabularyImporter.ImportInput input) {
+        try {
+            final Vocabulary imported = importers.importVocabulary(configuration, input);
+            vocabularyDao.evictCache(imported);
+            // refresh the imported vocabulary from database after evicted cache
+            return findRequired(imported.getUri());
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {

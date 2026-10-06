@@ -38,9 +38,8 @@ public class DuplicateSymmetricRelationshipPruner {
      * direction.
      */
     public void prune() {
-        connection.begin();
+        assert connection.isActive();
         SYMMETRIC_RELATIONSHIPS.forEach(this::pruneRelationship);
-        connection.commit();
     }
 
     private void pruneRelationship(IRI relationship) {

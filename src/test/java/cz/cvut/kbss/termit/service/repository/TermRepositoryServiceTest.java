@@ -39,6 +39,9 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.repository.removal.SubTermRemovalStrategy;
+import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
+import cz.cvut.kbss.termit.service.term.TermOccurrenceCleanupListener;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -47,6 +50,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -63,18 +68,22 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermRepositoryServiceTest extends BaseServiceTestRunner {
@@ -87,6 +96,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private TermRepositoryService sut;
+
+    @MockitoSpyBean
+    private TermOccurrenceCleanupListener termOccurrenceCleanupListener;
 
     private UserAccount user;
     private Vocabulary vocabulary;
@@ -464,6 +476,222 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNull(result);
     }
 
+    @Test
+    void removeWithParamsReconnectsChildrenToParents() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+
+        transactional(() -> sut.addRootTermToVocabulary(parent, vocabulary));
+        transactional(() -> sut.addChildTerm(toRemove, parent));
+        transactional(() -> sut.addChildTerm(child, toRemove));
+        transactional(() -> em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.RECONNECT, false, false));
+
+        final Term updatedParent = sut.findRequired(parent.getUri());
+        assertFalse(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(toRemove)::equals),
+                "Term to remove must be removed from its parent");
+        assertTrue(updatedParent.getSubTerms().stream().anyMatch(new TermInfo(child)::equals),
+                "Child of removed term must be reconnected to the parent");
+    }
+
+    @Test
+    void removeWithParamsCascadesToNestedChildren() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final Term grandChild = Generator.generateTermWithId(vocabulary.getUri());
+
+        transactional(() -> sut.addRootTermToVocabulary(parent, vocabulary));
+        transactional(() -> sut.addChildTerm(child, parent));
+        transactional(() -> sut.addChildTerm(grandChild, child));
+
+        // verify setup
+        assertNotNull(em.find(Term.class, parent.getUri()));
+        assertNotNull(em.find(Term.class, child.getUri()));
+        assertNotNull(em.find(Term.class, grandChild.getUri()));
+
+        // remove parent and all children
+        sut.remove(new TermRemovalParams(parent, SubTermRemovalStrategy.CASCADE, false, true));
+
+        assertNull(em.find(Term.class, parent.getUri()));
+        assertNull(em.find(Term.class, child.getUri()));
+        assertNull(em.find(Term.class, grandChild.getUri()));
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertTrue(result.getRootTerms().isEmpty());
+    }
+
+    /**
+     * Prepares and persists term with definition containing an occurrence of other therm.
+     *
+     * @param occurrenceUri the URI to use for the created occurrence
+     * @param suggested whether the occurrence should be marked as suggested
+     * @return the occurring term
+     */
+    private Term prepareTermWithOccurrence(URI occurrenceUri, boolean suggested) {
+        enableRdfsInference(em);
+
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
+
+        toRemove.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(referencing);
+        vocabulary.addRootTerm(toRemove);
+
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(),
+                new DefinitionalOccurrenceTarget(referencing));
+        if (suggested) {
+            occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_suggested_term_occurrence);
+        }
+        occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
+        occ.setUri(occurrenceUri);
+
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
+            em.persist(referencing, descriptorFactory.termDescriptor(referencing));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(occ);
+            em.persist(occ.getTarget());
+        });
+
+        return sut.findRequired(toRemove.getUri());
+    }
+
+    @Test
+    void removeWithParamsRemovesSuggestedOccurrencesWhenRemoveOccurrencesIsTrue() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, true);
+
+        transactional(() -> {
+            sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+            assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri),
+                    "Occurrences must remain until the outer transaction commits");
+            verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
+        });
+        verify(termOccurrenceCleanupListener).onTermRemoved(any());
+        assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    @Test
+    void removeWithParamsRemovesConfirmedOccurrencesWhenRemoveOccurrencesIsTrue() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
+
+        transactional(() -> {
+            sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+            assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri),
+                    "Occurrences must remain until the outer transaction commits");
+            verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
+        });
+        verify(termOccurrenceCleanupListener).onTermRemoved(any());
+        assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    @Test
+    void removeWithParamsThrowsWhenConfirmedOccurrencesExistAndRemoveOccurrencesIsFalse() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, false, false)));
+
+        verify(termOccurrenceCleanupListener, never()).onTermRemoved(any());
+        assertEquals("error.term.remove.annotationsExist", exception.getMessageId());
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    @Test
+    void removeWithParamsDoesNotRemoveOccurrencesWhenOuterTransactionRollsBack() {
+        final URI occurrenceUri = Generator.generateUri();
+        final Term toRemove = prepareTermWithOccurrence(occurrenceUri, false);
+
+        new TransactionTemplate(txManager).executeWithoutResult(status -> {
+            sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL, true, false));
+            status.setRollbackOnly();
+        });
+
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(TermDefinitionalOccurrence.class, occurrenceUri));
+    }
+
+    /**
+     * Prepares and persists two terms referencing each other
+     *
+     * @return the created terms
+     */
+    private List<Term> prepareTermsWithRelationship() {
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        final Term related = Generator.generateTermWithId(vocabulary.getUri());
+        toRemove.setVocabulary(vocabulary.getUri());
+        related.setVocabulary(vocabulary.getUri());
+        vocabulary.addRootTerm(toRemove);
+        vocabulary.addRootTerm(related);
+
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            generateRelatedInverse(toRemove, related, Environment.BASE_URI + "/example-custom-attribute");
+            generateRelatedInverse(related, toRemove, Environment.BASE_URI + "/different-example-custom-attribute");
+        });
+
+        return List.of(sut.findRequired(toRemove.getUri()),
+                sut.findRequired(related.getUri()));
+    }
+
+    @Test
+    void removeWithParamsThrowsWhenTermRelationshipsExistAndRemoveRelationshipsIsFalse() {
+        final List<Term> terms = prepareTermsWithRelationship();
+        final Term toRemove = terms.getFirst();
+        final Term related = terms.getLast();
+        assertNotEquals(toRemove, related);
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
+                                false, false)));
+        assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
+        // none of the terms must be removed because of the exception
+        assertNotNull(em.find(Term.class, toRemove.getUri()));
+        assertNotNull(em.find(Term.class, related.getUri()));
+    }
+
+    @Test
+    void removeWithParamsRemovesTermRelationshipsWhenRemoveRelationshipsIsTrue() {
+        final List<Term> terms = prepareTermsWithRelationship();
+        final Term toRemove = terms.getFirst();
+        final Term related = terms.getLast();
+        assertNotEquals(toRemove, related);
+
+        sut.remove(new TermRemovalParams(toRemove, SubTermRemovalStrategy.FAIL,
+                        false, true));
+
+        assertNull(em.find(Term.class, toRemove.getUri()), "The term must be removed");
+        assertNotNull(em.find(Term.class, related.getUri()), "The other term must not be removed");
+    }
+
+    @Test
+    void removeWithParamsPromotesChildToRootTermWhenItsParentRootTermIsRemoved() {
+        final Term root = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final Term childB = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> sut.addRootTermToVocabulary(root, vocabulary));
+        transactional(() -> sut.addChildTerm(child, root));
+        transactional(() -> sut.addChildTerm(childB, root));
+
+        sut.remove(new TermRemovalParams(root, SubTermRemovalStrategy.RECONNECT, false, false));
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertTrue(result.getRootTerms().contains(child.getUri()),
+                "Child of removed root term must become a root term");
+        assertTrue(result.getRootTerms().contains(childB.getUri()),
+                "Second child of removed root term must become a root term");
+    }
+
     private void generateRelatedInverse(Term term, Term related, String property) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
@@ -737,6 +965,24 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void removeThrowsWhenTermIsReferencedByOtherTerm() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term other = Generator.generateTermWithId(vocabulary.getUri());
+        other.addRelatedTerm(new TermInfo(term));
+
+        transactional(() -> {
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.flush();
+            em.clear();
+            em.persist(other, descriptorFactory.termDescriptor(other));
+        });
+
+        final AssetRemovalException exception = assertThrows(AssetRemovalException.class, () -> sut.remove(term));
+        assertEquals("error.term.remove.relationshipsExist", exception.getMessageId());
+    }
+
+    @Test
     void removeThrowsAssetRemovalExceptionWhenTermIsReferencedByConfirmedOccurrences() {
         enableRdfsInference(em);
         final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
@@ -777,8 +1023,13 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(occ.getTarget());
         });
 
-        assertDoesNotThrow(() -> sut.remove(toRemove));
+        transactional(() -> {
+            assertDoesNotThrow(() -> sut.remove(toRemove));
+            assertNotNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()),
+                    "Occurrences must remain until the outer transaction commits");
+        });
         assertNull(em.find(Term.class, toRemove.getUri()));
+        assertNull(em.find(TermDefinitionalOccurrence.class, occ.getUri()));
     }
 
     @Test

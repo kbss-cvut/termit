@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
  */
 public class ExcelTermExporter {
 
+    private static final int MAX_CELL_LENGTH = 32767;
+
     private final Map<URI, PrefixDeclaration> prefixes;
     private final String langCode;
 
@@ -46,55 +48,51 @@ public class ExcelTermExporter {
 
     public void export(Term t, Row row) {
         Objects.requireNonNull(row);
-        row.createCell(0).setCellValue(prefixedUri(t.getVocabulary(), t));
-        row.createCell(1).setCellValue(t.getLabel().get(langCode));
-        row.createCell(2).setCellValue(Utils.emptyIfNull(t.getAltLabels()).stream()
-                                            .map(str -> str.get(langCode))
-                                            .filter(Objects::nonNull)
-                                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(3).setCellValue(Utils.emptyIfNull(t.getHiddenLabels()).stream()
-                                            .map(str -> str.get(langCode))
-                                            .filter(Objects::nonNull)
-                                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(4)
-           .setCellValue(Utils.markdownToPlainText(t.getDefinition() != null ? t.getDefinition().get(langCode) : null));
-        row.createCell(5).setCellValue(
-                Utils.markdownToPlainText(t.getDescription() != null ? t.getDescription().get(langCode) : null));
-        row.createCell(6)
-           .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getTypes())));
-        row.createCell(7)
-           .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getSources())));
-        row.createCell(8)
-           .setCellValue(Utils.emptyIfNull(t.getParentTerms()).stream().map(pt -> prefixedUri(pt.getVocabulary(), pt))
-                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(9)
-           .setCellValue(Utils.emptyIfNull(t.getSubTerms()).stream()
-                              .map(this::termInfoPrefixedUri)
-                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(10).setCellValue(Utils.joinCollections(t.getRelated(), t.getInverseRelated()).stream()
-                                             .map(this::termInfoPrefixedUri)
-                                             .distinct()
-                                             .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(11)
-           .setCellValue(Utils.joinCollections(t.getRelatedMatch(), t.getInverseRelatedMatch()).stream()
-                              .map(this::termInfoPrefixedUri)
-                              .distinct()
-                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(12)
-           .setCellValue(Utils.joinCollections(t.getExactMatchTerms(), t.getInverseExactMatchTerms()).stream()
-                              .map(this::termInfoPrefixedUri)
-                              .distinct()
-                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(13).setCellValue(t.getState() != null ? t.getState().toString() : "");
-        row.createCell(14)
-           .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getNotations())));
-        row.createCell(15).setCellValue(Utils.emptyIfNull(t.getExamples()).stream()
-                                             .map(str -> str.get(langCode))
-                                             .filter(Objects::nonNull)
-                                             .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 0, prefixedUri(t.getVocabulary(), t));
+        write(row, 1, t.getLabel().get(langCode));
+        write(row, 2, Utils.emptyIfNull(t.getAltLabels()).stream()
+                           .map(str -> str.get(langCode))
+                           .filter(Objects::nonNull)
+                           .collect(Collectors.joining(
+                                   TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 3, Utils.emptyIfNull(t.getHiddenLabels()).stream()
+                           .map(str -> str.get(langCode))
+                           .filter(Objects::nonNull)
+                           .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 4, Utils.markdownToPlainText(t.getDefinition() != null ? t.getDefinition().get(langCode) : null));
+        write(row, 5, Utils.markdownToPlainText(t.getDescription() != null ? t.getDescription().get(langCode) : null));
+        write(row, 6, String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getTypes())));
+        write(row, 7, String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getSources())));
+        write(row, 8, Utils.emptyIfNull(t.getParentTerms()).stream().map(pt -> prefixedUri(pt.getVocabulary(), pt))
+                           .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 9, Utils.emptyIfNull(t.getSubTerms()).stream()
+                           .map(this::termInfoPrefixedUri)
+                           .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 10, Utils.joinCollections(t.getRelated(), t.getInverseRelated()).stream()
+                            .map(this::termInfoPrefixedUri)
+                            .distinct()
+                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 11, Utils.joinCollections(t.getRelatedMatch(), t.getInverseRelatedMatch()).stream()
+                            .map(this::termInfoPrefixedUri)
+                            .distinct()
+                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 12, Utils.joinCollections(t.getExactMatchTerms(), t.getInverseExactMatchTerms()).stream()
+                            .map(this::termInfoPrefixedUri)
+                            .distinct()
+                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        write(row, 13, t.getState() != null ? t.getState().toString() : "");
+        write(row, 14, String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getNotations())));
+        write(row, 15, Utils.emptyIfNull(t.getExamples()).stream()
+                            .map(str -> str.get(langCode))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
         if (t.getProperties() != null && !Utils.emptyIfNull(t.getProperties().get(DC.Terms.REFERENCES)).isEmpty()) {
-            row.createCell(16).setCellValue(t.getProperties().get(DC.Terms.REFERENCES).toString());
+            write(row, 16, t.getProperties().get(DC.Terms.REFERENCES).toString());
         }
+    }
+
+    private void write(Row row, int cellIndex, String content) {
+        row.createCell(cellIndex).setCellValue(sanitizeStringLength(content));
     }
 
     private String termInfoPrefixedUri(TermInfo ti) {
@@ -111,5 +109,9 @@ public class ExcelTermExporter {
             return prefix.getPrefix() + PrefixDeclaration.SEPARATOR + strUri.substring(prefix.getNamespace().length());
         }
         return strUri;
+    }
+
+    private static String sanitizeStringLength(String str) {
+        return str != null && str.length() > MAX_CELL_LENGTH ? str.substring(0, MAX_CELL_LENGTH - 3) + "..." : str;
     }
 }

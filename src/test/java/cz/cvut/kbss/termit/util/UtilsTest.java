@@ -41,6 +41,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.Collection;
@@ -67,7 +68,7 @@ class UtilsTest {
 
     @Test
     public void getUniqueIriFromBaseReturnsBaseIfCheckFails() {
-        Assert.equals(BASE, Utils.getUniqueIriFromBase(BASE, (iri) -> Optional.empty()));
+        Assert.equals(BASE, Utils.getUniqueIriFromBase(BASE, _ -> Optional.empty()));
     }
 
     @Test
@@ -259,6 +260,29 @@ class UtilsTest {
                                                                                                        .getResourceAsStream(
                                                                                                                "data/mock-aviation-safety-skos.ttl"));
         assertEquals("text/turtle", Utils.resolveContentType(mf));
+    }
+
+    @Test
+    void resolveContentTypeSupportsTurtleStar() throws IOException {
+        final String turtleStarContent = """
+                BASE <http://example.org/>
+                PREFIX : <#>
+                :man :hasSpouse :woman .
+                <<:man :hasSpouse :woman>> :startDate "2020-02-11"^^xsd:date .
+                """;
+        final MultipartFile mf = new MockMultipartFile("mock-turtle-star.ttls", turtleStarContent.getBytes(
+                StandardCharsets.UTF_8));
+        assertEquals("text/turtle", Utils.resolveContentType(mf));
+    }
+
+    @Test
+    void resolveContentTypeSupportsNTriplesStar() throws IOException {
+        final String nTriplesStarContent = """
+                <<<http://example.org/man> <http://example.org/hasSpouse> <http://example.org/woman>>> <http://example.org/startDate> "2020-02-11" .
+                """;
+        final MultipartFile mf = new MockMultipartFile("mock-n-triples-star.nt", nTriplesStarContent.getBytes(
+                StandardCharsets.UTF_8));
+        assertEquals("application/n-triples", Utils.resolveContentType(mf));
     }
 
     @Test

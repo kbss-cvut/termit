@@ -75,6 +75,7 @@ public class TermInfo implements TermDescription {
         this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
         this.state = term.getState();
+        this.types = term.getTypes();
     }
 
     public TermInfo(TermInfo other) {
@@ -92,6 +93,7 @@ public class TermInfo implements TermDescription {
         result.setLabel(getLabel());
         result.setVocabulary(getVocabulary());
         result.setState(getState());
+        result.setTypes(getTypes());
         return result;
     }
 

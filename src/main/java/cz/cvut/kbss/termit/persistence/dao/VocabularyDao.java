@@ -594,4 +594,16 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             throw new PersistenceException(e);
         }
     }
+
+    /**
+     * Evicts the context of the given vocabulary from JOPA cache
+     *
+     * @param vocabulary the vocabualry to evict from cache
+     */
+    public void evictCache(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary.getUri());
+        em.flush();
+        em.clear();
+        em.getEntityManagerFactory().getCache().evict(vocabulary.getUri());
+    }
 }

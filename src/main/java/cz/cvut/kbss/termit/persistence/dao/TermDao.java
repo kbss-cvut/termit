@@ -27,6 +27,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -48,8 +49,18 @@ import cz.cvut.kbss.termit.persistence.snapshot.TermSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -76,6 +87,28 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
     private static final URI TERM_FROM_VOCABULARY = URI.create(SKOS.IN_SCHEME);
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
+
+    /**
+     * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
+     * {@code skos:hasTopConcept} relations are excluded
+     * @implNote Bindings are required in {@link #countReferences(AbstractTerm)},
+     *           {@link #findReferencesInternal(AbstractTerm, Pageable, long)}, {@link #removeReferencesTo(AbstractTerm)}
+     *           and {@link #referencesToTermExist(AbstractTerm)}
+     */
+    private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
+                WHERE {
+                    GRAPH ?context {
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
+                        ?other ?relation ?term .
+                        ?context a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        FILTER (?relation NOT IN (
+                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+                        ))
+                    }
+                }
+                """;
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -151,6 +184,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseRelated(loadInverseRelatedTerms(r));
         r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
+    }
+
+    /**
+     * Flushes pending term changes and clears the persistence context.
+     */
+    public void flushAndClear() {
+        em.flush();
+        em.clear();
     }
 
     /**
@@ -424,6 +465,27 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy and returns them
+     * as a flat list of DTOs.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @param pageSpec   Page specification
+     * @param includeTerms Identifier of terms that should be additionally included in the result
+     * @return Flat list of vocabulary term DTOs
+     * @see #findAllFlat(Pageable, Collection)
+     */
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            final List<FlatTermDto> result =  findAllFlatQuery(vocabulary, pageSpec).getResultList();
+            loadIncludedTerms(getMissingTerms(result, includeTerms)).forEach(dto -> result.add(new FlatTermDto(dto)));
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
      * that have label and definition in the instance language.
      * <p>
@@ -615,7 +677,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
-                                                                 "FILTER (?term NOT IN (?included))" +
                                                                  "}} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
                                                          TermDto.class);
@@ -625,14 +686,27 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                     query.setParameter("context", context(vocabulary))
                          .setParameter("vocabulary", vocabulary.getUri())
                          .setParameter("labelLang", vocabulary.getPrimaryLanguage())
-                         .setParameter("included", includeTerms)
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    /**
+     * Resolves term identifiers from {@code includeTerms} that are not present in {@code loadedTerms}
+     *
+     * @param loadedTerms already loaded terms
+     * @param includeTerms terms that should be loaded next
+     * @return set of term identifiers from {@code includeTerms} that are not present in {@code loadedTerms}
+     */
+    private Set<URI> getMissingTerms(Collection<? extends AbstractTerm> loadedTerms, Collection<URI> includeTerms) {
+        final Set<URI> loadedSet = loadedTerms.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        return includeTerms.stream()
+                .filter(uri -> !loadedSet.contains(uri))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -653,7 +727,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?vocabulary ?hasTerm ?term . " +
                                                                  "?vocabulary ?hasLanguage ?primaryLanguage ." +
                                                                  "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
-                                                                 "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
                                                                  "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
@@ -662,15 +735,31 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                         .setParameter("included", includeTerms)
                          .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term))
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    /**
+     * Hydrates a collection of URIs into full Term instances.
+     */
+    public List<Term> findAllFullByUris(Collection<URI> uris) {
+        if (uris == null || uris.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return uris.stream().map(uri -> {
+            final Term t = em.find(Term.class, uri);
+            if (t != null) {
+                postLoad(t);
+                em.clear(); // Mandatory JOPA workaround
+            }
+            return t;
+        }).filter(Objects::nonNull).toList();
     }
 
     private <T> TypedQuery<T> setCommonFindAllRootsQueryParams(TypedQuery<T> query, boolean includeImports) {
@@ -735,7 +824,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?vocabulary ?hasTerm ?term ." +
                                                                  "?vocabulary ?hasLanguage ?primaryLanguage ." +
                                                                  "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
-                                                                 "FILTER (?term NOT IN (?included)) " +
                                                                  "FILTER (?vocabulary IN (?vocabularies)) ." +
                                                                  "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
@@ -745,10 +833,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabularies", vocabularies)
                          .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                         .setParameter("included", includeTerms)
                          .setFirstResult((int) pageSpec.getOffset())
                          .setMaxResults(pageSpec.getPageSize()));
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -904,7 +991,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(query);
             result.forEach(this::loadParentSubTerms);
-            result.addAll(loadIncludedTerms(includeTerms));
+            result.addAll(loadIncludedTerms(getMissingTerms(result, includeTerms)));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -1040,6 +1127,28 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+
+    /**
+     * Finds all terms contained in any of the specified vocabularies and returns them as a flat list of DTOs.
+     * <p>
+     * Returns terms as a list of {@link FlatTermDto} instances, i.e., only referencing direct parent terms.
+     *
+     * @param vocabularies Identifiers of vocabularies whose terms should be returned
+     * @param pageSpec     Page specification
+     * @param includeTerms Identifier of terms that should be additionally included in the result
+     * @return Flat list of matching terms
+     * @see #findAllFlatInVocabularies(String, Collection, Pageable)
+     */
+    public List<FlatTermDto> findAllFlatInVocabularies(Collection<URI> vocabularies,
+                                                       Pageable pageSpec, Collection<URI> includeTerms) {
+        List<FlatTermDto> result = findAllFlatInVocabularies(vocabularies, pageSpec);
+        if (includeTerms != null && !includeTerms.isEmpty()) {
+            loadIncludedTerms(getMissingTerms(result, includeTerms))
+                    .forEach(dto -> result.add(new FlatTermDto(dto)));
+        }
+        return result;
     }
 
     /**
@@ -1224,5 +1333,144 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    /**
+     * Checks whether there is any triple in any vocabulary where the term is an object.
+     * Excluding vocabulary snapshots.
+     *
+     * @param term term to which references should be checked
+     * @return true if there is any triple where the term is an object
+     */
+    public boolean referencesToTermExist(AbstractTerm term) {
+        Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
+        try {
+            return em.createNativeQuery("ASK " + REFERENCES_TO_TERM_WHERE_CLAUSE, Boolean.class)
+                     .setParameter("term", term.getUri())
+                     .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                     .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find references for term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Finds statements from vocabulary graphs referencing the specified term as an object.
+     *
+     * @param term term whose incoming references should be returned
+     * @param pageable paging specification applied to the constructed RDF4J query
+     * @return page of statements referencing the specified term
+     */
+    public Page<Statement> findReferences(AbstractTerm term, Pageable pageable) {
+        Objects.requireNonNull(term, "Term cannot be null");
+        Objects.requireNonNull(term.getUri(), "Term URI cannot be null");
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
+
+        try {
+            final long totalCount = countReferences(term);
+            if (totalCount == 0 || pageable.getOffset() >= totalCount) {
+                return new PageImpl<>(List.of(), pageable, totalCount);
+            }
+
+            return findReferencesInternal(term, pageable, totalCount);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find references to term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Counts the total amount of references to the specified term
+     *
+     * @param term the term to which references should be counted
+     * @return the total number of statements referencing the term as object
+     */
+    private long countReferences(AbstractTerm term) {
+        try {
+            return em.createNativeQuery("SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE, Long.class)
+                    .setParameter("term", term.getUri())
+                    .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                    .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to count references to term " + Utils.uriToString(term.getUri()), e);
+        }
+    }
+
+    /**
+     * Finds a page contents of references to the specified term.
+     *
+     * @param term the term to which references should be found
+     * @param pageable page spec
+     * @param totalCount the total (unpaged) count of all references
+     * @return the page of statements referencing the term as object
+     */
+    private Page<Statement> findReferencesInternal(AbstractTerm term, Pageable pageable, long totalCount) {
+        // On purpose not using auto-closable with try statement to prevent closing the connection here
+        // the connection is managed by Entity Manager
+        final RepositoryConnection con = em.unwrap(RepositoryConnection.class);
+        // The connection is guaranteed to be open by first counting the total references count
+        final TupleQuery query = con.prepareTupleQuery(
+                "SELECT ?other ?relation ?term ?context " + REFERENCES_TO_TERM_WHERE_CLAUSE +
+                " ORDER BY ?other ?relation ?context" +
+                " OFFSET " + pageable.getOffset() +
+                " LIMIT " + pageable.getPageSize());
+
+        query.setBinding("term", Values.iri(term.getUri().toString()));
+        query.setBinding("versionOfVocabulary",
+                Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary));
+
+        query.setIncludeInferred(false);
+
+        final int statementCount = (int) Math.min(pageable.getPageSize(), totalCount);
+        final List<Statement> statements = new ArrayList<>(statementCount);
+        try (TupleQueryResult result = query.evaluate()) {
+            while (result.hasNext()) {
+                final BindingSet bindings = result.next();
+                statements.add(Values.getValueFactory().createStatement(
+                        (Resource) bindings.getValue("other"),
+                        (IRI) bindings.getValue("relation"),
+                        bindings.getValue("term"),
+                        (Resource) bindings.getValue("context")
+                ));
+            }
+        }
+        return new PageImpl<>(statements, pageable, totalCount);
+    }
+
+    /**
+     * Removes all triples from vocabularies where the given term is references as object.
+     *
+     * @param toRemove term to which references should be removed
+     */
+    public void removeReferencesTo(AbstractTerm toRemove) {
+        Objects.requireNonNull(toRemove.getUri(), "Term URI cannot be null");
+
+        try {
+            em.createNativeQuery("""
+                        DELETE {
+                            GRAPH ?context {
+                                ?other ?relation ?term .
+                            }
+                        }
+                        """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
+              .setParameter("term", toRemove.getUri())
+              .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+              .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove references to term " + Utils.uriToString(toRemove.getUri()), e);
+        }
+    }
+
+    /**
+     * Evict specified instances from the Jopa's Entity Manager Factory cache.
+     *
+     * @param terms terms to evict from the cache
+     */
+    public void evictFromCache(Collection<? extends TermDescription> terms) {
+        if (terms == null || terms.isEmpty()) {
+            return;
+        }
+        terms.forEach(term -> {
+            em.getEntityManagerFactory().getCache().evict(TermDescription.class, term.getUri(), term.getVocabulary());
+        });
     }
 }

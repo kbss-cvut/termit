@@ -48,7 +48,6 @@ import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
-import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -348,14 +347,11 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void addDataIntoRepository(URI vocabularyIri) {
-        final Repository repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
-        try (final RepositoryConnection conn = repository.getConnection()) {
-            conn.begin();
-            final IRI targetContext = repository.getValueFactory().createIRI(vocabularyIri.toString());
-            LOG.debug("Importing vocabulary into context <{}>.", targetContext);
-            conn.add(model, targetContext);
-            conn.commit();
-        }
+        final RepositoryConnection conn = em.unwrap(RepositoryConnection.class);
+        assert conn.isActive();
+        final IRI targetContext = conn.getValueFactory().createIRI(vocabularyIri.toString());
+        LOG.debug("Importing vocabulary into context <{}>.", targetContext);
+        conn.add(model, targetContext);
     }
 
     private Vocabulary createVocabulary(boolean rename, URI providedVocabularyUri) {
@@ -488,10 +484,7 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void pruneDuplicateSymmetricRelationships() {
-        final Repository repo = em.unwrap(Repository.class);
-        try (final RepositoryConnection con = repo.getConnection()) {
-            new DuplicateSymmetricRelationshipPruner(con).prune();
-        }
+        new DuplicateSymmetricRelationshipPruner(em.unwrap(RepositoryConnection.class)).prune();
     }
 
     @Override

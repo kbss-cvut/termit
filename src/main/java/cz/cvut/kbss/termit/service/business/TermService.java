@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -48,14 +49,17 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import jakarta.annotation.Nonnull;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -158,6 +162,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
+    @Transactional(readOnly = true)
     public List<? extends AbstractTerm> findAll(Vocabulary vocabulary, TermSelectionParams selectionParams) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(selectionParams);
@@ -167,11 +172,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         } else {
             final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {
-                if (includeFromOther) {
-                    final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
-                    return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec());
-                }
-                return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec());
+                return findAllFlat(vocabulary, List.of(), selectionParams);
             } else {
                 if (includeFromOther) {
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
@@ -489,6 +490,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Gets referenes to the given term.
+     *
+     * @param term the term to which references should be found
+     * @param pageable Page spec
+     * @return Page of statements where the given term is object
+     */
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    public Page<Statement> findReferences(Term term, Pageable pageable) {
+        return repositoryService.findReferences(term, pageable);
+    }
+
+    /**
      * Gets aggregated info about occurrences of the specified Term.
      *
      * @param term Term whose occurrences to retrieve
@@ -569,6 +582,60 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Batch adds specific properties (relatedMatch, exactMatch, parentTerms,
+     * types) to a collection of terms.
+     *
+     * @param batchEditDto Data containing the term URIs and the properties to add
+     */
+    @Transactional
+    @PreAuthorize("@termAuthorizationService.canCreateIn(#vocabulary)")
+    public void batchEdit(Vocabulary vocabulary, TermBatchEditDto batchEditDto) {
+        Objects.requireNonNull(batchEditDto);
+        Objects.requireNonNull(batchEditDto.getTargetTerms());
+
+        List<TermInfo> exactMatches = batchEditDto.getExactMatchTerms() != null ?
+                batchEditDto.getExactMatchTerms().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> related = batchEditDto.getRelated() != null ?
+                batchEditDto.getRelated().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> relatedMatches = batchEditDto.getRelatedMatch() != null ?
+                batchEditDto.getRelatedMatch().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> parents = batchEditDto.getParentTerms() != null ?
+                batchEditDto.getParentTerms().stream().map(this::findRequiredTermInfo).toList() : null;
+
+        for (URI termUri : batchEditDto.getTargetTerms()) {
+            Term term = findRequired(termUri);
+            boolean changed = false;
+
+            if (batchEditDto.getTypes() != null && !batchEditDto.getTypes().isEmpty()) {
+                if (term.getTypes() == null) {
+                    term.setTypes(new HashSet<>());
+                }
+                changed |= term.getTypes().addAll(batchEditDto.getTypes());
+            }
+            if (exactMatches != null) {
+                exactMatches.forEach(term::addExactMatch);
+                changed = true;
+            }
+            if (related != null) {
+                related.forEach(term::addRelatedTerm);
+                changed = true;
+            }
+            if (relatedMatches != null) {
+                relatedMatches.forEach(term::addRelatedMatchTerm);
+                changed = true;
+            }
+            if (parents != null) {
+                parents.forEach(term::addParentTerm);
+                changed = true;
+            }
+            if (changed) {
+                term.splitExternalAndInternalParents();
+                repositoryService.update(term);
+            }
+        }
+    }
+
+    /**
      * Removes the specified term.
      *
      * @param term Term to remove
@@ -577,6 +644,21 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void remove(@Nonnull Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
+    }
+
+    /**
+     * Removes the specified term according to the removal parameters.
+     *
+     * @param termRemovalParams parameters describing how the term should be removed
+     */
+    @Transactional
+    @PreAuthorize("@termAuthorizationService.canRemove(#termRemovalParams.termToRemove())")
+    public void remove(TermRemovalParams termRemovalParams) {
+        Objects.requireNonNull(termRemovalParams);
+        Objects.requireNonNull(termRemovalParams.termToRemove());
+        Objects.requireNonNull(termRemovalParams.termToRemove().getVocabulary());
+
+        repositoryService.remove(termRemovalParams);
     }
 
     /**
@@ -760,5 +842,30 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public boolean exists(URI termId) {
         return repositoryService.exists(termId);
+    }
+
+    /**
+     * Finds all terms from the given vocabulary.
+     *
+     * @param vocabulary the vocabulary from which terms should be returned
+     * @param includeTerms terms that should always be included in the result, no matter on which page
+     * @param selectionParams term search parameters
+     * @return flattened list of terms
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
+        if (selectionParams.full()) {
+            throw new IllegalArgumentException("Full term representation is not supported");
+        }
+        if (selectionParams.includeImported() || selectionParams.includeRelated()) {
+            final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
+            return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec(), includeTerms);
+        }
+        return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec(), includeTerms);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Term> findAllFullByUris(Collection<URI> uris) {
+        return repositoryService.findAllFullByUris(uris);
     }
 }

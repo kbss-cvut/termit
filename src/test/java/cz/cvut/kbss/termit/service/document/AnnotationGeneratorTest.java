@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -46,7 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.web.WebAppConfiguration;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -65,6 +65,7 @@ import static cz.cvut.kbss.termit.environment.Environment.loadFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -226,19 +227,18 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void generateAnnotationsThrowsAnnotationGenerationExceptionForUnknownTermIdentifier() throws Exception {
-        final InputStream content = setUnknownTermIdentifier(loadFile("data/rdfa-simple.html"));
-        final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
-                () -> sut.generateAnnotations(content, file));
-        assertThat(ex.getMessage(), containsString("Term with id "));
-        assertThat(ex.getMessage(), containsString("not found"));
+    void generateAnnotationsIgnoresRdfaElementsWithUnknownTermIdentifier() throws Exception {
+        final URI unknownId = Generator.generateUri();
+        final InputStream content = setUnknownTermIdentifier(loadFile("data/rdfa-simple.html"), unknownId);
+        assertDoesNotThrow(() -> sut.generateAnnotations(content, file));
+        assertTrue(findAllOccurrencesOf(new Term(unknownId)).isEmpty());
     }
 
-    private InputStream setUnknownTermIdentifier(InputStream content) throws Exception {
+    private InputStream setUnknownTermIdentifier(InputStream content, URI identifier) throws Exception {
         final Document doc = Jsoup.parse(content, StandardCharsets.UTF_8.name(), "");
         final Elements element = doc.getElementsByAttribute(Constants.RDFa.ABOUT);
         assert element.size() == 1;
-        element.attr(Constants.RDFa.RESOURCE, Generator.generateUri().toString());
+        element.attr(Constants.RDFa.RESOURCE, identifier.toString());
 
         return new ByteArrayInputStream(doc.toString().getBytes(StandardCharsets.UTF_8));
     }

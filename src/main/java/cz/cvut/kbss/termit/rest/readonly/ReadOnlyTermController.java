@@ -96,6 +96,9 @@ public class ReadOnlyTermController extends BaseController {
                             @RequestParam(name = "includeRelated", required = false) boolean includeRelated,
                             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
                             @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
+                            @Parameter(description = "Identifiers of terms that should be included in the flat list response " +
+                                    "(regardless of whether they are root terms or not).")
+                            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms,
                             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
                             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
                             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
@@ -105,10 +108,17 @@ public class ReadOnlyTermController extends BaseController {
             return termService.findAll(searchString, vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
                                                                                          createPageRequest(pageSize,
                                                                                                            pageNo)));
-        } else {
-            return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
-                                                                           createPageRequest(pageSize, pageNo)));
         }
+
+        if (flat && !includeTerms.isEmpty()) {
+            final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
+                    createPageRequest(pageSize, pageNo));
+            return termService.findAllFlat(vocabulary, includeTerms, params);
+        }
+
+        return termService.findAll(vocabulary, new TermSelectionParams(flat, false, includeImported, includeRelated,
+                                                                       createPageRequest(pageSize, pageNo)));
+
     }
 
     private Vocabulary getVocabulary(String fragment, Optional<String> namespace) {

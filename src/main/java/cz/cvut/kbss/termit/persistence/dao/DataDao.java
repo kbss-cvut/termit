@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
+import cz.cvut.kbss.jopa.model.Cache;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
@@ -34,6 +35,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.persistence.dao.spec.Specification;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
@@ -41,15 +43,26 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nullable;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.io.ByteArrayOutputStream;
@@ -72,6 +85,21 @@ import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVoca
 public class DataDao {
 
     private static final URI RDFS_LABEL = URI.create(RDFS.LABEL);
+
+    /**
+     * SPARQL where clause matching custom attribute usage in vocabulary graphs, while excluding snapshots
+     */
+    private static final String CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE = """
+                WHERE {
+                    GRAPH ?context {
+                        ?subject ?attribute ?object .
+                        ?context a ?vocabulary .
+                        FILTER NOT EXISTS {
+                            ?context a ?versionOfVocabulary .
+                        }
+                    }
+                }
+                """;
 
     private final EntityManager em;
 
@@ -316,5 +344,149 @@ public class DataDao {
             });
             con.commit();
         }
+    }
+
+    private int countCustomAttributeUsage(RepositoryConnection con, IRI predicate) {
+        final TupleQuery countQuery = con.prepareTupleQuery("SELECT (COUNT(*) AS ?count) " + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE);
+
+        bindCustomAttributeUsageQueryParameters(countQuery, predicate);
+        countQuery.setIncludeInferred(false);
+
+        try (TupleQueryResult result = countQuery.evaluate()) {
+            final BindingSet bindings = result.next();
+            return ((Literal) bindings.getValue("count")).intValue();
+        }
+    }
+
+    private List<Statement> findCustomAttributeUsage(RepositoryConnection con, IRI predicate, long offset, int resultLimit) {
+        final TupleQuery pageQuery = con.prepareTupleQuery("SELECT ?subject ?attribute ?object ?context "+
+                CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE +
+                "LIMIT  " + resultLimit +
+                " OFFSET " + offset);
+
+        bindCustomAttributeUsageQueryParameters(pageQuery, predicate);
+        pageQuery.setIncludeInferred(false);
+
+        final List<Statement> statements = new ArrayList<>(resultLimit);
+
+        try (TupleQueryResult result = pageQuery.evaluate()) {
+            while (result.hasNext()) {
+                final BindingSet bindings = result.next();
+
+                final Resource subject = (Resource) bindings.getValue("subject");
+                final IRI statementPredicate = (IRI) bindings.getValue("attribute");
+                final Value object = bindings.getValue("object");
+                final Resource context = (Resource) bindings.getValue("context");
+
+                statements.add(Values.getValueFactory().createStatement(
+                        subject,
+                        statementPredicate,
+                        object,
+                        context
+                ));
+            }
+        }
+
+        return statements;
+    }
+
+    /**
+     * Finds statements where the specified custom attribute is used as a predicate.
+     *
+     * @param identifier Custom attribute identifier
+     * @param pageable {@link Pageable}
+     * @return Page of RDF statements
+     */
+    public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
+        Objects.requireNonNull(identifier);
+        Objects.requireNonNull(pageable);
+
+        final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        final IRI predicate = Values.iri(identifier.toString());
+
+        try (RepositoryConnection con = repo.getConnection()) {
+            final int totalCount = countCustomAttributeUsage(con, predicate);
+
+            if (totalCount == 0 || pageable.getOffset() >= totalCount) {
+                return new PageImpl<>(List.of(), pageable, totalCount);
+            }
+
+            int maxResults = Math.min(totalCount, pageable.getPageSize());
+            final List<Statement> statements = findCustomAttributeUsage(con, predicate, pageable.getOffset(), maxResults);
+
+            return new PageImpl<>(statements, pageable, totalCount);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find custom attribute usage", e);
+        }
+    }
+
+    /**
+     * Finds contexts in which the custom attribute is used
+     *
+     * @param customAttribute the custom attribute to look up
+     * @return contexts where the attribute URI is used as a predicate
+     */
+    public List<URI> findCustomAttributeUsageContexts(CustomAttribute customAttribute) {
+        Objects.requireNonNull(customAttribute);
+        Objects.requireNonNull(customAttribute.getUri());
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?context " + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE, URI.class)
+                     .setParameter("attribute", customAttribute.getUri())
+                     .setParameter("vocabulary", Vocabulary_.entityClassIRI)
+                     .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find custom attribute usage contexts", e);
+        }
+    }
+
+    /**
+     * Removes all triples where the {@link CustomAttribute} is used as predicate
+     *
+     * @param attribute {@link CustomAttribute} whose usages should be removed
+     */
+    public void removeAllCustomAttributeUsages(CustomAttribute attribute) {
+        Objects.requireNonNull(attribute);
+        Objects.requireNonNull(attribute.getUri());
+        try {
+            em.createNativeQuery("""
+            DELETE {
+                GRAPH ?context {
+                    ?subject ?attribute ?object .
+                }
+            }
+            """ + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE)
+              .setParameter("attribute", attribute.getUri())
+              .setParameter("vocabulary", Vocabulary_.entityClassIRI)
+              .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))
+              .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove all custom attribute usages", e);
+        }
+    }
+
+    private void bindCustomAttributeUsageQueryParameters(TupleQuery query, IRI predicate) {
+        query.setBinding("attribute", predicate);
+        query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
+        query.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
+    }
+
+    public void removeCustomAttribute(CustomAttribute attribute) {
+        Objects.requireNonNull(attribute);
+        try {
+            em.remove(attribute);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to remove custom attribute", e);
+        }
+    }
+
+    /**
+     * Evicts {@link cz.cvut.kbss.jopa.model.EntityManagerFactory} cache for each specified context.
+     *
+     * @param contexts context to evict from cache
+     */
+    public void evictCacheForContexts(List<URI> contexts) {
+        final Cache emfCache = em.getEntityManagerFactory().getCache();
+        contexts.forEach(emfCache::evict);
     }
 }

@@ -28,19 +28,24 @@ import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DataRepositoryService {
@@ -91,6 +96,18 @@ public class DataRepositoryService {
         Objects.requireNonNull(range);
         return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.hasDomain(domain),
                                                CustomAttributeSpecifications.hasRange(range)));
+    }
+
+    /**
+     * Finds a custom attribute with the specified identifier.
+     *
+     * @param attributeUri Attribute identifier
+     * @return Matching custom attribute or empty if no such attribute exists
+     */
+    @Transactional(readOnly = true)
+    public Optional<CustomAttribute> findCustomAttribute(URI attributeUri) {
+        Objects.requireNonNull(attributeUri);
+        return dataDao.findCustomAttribute(attributeUri);
     }
 
     /**
@@ -196,5 +213,49 @@ public class DataRepositoryService {
     @Transactional(readOnly = true)
     public Optional<String> getLabel(URI id, @Nullable String language) {
         return dataDao.getLabel(id, language);
+    }
+
+    /**
+     * Finds statements where the specified custom attribute is used as a predicate.
+     *
+     * @param identifier Custom attribute identifier
+     * @param pageable {@link Pageable}
+     * @return Page of RDF statements
+     */
+    @Transactional(readOnly = true)
+    public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
+        return dataDao.findCustomAttributeUsage(identifier, pageable);
+    }
+
+    /**
+     * Removes custom attribute identified by {@code identifier}.
+     *
+     * @param identifier the identifier of the {@link CustomAttribute}
+     * @param removeUsages whether to also remove all usages of the {@link CustomAttribute}
+     */
+    @Transactional
+    public void removeCustomAttribute(URI identifier, boolean removeUsages) {
+        final CustomAttribute attribute = dataDao.findCustomAttribute(identifier)
+                                                 .orElseThrow(() -> NotFoundException
+                                                         .create(CustomAttribute.class, identifier));
+
+        List<URI> affectedContexts = Collections.emptyList();
+        if (removeUsages) {
+            affectedContexts = dataDao.findCustomAttributeUsageContexts(attribute);
+            LOG.debug("Removing all usage of custom attribute {}", identifier);
+            dataDao.removeAllCustomAttributeUsages(attribute);
+        }
+
+        LOG.debug("Removing custom attribute {}", identifier);
+        dataDao.removeCustomAttribute(attribute);
+
+        if (!affectedContexts.isEmpty()) {
+            final List<URI> contextsToEvict = affectedContexts;
+            LOG.atDebug()
+               .addArgument(() -> contextsToEvict.stream().map(Utils::uriToString).collect(Collectors.joining(", ")))
+               .log("Evicting cache for contexts affected by custom attribute removal: {}");
+
+            dataDao.evictCacheForContexts(contextsToEvict);
+        }
     }
 }
