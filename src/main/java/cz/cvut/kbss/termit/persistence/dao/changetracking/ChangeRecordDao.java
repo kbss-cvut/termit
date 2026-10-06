@@ -57,15 +57,15 @@ public class ChangeRecordDao {
     /**
      * Persists the specified change record into the specified repository context.
      *
-     * @param record       Record to save
+     * @param record Record to save
      * @param changedAsset The changed asset
      */
     public void persist(AbstractChangeRecord record, Asset<?> changedAsset) {
         Objects.requireNonNull(record);
-        final EntityDescriptor descriptor = new EntityDescriptor(
-                contextResolver.resolveChangeTrackingContext(changedAsset));
-        descriptor.addAttributeDescriptor(em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"),
-                new EntityDescriptor());
+        final EntityDescriptor descriptor =
+                new EntityDescriptor(contextResolver.resolveChangeTrackingContext(changedAsset));
+        descriptor.addAttributeDescriptor(
+                em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"), new EntityDescriptor());
         descriptor.setLanguage(null);
         try {
             em.persist(record, descriptor);
@@ -99,23 +99,22 @@ public class ChangeRecordDao {
      * @param filterDto filter parameters
      */
     public List<AbstractChangeRecord> findAll(Asset<?> asset, ChangeRecordFilterDto filterDto) {
-        return resolveChangeTrackingContext(asset).map(context ->
-                findAllFiltered(context, filterDto, Optional.of(asset), Optional.empty(), Pageable.unpaged()))
-                    .orElseGet(List::of);
+        return resolveChangeTrackingContext(asset)
+                .map(context ->
+                        findAllFiltered(context, filterDto, Optional.of(asset), Optional.empty(), Pageable.unpaged()))
+                .orElseGet(List::of);
     }
 
     /**
-     * Finds all records from change context resolved from {@code changeContextAsset}
-     * that are matching the filter and are related to an entity of the type {@code relatedEntityType}.
+     * Finds all records from change context resolved from {@code changeContextAsset} that are matching the filter and
+     * are related to an entity of the type {@code relatedEntityType}.
      */
-    public List<AbstractChangeRecord> findAllRelatedToType(Asset<?> changeContextAsset, ChangeRecordFilterDto filterDto, URI relatedEntityType, Pageable pageable) {
-        return resolveChangeTrackingContext(changeContextAsset).map(context ->
-            findAllFiltered(context,
-                filterDto,
-                Optional.empty(),
-                Optional.ofNullable(relatedEntityType),
-                pageable
-        )).orElseGet(List::of);
+    public List<AbstractChangeRecord> findAllRelatedToType(
+            Asset<?> changeContextAsset, ChangeRecordFilterDto filterDto, URI relatedEntityType, Pageable pageable) {
+        return resolveChangeTrackingContext(changeContextAsset)
+                .map(context -> findAllFiltered(
+                        context, filterDto, Optional.empty(), Optional.ofNullable(relatedEntityType), pageable))
+                .orElseGet(List::of);
     }
 
     /**
@@ -126,19 +125,27 @@ public class ChangeRecordDao {
      * @param asset if present, only changes of the asset will be returned
      * @param assetType if present, only changes related to an asset of this type will be returned.
      */
-    private List<AbstractChangeRecord> findAllFiltered(URI changeContext, ChangeRecordFilterDto filter, Optional<Asset<?>> asset, Optional<URI> assetType, Pageable pageable) {
-        TypedQuery<AbstractChangeRecord> query = em.createNativeQuery("""
+    private List<AbstractChangeRecord> findAllFiltered(
+            URI changeContext,
+            ChangeRecordFilterDto filter,
+            Optional<Asset<?>> asset,
+            Optional<URI> assetType,
+            Pageable pageable) {
+        TypedQuery<AbstractChangeRecord> query = em.createNativeQuery(
+                        """
                          SELECT DISTINCT ?record WHERE {
 """ + /* Select anything from change context */ """
                             GRAPH ?changeContext {
                                 ?record a ?changeRecord .
                             }
-""" + /* The record should be a subclass of changeType ("zmena") and have timestamp and author */ """
+"""
+                                + /* The record should be a subclass of changeType ("zmena") and have timestamp and author */ """
                             ?changeRecord ?subClassOf+ ?changeType .
                             ?record ?hasChangedEntity ?asset ;
                                 ?hasTime ?timestamp ;
                                 ?hasAuthor ?author .
-""" + /* Find an asset type if it is known (deleted assets does not have a type */ """
+"""
+                                + /* Find an asset type if it is known (deleted assets does not have a type */ """
                             BIND(?assetTypeValue as ?assetTypeVar)
                             OPTIONAL {
                                 ?asset a ?assetType .
@@ -147,18 +154,22 @@ public class ChangeRecordDao {
                                     BIND(true as ?isAssetType)
                                 }
                             }
-""" + /* filter assets without a type (deleted) or with a matching type */ """
+"""
+                                + /* filter assets without a type (deleted) or with a matching type */ """
                             FILTER(!BOUND(?assetTypeVar) || !BOUND(?assetType) || BOUND(?isAssetType))
-""" + /* Get author's name */ """
+"""
+                                + /* Get author's name */ """
                             ?author ?hasFirstName ?firstName ;
                                 ?hasLastName ?lastName .
                             BIND(CONCAT(?firstName, " ", ?lastName) as ?authorFullName)
-""" + /* When its update record, there will be a changed attribute */ """
+"""
+                                + /* When its update record, there will be a changed attribute */ """
                             OPTIONAL {
                                ?record ?hasChangedAttribute ?attribute .
                                ?attribute ?hasRdfsLabel ?changedAttributeLabel .
                             }
-""" + /* Get asset's name (but the asset might have been already deleted) */ """
+"""
+                                + /* Get asset's name (but the asset might have been already deleted) */ """
                             OPTIONAL {
                                 ?asset ?hasLabel ?assetPrefLabel .
                                 BIND(?assetPrefLabel as ?finalAssetLabel)
@@ -167,12 +178,14 @@ public class ChangeRecordDao {
                                 ?asset ?hasRdfsLabel ?assetRdfsLabel .
                                 BIND(?assetRdfsLabel as ?finalAssetLabel)
                             }
-""" + /* then try to get the label from (delete) record */ """
+"""
+                                + /* then try to get the label from (delete) record */ """
                             OPTIONAL {
                                ?record ?hasRdfsLabel ?recordRdfsLabel .
                                BIND(?recordRdfsLabel as ?finalAssetLabel)
                             }
-""" + /* When label is still not bound, the term was probably deleted, find the delete record and get the label from it */ """
+"""
+                                + /* When label is still not bound, the term was probably deleted, find the delete record and get the label from it */ """
                             OPTIONAL {
                                 ?deleteRecord a ?deleteRecordType;
                                     ?hasChangedEntity ?asset;
@@ -186,32 +199,31 @@ public class ChangeRecordDao {
                             FILTER (!BOUND(?authorName) || CONTAINS(LCASE(?authorFullName), LCASE(?authorName)))
                             FILTER (!BOUND(?changedAttributeName) || CONTAINS(LCASE(?changedAttributeLabel), LCASE(?changedAttributeName)))
                          } ORDER BY DESC(?timestamp) ?attribute
-                         """, AbstractChangeRecord.class)
-                                                   .setParameter("changeContext", changeContext)
-                                                   .setParameter("subClassOf", URI.create(RDFS.SUB_CLASS_OF))
-                                                   .setParameter("changeType", URI.create(Vocabulary.s_c_change))
-                                                   .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
-                                                   .setParameter("hasTime", URI.create(DC.Terms.MODIFIED))
-                                                   .setParameter("hasAuthor", URI.create(
-                                                           Vocabulary.s_p_has_editor)) // record has author
-                                                   .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_first_name))
-                                                   .setParameter("hasLastName", URI.create(Vocabulary.s_p_has_surname))
-                                                   // Optional - update change record
-                                                   .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_has_changed_attribute))
-                                                   .setParameter("hasRdfsLabel", URI.create(RDFS.LABEL))
-                                                   // Optional -
-                                                   .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
-                                                   // Optional asset label
-                                                   .setParameter("deleteRecordType", URI.create(Vocabulary.s_c_deletion_of_entity));
+                         """,
+                        AbstractChangeRecord.class)
+                .setParameter("changeContext", changeContext)
+                .setParameter("subClassOf", URI.create(RDFS.SUB_CLASS_OF))
+                .setParameter("changeType", URI.create(Vocabulary.s_c_change))
+                .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
+                .setParameter("hasTime", URI.create(DC.Terms.MODIFIED))
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_editor)) // record has author
+                .setParameter("hasFirstName", URI.create(Vocabulary.s_p_has_first_name))
+                .setParameter("hasLastName", URI.create(Vocabulary.s_p_has_surname))
+                // Optional - update change record
+                .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_has_changed_attribute))
+                .setParameter("hasRdfsLabel", URI.create(RDFS.LABEL))
+                // Optional -
+                .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
+                // Optional asset label
+                .setParameter("deleteRecordType", URI.create(Vocabulary.s_c_deletion_of_entity));
 
-        if(asset.isPresent() && asset.get().getUri() != null) {
+        if (asset.isPresent() && asset.get().getUri() != null) {
             query = query.setParameter("asset", asset.get().getUri());
         } else if (assetType.isPresent()) {
             query = query.setParameter("assetTypeValue", assetType.get());
         }
-        
 
-        if(!Utils.isBlank(filter.getAssetLabel())) {
+        if (!Utils.isBlank(filter.getAssetLabel())) {
             query = query.setParameter("assetLabelValue", filter.getAssetLabel().trim());
         }
         if (!Utils.isBlank(filter.getAuthorName())) {
@@ -221,17 +233,19 @@ public class ChangeRecordDao {
             query = query.setParameter("changeRecord", filter.getChangeType());
         }
         if (!Utils.isBlank(filter.getChangedAttributeName())) {
-            query = query.setParameter("attributeNameValue", filter.getChangedAttributeName().trim());
+            query = query.setParameter(
+                    "attributeNameValue", filter.getChangedAttributeName().trim());
         }
 
         query = query.setDescriptor(new EntityDescriptor().anyLanguage());
 
-        if(pageable.isUnpaged()) {
+        if (pageable.isUnpaged()) {
             return query.getResultList();
         }
 
         return query.setFirstResult((int) pageable.getOffset())
-                    .setMaxResults(pageable.getPageSize()).getResultList();
+                .setMaxResults(pageable.getPageSize())
+                .getResultList();
     }
 
     /**
@@ -244,15 +258,16 @@ public class ChangeRecordDao {
     public Set<User> getAuthors(HasIdentifier asset) {
         Objects.requireNonNull(asset);
         try {
-            return new HashSet<>(em.createNativeQuery("SELECT ?author WHERE {" +
-                                           "?x a ?persistRecord ;" +
-                                           "?hasChangedEntity ?asset ;" +
-                                           "?hasAuthor ?author . }", User.class)
-                                   .setParameter("persistRecord", URI.create(Vocabulary.s_c_creation_of_entity))
-                                   .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
-                                   .setParameter("asset", asset.getUri())
-                                   .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_editor))
-                                   .getResultList());
+            return new HashSet<>(em.createNativeQuery(
+                            "SELECT ?author WHERE {" + "?x a ?persistRecord ;"
+                                    + "?hasChangedEntity ?asset ;"
+                                    + "?hasAuthor ?author . }",
+                            User.class)
+                    .setParameter("persistRecord", URI.create(Vocabulary.s_c_creation_of_entity))
+                    .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_has_changed_entity))
+                    .setParameter("asset", asset.getUri())
+                    .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_editor))
+                    .getResultList());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -262,7 +277,7 @@ public class ChangeRecordDao {
      * Finds a change record of the specified type and identifier.
      *
      * @param recordClass Change record type
-     * @param recordUri   Change record identifier
+     * @param recordUri Change record identifier
      * @return Matching record, or an empty optional if none is found
      */
     public <T extends AbstractChangeRecord> Optional<T> find(Class<T> recordClass, URI recordUri) {

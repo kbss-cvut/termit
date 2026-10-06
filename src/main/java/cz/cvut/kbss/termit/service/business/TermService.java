@@ -54,7 +54,6 @@ import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationServi
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
-import jakarta.annotation.Nonnull;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +65,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.time.Instant;
@@ -79,9 +80,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * Service for term-related business logic.
- */
+/** Service for term-related business logic. */
 @Service
 public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
 
@@ -108,12 +107,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     private final TermAuthorizationService termAuthorizationService;
 
     @Autowired
-    public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
-                       VocabularyContextMapper vocabularyContextMapper,
-                       TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
-                       TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, LanguageService languageService, DtoMapper dtoMapper,
-                       TermAuthorizationService termAuthorizationService) {
+    public TermService(
+            VocabularyExporters exporters,
+            VocabularyService vocabularyService,
+            VocabularyContextMapper vocabularyContextMapper,
+            TermRepositoryService repositoryService,
+            TextAnalysisService textAnalysisService,
+            TermOccurrenceService termOccurrenceService,
+            ChangeRecordService changeRecordService,
+            CommentService commentService,
+            LanguageService languageService,
+            DtoMapper dtoMapper,
+            TermAuthorizationService termAuthorizationService) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -129,11 +134,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Attempts to export glossary of the specified vocabulary according to the specified configuration.
-     * <p>
-     * If export into the specified media type is not supported, an empty {@link Optional} is returned.
+     *
+     * <p>If export into the specified media type is not supported, an empty {@link Optional} is returned.
      *
      * @param vocabulary Vocabulary to export
-     * @param config     Expected media type of the export
+     * @param config Expected media type of the export
      * @return Exported resource wrapped in an {@code Optional}
      */
     public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, ExportConfig config) {
@@ -155,10 +160,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Retrieves all terms from the specified vocabulary.
-     * <p>
-     * The provided selection params specify how many terms and in what form they will be returned.
      *
-     * @param vocabulary      Vocabulary whose terms will be returned. A reference is sufficient
+     * <p>The provided selection params specify how many terms and in what form they will be returned.
+     *
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
@@ -185,16 +190,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Retrieves all terms from the specified vocabulary whose label matches the specified search string.
-     * <p>
-     * The provided selection params specify how many terms and in what form they will be returned.
      *
-     * @param searchString    String to search terms by
-     * @param vocabulary      Vocabulary whose terms will be returned. A reference is sufficient
+     * <p>The provided selection params specify how many terms and in what form they will be returned.
+     *
+     * @param searchString String to search terms by
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
      * @param selectionParams Term selection parameters
      * @return Matching terms
      */
-    public List<? extends AbstractTerm> findAll(String searchString, Vocabulary vocabulary,
-                                                TermSelectionParams selectionParams) {
+    public List<? extends AbstractTerm> findAll(
+            String searchString, Vocabulary vocabulary, TermSelectionParams selectionParams) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(selectionParams);
@@ -206,15 +211,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             if (selectionParams.flat()) {
                 if (includeFromOther) {
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
-                    return repositoryService.findAllFlatInVocabularies(searchString, vocabularies,
-                                                                       selectionParams.pageSpec());
+                    return repositoryService.findAllFlatInVocabularies(
+                            searchString, vocabularies, selectionParams.pageSpec());
                 }
                 return repositoryService.findAllFlat(searchString, vocabulary, selectionParams.pageSpec());
             } else {
                 if (includeFromOther) {
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
-                    return repositoryService.findAllInVocabularies(searchString, vocabularies,
-                                                                   selectionParams.pageSpec());
+                    return repositoryService.findAllInVocabularies(
+                            searchString, vocabularies, selectionParams.pageSpec());
                 }
                 return repositoryService.findAll(searchString, vocabulary, selectionParams.pageSpec());
             }
@@ -224,12 +229,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Resolves a collection of target vocabulary identifiers based on the provided base vocabulary and selection
      * parameters.
-     * <p>
-     * The resulting collection always contains the base vocabulary identifier. If the selection parameters specify the
-     * inclusion of imported or related vocabularies, their respective identifiers are fetched and added to the
+     *
+     * <p>The resulting collection always contains the base vocabulary identifier. If the selection parameters specify
+     * the inclusion of imported or related vocabularies, their respective identifiers are fetched and added to the
      * collection.
      *
-     * @param vocabulary      Base vocabulary being queried
+     * @param vocabulary Base vocabulary being queried
      * @param selectionParams Parameters specifying whether to include imported or related vocabularies
      * @return Collection of target vocabulary identifiers
      */
@@ -248,8 +253,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
      * that have label and definition in the instance language.
-     * <p>
-     * Terms are loaded <b>without</b> their subterms.
+     *
+     * <p>Terms are loaded <b>without</b> their subterms.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @return List of vocabulary term DTOs ordered by label
@@ -271,16 +276,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Retrieves root terms (terms without parent) from the specified vocabulary.
-     * <p>
-     * The page specification parameter allows configuration of the number of results and their offset.
      *
-     * @param vocabulary      Vocabulary whose terms will be returned
+     * <p>The page specification parameter allows configuration of the number of results and their offset.
+     *
+     * @param vocabulary Vocabulary whose terms will be returned
      * @param selectionParams Parameters for selecting terms
-     * @param includeTerms    Identifiers of terms which should be included in the result
+     * @param includeTerms Identifiers of terms which should be included in the result
      * @return Matching terms
      */
-    public List<TermDto> findAllRoots(Vocabulary vocabulary, TermSelectionParams selectionParams,
-                                      Collection<URI> includeTerms) {
+    public List<TermDto> findAllRoots(
+            Vocabulary vocabulary, TermSelectionParams selectionParams, Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(selectionParams);
         if (!selectionParams.includeImported() && !selectionParams.includeRelated()) {
@@ -292,12 +297,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Retrieves root terms (terms without parent).
-     * <p>
-     * The page specification parameter allows configuration of the number of results and their offset.
-     * <p>
-     * Terms with a label in the instance language are prepended.
      *
-     * @param pageSpec     Paging specification
+     * <p>The page specification parameter allows configuration of the number of results and their offset.
+     *
+     * <p>Terms with a label in the instance language are prepended.
+     *
+     * @param pageSpec Paging specification
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms
      */
@@ -310,8 +315,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Finds all terms which match the specified search string in the specified vocabulary.
      *
      * @param searchString Search string
-     * @param vocabulary   Vocabulary whose terms should be returned
-     * @param pageSpec     Page specification
+     * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec Page specification
      * @return Matching terms
      */
     public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
@@ -325,7 +330,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Finds all terms whose label matches the searchString.
      *
      * @param searchString string to search the label by
-     * @param pageSpec     Page specifying result number and position
+     * @param pageSpec Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms
      */
@@ -407,15 +412,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Resolves the full ancestor chain of the {@code term}.
      *
      * @param term term for which the full ancestor chain should be resolved
-     * @return {@link FullTermDtoWithAncestors} with {@link FullTermDtoWithAncestors#getAncestorTerms() ancestorTerms} set
+     * @return {@link FullTermDtoWithAncestors} with {@link FullTermDtoWithAncestors#getAncestorTerms() ancestorTerms}
+     *     set
      */
     @PreAuthorize("@termAuthorizationService.canRead(#term)")
     public FullTermDtoWithAncestors resolveAllAncestors(Term term) {
         if (term.getParentTerms() == null) {
             return dtoMapper.withAncestors(term, Set.of());
         }
-        final Set<URI> directParentIdentifiers = term.getParentTerms()
-                .stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
+        final Set<URI> directParentIdentifiers =
+                term.getParentTerms().stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
 
         final Set<TermInfoWithParents> ancestors = findWithAllAncestors(directParentIdentifiers);
 
@@ -423,16 +429,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds all terms using their URIs including all their ancestors.
-     * The terms and ancestors are filtered based on the current user authorizations.
+     * Finds all terms using their URIs including all their ancestors. The terms and ancestors are filtered based on the
+     * current user authorizations.
      *
      * @param termUris term identifiers to find
      * @return requested terms with their full ancestor chain
      * @throws PersistenceException if any of the requested terms could not be found
      */
     public Set<TermInfoWithParents> findWithAllAncestors(Set<URI> termUris) {
-        Set<TermInfoWithParents> ancestors =
-                new HashSet<>(repositoryService.findWithAllAncestors(termUris));
+        Set<TermInfoWithParents> ancestors = new HashSet<>(repositoryService.findWithAllAncestors(termUris));
 
         // verify that all requested terms were found
         Set<URI> ancestorIds = ancestors.stream().map(HasIdentifier::getUri).collect(Collectors.toSet());
@@ -448,9 +453,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Gets a term with the specified identifier with populated custom attribute term references.
-     * <p>
-     * This means values of custom attributes that reference other terms and are by default represented only by the term
-     * identifier are replaced by {@link TermInfo} instances in the term's {@code properties} field.
+     *
+     * <p>This means values of custom attributes that reference other terms and are by default represented only by the
+     * term identifier are replaced by {@link TermInfo} instances in the term's {@code properties} field.
      *
      * @param id Term identifier
      * @return Matching term
@@ -466,9 +471,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Gets a reference to a Term with the specified identifier.
-     * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used without some other
-     * type of authorization.
+     *
+     * <p>Note that this method is not protected by ACL-based authorization and should thus not be used without some
+     * other type of authorization.
      *
      * @param id Term identifier
      * @return Matching Term reference wrapped in an {@code Optional}
@@ -514,9 +519,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Checks whether a term with the specified label already exists in the specified vocabulary.
      *
-     * @param termLabel  Label to search for
+     * @param termLabel Label to search for
      * @param vocabulary Vocabulary in which to search
-     * @param language   Language to check existence in.
+     * @param language Language to check existence in.
      * @return Whether a matching label was found
      */
     public boolean existsInVocabulary(String termLabel, Vocabulary vocabulary, String language) {
@@ -528,7 +533,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Persists the specified term as a root term in the specified vocabulary's glossary.
      *
-     * @param term  Term to persist
+     * @param term Term to persist
      * @param owner Vocabulary to add the term to
      */
     @PreAuthorize("@termAuthorizationService.canCreateIn(#owner)")
@@ -543,7 +548,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Persists the specified term as a child of the specified parent term.
      *
-     * @param child  The child to persist
+     * @param child The child to persist
      * @param parent Existing parent term
      */
     @PreAuthorize("@termAuthorizationService.canCreateChild(#parent)")
@@ -582,8 +587,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Batch adds specific properties (relatedMatch, exactMatch, parentTerms,
-     * types) to a collection of terms.
+     * Batch adds specific properties (relatedMatch, exactMatch, parentTerms, types) to a collection of terms.
      *
      * @param batchEditDto Data containing the term URIs and the properties to add
      */
@@ -593,14 +597,26 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(batchEditDto);
         Objects.requireNonNull(batchEditDto.getTargetTerms());
 
-        List<TermInfo> exactMatches = batchEditDto.getExactMatchTerms() != null ?
-                batchEditDto.getExactMatchTerms().stream().map(this::findRequiredTermInfo).toList() : null;
-        List<TermInfo> related = batchEditDto.getRelated() != null ?
-                batchEditDto.getRelated().stream().map(this::findRequiredTermInfo).toList() : null;
-        List<TermInfo> relatedMatches = batchEditDto.getRelatedMatch() != null ?
-                batchEditDto.getRelatedMatch().stream().map(this::findRequiredTermInfo).toList() : null;
-        List<TermInfo> parents = batchEditDto.getParentTerms() != null ?
-                batchEditDto.getParentTerms().stream().map(this::findRequiredTermInfo).toList() : null;
+        List<TermInfo> exactMatches = batchEditDto.getExactMatchTerms() != null
+                ? batchEditDto.getExactMatchTerms().stream()
+                        .map(this::findRequiredTermInfo)
+                        .toList()
+                : null;
+        List<TermInfo> related = batchEditDto.getRelated() != null
+                ? batchEditDto.getRelated().stream()
+                        .map(this::findRequiredTermInfo)
+                        .toList()
+                : null;
+        List<TermInfo> relatedMatches = batchEditDto.getRelatedMatch() != null
+                ? batchEditDto.getRelatedMatch().stream()
+                        .map(this::findRequiredTermInfo)
+                        .toList()
+                : null;
+        List<TermInfo> parents = batchEditDto.getParentTerms() != null
+                ? batchEditDto.getParentTerms().stream()
+                        .map(this::findRequiredTermInfo)
+                        .toList()
+                : null;
 
         for (URI termUri : batchEditDto.getTargetTerms()) {
             Term term = findRequired(termUri);
@@ -663,16 +679,17 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Executes text analysis on the specified term's definition.
-     * <p>
-     * A vocabulary with the specified identifier is used as base for the text analysis (its terms are searched for
+     *
+     * <p>A vocabulary with the specified identifier is used as base for the text analysis (its terms are searched for
      * during the analysis).
      *
-     * @param term          Term to analyze
+     * @param term Term to analyze
      * @param vocabularyIri Identifier of the vocabulary used for analysis
      */
-    @Throttle(value = "{#vocabularyIri, #term.getUri()}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
-              name = "termDefinitionAnalysis")
+    @Throttle(
+            value = "{#vocabularyIri, #term.getUri()}",
+            group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
+            name = "termDefinitionAnalysis")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
@@ -685,17 +702,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         textAnalysisService.analyzeTermDefinition(
                 term,
                 vocabularyContextMapper.getVocabularyContext(vocabularyIri),
-                vocabularyService.getPrimaryLanguage(vocabularyIri)
-        );
+                vocabularyService.getPrimaryLanguage(vocabularyIri));
     }
 
     /**
      * Analyzes term definitions for the given context-to-terms map.
-     * <p>
-     * Text analysis is invoked on all definitions merged for better efficiency.
+     *
+     * <p>Text analysis is invoked on all definitions merged for better efficiency.
      *
      * @param contextToTerms Map of vocabulary context URIs to lists of terms.
-     * @param language       Language of the term definitions to analyze
+     * @param language Language of the term definitions to analyze
      * @see TextAnalysisService#analyzeTermDefinitions(Map, String)
      */
     public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms, String language) {
@@ -725,10 +741,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Sets the definition source of the specified term.
-     * <p>
-     * It removes the previously existing definition source if there was any.
      *
-     * @param term             Term whose definition source is being specified
+     * <p>It removes the previously existing definition source if there was any.
+     *
+     * @param term Term whose definition source is being specified
      * @param definitionSource Definition source representation
      */
     @Transactional
@@ -745,11 +761,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Removes the definition source of the specified term.
-     * <p>
-     * This involves deleting the {@link TermDefinitionSource} instance representing the definition source from the
+     *
+     * <p>This involves deleting the {@link TermDefinitionSource} instance representing the definition source from the
      * repository.
-     * <p>
-     * If the specified term has no definition source, nothing happens.
+     *
+     * <p>If the specified term has no definition source, nothing happens.
      *
      * @param term Term whose definition to remove
      */
@@ -765,7 +781,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Updates the specified term's state to the specified new value.
      *
-     * @param term  Term to update
+     * @param term Term to update
      * @param state New state
      */
     @Transactional
@@ -778,17 +794,19 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private void checkForInvalidTerminalStateAssignment(Term term, URI state) {
         final List<RdfsResource> states = languageService.getTermStates();
-        final Predicate<URI> isStateTerminal = (URI s) -> states.stream().filter(r -> r.getUri().equals(s)).findFirst()
-                                                                .map(r -> r.hasType(
-                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state))
-                                                                .orElse(false);
+        final Predicate<URI> isStateTerminal = (URI s) -> states.stream()
+                .filter(r -> r.getUri().equals(s))
+                .findFirst()
+                .map(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_terminal_term_state))
+                .orElse(false);
         if (!isStateTerminal.test(state)) {
             return;
         }
         if (Utils.emptyIfNull(term.getSubTerms()).stream()
-                 .anyMatch(Predicate.not(ti -> isStateTerminal.test(ti.getState())))) {
+                .anyMatch(Predicate.not(ti -> isStateTerminal.test(ti.getState())))) {
             throw new InvalidTermStateException(
-                    "Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.",
+                    "Cannot set state of term " + term
+                            + " to terminal when at least one of its sub-terms is not in terminal state.",
                     "error.term.state.terminal.liveChildren");
         }
     }
@@ -804,7 +822,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param term Term to get comments for
      * @param from Retrieval interval start
-     * @param to   Retrieval interval end
+     * @param to Retrieval interval end
      * @return List of comments
      */
     public List<Comment> getComments(Term term, Instant from, Instant to) {
@@ -815,7 +833,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Adds the specified comment to the specified target term.
      *
      * @param comment Comment to add (create)
-     * @param target  Term to which the comment pertains
+     * @param target Term to which the comment pertains
      */
     public void addComment(Comment comment, Term target) {
         Objects.requireNonNull(comment);
@@ -828,10 +846,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     public Term findVersionValidAt(Term asset, Instant at) {
-        return repositoryService.findVersionValidAt(asset, at).map(t -> {
-            consolidateAttributes(t);
-            return t;
-        }).orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
+        return repositoryService
+                .findVersionValidAt(asset, at)
+                .map(t -> {
+                    consolidateAttributes(t);
+                    return t;
+                })
+                .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
     }
 
     /**
@@ -853,7 +874,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return flattened list of terms
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
+    public List<FlatTermDto> findAllFlat(
+            Vocabulary vocabulary, List<URI> includeTerms, TermSelectionParams selectionParams) {
         if (selectionParams.full()) {
             throw new IllegalArgumentException("Full term representation is not supported");
         }

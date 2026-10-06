@@ -49,9 +49,7 @@ public class FlatTermDto extends AbstractTerm {
     public FlatTermDto(AbstractTerm other, Collection<? extends HasIdentifier> parents) {
         super(other);
         if (parents != null) {
-            setParentTerms(parents.stream()
-                                  .map(HasIdentifier::getUri)
-                                  .collect(Collectors.toSet()));
+            setParentTerms(parents.stream().map(HasIdentifier::getUri).collect(Collectors.toSet()));
         }
     }
 

@@ -71,10 +71,10 @@ import java.util.stream.IntStream;
 
 public class Generator {
 
-    public static URI[] TERM_STATES = new URI[]{
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/new-term"),
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/published-term"),
-            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/cancelled-term")
+    public static URI[] TERM_STATES = new URI[] {
+        URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/new-term"),
+        URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/published-term"),
+        URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/cancelled-term")
     };
 
     private static final Random random = new Random();
@@ -118,8 +118,8 @@ public class Generator {
 
     /**
      * Generates a (pseudo) random integer.
-     * <p>
-     * This version has no bounds (aside from the integer range), so the returned number may be negative or zero.
+     *
+     * <p>This version has no bounds (aside from the integer range), so the returned number may be negative or zero.
      *
      * @return Randomly generated integer
      * @see #randomInt(int, int)
@@ -130,8 +130,8 @@ public class Generator {
 
     /**
      * Generates a (pseudo)random index of an element in the collection.
-     * <p>
-     * I.e. the returned number is in the interval <0, col.size()).
+     *
+     * <p>I.e. the returned number is in the interval <0, col.size()).
      *
      * @param col The collection
      * @return Random index
@@ -144,8 +144,8 @@ public class Generator {
 
     /**
      * Generates a (pseudo)random index of an element in the array.
-     * <p>
-     * I.e. the returned number is in the interval <0, arr.length).
+     *
+     * <p>I.e. the returned number is in the interval <0, arr.length).
      *
      * @param arr The array
      * @return Random index
@@ -169,6 +169,7 @@ public class Generator {
 
     /**
      * Returns a (pseudo)random element from the specified list.
+     *
      * @param lst List to select random element from
      * @return Element from the list
      * @param <T> Element type
@@ -188,8 +189,8 @@ public class Generator {
 
     /**
      * Creates a random instance of {@link User}.
-     * <p>
-     * The instance has no identifier set.
+     *
+     * <p>The instance has no identifier set.
      *
      * @return New {@code User} instance
      * @see #generateUserWithId()
@@ -205,8 +206,8 @@ public class Generator {
 
     /**
      * Creates a random instance of {@link User} with a generated identifier.
-     * <p>
-     * The presence of identifier is the only difference between this method and {@link #generateUser()}.
+     *
+     * <p>The presence of identifier is the only difference between this method and {@link #generateUser()}.
      *
      * @return New {@code User} instance
      */
@@ -217,8 +218,7 @@ public class Generator {
     }
 
     /**
-     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username and
-     * identifier.
+     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username and identifier.
      *
      * @return A new {@code UserAccount} instance
      */
@@ -245,14 +245,13 @@ public class Generator {
     }
 
     /**
-     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary, a model
-     * and {@link Environment#LANGUAGE} as the primary language.
+     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary, a model and
+     * {@link Environment#LANGUAGE} as the primary language.
      *
      * @return New {@code Vocabulary} instance
      */
     public static cz.cvut.kbss.termit.model.Vocabulary generateVocabulary() {
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary =
-                new cz.cvut.kbss.termit.model.Vocabulary();
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
         final String primaryLanguage = Environment.LANGUAGE;
         vocabulary.setPrimaryLanguage(primaryLanguage);
         vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), primaryLanguage));
@@ -289,9 +288,8 @@ public class Generator {
     public static Term generateTerm() {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
-        term.setDefinition(MultilingualString
-                                   .create("Normative definition of term " + term.getLabel().get(Environment.LANGUAGE),
-                                           Environment.LANGUAGE));
+        term.setDefinition(MultilingualString.create(
+                "Normative definition of term " + term.getLabel().get(Environment.LANGUAGE), Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         term.setPrimaryLanguage(Environment.LANGUAGE);
         if (Generator.randomBoolean()) {
@@ -320,8 +318,7 @@ public class Generator {
     }
 
     public static List<Term> generateTermsWithIds(int count) {
-        return IntStream.range(0, count).mapToObj(i -> generateTermWithId())
-                        .collect(Collectors.toList());
+        return IntStream.range(0, count).mapToObj(i -> generateTermWithId()).collect(Collectors.toList());
     }
 
     public static Resource generateResource() {
@@ -380,18 +377,17 @@ public class Generator {
 
     /**
      * Generates a list of change records for the specified asset.
-     * <p>
-     * The list contains one persist record and several update records.
+     *
+     * <p>The list contains one persist record and several update records.
      *
      * @param asset Asset to generate change records for
-     * @param user  Author of the changes
+     * @param user Author of the changes
      * @return List of change records
      */
     public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
-                IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
-                         .collect(Collectors.toList());
+                IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset)).collect(Collectors.toList());
         result.add(0, persistRecord);
         if (user != null) {
             result.forEach(r -> r.setAuthor(user));
@@ -446,8 +442,8 @@ public class Generator {
 
     public static Snapshot generateSnapshot(Asset<?> asset) {
         final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-        final URI uri = URI.create(
-                asset.getUri().toString() + "/version/" + timestamp.toString().replace(":", "").replace(" ", ""));
+        final URI uri = URI.create(asset.getUri().toString() + "/version/"
+                + timestamp.toString().replace(":", "").replace(" ", ""));
         final String type;
         if (asset instanceof Vocabulary) {
             type = cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary;
@@ -459,16 +455,18 @@ public class Generator {
         return new Snapshot(uri, timestamp, asset.getUri(), type);
     }
 
-    public static void simulateInferredSkosRelationship(AbstractTerm source, Collection<? extends AbstractTerm> related,
-                                                        String relationship, EntityManager em) {
+    public static void simulateInferredSkosRelationship(
+            AbstractTerm source, Collection<? extends AbstractTerm> related, String relationship, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.begin();
             for (AbstractTerm r : related) {
                 // Don't put it into any specific context to make it look like inference
-                conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
-                         vf.createIRI(source.getUri().toString()));
+                conn.add(
+                        vf.createIRI(r.getUri().toString()),
+                        vf.createIRI(relationship),
+                        vf.createIRI(source.getUri().toString()));
             }
             conn.commit();
         }
@@ -476,8 +474,7 @@ public class Generator {
 
     public static UserGroup generateUserGroup() {
         final UserGroup group = new UserGroup();
-        group.setUri(
-                IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup));
+        group.setUri(IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
     }
@@ -493,21 +490,23 @@ public class Generator {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static List<AccessControlRecord<?>> generateAccessControlRecords() {
-        final List<AccessControlRecord<?>> result = IntStream.range(0, 5).mapToObj(i -> {
-            final AccessControlRecord r;
-            int maxAccessLevel = AccessLevel.values().length; // exclusive
-            if (Generator.randomBoolean()) {
-                r = new UserAccessControlRecord();
-                r.setHolder(Generator.generateUserWithId());
-            } else {
-                r = new UserGroupAccessControlRecord();
-                r.setHolder(generateUserGroup());
-                maxAccessLevel = AccessLevel.SECURITY.ordinal();
-            }
-            r.setUri(Generator.generateUri());
-            r.setAccessLevel(AccessLevel.values()[Generator.randomInt(0, maxAccessLevel)]);
-            return (AccessControlRecord<?>) r;
-        }).collect(Collectors.toList());
+        final List<AccessControlRecord<?>> result = IntStream.range(0, 5)
+                .mapToObj(i -> {
+                    final AccessControlRecord r;
+                    int maxAccessLevel = AccessLevel.values().length; // exclusive
+                    if (Generator.randomBoolean()) {
+                        r = new UserAccessControlRecord();
+                        r.setHolder(Generator.generateUserWithId());
+                    } else {
+                        r = new UserGroupAccessControlRecord();
+                        r.setHolder(generateUserGroup());
+                        maxAccessLevel = AccessLevel.SECURITY.ordinal();
+                    }
+                    r.setUri(Generator.generateUri());
+                    r.setAccessLevel(AccessLevel.values()[Generator.randomInt(0, maxAccessLevel)]);
+                    return (AccessControlRecord<?>) r;
+                })
+                .collect(Collectors.toList());
 
         final RoleAccessControlRecord fr = new RoleAccessControlRecord();
         final UserRole fullRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
@@ -531,30 +530,39 @@ public class Generator {
     }
 
     /**
-     * Generates {@link File Files} with different modification and last backup timestamps.
-     * Generated files are linked to the provided document.
+     * Generates {@link File Files} with different modification and last backup timestamps. Generated files are linked
+     * to the provided document.
+     *
      * @param document the document to which the files should be added
      * @return generated files
      */
     public static List<File> generateDocumentFilesWithBackupTimestamps(Document document) {
         Instant now = Instant.now().minusSeconds(1);
-        return Map.of(now.minus(25, ChronoUnit.HOURS), now.minus(24, ChronoUnit.HOURS),
-                   now.minus(23, ChronoUnit.HOURS), now.minus(25, ChronoUnit.HOURS),
-                   now.minusSeconds(10), now.minus(1, ChronoUnit.MINUTES),
-                   Instant.EPOCH, now.minus(5, ChronoUnit.DAYS))
-                .entrySet().stream().map(entry -> {
-               final Instant modified = entry.getKey();
-               final Instant lastBackup = entry.getValue();
+        return Map.of(
+                        now.minus(25, ChronoUnit.HOURS),
+                        now.minus(24, ChronoUnit.HOURS),
+                        now.minus(23, ChronoUnit.HOURS),
+                        now.minus(25, ChronoUnit.HOURS),
+                        now.minusSeconds(10),
+                        now.minus(1, ChronoUnit.MINUTES),
+                        Instant.EPOCH,
+                        now.minus(5, ChronoUnit.DAYS))
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    final Instant modified = entry.getKey();
+                    final Instant lastBackup = entry.getValue();
 
-               File file = new File();
-               file.setLabel("documentFile" + randomInt());
-               document.addFile(file);
-               file.setDocument(document);
-               file.setUri(Generator.generateUri());
-               file.setModified(modified);
-               file.setLastBackup(lastBackup);
-               return file;
-           }).toList();
+                    File file = new File();
+                    file.setLabel("documentFile" + randomInt());
+                    document.addFile(file);
+                    file.setDocument(document);
+                    file.setUri(Generator.generateUri());
+                    file.setModified(modified);
+                    file.setLastBackup(lastBackup);
+                    return file;
+                })
+                .toList();
     }
 
     public static PersonalAccessToken generatePersonalAccessToken(UserAccount owner) {

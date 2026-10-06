@@ -25,9 +25,7 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import java.net.URI;
 import java.util.List;
 
-/**
- * Business service for managing {@link TermOccurrence}s.
- */
+/** Business service for managing {@link TermOccurrence}s. */
 public interface TermOccurrenceService {
 
     /**
@@ -39,8 +37,8 @@ public interface TermOccurrenceService {
 
     /**
      * Saves the specified term occurrence, either persisting it or updating if it already exists.
-     * <p>
-     * If the occurrence already exists, it is assumed that the term has changed and only this attribute is updated.
+     *
+     * <p>If the occurrence already exists, it is assumed that the term has changed and only this attribute is updated.
      *
      * @param occurrence Occurrence to save
      */
@@ -48,8 +46,8 @@ public interface TermOccurrenceService {
 
     /**
      * Approves term occurrence with the specified identifier.
-     * <p>
-     * This removes the suggested classification of the occurrence if it were present.
+     *
+     * <p>This removes the suggested classification of the occurrence if it were present.
      *
      * @param occurrenceId Identifier of the occurrence to approve
      */
@@ -89,8 +87,8 @@ public interface TermOccurrenceService {
 
     /**
      * Finds all term occurrences whose target points to the specified asset.
-     * <p>
-     * I.e., these term occurrences appear in the specified asset (file, term definition).
+     *
+     * <p>I.e., these term occurrences appear in the specified asset (file, term definition).
      *
      * @param target Asset to filter by
      * @return List of matching term occurrences

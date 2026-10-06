@@ -60,35 +60,35 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Perf #1283
-     * <p>
-     * Query for loading term occurrences targeting a specified source (file, another term) in a single go.
+     *
+     * <p>Query for loading term occurrences targeting a specified source (file, another term) in a single go.
      */
     private static final String FIND_ALL_TARGETING_QUERY =
-            "SELECT ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition WHERE {" +
-                    "?occ a ?occurrence ." +
-                    "GRAPH ?g { " +
-                    "?occ a ?type ;" +
-                    "   ?hasTarget ?target ." +
-                    "OPTIONAL {" +
-                    "   ?occ ?assignmentOfTerm ?term ." +
-                    "} }" +
-                    "?target a ?occurrenceTarget ;" +
-                    "   ?hasSource ?source ." +
-                    "OPTIONAL {" +
-                    "   ?target ?hasSelector ?selector ." +
-                    "   ?selector a ?selectorType ." +
-                    "   {" +
-                    "       ?selector ?hasExactMatch ?exactMatch ." +
-                    "       OPTIONAL { ?selector ?hasPrefix ?prefix . }" +
-                    "       OPTIONAL { ?selector ?hasSuffix ?suffix . }" +
-                    "   } UNION {" +
-                    "       ?selector ?hasStart ?startPosition ;" +
-                    "           ?hasEnd ?endPosition ." +
-                    "   } " +
-                    "} " +
-                    "FILTER (?type = ?fileOccurrence || ?type = ?definitionalOccurrence)" +
-                    "BIND(EXISTS { ?occ a ?suggestedType . } as ?suggested)" +
-                    "} GROUP BY ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition";
+            "SELECT ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition WHERE {"
+                    + "?occ a ?occurrence ."
+                    + "GRAPH ?g { "
+                    + "?occ a ?type ;"
+                    + "   ?hasTarget ?target ."
+                    + "OPTIONAL {"
+                    + "   ?occ ?assignmentOfTerm ?term ."
+                    + "} }"
+                    + "?target a ?occurrenceTarget ;"
+                    + "   ?hasSource ?source ."
+                    + "OPTIONAL {"
+                    + "   ?target ?hasSelector ?selector ."
+                    + "   ?selector a ?selectorType ."
+                    + "   {"
+                    + "       ?selector ?hasExactMatch ?exactMatch ."
+                    + "       OPTIONAL { ?selector ?hasPrefix ?prefix . }"
+                    + "       OPTIONAL { ?selector ?hasSuffix ?suffix . }"
+                    + "   } UNION {"
+                    + "       ?selector ?hasStart ?startPosition ;"
+                    + "           ?hasEnd ?endPosition ."
+                    + "   } "
+                    + "} "
+                    + "FILTER (?type = ?fileOccurrence || ?type = ?definitionalOccurrence)"
+                    + "BIND(EXISTS { ?occ a ?suggestedType . } as ?suggested)"
+                    + "} GROUP BY ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition";
 
     private final Configuration.Persistence config;
 
@@ -105,12 +105,11 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      */
     public List<TermOccurrence> findAllOf(AbstractTerm term) {
         Objects.requireNonNull(term);
-        return em.createNativeQuery("SELECT ?x WHERE {" +
-                                            "?x a ?type ;" +
-                                            "?hasTerm ?term . }", TermOccurrence.class)
-                 .setParameter("type", typeUri)
-                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
-                 .setParameter("term", term.getUri()).getResultList();
+        return em.createNativeQuery("SELECT ?x WHERE {" + "?x a ?type ;" + "?hasTerm ?term . }", TermOccurrence.class)
+                .setParameter("type", typeUri)
+                .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
+                .setParameter("term", term.getUri())
+                .getResultList();
     }
 
     /**
@@ -121,15 +120,16 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      */
     public List<TermOccurrence> findAllDefinitionalOf(AbstractTerm term) {
         Objects.requireNonNull(term);
-        return em
-                .createQuery("SELECT to FROM TermDefinitionalOccurrence to WHERE to.term = :term", TermOccurrence.class)
-                .setParameter("term", term).getResultList();
+        return em.createQuery(
+                        "SELECT to FROM TermDefinitionalOccurrence to WHERE to.term = :term", TermOccurrence.class)
+                .setParameter("term", term)
+                .getResultList();
     }
 
     /**
      * Finds all term occurrences whose target points to the specified resource.
-     * <p>
-     * I.e., these term occurrences appear in the specified resource (presumably file).
+     *
+     * <p>I.e., these term occurrences appear in the specified resource (presumably file).
      *
      * @param target Asset to filter by
      * @return List of matching term occurrences
@@ -137,23 +137,23 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
     public List<TermOccurrence> findAllTargeting(Asset<?> target) {
         Objects.requireNonNull(target);
         final Query query = em.createNativeQuery(FIND_ALL_TARGETING_QUERY)
-                              .setParameter("g", TermOccurrence.resolveContext(target.getUri()))
-                              .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
-                              .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
-                              .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
-                              .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
-                              .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
-                              .setParameter("source", target.getUri())
-                              .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector))
-                              .setParameter("selectorType", URI.create(Vocabulary.s_c_selector))
-                              .setParameter("hasExactMatch", URI.create(Vocabulary.s_p_has_exact_text_quote))
-                              .setParameter("hasPrefix", URI.create(Vocabulary.s_p_has_text_quote_prefix))
-                              .setParameter("hasSuffix", URI.create(Vocabulary.s_p_has_text_quote_suffix))
-                              .setParameter("hasStart", URI.create(Vocabulary.s_p_has_start_position))
-                              .setParameter("hasEnd", URI.create(Vocabulary.s_p_has_end_position))
-                              .setParameter("fileOccurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
-                              .setParameter("definitionalOccurrence", URI.create(Vocabulary.s_c_definition_term_occurrence))
-                              .setParameter("suggestedType", URI.create(Vocabulary.s_c_suggested_term_occurrence));
+                .setParameter("g", TermOccurrence.resolveContext(target.getUri()))
+                .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
+                .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
+                .setParameter("assignmentOfTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
+                .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
+                .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
+                .setParameter("source", target.getUri())
+                .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector))
+                .setParameter("selectorType", URI.create(Vocabulary.s_c_selector))
+                .setParameter("hasExactMatch", URI.create(Vocabulary.s_p_has_exact_text_quote))
+                .setParameter("hasPrefix", URI.create(Vocabulary.s_p_has_text_quote_prefix))
+                .setParameter("hasSuffix", URI.create(Vocabulary.s_p_has_text_quote_suffix))
+                .setParameter("hasStart", URI.create(Vocabulary.s_p_has_start_position))
+                .setParameter("hasEnd", URI.create(Vocabulary.s_p_has_end_position))
+                .setParameter("fileOccurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
+                .setParameter("definitionalOccurrence", URI.create(Vocabulary.s_c_definition_term_occurrence))
+                .setParameter("suggestedType", URI.create(Vocabulary.s_c_suggested_term_occurrence));
         return new SparqlResultToTermOccurrenceMapper(target.getUri()).map(query.getResultList());
     }
 
@@ -164,45 +164,47 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      * @return List of {@code TermOccurrences}
      */
     public List<TermOccurrences> getOccurrenceInfo(AbstractTerm term) {
-        final Query query = em.createNativeQuery("SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {" +
-                                            "BIND (?t AS ?term)" +
-                                            "{" +
-                                            "  ?x a ?suggestedOccurrence ." +
-                                            "  BIND (true as ?suggested)" +
-                                            "} UNION {" +
-                                            "  ?x a ?occurrence ." +
-                                            "  FILTER NOT EXISTS {" +
-                                            "    ?x a ?suggestedOccurrence ." +
-                                            "  }" +
-                                            "  BIND (false as ?suggested)" +
-                                            "} " +
-                                            "  ?x ?hasTerm ?term ;" +
-                                            "     ?hasTarget ?target . " +
-                                            "  { ?target ?hasSource ?resource . FILTER NOT EXISTS { ?resource a ?fileType . } } " +
-                                            "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . } " +
-                                            "BIND (IF(EXISTS { ?resource a ?termType }, ?termDefOcc, ?fileOcc) as ?type)" +
-                                            "{ ?resource rdfs:label ?label . } UNION { ?resource ?hasTitle ?label . } " +
-                                            // Assuming ?resource is either Document or Term
-                                            "BIND(?langVal AS ?language) ." +
-                                            insertVocabularyPattern("?resource") +
-                                            insertLanguagePattern("?resource") +
-                                            "FILTER langMatches(lang(?label), ?language)" +
-                                            "} GROUP BY ?resource ?term ?label ?type ?suggested HAVING (?cnt > 0) ORDER BY ?label",
-                                    "TermOccurrences")
-                 .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_suggested_term_occurrence))
-                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
-                 .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
-                 .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
-                 .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
-                 .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
-                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_has_file))
-                 .setParameter("fileType", URI.create(Vocabulary.s_c_file))
-                 .setParameter("langVal", config.getLanguage())
-                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                 .setParameter("termType", URI.create(SKOS.CONCEPT))
-                 .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definition_term_occurrence))
-                 .setParameter("fileOcc", URI.create(Vocabulary.s_c_file_term_occurrence))
-                 .setParameter("t", term.getUri());
+        final Query query = em.createNativeQuery(
+                        "SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {"
+                                + "BIND (?t AS ?term)"
+                                + "{"
+                                + "  ?x a ?suggestedOccurrence ."
+                                + "  BIND (true as ?suggested)"
+                                + "} UNION {"
+                                + "  ?x a ?occurrence ."
+                                + "  FILTER NOT EXISTS {"
+                                + "    ?x a ?suggestedOccurrence ."
+                                + "  }"
+                                + "  BIND (false as ?suggested)"
+                                + "} "
+                                + "  ?x ?hasTerm ?term ;"
+                                + "     ?hasTarget ?target . "
+                                + "  { ?target ?hasSource ?resource . FILTER NOT EXISTS { ?resource a ?fileType . } } "
+                                + "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . } "
+                                + "BIND (IF(EXISTS { ?resource a ?termType }, ?termDefOcc, ?fileOcc) as ?type)"
+                                + "{ ?resource rdfs:label ?label . } UNION { ?resource ?hasTitle ?label . } "
+                                +
+                                // Assuming ?resource is either Document or Term
+                                "BIND(?langVal AS ?language) ."
+                                + insertVocabularyPattern("?resource")
+                                + insertLanguagePattern("?resource")
+                                + "FILTER langMatches(lang(?label), ?language)"
+                                + "} GROUP BY ?resource ?term ?label ?type ?suggested HAVING (?cnt > 0) ORDER BY ?label",
+                        "TermOccurrences")
+                .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_suggested_term_occurrence))
+                .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
+                .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
+                .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
+                .setParameter("occurrence", URI.create(Vocabulary.s_c_term_occurrence))
+                .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
+                .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_has_file))
+                .setParameter("fileType", URI.create(Vocabulary.s_c_file))
+                .setParameter("langVal", config.getLanguage())
+                .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                .setParameter("termType", URI.create(SKOS.CONCEPT))
+                .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definition_term_occurrence))
+                .setParameter("fileOcc", URI.create(Vocabulary.s_c_file_term_occurrence))
+                .setParameter("t", term.getUri());
         bindVocabularyRelatedParameters(query);
         return query.getResultList();
     }
@@ -245,27 +247,27 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
     }
 
     private void removeAll(URI assetUri, URI toType) {
-        em.createNativeQuery("DELETE WHERE {" +
-                                     "?x a ?toType ;" +
-                                     "?hasTarget ?target ;" +
-                                     "?y ?z ." +
-                                     "?target a ?occurrenceTarget ;" +
-                                     "?hasSelector ?selector ;" +
-                                     "?hasSource ?asset ." +
-                                     "?target ?tY ?tZ ." +
-                                     "?selector ?sY ?sZ . }")
-          .setParameter("toType", toType)
-          .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
-          .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
-          .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
-          .setParameter("asset", assetUri)
-          .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector)).executeUpdate();
+        em.createNativeQuery("DELETE WHERE {" + "?x a ?toType ;"
+                        + "?hasTarget ?target ;"
+                        + "?y ?z ."
+                        + "?target a ?occurrenceTarget ;"
+                        + "?hasSelector ?selector ;"
+                        + "?hasSource ?asset ."
+                        + "?target ?tY ?tZ ."
+                        + "?selector ?sY ?sZ . }")
+                .setParameter("toType", toType)
+                .setParameter("hasTarget", URI.create(Vocabulary.s_p_has_target))
+                .setParameter("occurrenceTarget", URI.create(Vocabulary.s_c_occurrence_target))
+                .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
+                .setParameter("asset", assetUri)
+                .setParameter("hasSelector", URI.create(Vocabulary.s_p_has_selector))
+                .executeUpdate();
     }
 
     /**
      * Removes all term occurrences whose target points to the specified asset.
-     * <p>
-     * Note that the removal may not be immediate. Rather, the occurrences are moved into a context that is scheduled
+     *
+     * <p>Note that the removal may not be immediate. Rather, the occurrences are moved into a context that is scheduled
      * for removal later.
      *
      * @param target Asset for which term occurrences will be removed
@@ -276,16 +278,18 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         final URI sourceContext = TermOccurrence.resolveContext(target.getUri());
         LOG.debug("Removing all occurrences from {}", Utils.uriToString(sourceContext));
         em.createNativeQuery("DROP GRAPH ?context")
-          .setParameter("context", sourceContext)
-          .executeUpdate();
-        LOG.atDebug().setMessage("Removed all occurrences from {}")
-           .addArgument(() -> Utils.uriToString(sourceContext)).log();
+                .setParameter("context", sourceContext)
+                .executeUpdate();
+        LOG.atDebug()
+                .setMessage("Removed all occurrences from {}")
+                .addArgument(() -> Utils.uriToString(sourceContext))
+                .log();
     }
 
     /**
      * Removes all occurrences of the specified term.
-     * <p>
-     * That is, remove all term occurrences whose subject (not target) is the specified term.
+     *
+     * <p>That is, remove all term occurrences whose subject (not target) is the specified term.
      *
      * @param term Term whose occurrences to remove
      */
@@ -295,30 +299,33 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Removes all term occurrence whose target points to a non-existent asset.
-     * <p>
-     * This method exists mainly for legacy reasons - since occurrences are now stored in a particular context, their
+     *
+     * <p>This method exists mainly for legacy reasons - since occurrences are now stored in a particular context, their
      * batch removal (e.g., on corresponding asset remove) is implemented by dropping the whole context. However, old
      * occurrences were stored in the default context and thus the new removal logic does not affect them. This method
      * allows targeting such occurrences.
      */
     public void removeAllOrphans() {
-        em.createNativeQuery("SELECT DISTINCT ?source WHERE {" +
-                                     "?t a ?target ;" +
-                                     "?hasSource ?source ." +
-                                     // If an asset does not have a label, it does not exist
-                                     "FILTER NOT EXISTS { " +
-                                     "{ ?source ?hasLabel ?label . } " +
-                                     "UNION" +
-                                     "{ ?source ?hasTitle ?label . } " +
-                                     "}}", URI.class)
-          .setParameter("target", URI.create(Vocabulary.s_c_occurrence_target))
-          .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
-          .setParameter("hasLabel", URI.create(RDFS.LABEL))
-          .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
-          .getResultStream().forEach(a -> {
-              LOG.trace("Removing orphaned term occurrences targeting <{}>.", a);
-              removeAll(a, URI.create(Vocabulary.s_c_term_occurrence));
-          });
+        em.createNativeQuery(
+                        "SELECT DISTINCT ?source WHERE {" + "?t a ?target ;"
+                                + "?hasSource ?source ."
+                                +
+                                // If an asset does not have a label, it does not exist
+                                "FILTER NOT EXISTS { "
+                                + "{ ?source ?hasLabel ?label . } "
+                                + "UNION"
+                                + "{ ?source ?hasTitle ?label . } "
+                                + "}}",
+                        URI.class)
+                .setParameter("target", URI.create(Vocabulary.s_c_occurrence_target))
+                .setParameter("hasSource", URI.create(Vocabulary.s_p_has_resource))
+                .setParameter("hasLabel", URI.create(RDFS.LABEL))
+                .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
+                .getResultStream()
+                .forEach(a -> {
+                    LOG.trace("Removing orphaned term occurrences targeting <{}>.", a);
+                    removeAll(a, URI.create(Vocabulary.s_c_term_occurrence));
+                });
     }
 
     /**
@@ -339,12 +346,10 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
         if (excludeSuggested) {
             final URI suggestedType = URI.create(Vocabulary.s_c_suggested_term_occurrence);
-            Predicate notSuggestedType = cb.isNotMember(suggestedType,
-                                               root.<Set<URI>>getAttr("types"));
+            Predicate notSuggestedType = cb.isNotMember(suggestedType, root.<Set<URI>>getAttr("types"));
             wherePredicates.add(notSuggestedType);
         }
 
-        return em.createQuery(query.ask().where(wherePredicates))
-                .getSingleResult();
+        return em.createQuery(query.ask().where(wherePredicates)).getSingleResult();
     }
 }

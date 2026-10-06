@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-/**
- * Removes occurrences of deleted terms after their removal transaction has committed.
- */
+/** Removes occurrences of deleted terms after their removal transaction has committed. */
 @Service
 public class TermOccurrenceCleanupListener {
 
@@ -30,10 +28,10 @@ public class TermOccurrenceCleanupListener {
 
     /**
      * Cleans up occurrences asynchronously after the term removal transaction commits.
-     * <p>
-     * Rolled-back transactions do not trigger this listener. Failed cleanup is retried up to three times,
-     * with a one-second delay and an independent transaction for each attempt. Exhausted failures propagate
-     * to the application's asynchronous exception handler.
+     *
+     * <p>Rolled-back transactions do not trigger this listener. Failed cleanup is retried up to three times, with a
+     * one-second delay and an independent transaction for each attempt. Exhausted failures propagate to the
+     * application's asynchronous exception handler.
      *
      * @param event Event containing the removed term
      */

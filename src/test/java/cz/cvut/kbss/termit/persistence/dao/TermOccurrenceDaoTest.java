@@ -111,7 +111,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         if (files.length == 0) {
             final File file = new File();
             file.setLabel(FILE_LABEL);
-            filesToProcess = new File[]{file};
+            filesToProcess = new File[] {file};
         } else {
             filesToProcess = files;
         }
@@ -135,9 +135,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         }
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.randomBoolean() ? tOne : tTwo;
-            final TermOccurrence to = generateTermOccurrence(suggested,
-                                                             filesToProcess[Generator.randomIndex(filesToProcess)],
-                                                             term);
+            final TermOccurrence to =
+                    generateTermOccurrence(suggested, filesToProcess[Generator.randomIndex(filesToProcess)], term);
             map.get(term).add(to);
         }
         transactional(() -> {
@@ -178,9 +177,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final File fTwo = new File();
         fTwo.setLabel("fTwo.html");
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(false, fOne, fTwo);
-        final List<TermOccurrence> matching = allOccurrences.values().stream().flatMap(
-                                                                    l -> l.stream().filter(to -> to.getTarget().getSource().equals(fOne.getUri())))
-                                                            .toList();
+        final List<TermOccurrence> matching = allOccurrences.values().stream()
+                .flatMap(l -> l.stream().filter(to -> to.getTarget().getSource().equals(fOne.getUri())))
+                .toList();
 
         em.getEntityManagerFactory().getCache().evictAll();
         final List<TermOccurrence> result = sut.findAllTargeting(fOne);
@@ -238,8 +237,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeSuggested(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
-                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
-                      .getSingleResult());
+                .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
+                .getSingleResult());
     }
 
     @Test
@@ -249,8 +248,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(true, file);
         assertFalse(sut.findAllTargeting(file).isEmpty());
         final List<TermOccurrence> retained = new ArrayList<>();
-        transactional(() -> allOccurrences
-                .forEach((t, list) -> list.stream().filter(to -> Generator.randomBoolean()).forEach(to -> {
+        transactional(() -> allOccurrences.forEach((t, list) -> list.stream()
+                .filter(to -> Generator.randomBoolean())
+                .forEach(to -> {
                     to.removeType(Vocabulary.s_c_suggested_term_occurrence);
                     retained.add(to);
                     em.merge(to);
@@ -258,7 +258,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeSuggested(file));
         final List<TermOccurrence> result = sut.findAllTargeting(file);
         assertEquals(retained.size(), result.size());
-        result.forEach(to -> assertTrue(retained.stream().anyMatch(toExp -> toExp.getUri().equals(to.getUri()))));
+        result.forEach(to ->
+                assertTrue(retained.stream().anyMatch(toExp -> toExp.getUri().equals(to.getUri()))));
     }
 
     @Test
@@ -266,16 +267,17 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final File file = Generator.generateFileWithId(FILE_LABEL);
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(true, file);
         assertFalse(sut.findAllTargeting(file).isEmpty());
-        transactional(() -> allOccurrences
-                .forEach((t, list) -> list.stream().filter(to -> Generator.randomBoolean()).forEach(to -> {
+        transactional(() -> allOccurrences.forEach((t, list) -> list.stream()
+                .filter(to -> Generator.randomBoolean())
+                .forEach(to -> {
                     to.removeType(Vocabulary.s_c_suggested_term_occurrence);
                     em.merge(to);
                 })));
         transactional(() -> sut.removeAll(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
-                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
-                      .getSingleResult());
+                .setParameter("termOccurrence", URI.create(Vocabulary.s_c_term_occurrence))
+                .getSingleResult());
     }
 
     @Test
@@ -284,16 +286,15 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         file.setLabel(FILE_LABEL);
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(true, file);
         assertFalse(sut.findAllTargeting(file).isEmpty());
-        transactional(() -> allOccurrences
-                .forEach((t, list) -> list.forEach(to -> {
-                    to.removeType(Vocabulary.s_c_suggested_term_occurrence);
-                    em.merge(to);
-                })));
+        transactional(() -> allOccurrences.forEach((t, list) -> list.forEach(to -> {
+            to.removeType(Vocabulary.s_c_suggested_term_occurrence);
+            em.merge(to);
+        })));
         transactional(() -> sut.removeAll(file));
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class)
-                      .setParameter("target", URI.create(Vocabulary.s_c_target))
-                      .getSingleResult());
+                .setParameter("target", URI.create(Vocabulary.s_c_target))
+                .getSingleResult());
     }
 
     @Test
@@ -389,17 +390,17 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     void persistSavesTermOccurrenceWithTargetIntoGeneratedContext() {
         final File file = Generator.generateFileWithId(FILE_LABEL);
         transactional(() -> em.persist(file));
-        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(),
-                                                                 new FileOccurrenceTarget(file));
+        final TermOccurrence occurrence =
+                new TermFileOccurrence(Generator.generateUri(), new FileOccurrenceTarget(file));
         occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
 
         transactional(() -> sut.persist(occurrence));
         assertNotNull(sut.find(occurrence.getUri()));
         assertThat(sut.findAllTargeting(file), not(emptyCollectionOf(TermOccurrence.class)));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence .} }", Boolean.class)
-                     .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
-                     .getSingleResult());
+                .setParameter("x", occurrence.getUri())
+                .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
+                .getSingleResult());
     }
 
     @Test
@@ -464,7 +465,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(1, result.size());
         final TermOccurrences toi = result.get(0);
-        assertEquals(occurrencesOne.size() + occurrencesTwo.size(), toi.getCount().intValue());
+        assertEquals(
+                occurrencesOne.size() + occurrencesTwo.size(), toi.getCount().intValue());
     }
 
     @Test
@@ -488,9 +490,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     private List<TermOccurrence> generateTermOccurrences(Term term, Asset<?> target, boolean suggested) {
         final List<TermOccurrence> occurrences = IntStream.range(0, Generator.randomInt(5, 10))
-                                                          .mapToObj(i -> Generator.generateTermOccurrence(term, target,
-                                                                                                          suggested))
-                                                          .collect(Collectors.toList());
+                .mapToObj(i -> Generator.generateTermOccurrence(term, target, suggested))
+                .collect(Collectors.toList());
         transactional(() -> occurrences.forEach(to -> {
             em.persist(to);
             em.persist(to.getTarget());
@@ -499,13 +500,14 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     }
 
     private void saveAssetLabelInOtherLanguage(Asset<?> asset) {
-        assertEquals(Environment.LANGUAGE,
-                     em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
+        assertEquals(
+                Environment.LANGUAGE,
+                em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
         final Repository repo = em.unwrap(Repository.class);
         final ValueFactory vf = repo.getValueFactory();
         try (final RepositoryConnection conn = repo.getConnection()) {
-            conn.add(vf.createStatement(vf.createIRI(asset.getUri().toString()), RDFS.LABEL,
-                                        vf.createLiteral("Czech label", "cs")));
+            conn.add(vf.createStatement(
+                    vf.createIRI(asset.getUri().toString()), RDFS.LABEL, vf.createLiteral("Czech label", "cs")));
         }
     }
 
@@ -562,37 +564,37 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     void updateSavesTermOccurrenceInContext() {
         final File file = Generator.generateFileWithId(FILE_LABEL);
         transactional(() -> em.persist(file));
-        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(),
-                                                                 new FileOccurrenceTarget(file));
+        final TermOccurrence occurrence =
+                new TermFileOccurrence(Generator.generateUri(), new FileOccurrenceTarget(file));
         occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
 
         transactional(() -> sut.persist(occurrence));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
-                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
-                     .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
-                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
-                     .getSingleResult());
+                .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                .setParameter("x", occurrence.getUri())
+                .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
+                .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
+                .getSingleResult());
         final URI newTermUri = Generator.generateUri();
         occurrence.setTerm(newTermUri);
         transactional(() -> sut.update(occurrence));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
-                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
-                     .setParameter("x", occurrence.getUri())
-                     .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
-                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
-                     .getSingleResult());
+                .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                .setParameter("x", occurrence.getUri())
+                .setParameter("occurrence", URI.create(Vocabulary.s_c_file_term_occurrence))
+                .setParameter("hasTerm", URI.create(Vocabulary.s_p_is_assignment_of_term))
+                .getSingleResult());
     }
 
     @Test
     void removeAllOfRemovesOccurrencesOfSpecifiedTerm() {
         final Term subject = Generator.generateTermWithId();
         final Term target = Generator.generateTermWithId();
-        final TermOccurrence toRemove = new TermDefinitionalOccurrence(subject.getUri(),
-                                                                       new DefinitionalOccurrenceTarget(target));
+        final TermOccurrence toRemove =
+                new TermDefinitionalOccurrence(subject.getUri(), new DefinitionalOccurrenceTarget(target));
         toRemove.getTarget().setSelectors(Set.of(new TextQuoteSelector("Exact match")));
-        final TermOccurrence toRetain = new TermDefinitionalOccurrence(Generator.generateUri(),
-                                                                       new DefinitionalOccurrenceTarget(target));
+        final TermOccurrence toRetain =
+                new TermDefinitionalOccurrence(Generator.generateUri(), new DefinitionalOccurrenceTarget(target));
         toRetain.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 12)));
         transactional(() -> {
             em.persist(target);
