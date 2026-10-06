@@ -32,25 +32,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Application-wide constants.
- */
+/** Application-wide constants. */
 public class Constants {
 
-    /**
-     * Letters of the (English) alphabet.
-     */
+    /** Letters of the (English) alphabet. */
     public static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
 
-    /**
-     * URL path to the application's REST API.
-     */
+    /** URL path to the application's REST API. */
     public static final String REST_MAPPING_PATH = "/rest";
 
     /**
      * Default page size.
-     * <p>
-     * Implemented as maximum integer so that a default page specification corresponds to a find all query.
+     *
+     * <p>Implemented as maximum integer so that a default page specification corresponds to a find all query.
      *
      * @see #DEFAULT_PAGE_SPEC
      */
@@ -58,15 +52,15 @@ public class Constants {
 
     /**
      * Default page specification, corresponding to a find all query with no page specification.
-     * <p>
-     * I.e., the request asks for the first page (number = 0) and its size is {@link Integer#MAX_VALUE}.
+     *
+     * <p>I.e., the request asks for the first page (number = 0) and its size is {@link Integer#MAX_VALUE}.
      */
     public static final Pageable DEFAULT_PAGE_SPEC = PageRequest.of(0, DEFAULT_PAGE_SIZE);
 
     /**
      * Path to directory containing queries used by the system.
-     * <p>
-     * The path should be relative to the classpath, so that queries from it can be loaded using
+     *
+     * <p>The path should be relative to the classpath, so that queries from it can be loaded using
      * {@link ClassLoader#getResourceAsStream(String)}.
      */
     public static final String QUERY_DIRECTORY = "query";
@@ -77,80 +71,104 @@ public class Constants {
      */
     public static final String X_TOTAL_COUNT_HEADER = "X-Total-Count";
 
-    /**
-     * Score threshold for term occurrence.
-     */
+    /** Score threshold for term occurrence. */
     public static final Double SCORE_THRESHOLD = 0.49;
 
     /**
      * Default identifier component for {@link cz.cvut.kbss.termit.model.resource.Document}.
-     * <p>
-     * This component is appended to the containing vocabulary identifier to form the document identifier.
+     *
+     * <p>This component is appended to the containing vocabulary identifier to form the document identifier.
      */
     public static final String DEFAULT_DOCUMENT_IRI_COMPONENT = "document";
 
     /**
      * Default language when none is specified in configuration.
-     * <p>
-     * Used mainly for resolving internationalized templates.
+     *
+     * <p>Used mainly for resolving internationalized templates.
      */
     public static final String DEFAULT_LANGUAGE = "en";
 
     /**
      * CRON pattern for executing scheduled actions.
-     * <p>
-     * Indicates that the scheduled actions should be executed at 1:10 every day.
+     *
+     * <p>Indicates that the scheduled actions should be executed at 1:10 every day.
      */
     public static final String SCHEDULING_PATTERN = "0 1 1 * * ?";
 
     /**
      * Instant representing the Unix epoch.
-     * <p>
-     * Useful as a default minimum value for timestamp-based calculations.
+     *
+     * <p>Useful as a default minimum value for timestamp-based calculations.
      */
     public static final Instant EPOCH_TIMESTAMP = Instant.EPOCH;
 
     /**
      * Formatter for timestamps (for example, in asset snapshot identifiers).
-     * <p>
-     * It represents ISO instant string without separator dashes and colons truncated to seconds at the UTC timezone.
+     *
+     * <p>It represents ISO instant string without separator dashes and colons truncated to seconds at the UTC timezone.
      */
-    public static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX")
-                                                                                 .withZone(ZoneId.of("UTC"));
+    public static final DateTimeFormatter TIMESTAMP_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneId.of("UTC"));
 
-    /**
-     * SKOS relationships between concepts from different concept schemes (glossaries).
-     */
+    /** SKOS relationships between concepts from different concept schemes (glossaries). */
     public static final Set<URI> SKOS_CONCEPT_MATCH_RELATIONSHIPS = Stream.of(
-            SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH
-    ).map(URI::create).collect(Collectors.toSet());
+                    SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH)
+            .map(URI::create)
+            .collect(Collectors.toSet());
 
-    /**
-     * Relations between vocabularies that do not prevent vocabulary to be removed
-     */
+    /** Relations between vocabularies that do not prevent vocabulary to be removed */
     public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
-            Vocabulary.s_p_is_version_of, Vocabulary.s_p_is_version_of_vocabulary, Vocabulary.s_p_imports_vocabulary
-    ).map(URI::create).collect(Collectors.toSet());
+                    Vocabulary.s_p_is_version_of,
+                    Vocabulary.s_p_is_version_of_vocabulary,
+                    Vocabulary.s_p_imports_vocabulary)
+            .map(URI::create)
+            .collect(Collectors.toSet());
 
     /**
-     * Labels of columns representing exported term attributes in various supported languages.
-     * TODO Replace with constants loaded from attribute mapping properties files
+     * Labels of columns representing exported term attributes in various supported languages. TODO Replace with
+     * constants loaded from attribute mapping properties files
      */
     public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(
             "cs",
-            List.of("Identifikátor", "Název", "Synonyma", "Vyhledávací texty", "Definice", "Doplňující poznámka", "Typ",
-                    "Zdroj", "Nadřazené pojmy", "Podřazené pojmy", "Související pojmy", "Externí související pojmy",
-                    "Pojmy se stejným významem", "Stav pojmu", "Notace", "Příklady", "Reference"),
+            List.of(
+                    "Identifikátor",
+                    "Název",
+                    "Synonyma",
+                    "Vyhledávací texty",
+                    "Definice",
+                    "Doplňující poznámka",
+                    "Typ",
+                    "Zdroj",
+                    "Nadřazené pojmy",
+                    "Podřazené pojmy",
+                    "Související pojmy",
+                    "Externí související pojmy",
+                    "Pojmy se stejným významem",
+                    "Stav pojmu",
+                    "Notace",
+                    "Příklady",
+                    "Reference"),
             DEFAULT_LANGUAGE,
-            List.of("Identifier", "Label", "Synonyms", "Search strings", "Definition", "Scope note", "Type", "Source",
-                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "State",
-                    "Notation", "Example", "References")
-    );
+            List.of(
+                    "Identifier",
+                    "Label",
+                    "Synonyms",
+                    "Search strings",
+                    "Definition",
+                    "Scope note",
+                    "Type",
+                    "Source",
+                    "Parent terms",
+                    "Sub terms",
+                    "Related terms",
+                    "Related match terms",
+                    "Exact matches",
+                    "State",
+                    "Notation",
+                    "Example",
+                    "References"));
 
-
-    /**
-     * the maximum amount of data to buffer when sending messages to a WebSocket session
-     */
+    /** the maximum amount of data to buffer when sending messages to a WebSocket session */
     public static final int WEBSOCKET_SEND_BUFFER_SIZE_LIMIT = Integer.MAX_VALUE;
 
     /**
@@ -159,37 +177,27 @@ public class Constants {
      */
     public static final int WEBSOCKET_TIME_TO_FIRST_MESSAGE = 15 * 1000 /* 15s */;
 
-    /**
-     * Development Spring profile.
-     */
+    /** Development Spring profile. */
     public static final String DEVELOPMENT_PROFILE = "development";
 
-    /**
-     * Blank node prefix.
-     */
+    /** Blank node prefix. */
     public static final String BNODE_PREFIX = "_:";
 
     /**
      * Separator used for SPARQL {@literal GROUP_CONCAT} aggregation.
-     * <p>
-     * Note that the same separator is used in the {@code fulltextsearchquery.rq}, so any changes here should be
+     *
+     * <p>Note that the same separator is used in the {@code fulltextsearchquery.rq}, so any changes here should be
      * reflected in that file as well.
      */
     public static final String GROUP_CONCAT_SEPARATOR = ";;;";
 
-    /**
-     * Lucene index URI namespace
-     */
+    /** Lucene index URI namespace */
     public static final String LUCENE_INSTANCE_NS = "http://www.ontotext.com/connectors/lucene/instance#";
 
-    /**
-     * Prefix used for naming lucene connectors indexing labels.
-     */
+    /** Prefix used for naming lucene connectors indexing labels. */
     public static final String LUCENE_CONNECTOR_LABEL_INDEX_PREFIX = LUCENE_INSTANCE_NS + "termit_labelIndex_";
 
-    /**
-     * Prefix used for naming lucene connectors indexing definitions.
-     */
+    /** Prefix used for naming lucene connectors indexing definitions. */
     public static final String LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX = LUCENE_INSTANCE_NS + "termit_defcomIndex_";
 
     /**
@@ -203,39 +211,25 @@ public class Constants {
         throw new AssertionError();
     }
 
-    /**
-     * Constants from the RDFa vocabulary.
-     */
+    /** Constants from the RDFa vocabulary. */
     public static final class RDFa {
 
-        /**
-         * RDFa property attribute.
-         */
+        /** RDFa property attribute. */
         public static final String PROPERTY = "property";
 
-        /**
-         * RDFa context identifier attribute.
-         */
+        /** RDFa context identifier attribute. */
         public static final String ABOUT = "about";
 
-        /**
-         * RDFa content attribute.
-         */
+        /** RDFa content attribute. */
         public static final String CONTENT = "content";
 
-        /**
-         * RDFa type identifier attribute.
-         */
+        /** RDFa type identifier attribute. */
         public static final String TYPE = "typeof";
 
-        /**
-         * RDFa resource identifier.
-         */
+        /** RDFa resource identifier. */
         public static final String RESOURCE = "resource";
 
-        /**
-         * RDFa prefix attribute.
-         */
+        /** RDFa prefix attribute. */
         public static final String PREFIX = "prefix";
 
         private RDFa() {
@@ -243,14 +237,11 @@ public class Constants {
         }
     }
 
-    /**
-     * Additional media types not covered by {@link org.springframework.http.MediaType}.
-     */
+    /** Additional media types not covered by {@link org.springframework.http.MediaType}. */
     public static final class MediaType {
-        /**
-         * Media type for .xlsx
-         */
+        /** Media type for .xlsx */
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";
         /**
@@ -265,22 +256,20 @@ public class Constants {
         }
     }
 
-    /**
-     * Useful HTTP request query parameters used by the application REST API.
-     */
+    /** Useful HTTP request query parameters used by the application REST API. */
     public static final class QueryParams {
 
         /**
          * HTTP request query parameter denoting identifier namespace.
-         * <p>
-         * Used in connection with normalized name of an individual.
+         *
+         * <p>Used in connection with normalized name of an individual.
          */
         public static final String NAMESPACE = "namespace";
 
         /**
          * HTTP request query parameter denoting page number.
-         * <p>
-         * Used for paging in collections of results.
+         *
+         * <p>Used for paging in collections of results.
          *
          * @see #PAGE_SIZE
          */
@@ -288,8 +277,8 @@ public class Constants {
 
         /**
          * HTTP request query parameter denoting page size.
-         * <p>
-         * Used for paging in collections of results.
+         *
+         * <p>Used for paging in collections of results.
          *
          * @see #PAGE
          */

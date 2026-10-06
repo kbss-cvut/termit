@@ -26,9 +26,7 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.util.Optional;
 
-/**
- * Authorizes access to resources, files and documents in particular.
- */
+/** Authorizes access to resources, files and documents in particular. */
 @Service
 public class ResourceAuthorizationService implements AssetAuthorizationService<Resource> {
 
@@ -45,7 +43,9 @@ public class ResourceAuthorizationService implements AssetAuthorizationService<R
 
     @Override
     public boolean canModify(Resource asset) {
-        return resolveVocabulary(asset).map(vocabularyAuthorizationService::canModify).orElse(true);
+        return resolveVocabulary(asset)
+                .map(vocabularyAuthorizationService::canModify)
+                .orElse(true);
     }
 
     private Optional<Vocabulary> resolveVocabulary(Resource resource) {
@@ -65,7 +65,9 @@ public class ResourceAuthorizationService implements AssetAuthorizationService<R
 
     @Override
     public boolean canRemove(Resource asset) {
-        return resolveVocabulary(asset).map(vocabularyAuthorizationService::canRemoveFiles).orElse(true);
+        return resolveVocabulary(asset)
+                .map(vocabularyAuthorizationService::canRemoveFiles)
+                .orElse(true);
     }
 
     /**

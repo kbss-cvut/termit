@@ -12,8 +12,7 @@ public class IdentifierChangeRecord extends AbstractChangeRecord {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_has_original_value)
     private URI originalIdentifier;
 
-    public IdentifierChangeRecord() {
-    }
+    public IdentifierChangeRecord() {}
 
     public URI getOriginalIdentifier() {
         return originalIdentifier;

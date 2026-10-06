@@ -38,12 +38,14 @@ public class IriMigrationRepositoryService {
     private final ChangeRecordDao changeRecordDao;
     private final SecurityUtils securityUtils;
 
-    public IriMigrationRepositoryService(IriMigrationDao iriMigrationDao,
-                                         ChangeTrackingContextResolver changeTrackingContextResolver,
-                                         TermRepositoryService termRepositoryService,
-                                         VocabularyRepositoryService vocabularyRepositoryService,
-                                         VocabularyNamespaceResolver vocabularyNamespaceResolver,
-                                         ChangeRecordDao changeRecordDao, SecurityUtils securityUtils) {
+    public IriMigrationRepositoryService(
+            IriMigrationDao iriMigrationDao,
+            ChangeTrackingContextResolver changeTrackingContextResolver,
+            TermRepositoryService termRepositoryService,
+            VocabularyRepositoryService vocabularyRepositoryService,
+            VocabularyNamespaceResolver vocabularyNamespaceResolver,
+            ChangeRecordDao changeRecordDao,
+            SecurityUtils securityUtils) {
         this.iriMigrationDao = iriMigrationDao;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
         this.termRepositoryService = termRepositoryService;
@@ -54,8 +56,8 @@ public class IriMigrationRepositoryService {
     }
 
     /**
-     * Performs IRI migration specified by the {@link IriMigrationPair} and optionally {@link IriMigrationParams}.
-     * The operation is performed asynchronously within a standalone transaction.
+     * Performs IRI migration specified by the {@link IriMigrationPair} and optionally {@link IriMigrationParams}. The
+     * operation is performed asynchronously within a standalone transaction.
      *
      * @param iriMigrationPair The pair of IRIs to migrate
      * @param migrationType the expected type of the entity with the original IRI
@@ -64,48 +66,45 @@ public class IriMigrationRepositoryService {
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void migrateIdentifier(IriMigrationPair iriMigrationPair, IriMigrationType migrationType,
-                                  IriMigrationParams params) {
+    public void migrateIdentifier(
+            IriMigrationPair iriMigrationPair, IriMigrationType migrationType, IriMigrationParams params) {
         migrateIdentifierInternal(iriMigrationPair, migrationType, params);
     }
 
-    /**
-     * @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams)
-     */
+    /** @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams) */
     @Transactional(propagation = Propagation.MANDATORY)
     void migrateIdentifierInternal(IriMigrationPair iris, IriMigrationType migrationType, IriMigrationParams params) {
         ensureExists(iris, migrationType);
         final Asset<?> changedAsset = getChangedAsset(iris, migrationType);
 
         new IriMigrationAction(
-                this,
-                iriMigrationDao,
-                changeTrackingContextResolver,
-                vocabularyNamespaceResolver,
-                vocabularyRepositoryService,
-                changeRecordDao,
-                changedAsset,
-                migrationType,
-                iris,
-                params).run();
+                        this,
+                        iriMigrationDao,
+                        changeTrackingContextResolver,
+                        vocabularyNamespaceResolver,
+                        vocabularyRepositoryService,
+                        changeRecordDao,
+                        changedAsset,
+                        migrationType,
+                        iris,
+                        params)
+                .run();
         createChangeRecord(iris, changedAsset);
     }
 
     private Asset<?> getChangedAsset(IriMigrationPair pair, IriMigrationType migrationType) {
         return switch (migrationType) {
             case TERM -> termRepositoryService.findRequired(pair.originalIri());
-            case VOCABULARY ->  vocabularyRepositoryService.findRequired(pair.originalIri());
+            case VOCABULARY -> vocabularyRepositoryService.findRequired(pair.originalIri());
             case CUSTOM_ATTRIBUTE -> null;
         };
     }
 
-    /**
-     * Ensures that the entity with the original IRI exists and is of the type expected by the migration type.
-     */
+    /** Ensures that the entity with the original IRI exists and is of the type expected by the migration type. */
     private void ensureExists(IriMigrationPair iris, IriMigrationType migrationType) {
         if (iriMigrationDao.getEntityTypes(iris.originalIri()).noneMatch(migrationType.getEntityType()::equals)) {
-            throw new NotFoundException("Entity " + Utils.uriToString(iris.originalIri()) + " of type " +
-                    Utils.uriToString(migrationType.getEntityType()) + " not found.");
+            throw new NotFoundException("Entity " + Utils.uriToString(iris.originalIri()) + " of type "
+                    + Utils.uriToString(migrationType.getEntityType()) + " not found.");
         }
     }
 
@@ -122,7 +121,7 @@ public class IriMigrationRepositoryService {
         record.setAuthor(securityUtils.getCurrentUser().toUser());
         record.setOriginalIdentifier(iris.originalIri());
 
-//        changeRecordDao.persist(record, changedAsset);
+        //        changeRecordDao.persist(record, changedAsset);
         // TODO: persist
     }
 }

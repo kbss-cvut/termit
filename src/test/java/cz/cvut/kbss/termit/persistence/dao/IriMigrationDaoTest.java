@@ -33,8 +33,8 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
     }
 
     /**
-     * Provides the subject, predicate and object data to insert into a graph and Iri migration pairs with
-     * subject, predicate and object as originalIri respectively.
+     * Provides the subject, predicate and object data to insert into a graph and Iri migration pairs with subject,
+     * predicate and object as originalIri respectively.
      */
     static Stream<Arguments> migrateIdentifierSource() {
         URI subject = Generator.generateUri();
@@ -44,19 +44,20 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
         return Stream.of(
                 Arguments.of(subject, predicate, object, new IriMigrationPair(subject, newUri)),
                 Arguments.of(subject, predicate, object, new IriMigrationPair(predicate, newUri)),
-                Arguments.of(subject, predicate, object, new IriMigrationPair(object, newUri))
-        );
+                Arguments.of(subject, predicate, object, new IriMigrationPair(object, newUri)));
     }
 
     private boolean askExists(URI subject, URI predicate, URI object, URI graph) {
         return readOnlyTransactional(() -> {
-            TypedQuery<Boolean> query = em.createNativeQuery(graph == null ?
-                    "ASK { ?subject ?predicate ?object }" :
-                    "ASK { GRAPH ?graph { ?subject ?predicate ?object }}", Boolean.class);
+            TypedQuery<Boolean> query = em.createNativeQuery(
+                    graph == null
+                            ? "ASK { ?subject ?predicate ?object }"
+                            : "ASK { GRAPH ?graph { ?subject ?predicate ?object }}",
+                    Boolean.class);
 
             query.setParameter("subject", subject)
-                 .setParameter("predicate", predicate)
-                 .setParameter("object", object);
+                    .setParameter("predicate", predicate)
+                    .setParameter("object", object);
 
             if (graph != null) {
                 query.setParameter("graph", graph);
@@ -71,7 +72,8 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
      *
      * @param uri the URI to check
      * @param iris the pair of URIs for migration
-     * @return {@link IriMigrationPair#newIri()} when the {@code uri} matches the {@link IriMigrationPair#originalIri()}, {@code uri} otherwise.
+     * @return {@link IriMigrationPair#newIri()} when the {@code uri} matches the
+     *     {@link IriMigrationPair#originalIri()}, {@code uri} otherwise.
      */
     private static URI migrated(URI uri, IriMigrationPair iris) {
         if (uri.equals(iris.originalIri())) {
@@ -81,17 +83,12 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
     }
 
     private boolean askExistsAfterMigration(URI subject, URI predicate, URI object, URI graph, IriMigrationPair iris) {
-        return askExists(migrated(subject, iris),
-                migrated(predicate, iris),
-                migrated(object, iris),
-                graph);
+        return askExists(migrated(subject, iris), migrated(predicate, iris), migrated(object, iris), graph);
     }
 
     private void insertData(URI subject, URI predicate, URI object, URI graph) {
         transactional(() -> {
-            Query query = em.createNativeQuery(graph == null ?
-                    "INSERT DATA { ?subject ?predicate ?object }" :
-                    """
+            Query query = em.createNativeQuery(graph == null ? "INSERT DATA { ?subject ?predicate ?object }" : """
                         INSERT DATA {
                             GRAPH ?graph {
                                 ?subject ?predicate ?object .
@@ -99,8 +96,8 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
                         }
                     """);
             query.setParameter("subject", subject)
-                 .setParameter("predicate", predicate)
-                 .setParameter("object", object);
+                    .setParameter("predicate", predicate)
+                    .setParameter("object", object);
 
             if (graph != null) {
                 query.setParameter("graph", graph);

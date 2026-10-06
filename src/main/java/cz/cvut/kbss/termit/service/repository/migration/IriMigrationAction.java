@@ -13,9 +13,10 @@ import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextR
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Objects;
@@ -36,19 +37,22 @@ public class IriMigrationAction implements Runnable {
 
     @Nullable
     private final Asset<?> changedAsset;
+
     private final IriMigrationType migrationType;
     private final IriMigrationPair iris;
     private final IriMigrationParams params;
 
-    IriMigrationAction(IriMigrationRepositoryService iriMigrationRepositoryService,
-                       IriMigrationDao iriMigrationDao,
-                       ChangeTrackingContextResolver changeTrackingContextResolver,
-                       VocabularyNamespaceResolver vocabularyNamespaceResolver,
-                       VocabularyRepositoryService vocabularyRepositoryService, ChangeRecordDao changeRecordDao,
-                       @Nullable Asset<?> changedAsset,
-                       IriMigrationType migrationType,
-                       IriMigrationPair iris,
-                       IriMigrationParams params) {
+    IriMigrationAction(
+            IriMigrationRepositoryService iriMigrationRepositoryService,
+            IriMigrationDao iriMigrationDao,
+            ChangeTrackingContextResolver changeTrackingContextResolver,
+            VocabularyNamespaceResolver vocabularyNamespaceResolver,
+            VocabularyRepositoryService vocabularyRepositoryService,
+            ChangeRecordDao changeRecordDao,
+            @Nullable Asset<?> changedAsset,
+            IriMigrationType migrationType,
+            IriMigrationPair iris,
+            IriMigrationParams params) {
         this.iriMigrationRepositoryService = iriMigrationRepositoryService;
         this.iriMigrationDao = Objects.requireNonNull(iriMigrationDao);
         this.changeTrackingContextResolver = Objects.requireNonNull(changeTrackingContextResolver);
@@ -61,9 +65,7 @@ public class IriMigrationAction implements Runnable {
         this.params = Objects.requireNonNull(params);
     }
 
-    /**
-     * Perform the migration
-     */
+    /** Perform the migration */
     @Override
     public void run() {
         LOG.trace("Executing IRI migration: {}", iris);
@@ -88,7 +90,9 @@ public class IriMigrationAction implements Runnable {
         switch (migrationType) {
             case TERM -> validateTermMigration();
             case VOCABULARY -> validateVocabularyMigration();
-            case CUSTOM_ATTRIBUTE -> {/* no validation */}
+            case CUSTOM_ATTRIBUTE -> {
+                /* no validation */
+            }
         }
     }
 
@@ -106,15 +110,15 @@ public class IriMigrationAction implements Runnable {
         // ensure the new term IRI is inside vocabulary namespace
         final String vocabularyNamespace = vocabularyNamespaceResolver.resolveNamespace(term.getVocabulary());
         if (!term.getUri().toString().startsWith(vocabularyNamespace)) {
-            throw new InvalidParameterException("New Term IRI " + Utils.uriToString(term.getUri()) +
-                    " does not start with Vocabulary namespace <" + vocabularyNamespace + ">");
+            throw new InvalidParameterException("New Term IRI " + Utils.uriToString(term.getUri())
+                    + " does not start with Vocabulary namespace <" + vocabularyNamespace + ">");
         }
     }
 
     /**
      * Moves occurrence graph to the new IRI if there is an occurrence graph for the original IRI.
-     * 
-     * @see TermOccurrence#resolveContext(URI) 
+     *
+     * @see TermOccurrence#resolveContext(URI)
      */
     private void migrateOccurrenceGraph() {
         URI originalGraph = TermOccurrence.resolveContext(iris.originalIri());
@@ -168,13 +172,14 @@ public class IriMigrationAction implements Runnable {
         LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(iris.newIri()));
         assert migrationType == IriMigrationType.VOCABULARY;
         final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
-        iriMigrationDao.findAllTerms(iris.newIri())
+        iriMigrationDao
+                .findAllTerms(iris.newIri())
                 .map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
                 .filter(Objects::nonNull)
                 .forEach(termMigration ->
                         // calling internal to stay in the same transaction
-                        iriMigrationRepositoryService.migrateIdentifierInternal(termMigration, IriMigrationType.TERM,
-                                                                                termMigrationParams));
+                        iriMigrationRepositoryService.migrateIdentifierInternal(
+                                termMigration, IriMigrationType.TERM, termMigrationParams));
     }
 
     private static IriMigrationPair mapTermUri(URI originalTermUri, String originalNamespace, String newNamespace) {
@@ -184,13 +189,10 @@ public class IriMigrationAction implements Runnable {
             return null;
         }
         if (!originalTermUriStr.startsWith(originalNamespace)) {
-            throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri) +
-                    " is not in vocabulary namespace " + originalNamespace);
+            throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri)
+                    + " is not in vocabulary namespace " + originalNamespace);
         }
         final String newTermUriStr = newNamespace + originalTermUriStr.substring(0, originalNamespace.length());
-        return new IriMigrationPair(
-                originalTermUri,
-                URI.create(newTermUriStr)
-        );
+        return new IriMigrationPair(originalTermUri, URI.create(newTermUriStr));
     }
 }
