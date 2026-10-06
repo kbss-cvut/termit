@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -77,6 +78,7 @@ public class IriMigrationService {
         Objects.requireNonNull(iris);
         Objects.requireNonNull(migrationType);
         Objects.requireNonNull(params);
+        validateParameters(migrationType, params);
         if (!canModifyChangedAsset(iris, migrationType)) {
             throw new AuthorizationException("User " + securityUtils.getCurrentUser()
                     + " is not authorized to migrate identifier " + Utils.uriToString(iris.originalIri()) + ".");
@@ -84,6 +86,13 @@ public class IriMigrationService {
         LOG.info("Migrating {} identifier: {}", migrationType.name(), iris);
         repositoryService.migrateIdentifier(iris, migrationType, params);
         LOG.debug("Migrated {} identifier: {}", migrationType.name(), iris);
+    }
+
+    private static void validateParameters(IriMigrationType migrationType, IriMigrationParams params) {
+        if (params.preferredNamespaceUri() != null && migrationType != IriMigrationType.VOCABULARY) {
+            throw new InvalidParameterException(
+                    "Preferred namespace uri is not supported by migration type " + migrationType.name());
+        }
     }
 
     /**
