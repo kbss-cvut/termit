@@ -60,7 +60,9 @@ public class IriMigrationAction implements Runnable {
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.changedAsset = changedAsset;
-        iriMigrationDao.detach(changedAsset);
+        if (changedAsset != null) {
+            iriMigrationDao.detach(changedAsset);
+        }
         this.migrationType = Objects.requireNonNull(migrationType);
         this.iris = Objects.requireNonNull(iris);
         this.params = Objects.requireNonNull(params);
