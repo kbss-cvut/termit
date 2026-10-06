@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>5.0.0</version>
+    <version>5.1.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -193,7 +193,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.23.1</version>
+            <version>1.23.2</version>
         </dependency>
 
         <!-- Flexmark for handling Markdown -->
@@ -262,7 +262,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.0.3</version>
+            <version>3.1.1</version>
         </dependency>
 
         <!-- Ontology schema migration -->
