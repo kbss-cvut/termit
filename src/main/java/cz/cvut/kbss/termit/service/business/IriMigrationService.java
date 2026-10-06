@@ -14,6 +14,8 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ import java.util.Objects;
 @Service
 public class IriMigrationService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(IriMigrationService.class);
     private final IriMigrationRepositoryService repositoryService;
 
     private final VocabularyRepositoryService vocabularyRepositoryService;
@@ -78,7 +81,9 @@ public class IriMigrationService {
                     "User " + securityUtils.getCurrentUser() + " is not authorized to migrate identifier " +
                             Utils.uriToString(iris.originalIri()) + ".");
         }
+        LOG.info("Migrating {} identifier: {}", migrationType.name(), iris);
         repositoryService.migrateIdentifier(iris, migrationType, params);
+        LOG.debug("Migrated {} identifier: {}", migrationType.name(), iris);
     }
 
     /**
