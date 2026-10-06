@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -186,6 +187,10 @@ public class TermController extends BaseController {
                                     + "(regardless of whether they are root terms or not).")
                     @RequestParam(name = "includeTerms", required = false, defaultValue = "")
                     List<URI> includeTerms,
+            @Parameter(description = "Language for sorting. Sorting is done in the specified language.")
+            @RequestParam(name = "language", required = false) String language,
+            @Parameter(description = "Attribute by which the results should be sorted followed by the sort direction (asc or desc).")
+            @RequestParam(name = "sort", required = false) String sort,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
                     @RequestParam(name = QueryParams.PAGE_SIZE, required = false)
                     Integer pageSize,
@@ -194,27 +199,34 @@ public class TermController extends BaseController {
                     Integer pageNo) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(Constants.X_TOTAL_COUNT_HEADER, String.valueOf(termService.getTermCount(vocabulary)));
+        headers.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, Constants.X_TOTAL_COUNT_HEADER);
+
+        Pageable pageable = RestUtils.createPageRequest(pageSize, pageNo, sort);
+
         if (searchString != null) {
-            return ResponseEntity.ok(termService.findAll(
+            return ResponseEntity.ok().headers(headers).body(termService.findAll(
                     searchString,
                     vocabulary,
                     new TermSelectionParams(
-                            flat, full, includeImported, includeRelated, createPageRequest(pageSize, pageNo))));
+                            flat, full, includeImported, includeRelated, pageable, language)));
         }
 
         if (flat && !includeTerms.isEmpty()) {
-            final TermSelectionParams params = new TermSelectionParams(
-                    true, false, includeImported, includeRelated, createPageRequest(pageSize, pageNo));
-            return ResponseEntity.ok(termService.findAllFlat(vocabulary, includeTerms, params));
+            final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
+                                                                       pageable, language);
+            return ResponseEntity.ok().headers(headers).body(termService.findAllFlat(vocabulary, includeTerms, params));
         }
 
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
-            return ResponseEntity.ok(termService.findAll(
+            return ResponseEntity.ok().headers(headers).body(termService.findAll(
                     vocabulary,
                     new TermSelectionParams(
-                            flat, full, includeImported, includeRelated, createPageRequest(pageSize, pageNo))));
+                            flat, full, includeImported, includeRelated, pageable, language)));
         });
     }
 

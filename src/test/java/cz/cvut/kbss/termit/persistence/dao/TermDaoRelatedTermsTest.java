@@ -164,7 +164,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
         transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
 
-        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         final Optional<Term> singleResult = result.stream().filter(t -> t.equals(term)).findFirst();
         assertTrue(singleResult.isPresent());
         inverseRelated.forEach(ir -> assertThat(singleResult.get().getInverseRelated(), hasItem(new TermInfo(ir))));

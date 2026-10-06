@@ -398,7 +398,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     public Integer getTermCount(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return em.createQuery("SELECT DISTINCT COUNT(t) FROM Term t WHERE t.vocabulary = :vocabulary", Integer.class)
-                .setParameter("vocabulary", vocabulary)
+                .setParameter("vocabulary", vocabulary.getUri())
                 .getSingleResult();
     }
 

@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -202,5 +203,30 @@ public class RestUtils {
      */
     public static void setAuthHeader(HttpServletResponse response, String token) {
         response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
+    }
+
+    /**
+     * Creates a page request from the specified parameters, including sorting.
+     *
+     * @param size Page size
+     * @param page Page number
+     * @param sort Sort string in the format "property,direction" (e.g., "label,desc")
+     * @return Page specification with sorting applied
+     */
+    public static Pageable createPageRequest(Integer size, Integer page, String sort) {
+        final int pageSize = size != null ? size : DEFAULT_PAGE_SIZE;
+        final int pageNo = page != null ? page : DEFAULT_PAGE_SPEC.getPageNumber();
+
+        if (sort != null && !sort.isBlank()) {
+            String[] sortParams = sort.split(",");
+            String property = sortParams[0].trim();
+            Sort.Direction direction = Sort.Direction.ASC;
+
+            if (sortParams.length > 1) {
+                direction = Sort.Direction.fromString(sortParams[1].trim());
+            }
+            return PageRequest.of(pageNo, pageSize, Sort.by(direction, property));
+        }
+        return PageRequest.of(pageNo, pageSize);
     }
 }
