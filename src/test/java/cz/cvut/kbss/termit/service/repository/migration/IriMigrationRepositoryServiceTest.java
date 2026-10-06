@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
@@ -15,12 +16,16 @@ import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -29,6 +34,7 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +42,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.IllegalTransactionStateException;
@@ -51,6 +58,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -83,6 +91,9 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
     @Autowired
     private TermOccurrenceDao termOccurrenceDao;
 
+    @Autowired
+    private ChangeRecordDao changeRecordDao;
+
     @MockitoSpyBean
     private IriMigrationDao iriMigrationDao;
 
@@ -100,9 +111,14 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     private List<Term> termsB;
 
+    private User author;
+
+    @Autowired
+    private VocabularyRepositoryService vocabularyRepositoryService;
+
     @BeforeEach
     void setUp() {
-        final User author = Generator.generateUserWithId();
+        this.author = Generator.generateUserWithId();
         author.addType(UserRole.ADMIN.getType());
         Environment.setCurrentUser(author);
         transactional(() -> em.persist(author));
@@ -181,9 +197,37 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         return occurrence;
     }
 
+    private static String generateNamespace() {
+        return IdentifierResolver.ensureNamespaceSeparatorTermination(Generator.generateUriString());
+    }
+
+    /**
+     * Changes the preferred namespace of the vocabulary to a random one and persists the change, the identifiers of the
+     * vocabulary terms are not changed.
+     *
+     * @return the new namespace of the vocabulary
+     */
+    private String changeVocabularyNamespace(Vocabulary vocabulary) {
+        final String namespace = generateNamespace();
+        transactional(() -> {
+            // the namespace must be changed on a managed instance, update restores the namespace of a detached one
+            final Vocabulary managed = vocabularyRepositoryService.findRequired(vocabulary.getUri());
+            managed.setPreferredNamespaceUri(namespace);
+            // persisted by jopa at the end of transaction
+        });
+        vocabulary.setPreferredNamespaceUri(namespace);
+
+        final Vocabulary persisted = vocabularyRepositoryService.findRequired(vocabulary.getUri());
+        assertEquals(namespace, persisted.getPreferredNamespaceUri(), "Vocabulary namespace was not changed!");
+        return namespace;
+    }
+
     private IriMigrationPair iriMigration(URI originalIri) {
+        return iriMigration(originalIri, vocabularyA.getPreferredNamespaceUri());
+    }
+
+    private IriMigrationPair iriMigration(URI originalIri, String namespace) {
         final URI randomUri = Generator.generateUri();
-        final String namespace = vocabularyA.getPreferredNamespaceUri();
         final String randomFragment = IdentifierResolver.extractIdentifierFragment(randomUri);
 
         return new IriMigrationPair(originalIri, URI.create(namespace + randomFragment));
@@ -336,7 +380,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary toMigrate = vocabularyA;
         assertFalse(Utils.isBlank(toMigrate.getPreferredNamespaceUri()));
 
-        final String newNamespace = Environment.BASE_URI + "/vocabulary/new-namespace/term/";
+        final String newNamespace = generateNamespace();
 
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
@@ -441,6 +485,149 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         assertEquals(occurring.getUri(), migrated.getTerm(), "Occurring term was changed!");
         assertEquals(iris.newIri(), migrated.getTarget().getSource(), "Occurrence target is not the migrated term!");
+    }
+
+    @Test
+    void migrateIdentifierThrowsWhenTermsNewIdentifierDoesNotBelongToUnchangedVocabularyNamespace() {
+        final Term toMigrate = termsA.getFirst();
+        final String previousNamespace = vocabularyA.getPreferredNamespaceUri();
+
+        changeVocabularyNamespace(vocabularyA);
+
+        // the new identifier is outside the vocabulary namespace, which is not changed by the migration
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri(), previousNamespace);
+        final IriMigrationParams params = new IriMigrationParams();
+
+        assertThrows(InvalidParameterException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
+    }
+
+    @Test
+    void migrateIdentifierInternalThrowsWhenTermsNewIdentifierDoesNotBelongToNewVocabularyNamespace() {
+        final Term toMigrate = termsA.getFirst();
+
+        // the new identifier is inside the current vocabulary namespace, but outside the new one
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri(), vocabularyA.getPreferredNamespaceUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
+
+        assertThrows(
+                InvalidParameterException.class,
+                () -> transactional(() -> sut.migrateIdentifierInternal(iris, IriMigrationType.TERM, params)));
+    }
+
+    // ensures terms within invalid namespace can be migrated to a correct one
+    @Test
+    void migrateIdentifierDoesNotThrowWhenOriginalTermIdentifierDoesNotBelongToOriginalVocabularyNamespace() {
+        final Term toMigrate = termsA.getFirst();
+
+        // the original term identifier remains in the previous namespace
+        final String vocabularyNamespace = changeVocabularyNamespace(vocabularyA);
+
+        // the new identifier is inside the vocabulary namespace, which is not changed by the migration
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri(), vocabularyNamespace);
+        final IriMigrationParams params = new IriMigrationParams();
+
+        assertDoesNotThrow(() -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
+
+        assertTrue(termService.find(iris.newIri()).isPresent(), "Term not migrated!");
+    }
+
+    // the context is discarded, to disable rdfs inference for other tests
+    @DirtiesContext
+    @ParameterizedTest
+    @EnumSource(
+            value = IriMigrationType.class,
+            names = {"TERM", "VOCABULARY"})
+    void migrateIdentifierCreatesIdentifierChangeRecordForMigratedEntity(IriMigrationType type) {
+        final Asset<?> assetToMigrate = type == IriMigrationType.TERM ? termsA.getFirst() : vocabularyA;
+        final IriMigrationPair iris = iriMigration(assetToMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        sut.migrateIdentifier(iris, type, params);
+
+        // change records are searched by the current identifier of the asset
+        assetToMigrate.setUri(iris.newIri());
+        // the search requires the hierarchy of change record classes from the ontology
+        enableRdfsInference(em);
+
+        final List<IdentifierChangeRecord> records = findIdentifierChangeRecords(assetToMigrate);
+
+        assertEquals(1, records.size());
+        final IdentifierChangeRecord record = records.getFirst();
+        assertEquals(iris.originalIri(), record.getOriginalIdentifier());
+        assertEquals(iris.newIri(), record.getChangedEntity());
+
+        assertEquals(author, record.getAuthor());
+    }
+
+    // the context is discarded, to disable rdfs inference for other tests
+    @DirtiesContext
+    @Test
+    void migrateIdentifierCreatesIdentifierChangeRecordForTermsWhenVocabularyNamespaceIsMigrated() {
+        final Vocabulary toMigrate = vocabularyA;
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
+        final String newNamespace = params.preferredNamespaceUri().toString();
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+
+        // the search requires the hierarchy of change record classes from the ontology
+        enableRdfsInference(em);
+
+        for (Term term : termsA) {
+            final URI originalIri = term.getUri();
+            final URI newIri = URI.create(newNamespace + IdentifierResolver.extractIdentifierFragment(originalIri));
+
+            // change records are searched by the current identifier of the term and of its vocabulary
+            term.setUri(newIri);
+            term.setVocabulary(iris.newIri());
+
+            final List<IdentifierChangeRecord> records = findIdentifierChangeRecords(term);
+
+            assertEquals(1, records.size());
+            final IdentifierChangeRecord record = records.getFirst();
+            assertEquals(originalIri, record.getOriginalIdentifier());
+            assertEquals(newIri, record.getChangedEntity());
+        }
+    }
+
+    // the context is discarded, to disable rdfs inference for other tests
+    @DirtiesContext
+    @Test
+    void migrateIdentifierCreatesPreferredNamespaceChangeRecord() {
+        final Vocabulary toMigrate = vocabularyA;
+        final String originalNamespace = toMigrate.getPreferredNamespaceUri();
+        assertFalse(Utils.isBlank(originalNamespace));
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
+        final String newNamespace = params.preferredNamespaceUri().toString();
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+
+        // change records are searched by the current identifier of the asset
+        toMigrate.setUri(iris.newIri());
+        // the search requires the hierarchy of change record classes from the ontology
+        enableRdfsInference(em);
+
+        final List<UpdateChangeRecord> records = changeRecordDao.findAll(toMigrate).stream()
+                .filter(UpdateChangeRecord.class::isInstance)
+                .map(UpdateChangeRecord.class::cast)
+                .filter(record ->
+                        record.getChangedAttribute().equals(Vocabulary_.preferredNamespacePrefixPropertyIRI.toURI()))
+                .toList();
+
+        assertEquals(1, records.size());
+        final UpdateChangeRecord record = records.getFirst();
+        assertEquals(Set.of(originalNamespace), record.getOriginalValue());
+        assertEquals(Set.of(newNamespace), record.getNewValue());
+    }
+
+    private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {
+        return changeRecordDao.findAll(asset).stream()
+                .filter(IdentifierChangeRecord.class::isInstance)
+                .map(IdentifierChangeRecord.class::cast)
+                .toList();
     }
 
     /** Finds the occurrence in the specified graph, fails when the graph does not contain the occurrence. */
