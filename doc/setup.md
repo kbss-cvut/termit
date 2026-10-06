@@ -6,7 +6,7 @@ This guide provides information on how to build and deploy TermIt.
 
 ### System Requirements
 
-* JDK 17 or newer
+* JDK 25 or newer
 * Apache Maven 3.5.x or newer
 
 ### Setup
@@ -49,11 +49,21 @@ calling
 
 or configure it permanently by setting the `MAVEN_OPTS` variable in System Settings.
 
+#### Code Formatting
+
+TermIt uses the [Spotless Maven Plugin](https://github.com/diffplug/spotless) for code formatting. Every pull request
+is checked for code formatting and the build will fail if the check does not pass. To ensure unformatted code is not
+pushed to the repository, we recommend installing
+the [pre-push hook](https://github.com/diffplug/spotless/blob/main/plugin-maven/README.md#git-hook) using the
+`spotless:install-git-pre-push-hook` Maven goal. This way, code formatting is checked before push, and you are able to
+amend the commit before pushing it. Amending the last commit is preferred over adding a separate purely code formatting
+fixing commit.
+
 ## Deployment
 
 ### System Requirements
 
-* JDK 17 or later
+* JDK 25 or later
 
 ### Setup
 
