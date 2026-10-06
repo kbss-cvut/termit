@@ -28,7 +28,6 @@ public abstract class TransactionalTestRunner {
     @Autowired
     protected PlatformTransactionManager txManager;
 
-
     protected <T> T transactional(Supplier<T> procedure) {
         return Transaction.execute(txManager, procedure);
     }

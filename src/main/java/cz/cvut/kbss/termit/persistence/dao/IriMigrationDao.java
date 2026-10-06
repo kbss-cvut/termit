@@ -23,8 +23,8 @@ public class IriMigrationDao {
 
     /**
      * Replaces any occurrence of the {@link IriMigrationPair#originalIri()} with the {@link IriMigrationPair#newIri()}.
-     * <p>
-     * Snapshot modification is prevented except of rewiring the {@code is-version-of} relations.
+     *
+     * <p>Snapshot modification is prevented except of rewiring the {@code is-version-of} relations.
      *
      * @param iris the pair of IRIs for migration
      */
@@ -59,8 +59,8 @@ public class IriMigrationDao {
     }
 
     /**
-     * Moves the {@code originalGraph} to the {@code newGraph} if the original Graph exists.
-     * Does nothing if the {@code originalGraph} does not exist.
+     * Moves the {@code originalGraph} to the {@code newGraph} if the original Graph exists. Does nothing if the
+     * {@code originalGraph} does not exist.
      *
      * @param originalGraph the original graph to move
      * @param newGraph the destination where the original graph should be moved
@@ -70,12 +70,13 @@ public class IriMigrationDao {
         Objects.requireNonNull(newGraph);
         try {
             em.createNativeQuery("MOVE SILENT GRAPH ?original TO ?new")
-              .setParameter("original", originalGraph)
-              .setParameter("new", newGraph)
-              .executeUpdate();
+                    .setParameter("original", originalGraph)
+                    .setParameter("new", newGraph)
+                    .executeUpdate();
         } catch (RuntimeException e) {
-            throw new PersistenceException("Failed to move graph " +
-                    Utils.uriToString(originalGraph) + " to " + Utils.uriToString(newGraph), e);
+            throw new PersistenceException(
+                    "Failed to move graph " + Utils.uriToString(originalGraph) + " to " + Utils.uriToString(newGraph),
+                    e);
         }
     }
 
@@ -86,7 +87,8 @@ public class IriMigrationDao {
                     .setParameter("vocabulary", vocabularyUri)
                     .getResultStream();
         } catch (RuntimeException e) {
-            throw new PersistenceException("Failed to find all terms for vocabulary: " + Utils.uriToString(vocabularyUri), e);
+            throw new PersistenceException(
+                    "Failed to find all terms for vocabulary: " + Utils.uriToString(vocabularyUri), e);
         }
     }
 
@@ -101,8 +103,7 @@ public class IriMigrationDao {
      * @param iris the pair of IRIs for migration
      */
     private static void bind(Query query, IriMigrationPair iris) {
-        query.setParameter("originalIri", iris.originalIri())
-             .setParameter("newIri", iris.newIri());
+        query.setParameter("originalIri", iris.originalIri()).setParameter("newIri", iris.newIri());
     }
 
     public void evictCache() {

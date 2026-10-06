@@ -52,80 +52,86 @@ class MigrationControllerTest extends BaseControllerTestRunner {
     @ParameterizedTest
     @EnumSource(IriMigrationType.class)
     void migrateIdentifierPassesIrisAndMigrationTypeToService(IriMigrationType migrationType) throws Exception {
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString())
-                                  .param("type", migrationType.name()))
-               .andExpect(status().isAccepted());
-        verify(iriMigrationService).migrateIdentifier(new IriMigrationPair(originalIri, newIri), migrationType,
-                                                      new IriMigrationParams(null));
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", newIri.toString())
+                        .param("type", migrationType.name()))
+                .andExpect(status().isAccepted());
+        verify(iriMigrationService)
+                .migrateIdentifier(
+                        new IriMigrationPair(originalIri, newIri), migrationType, new IriMigrationParams(null));
     }
 
     @Test
     void migrateIdentifierPassesPreferredNamespaceToServiceWhenItIsSpecified() throws Exception {
         final URI preferredNamespace = URI.create(newIri + "/pojem/");
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString())
-                                  .param("type", IriMigrationType.VOCABULARY.name())
-                                  .param("preferredNamespace", preferredNamespace.toString()))
-               .andExpect(status().isAccepted());
-        verify(iriMigrationService).migrateIdentifier(new IriMigrationPair(originalIri, newIri),
-                                                      IriMigrationType.VOCABULARY,
-                                                      new IriMigrationParams(preferredNamespace));
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", newIri.toString())
+                        .param("type", IriMigrationType.VOCABULARY.name())
+                        .param("preferredNamespace", preferredNamespace.toString()))
+                .andExpect(status().isAccepted());
+        verify(iriMigrationService)
+                .migrateIdentifier(
+                        new IriMigrationPair(originalIri, newIri),
+                        IriMigrationType.VOCABULARY,
+                        new IriMigrationParams(preferredNamespace));
     }
 
     @ParameterizedTest
-    @EnumSource(value = IriMigrationType.class,
-                names = "VOCABULARY",
-                mode = EnumSource.Mode.EXCLUDE)
-    void migrateIdentifierThrowsUnprocessableContentWhenNamespaceIsSpecifiedForNonVocabularyMigrationType(IriMigrationType type) throws Exception {
+    @EnumSource(value = IriMigrationType.class, names = "VOCABULARY", mode = EnumSource.Mode.EXCLUDE)
+    void migrateIdentifierThrowsUnprocessableContentWhenNamespaceIsSpecifiedForNonVocabularyMigrationType(
+            IriMigrationType type) throws Exception {
         final URI preferredNamespace = URI.create(newIri + "/pojem/");
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString())
-                                  .param("type", type.name())
-                                  .param("preferredNamespace", preferredNamespace.toString()))
-               .andExpect(status().isUnprocessableContent());
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", newIri.toString())
+                        .param("type", type.name())
+                        .param("preferredNamespace", preferredNamespace.toString()))
+                .andExpect(status().isUnprocessableContent());
         verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
     }
 
     @Test
     void migrateIdentifierThrowsBadRequestWhenOriginalIriIsMissing() throws Exception {
-        mockMvc.perform(post(PATH).param("newIri", newIri.toString())
-                                  .param("type", IriMigrationType.TERM.name()))
-               .andExpect(status().isBadRequest());
+        mockMvc.perform(post(PATH).param("newIri", newIri.toString()).param("type", IriMigrationType.TERM.name()))
+                .andExpect(status().isBadRequest());
         verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
     }
 
     @Test
     void migrateIdentifierThrowsBadRequestWhenNewIriIsMissing() throws Exception {
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("type", IriMigrationType.TERM.name()))
-               .andExpect(status().isBadRequest());
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("type", IriMigrationType.TERM.name()))
+                .andExpect(status().isBadRequest());
         verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
     }
 
     @Test
     void migrateIdentifierThrowsBadRequestWhenMigrationTypeIsMissing() throws Exception {
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString()))
-               .andExpect(status().isBadRequest());
+        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString()).param("newIri", newIri.toString()))
+                .andExpect(status().isBadRequest());
         verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
     }
 
     @Test
     void migrateIdentifierThrowsBadRequestWhenMigrationTypeIsInvalid() throws Exception {
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString())
-                                  .param("type", "INVALID"))
-               .andExpect(status().isBadRequest());
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", newIri.toString())
+                        .param("type", "INVALID"))
+                .andExpect(status().isBadRequest());
         verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
     }
 
     @Test
     void migrateIdentifierThrowsUnprocessableEntityWhenOriginalAndNewIriAreTheSame() throws Exception {
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", originalIri.toString())
-                                  .param("type", IriMigrationType.TERM.name()))
-               .andExpect(status().is(HttpStatus.UNPROCESSABLE_CONTENT.value()));
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", originalIri.toString())
+                        .param("type", IriMigrationType.TERM.name()))
+                .andExpect(status().is(HttpStatus.UNPROCESSABLE_CONTENT.value()));
         verify(iriMigrationService, never()).migrateIdentifier(any(), any(), any());
     }
 
@@ -134,12 +140,14 @@ class MigrationControllerTest extends BaseControllerTestRunner {
         final IriMigrationPair iris = new IriMigrationPair(originalIri, newIri);
         final IriMigrationParams params = new IriMigrationParams(null);
         doThrow(NotFoundException.create(Vocabulary.class, originalIri))
-                .when(iriMigrationService).migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+                .when(iriMigrationService)
+                .migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
 
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString())
-                                  .param("type", IriMigrationType.VOCABULARY.name()))
-               .andExpect(status().isNotFound());
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", newIri.toString())
+                        .param("type", IriMigrationType.VOCABULARY.name()))
+                .andExpect(status().isNotFound());
         verify(iriMigrationService).migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
     }
 
@@ -148,12 +156,14 @@ class MigrationControllerTest extends BaseControllerTestRunner {
         final IriMigrationPair iris = new IriMigrationPair(originalIri, newIri);
         final IriMigrationParams params = new IriMigrationParams(null);
         doThrow(new AuthorizationException("User is not authorized to migrate identifier " + originalIri + "."))
-                .when(iriMigrationService).migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+                .when(iriMigrationService)
+                .migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
 
-        mockMvc.perform(post(PATH).param("originalIri", originalIri.toString())
-                                  .param("newIri", newIri.toString())
-                                  .param("type", IriMigrationType.VOCABULARY.name()))
-               .andExpect(status().isForbidden());
+        mockMvc.perform(post(PATH)
+                        .param("originalIri", originalIri.toString())
+                        .param("newIri", newIri.toString())
+                        .param("type", IriMigrationType.VOCABULARY.name()))
+                .andExpect(status().isForbidden());
         verify(iriMigrationService).migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
     }
 }

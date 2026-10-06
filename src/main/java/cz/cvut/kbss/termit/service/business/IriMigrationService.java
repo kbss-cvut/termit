@@ -24,8 +24,8 @@ import java.util.Objects;
 
 /**
  * Service for migrating IRIs of supported entities.
- * <p>
- * Resolves the asset whose identifier is being changed and ensures that the current user is authorized to modify it
+ *
+ * <p>Resolves the asset whose identifier is being changed and ensures that the current user is authorized to modify it
  * before the migration is started.
  */
 @Service
@@ -45,12 +45,13 @@ public class IriMigrationService {
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public IriMigrationService(IriMigrationRepositoryService repositoryService,
-                               VocabularyRepositoryService vocabularyRepositoryService,
-                               TermRepositoryService termRepositoryService,
-                               VocabularyAuthorizationService vocabularyAuthorizationService,
-                               TermAuthorizationService termAuthorizationService,
-                               SecurityUtils securityUtils) {
+    public IriMigrationService(
+            IriMigrationRepositoryService repositoryService,
+            VocabularyRepositoryService vocabularyRepositoryService,
+            TermRepositoryService termRepositoryService,
+            VocabularyAuthorizationService vocabularyAuthorizationService,
+            TermAuthorizationService termAuthorizationService,
+            SecurityUtils securityUtils) {
         this.repositoryService = repositoryService;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.termRepositoryService = termRepositoryService;
@@ -61,14 +62,14 @@ public class IriMigrationService {
 
     /**
      * Migrates the identifier specified by the {@link IriMigrationPair}.
-     * <p>
-     * The changed asset is resolved and the authorization of the current user is verified synchronously, the migration
-     * itself is then performed asynchronously.
      *
-     * @param iris          The pair of IRIs to migrate
+     * <p>The changed asset is resolved and the authorization of the current user is verified synchronously, the
+     * migration itself is then performed asynchronously.
+     *
+     * @param iris The pair of IRIs to migrate
      * @param migrationType Type of the entity whose identifier is being migrated
-     * @param params        Additional parameters to customize the migration process
-     * @throws NotFoundException      When the vocabulary or term with the original IRI does not exist
+     * @param params Additional parameters to customize the migration process
+     * @throws NotFoundException When the vocabulary or term with the original IRI does not exist
      * @throws AuthorizationException When the current user is not authorized to modify the changed asset
      */
     @Transactional(readOnly = true)
@@ -77,9 +78,8 @@ public class IriMigrationService {
         Objects.requireNonNull(migrationType);
         Objects.requireNonNull(params);
         if (!canModifyChangedAsset(iris, migrationType)) {
-            throw new AuthorizationException(
-                    "User " + securityUtils.getCurrentUser() + " is not authorized to migrate identifier " +
-                            Utils.uriToString(iris.originalIri()) + ".");
+            throw new AuthorizationException("User " + securityUtils.getCurrentUser()
+                    + " is not authorized to migrate identifier " + Utils.uriToString(iris.originalIri()) + ".");
         }
         LOG.info("Migrating {} identifier: {}", migrationType.name(), iris);
         repositoryService.migrateIdentifier(iris, migrationType, params);
@@ -88,10 +88,10 @@ public class IriMigrationService {
 
     /**
      * Resolves the asset whose identifier is being changed and checks whether the current user can modify it.
-     * <p>
-     * Custom attributes can be migrated only by administrators.
      *
-     * @param iris          The pair of IRIs to migrate
+     * <p>Custom attributes can be migrated only by administrators.
+     *
+     * @param iris The pair of IRIs to migrate
      * @param migrationType Type of the entity whose identifier is being migrated
      * @return {@code true} if the current user is authorized to modify the changed asset, {@code false} otherwise
      */

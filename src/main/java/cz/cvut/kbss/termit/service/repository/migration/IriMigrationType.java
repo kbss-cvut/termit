@@ -7,9 +7,7 @@ import cz.cvut.kbss.termit.model.Vocabulary_;
 
 import java.net.URI;
 
-/**
- * Type of the entity whose IRI is being migrated
- */
+/** Type of the entity whose IRI is being migrated */
 public enum IriMigrationType {
     VOCABULARY(Vocabulary_.entityClassIRI),
     TERM(Term_.entityClassIRI),
