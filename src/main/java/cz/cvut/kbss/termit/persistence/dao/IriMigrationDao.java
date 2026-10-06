@@ -84,7 +84,7 @@ public class IriMigrationDao {
     public Stream<URI> findAllTerms(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
-            return em.createQuery("SELECT term FROM Term term WHERE term.vocabulary = :vocabulary", URI.class)
+            return em.createQuery("SELECT DISTINCT term FROM Term term WHERE term.vocabulary = :vocabulary", URI.class)
                     .setParameter("vocabulary", vocabularyUri)
                     .getResultStream();
         } catch (RuntimeException e) {
