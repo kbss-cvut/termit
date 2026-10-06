@@ -1,10 +1,13 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Repository;
@@ -17,9 +20,11 @@ import java.util.stream.Stream;
 @Repository
 public class IriMigrationDao {
     private final EntityManager em;
+    private final DescriptorFactory descriptorFactory;
 
-    public IriMigrationDao(EntityManager em) {
+    public IriMigrationDao(EntityManager em, DescriptorFactory descriptorFactory) {
         this.em = em;
+        this.descriptorFactory = descriptorFactory;
     }
 
     /**
@@ -81,6 +86,28 @@ public class IriMigrationDao {
         }
     }
 
+    /**
+     * Replaces the preferred namespace of the vocabulary with the {@code namespace}.
+     *
+     * <p>Identifiers of the vocabulary terms are not changed.
+     *
+     * @param vocabularyUri the identifier of the vocabulary
+     * @param namespace the new preferred namespace of the vocabulary
+     */
+    public void updatePreferredNamespace(URI vocabularyUri, String namespace) {
+        Objects.requireNonNull(vocabularyUri);
+        Objects.requireNonNull(namespace);
+        final Descriptor vocabularyDescriptor = descriptorFactory.vocabularyDescriptor(vocabularyUri);
+        try {
+            final Vocabulary managed = em.find(Vocabulary.class, vocabularyUri, vocabularyDescriptor);
+            managed.setPreferredNamespaceUri(namespace);
+            em.merge(managed);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to update preferred namespace of vocabulary: " + Utils.uriToString(vocabularyUri), e);
+        }
+    }
+
     public Stream<URI> findAllTerms(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
@@ -109,5 +136,10 @@ public class IriMigrationDao {
 
     public void evictCache() {
         em.getEntityManagerFactory().getCache().evictAll();
+    }
+
+    public void flushChanges() {
+        em.flush();
+        em.clear();
     }
 }
