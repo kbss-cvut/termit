@@ -188,9 +188,13 @@ public class TermController extends BaseController {
                     @RequestParam(name = "includeTerms", required = false, defaultValue = "")
                     List<URI> includeTerms,
             @Parameter(description = "Language for sorting. Sorting is done in the specified language.")
-            @RequestParam(name = "language", required = false) String language,
-            @Parameter(description = "Attribute by which the results should be sorted followed by the sort direction (asc or desc).")
-            @RequestParam(name = "sort", required = false) String sort,
+                    @RequestParam(name = "language", required = false)
+                    String language,
+            @Parameter(
+                            description =
+                                    "Attribute by which the results should be sorted followed by the sort direction (asc or desc).")
+                    @RequestParam(name = "sort", required = false)
+                    String sort,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
                     @RequestParam(name = QueryParams.PAGE_SIZE, required = false)
                     Integer pageSize,
@@ -207,26 +211,28 @@ public class TermController extends BaseController {
         Pageable pageable = RestUtils.createPageRequest(pageSize, pageNo, sort);
 
         if (searchString != null) {
-            return ResponseEntity.ok().headers(headers).body(termService.findAll(
-                    searchString,
-                    vocabulary,
-                    new TermSelectionParams(
-                            flat, full, includeImported, includeRelated, pageable, language)));
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(termService.findAll(
+                            searchString,
+                            vocabulary,
+                            new TermSelectionParams(flat, full, includeImported, includeRelated, pageable, language)));
         }
 
         if (flat && !includeTerms.isEmpty()) {
-            final TermSelectionParams params = new TermSelectionParams(true, false, includeImported, includeRelated,
-                                                                       pageable, language);
+            final TermSelectionParams params =
+                    new TermSelectionParams(true, false, includeImported, includeRelated, pageable, language);
             return ResponseEntity.ok().headers(headers).body(termService.findAllFlat(vocabulary, includeTerms, params));
         }
 
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
-            return ResponseEntity.ok().headers(headers).body(termService.findAll(
-                    vocabulary,
-                    new TermSelectionParams(
-                            flat, full, includeImported, includeRelated, pageable, language)));
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(termService.findAll(
+                            vocabulary,
+                            new TermSelectionParams(flat, full, includeImported, includeRelated, pageable, language)));
         });
     }
 
