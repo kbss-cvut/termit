@@ -73,12 +73,14 @@ public class IriMigrationAction implements Runnable {
     public void run() {
         LOG.trace("Executing IRI migration: {}", iris);
         validateMigration();
+        // must migrate namespace and all terms as first, because JOPA does not publish transaction changes
+        // to select queries with RDF4J driver
+        migrateVocabularyNamespace(params.preferredNamespaceUri());
         iriMigrationDao.migrateIdentifier(iris); // replace every identifier occurrence
         LOG.trace("Migrating graphs after IRI migration: {}", iris);
         migrateVocabularyGraph();
         migrateChangeRecordsGraph();
         migrateOccurrenceGraph();
-        migrateVocabularyNamespace(params.preferredNamespaceUri());
         // changes to entity identifiers and graph identifiers were made
         iriMigrationDao.evictCache();
     }
@@ -174,17 +176,18 @@ public class IriMigrationAction implements Runnable {
         LOG.info("Migrating vocabulary namespace '{}' -> '{}'", originalNamespace, newNamespace);
 
         // we are already after the IRI migration, using new IRI
-        final Vocabulary migratedVocabulary = vocabularyRepositoryService.findRequired(iris.newIri());
+        final Vocabulary migratedVocabulary = vocabularyRepositoryService.findRequired(changedAsset.getUri());
         migratedVocabulary.setPreferredNamespaceUri(newNamespace);
         vocabularyRepositoryService.update(migratedVocabulary);
         migrateAllTerms(originalNamespace, newNamespace);
     }
 
     private void migrateAllTerms(final String originalNamespace, final String newNamespace) {
-        LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(iris.newIri()));
+        assert changedAsset instanceof Vocabulary;
+        LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(changedAsset.getUri()));
         assert migrationType == IriMigrationType.VOCABULARY;
         final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
-        try (Stream<URI> terms = iriMigrationDao.findAllTerms(iris.newIri())) {
+        try (Stream<URI> terms = iriMigrationDao.findAllTerms(changedAsset.getUri())) {
             terms.map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
                     .filter(Objects::nonNull)
                     .forEach(termMigration ->
@@ -204,7 +207,7 @@ public class IriMigrationAction implements Runnable {
             throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri)
                     + " is not in vocabulary namespace " + originalNamespace);
         }
-        final String newTermUriStr = newNamespace + originalTermUriStr.substring(0, originalNamespace.length());
+        final String newTermUriStr = newNamespace + originalTermUriStr.substring(originalNamespace.length());
         return new IriMigrationPair(originalTermUri, URI.create(newTermUriStr));
     }
 }

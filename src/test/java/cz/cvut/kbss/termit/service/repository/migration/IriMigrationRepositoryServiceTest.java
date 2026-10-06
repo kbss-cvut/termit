@@ -4,42 +4,59 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.IllegalTransactionStateException;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
+
+    private static final Comparator<AbstractTerm> TERM_LABEL_COMPARATOR =
+            Comparator.comparing(t -> t.getLabel(Environment.LANGUAGE));
 
     @Autowired
     private EntityManager em;
@@ -52,6 +69,9 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private DataRepositoryService dataService;
+
+    @MockitoSpyBean
+    private IriMigrationDao iriMigrationDao;
 
     @Autowired
     private IriMigrationRepositoryService sut;
@@ -91,12 +111,33 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final String fragment = IdentifierResolver.extractIdentifierFragment(term.getUri());
         final String namespace = Objects.requireNonNull(vocabulary.getPreferredNamespaceUri());
         term.setUri(URI.create(namespace + fragment));
+        return term;
+    }
+
+    private Term generateRootTerm(Vocabulary vocabulary) {
+        final Term term = generateTerm(vocabulary);
         termService.persistRoot(term, vocabulary);
         return term;
     }
 
+    private Term generateSubTerm(Vocabulary vocabulary, Term parent) {
+        final Term term = generateTerm(vocabulary);
+        termService.persistChild(term, parent);
+        return term;
+    }
+
+    /**
+     * Generates {@code count} terms in the vocabulary, the first one in the list is a sub term of the second one, the
+     * rest are root terms.
+     */
     private List<Term> generateTerms(Vocabulary vocabulary, int count) {
-        return IntStream.range(0, count).mapToObj(i -> generateTerm(vocabulary)).toList();
+        final List<Term> terms = IntStream.range(0, count - 1)
+                .mapToObj(i -> generateRootTerm(vocabulary))
+                .collect(Collectors.toCollection(ArrayList::new));
+        // the parent must be persisted first, so the sub term is prepended once all root terms exist
+        terms.add(generateSubTerm(vocabulary, terms.getFirst()));
+        terms.sort(TERM_LABEL_COMPARATOR);
+        return terms;
     }
 
     private CustomAttribute generateCustomAttribute() {
@@ -225,6 +266,70 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         assertFalse(askGraphExists(toMigrate.getUri()), "Old vocabulary graph was not migrated!");
         assertTrue(askGraphExists(iris.newIri()), "New vocabulary graph does not exists!");
         assertTrue(askGraphExists(related.getUri()), "Unrelated vocabulary graph was removed!");
+    }
+
+    @Test
+    void migrateVocabularyIdentifierDoesNotMigrateTermsWhenNamespaceIsNotProvided() {
+        final Vocabulary toMigrate = vocabularyA;
+        final IriMigrationParams params = new IriMigrationParams();
+        migrateVocabularyAndAssertTermsNotChanged(toMigrate, params);
+    }
+
+    @Test
+    void migrateVocabularyIdentifierDoesNotMigrateTermsWhenNamespaceIsNotChanged() {
+        final Vocabulary toMigrate = vocabularyA;
+        assertFalse(Utils.isBlank(toMigrate.getPreferredNamespaceUri()));
+        final IriMigrationParams params = new IriMigrationParams(URI.create(toMigrate.getPreferredNamespaceUri()));
+        migrateVocabularyAndAssertTermsNotChanged(toMigrate, params);
+    }
+
+    void migrateVocabularyAndAssertTermsNotChanged(Vocabulary toMigrate, IriMigrationParams params) {
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+
+        verify(iriMigrationDao, times(1)).migrateIdentifier(any());
+        verify(iriMigrationDao).migrateIdentifier(iris);
+
+        // ensure every term still exists
+        termsA.stream().map(HasIdentifier::getUri).forEach(termService::findRequired);
+    }
+
+    @Test
+    void migrateVocabularyWithNewNamespaceMigratesAllTerms() {
+        final Vocabulary toMigrate = vocabularyA;
+        assertFalse(Utils.isBlank(toMigrate.getPreferredNamespaceUri()));
+
+        final String newNamespace = Environment.BASE_URI + "/vocabulary/new-namespace/term/";
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
+
+        System.out.println(termsA.getFirst().getUri());
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+        System.out.println(termsA.getFirst().getUri());
+
+        verify(iriMigrationDao, times(1 + termsA.size())).migrateIdentifier(any());
+
+        final Vocabulary migratedVocabulary = vocabularyService.findRequired(iris.newIri());
+
+        final TermSelectionParams termSelectionParams =
+                new TermSelectionParams(true, false, false, false, Pageable.ofSize(termsA.size()));
+        final List<? extends AbstractTerm> terms = termService.findAll(migratedVocabulary, termSelectionParams);
+        terms.sort(TERM_LABEL_COMPARATOR);
+
+        // ensure no original term exists
+        termsA.stream().map(HasIdentifier::getUri).map(termService::find).forEach(term -> {
+            assertTrue(term.isEmpty(), "Term not migrated!");
+        });
+
+        for (int i = 0; i < terms.size(); i++) {
+            final FlatTermDto migratedTerm = (FlatTermDto) terms.get(i);
+            final Term originalTerm = termsA.get(i);
+            assertTrue(
+                    migratedTerm.getUri().toString().startsWith(newNamespace), "Term not migrated to new namespace!");
+            assertEquals(originalTerm.getLabel(), migratedTerm.getLabel());
+        }
     }
 
     @Test
