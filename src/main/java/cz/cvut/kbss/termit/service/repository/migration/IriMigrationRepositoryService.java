@@ -128,7 +128,13 @@ public class IriMigrationRepositoryService {
         record.setAuthor(securityUtils.getCurrentUser().toUser());
         record.setOriginalIdentifier(iris.originalIri());
 
-        //        changeRecordDao.persist(record, changedAsset);
-        // TODO: persist
+        assert changedAsset.getUri().equals(iris.originalIri());
+        try {
+            changedAsset.setUri(iris.newIri());
+            // temporarily changing the URI to allow correct
+            changeRecordDao.persist(record, changedAsset);
+        } finally {
+            changedAsset.setUri(iris.originalIri());
+        }
     }
 }
