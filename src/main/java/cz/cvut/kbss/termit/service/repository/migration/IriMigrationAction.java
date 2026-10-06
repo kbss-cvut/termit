@@ -20,6 +20,7 @@ import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Class whose instance is representing a single IRI migration.
@@ -72,6 +73,7 @@ public class IriMigrationAction implements Runnable {
         validateMigration();
         iriMigrationDao.migrateIdentifier(iris); // replace every identifier occurrence
         LOG.trace("Migrating graphs after IRI migration: {}", iris);
+        migrateVocabularyGraph();
         migrateChangeRecordsGraph();
         migrateOccurrenceGraph();
         migrateVocabularyNamespace(params.preferredNamespaceUri());
@@ -80,7 +82,7 @@ public class IriMigrationAction implements Runnable {
     }
 
     private void ensureNotExists(URI resource) {
-        if (iriMigrationDao.getEntityTypes(resource).findAny().isPresent()) {
+        if (!iriMigrationDao.getEntityTypes(resource).isEmpty()) {
             throw new InvalidParameterException("Resource " + Utils.uriToString(resource) + " already exists!");
         }
     }
@@ -144,6 +146,14 @@ public class IriMigrationAction implements Runnable {
         iriMigrationDao.moveGraph(originalGraph, newGraph);
     }
 
+    private void migrateVocabularyGraph() {
+        if (migrationType != IriMigrationType.VOCABULARY) {
+            return;
+        }
+        assert changedAsset instanceof Vocabulary;
+        iriMigrationDao.moveGraph(iris.originalIri(), iris.newIri());
+    }
+
     private void migrateVocabularyNamespace(final URI newNamespaceUri) {
         if (newNamespaceUri == null || migrationType != IriMigrationType.VOCABULARY) {
             return;
@@ -172,14 +182,14 @@ public class IriMigrationAction implements Runnable {
         LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(iris.newIri()));
         assert migrationType == IriMigrationType.VOCABULARY;
         final IriMigrationParams termMigrationParams = new IriMigrationParams(null);
-        iriMigrationDao
-                .findAllTerms(iris.newIri())
-                .map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
-                .filter(Objects::nonNull)
-                .forEach(termMigration ->
-                        // calling internal to stay in the same transaction
-                        iriMigrationRepositoryService.migrateIdentifierInternal(
-                                termMigration, IriMigrationType.TERM, termMigrationParams));
+        try (Stream<URI> terms = iriMigrationDao.findAllTerms(iris.newIri())) {
+            terms.map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
+                    .filter(Objects::nonNull)
+                    .forEach(termMigration ->
+                            // calling internal to stay in the same transaction
+                            iriMigrationRepositoryService.migrateIdentifierInternal(
+                                    termMigration, IriMigrationType.TERM, termMigrationParams));
+        }
     }
 
     private static IriMigrationPair mapTermUri(URI originalTermUri, String originalNamespace, String newNamespace) {

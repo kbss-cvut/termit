@@ -14,4 +14,8 @@ public record IriMigrationParams(URI preferredNamespaceUri) {
             this.preferredNamespaceUri = null;
         }
     }
+
+    public IriMigrationParams() {
+        this(null);
+    }
 }
