@@ -1629,8 +1629,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 Values.iri(Environment.BASE_URI + "/term/source-1"),
                 Values.iri(SKOS.BROADER),
                 Values.iri(term.getUri().toString()),
-                Values.iri(vocabulary.getUri().toString())
-        );
+                Values.iri(vocabulary.getUri().toString()));
         withStatements(vocabulary.getUri(), expected);
 
         readOnlyTransactional(() -> {
@@ -1802,7 +1801,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                         Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary),
                         context);
                 conn.add(snapshot, RDF.TYPE, Values.iri(SKOS.CONCEPT_SCHEME), context);
-                conn.add(snapshot,
+                conn.add(
+                        snapshot,
                         Values.iri(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
                         Values.iri(vocabulary.toString()),
                         context);

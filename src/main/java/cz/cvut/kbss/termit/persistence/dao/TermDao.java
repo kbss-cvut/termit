@@ -93,8 +93,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * {@code skos:hasTopConcept} relations are excluded
      *
      * @implNote Bindings are required in {@link #countReferences(AbstractTerm)},
-     *           {@link #findReferencesInternal(AbstractTerm, Pageable, long)}, {@link #removeReferencesTo(AbstractTerm)}
-     *           and {@link #referencesToTermExist(AbstractTerm)}
+     *     {@link #findReferencesInternal(AbstractTerm, Pageable, long)}, {@link #removeReferencesTo(AbstractTerm)} and
+     *     {@link #referencesToTermExist(AbstractTerm)}
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
                 WHERE {
@@ -1422,7 +1422,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             return em.createNativeQuery("SELECT (COUNT(*) AS ?count) " + REFERENCES_TO_TERM_WHERE_CLAUSE, Long.class)
                     .setParameter("term", term.getUri())
-                    .setParameter("versionOfVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                    .setParameter(
+                            "versionOfVocabulary",
+                            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to count references to term " + Utils.uriToString(term.getUri()), e);
