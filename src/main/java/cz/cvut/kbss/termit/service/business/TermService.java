@@ -883,7 +883,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
             return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec(), includeTerms);
         }
-        return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec(), selectionParams.language(), includeTerms);
+        return repositoryService.findAllFlat(
+                vocabulary, selectionParams.pageSpec(), selectionParams.language(), includeTerms);
     }
 
     @Transactional(readOnly = true)
