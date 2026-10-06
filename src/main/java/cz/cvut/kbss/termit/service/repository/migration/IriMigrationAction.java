@@ -5,13 +5,15 @@ import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
-import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import jakarta.annotation.Nullable;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -35,7 +38,8 @@ public class IriMigrationAction implements Runnable {
     private final IriMigrationDao iriMigrationDao;
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
-    private final VocabularyRepositoryService vocabularyRepositoryService;
+    private final ChangeRecordDao changeRecordDao;
+    private final User author;
 
     @Nullable
     private final Asset<?> changedAsset;
@@ -49,17 +53,18 @@ public class IriMigrationAction implements Runnable {
             IriMigrationDao iriMigrationDao,
             ChangeTrackingContextResolver changeTrackingContextResolver,
             VocabularyNamespaceResolver vocabularyNamespaceResolver,
-            VocabularyRepositoryService vocabularyRepositoryService,
             ChangeRecordDao changeRecordDao,
+            User author,
             @Nullable Asset<?> changedAsset,
             IriMigrationType migrationType,
             IriMigrationPair iris,
             IriMigrationParams params) {
-        this.iriMigrationRepositoryService = iriMigrationRepositoryService;
+        this.iriMigrationRepositoryService = Objects.requireNonNull(iriMigrationRepositoryService);
         this.iriMigrationDao = Objects.requireNonNull(iriMigrationDao);
         this.changeTrackingContextResolver = Objects.requireNonNull(changeTrackingContextResolver);
-        this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
-        this.vocabularyRepositoryService = vocabularyRepositoryService;
+        this.vocabularyNamespaceResolver = Objects.requireNonNull(vocabularyNamespaceResolver);
+        this.changeRecordDao = Objects.requireNonNull(changeRecordDao);
+        this.author = Objects.requireNonNull(author);
         this.changedAsset = changedAsset;
         if (changedAsset != null) {
             iriMigrationDao.detach(changedAsset);
@@ -161,6 +166,12 @@ public class IriMigrationAction implements Runnable {
         iriMigrationDao.moveGraph(iris.originalIri(), iris.newIri());
     }
 
+    /**
+     * For {@link IriMigrationType#VOCABULARY} changes the preferred namespace of the vocabulary and migrates the
+     * identifiers of all its terms to the new namespace.
+     *
+     * @implNote Entity manager is flushed and cleared at the end to write entity changes to the repository
+     */
     private void migrateVocabularyNamespace(final URI newNamespaceUri) {
         if (newNamespaceUri == null || migrationType != IriMigrationType.VOCABULARY) {
             return;
@@ -178,17 +189,32 @@ public class IriMigrationAction implements Runnable {
 
         LOG.info("Migrating vocabulary namespace '{}' -> '{}'", originalNamespace, newNamespace);
 
-        // we are already after the IRI migration, using new IRI
-        final Vocabulary migratedVocabulary = vocabularyRepositoryService.findRequired(changedAsset.getUri());
-        migratedVocabulary.setPreferredNamespaceUri(newNamespace);
-        vocabularyRepositoryService.update(migratedVocabulary);
+        // executed before vocabulary IRI migration!
+        iriMigrationDao.updatePreferredNamespace(vocabulary.getUri(), newNamespace);
+        createNamespaceChangeRecord(originalNamespace, newNamespace);
         migrateAllTerms(originalNamespace, newNamespace);
+    }
+
+    private void createNamespaceChangeRecord(String originalNamespace, String newNamespace) {
+        assert changedAsset != null;
+
+        final UpdateChangeRecord record = new UpdateChangeRecord();
+        record.setChangedEntity(iris.newIri());
+        record.setChangedAttribute(Vocabulary_.preferredNamespaceUriPropertyIRI.toURI());
+        record.setOriginalValue(Set.of(originalNamespace));
+        record.setNewValue(Set.of(newNamespace));
+        record.setTimestamp(Utils.timestamp());
+        record.setAuthor(author);
+
+        changeRecordDao.persist(record, changedAsset);
     }
 
     private void migrateAllTerms(final String originalNamespace, final String newNamespace) {
         assert changedAsset instanceof Vocabulary;
-        LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(changedAsset.getUri()));
         assert migrationType == IriMigrationType.VOCABULARY;
+
+        LOG.info("Migrating identifiers of all terms from vocabulary {}", Utils.uriToString(changedAsset.getUri()));
+
         try (Stream<URI> terms = iriMigrationDao.findAllTerms(changedAsset.getUri())) {
             terms.map(originalTermUri -> mapTermUri(originalTermUri, originalNamespace, newNamespace))
                     .filter(Objects::nonNull)
@@ -197,6 +223,7 @@ public class IriMigrationAction implements Runnable {
                             iriMigrationRepositoryService.migrateIdentifierInternal(
                                     termMigration, IriMigrationType.TERM, params));
         }
+        iriMigrationDao.flushChanges();
     }
 
     private static IriMigrationPair mapTermUri(URI originalTermUri, String originalNamespace, String newNamespace) {
@@ -207,7 +234,7 @@ public class IriMigrationAction implements Runnable {
         }
         if (!originalTermUriStr.startsWith(originalNamespace)) {
             throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri)
-                    + " is not in vocabulary namespace " + originalNamespace);
+                    + " is not in the original vocabulary namespace " + originalNamespace);
         }
         final String newTermUriStr = newNamespace + originalTermUriStr.substring(originalNamespace.length());
         return new IriMigrationPair(originalTermUri, URI.create(newTermUriStr));
