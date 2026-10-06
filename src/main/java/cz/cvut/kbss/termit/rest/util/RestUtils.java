@@ -19,9 +19,6 @@ package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.Constants;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,6 +26,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.net.URI;
 import java.time.Instant;
@@ -39,9 +40,7 @@ import java.util.Optional;
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SPEC;
 
-/**
- * Utility functions for request processing.
- */
+/** Utility functions for request processing. */
 public class RestUtils {
 
     private RestUtils() {
@@ -59,85 +58,94 @@ public class RestUtils {
 
     /**
      * Creates location URI with the specified path appended to the current request URI.
-     * <p>
-     * The {@code uriVariableValues} are used to fill in possible variables specified in {@code path}.
      *
-     * @param path              Path to add to the current request URI in order to construct a resource location
+     * <p>The {@code uriVariableValues} are used to fill in possible variables specified in {@code path}.
+     *
+     * @param path Path to add to the current request URI in order to construct a resource location
      * @param uriVariableValues Values used to replace possible variables in the path
      * @return location {@code URI}
      * @see #createLocationFromCurrentUriWithQueryParam(String, Object...)
      */
     public static URI createLocationFromCurrentUriWithPath(String path, Object... uriVariableValues) {
         Objects.requireNonNull(path);
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().path(path).buildAndExpand(
-                uriVariableValues).toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .path(path)
+                .buildAndExpand(uriVariableValues)
+                .toUri();
     }
 
     /**
      * Creates location URI with the specified query parameter appended to the current request URI.
-     * <p>
-     * The {@code values} are used as values of {@code param} in the resulting URI.
      *
-     * @param param  Query parameter to add to current request URI
+     * <p>The {@code values} are used as values of {@code param} in the resulting URI.
+     *
+     * @param param Query parameter to add to current request URI
      * @param values Values of the query parameter
      * @return location {@code URI}
      * @see #createLocationFromCurrentUriWithPath(String, Object...)
      */
     public static URI createLocationFromCurrentUriWithQueryParam(String param, Object... values) {
         Objects.requireNonNull(param);
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().queryParam(param, values).build()
-                                          .toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .queryParam(param, values)
+                .build()
+                .toUri();
     }
 
     /**
      * Creates location URI with the specified path and query parameter appended to the current request URI.
-     * <p>
-     * The {@code paramValue} is specified for the query parameter and {@code pathValues} are used to replace path
+     *
+     * <p>The {@code paramValue} is specified for the query parameter and {@code pathValues} are used to replace path
      * variables.
      *
-     * @param path       Path string, may contain path variables
-     * @param param      Query parameter to add to current request URI
+     * @param path Path string, may contain path variables
+     * @param param Query parameter to add to current request URI
      * @param paramValue Value of the query parameter
      * @param pathValues Path variable values
      * @return location {@code URI}
      * @see #createLocationFromCurrentUriWithPath(String, Object...)
      * @see #createLocationFromCurrentUriWithQueryParam(String, Object...)
      */
-    public static URI createLocationFromCurrentUriWithPathAndQuery(String path, String param,
-                                                                   Object paramValue,
-                                                                   Object... pathValues) {
+    public static URI createLocationFromCurrentUriWithPathAndQuery(
+            String path, String param, Object paramValue, Object... pathValues) {
         Objects.requireNonNull(path);
         Objects.requireNonNull(param);
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().queryParam(param, paramValue)
-                                          .path(path).buildAndExpand(pathValues).toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .queryParam(param, paramValue)
+                .path(path)
+                .buildAndExpand(pathValues)
+                .toUri();
     }
 
     /**
      * Creates location URI with the specified path and query parameter appended to the current context URI.
-     * <p>
-     * The {@code paramValue} is specified for the query parameter and {@code pathValues} are used to replace path
+     *
+     * <p>The {@code paramValue} is specified for the query parameter and {@code pathValues} are used to replace path
      * variables.
      *
      * @param queryParam Query parameter to add to current request URI
-     * @param path       Path string, may contain path variables
+     * @param path Path string, may contain path variables
      * @param queryValue Value of the query parameter
      * @param pathValues Path variable values
      * @return location {@code URI}
      * @see #createLocationFromCurrentUriWithPath(String, Object...)
      * @see #createLocationFromCurrentUriWithQueryParam(String, Object...)
      */
-    public static URI createLocationFromCurrentContextWithPathAndQuery(String path, String queryParam,
-                                                                       String queryValue, Object... pathValues) {
+    public static URI createLocationFromCurrentContextWithPathAndQuery(
+            String path, String queryParam, String queryValue, Object... pathValues) {
         Objects.requireNonNull(path);
         Objects.requireNonNull(queryParam);
-        return ServletUriComponentsBuilder.fromCurrentContextPath().queryParam(queryParam, queryValue).path(path)
-                                          .buildAndExpand(pathValues).toUri();
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .queryParam(queryParam, queryValue)
+                .path(path)
+                .buildAndExpand(pathValues)
+                .toUri();
     }
 
     /**
      * Retrieves value of the specified cookie from the specified request.
      *
-     * @param request    Request to get cookie from
+     * @param request Request to get cookie from
      * @param cookieName Name of the cookie to retrieve
      * @return Value of the cookie
      */
@@ -154,8 +162,8 @@ public class RestUtils {
 
     /**
      * Parses the specified string as {@link Instant}.
-     * <p>
-     * It expects the string to be in the ISO format at UTC, compatible with {@link Instant} string representation.
+     *
+     * <p>It expects the string to be in the ISO format at UTC, compatible with {@link Instant} string representation.
      *
      * @param strTimestamp String representing the instant
      * @return Parsed instant
@@ -165,8 +173,8 @@ public class RestUtils {
         try {
             return parseTimestampWithException(strTimestamp);
         } catch (DateTimeParseException | NullPointerException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                              "Value '" + strTimestamp + "' is not a valid timestamp in ISO format.");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Value '" + strTimestamp + "' is not a valid timestamp in ISO format.");
         }
     }
 
@@ -180,8 +188,8 @@ public class RestUtils {
 
     /**
      * Creates a page request from the specified parameters.
-     * <p>
-     * Both parameters are optional and default values will be used if either parameter is not specified.
+     *
+     * <p>Both parameters are optional and default values will be used if either parameter is not specified.
      *
      * @param size Page size
      * @param page Page number
@@ -195,11 +203,10 @@ public class RestUtils {
     }
 
     /**
-     * Sets the specified authentication token in the specified response using the HTTP {@literal Authorization}
-     * header.
+     * Sets the specified authentication token in the specified response using the HTTP {@literal Authorization} header.
      *
      * @param response Response to write header to
-     * @param token    Authentication token
+     * @param token Authentication token
      */
     public static void setAuthHeader(HttpServletResponse response, String token) {
         response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);

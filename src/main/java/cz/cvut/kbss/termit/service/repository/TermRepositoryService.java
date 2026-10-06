@@ -324,7 +324,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @param language   Language by which the terms should be sorted.
+     * @param language Language by which the terms should be sorted.
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */
@@ -341,7 +341,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @param language   Language by which the terms should be sorted.
+     * @param language Language by which the terms should be sorted.
      * @return List of term DTOs ordered by label in a flat structure
      */
     @Transactional(readOnly = true)
@@ -357,13 +357,14 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @param language   Language by which the terms should be sorted.
+     * @param language Language by which the terms should be sorted.
      * @param includeTerms Identifier of terms that should be additionally included in the result
      * @return List of term DTOs ordered by label in a flat structure
      * @see #findAllFlat(Vocabulary, Pageable, String)
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String language, Collection<URI> includeTerms) {
+    public List<FlatTermDto> findAllFlat(
+            Vocabulary vocabulary, Pageable pageSpec, String language, Collection<URI> includeTerms) {
         return termDao.findAllFlat(vocabulary, pageSpec, language, includeTerms);
     }
 
@@ -385,7 +386,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * Gets all terms from the specified vocabulary, regardless of their position in the term hierarchy.
      *
      * <p>This returns the full versions of all terms (complete metadata) contained in vocabulary's glossary, and thus
-     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable, String)}.
+     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable,
+     * String)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @return List of full terms ordered by label
@@ -400,11 +402,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
      *
      * <p>This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, and thus
-     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable, String)}.
+     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable,
+     * String)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @param pageSpec Page specifying result number and position
-     * @param language   Language by which the terms should be sorted.
+     * @param language Language by which the terms should be sorted.
      * @return List of full terms ordered by label
      * @see #findAll(Vocabulary, Pageable, String)
      */
