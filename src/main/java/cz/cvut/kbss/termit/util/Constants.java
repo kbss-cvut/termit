@@ -114,7 +114,7 @@ public class Constants {
     public static final Set<URI> SKOS_CONCEPT_MATCH_RELATIONSHIPS = Stream.of(
                     SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH)
             .map(URI::create)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toUnmodifiableSet());
 
     /** Relations between vocabularies that do not prevent vocabulary to be removed */
     public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
@@ -122,7 +122,15 @@ public class Constants {
                     Vocabulary.s_p_is_version_of_vocabulary,
                     Vocabulary.s_p_imports_vocabulary)
             .map(URI::create)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toUnmodifiableSet());
+
+    /** Relations linking a snapshot to the asset it is a version of. */
+    public static final Set<URI> IS_VERSION_OF_RELATIONS = Stream.of(
+                    Vocabulary.s_p_is_version_of,
+                    Vocabulary.s_p_is_version_of_vocabulary,
+                    Vocabulary.s_p_is_version_of_term)
+            .map(URI::create)
+            .collect(Collectors.toUnmodifiableSet());
 
     /**
      * Labels of columns representing exported term attributes in various supported languages. TODO Replace with

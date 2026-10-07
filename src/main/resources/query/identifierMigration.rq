@@ -12,9 +12,8 @@ DELETE {
     }
 }
 INSERT {
-    GRAPH ?graph {
-        ?newSubject ?newPredicate ?newObject .
-    }
+    # insert pattern must not contain graph specification when inserting into default graph
+    ##$INSERT_PATTERN$##
 }
 WHERE {
     GRAPH ?graph {
@@ -35,12 +34,12 @@ WHERE {
         ||
         # Unless rewiring the is-version-of-* relation
         # ?graph can be version of vocabulary if ?predicate is version-of-*
-        (?predicate IN (dd:is-version-of-vocabulary, dd:is-version-of-term) && (?subject != ?originalIri))
+        (?predicate IN (?isVersionOfRelations) && (?subject != ?originalIri))
     )
 
     # Prevent identifier change records modification
     FILTER NOT EXISTS {
-        ?subject a <http://onto.fel.cvut.cz/ontologies/application/termit/identifier-change> .
+        ?subject a ?identifierChangeType .
     }
 
     # bind new values replacing the original IRI

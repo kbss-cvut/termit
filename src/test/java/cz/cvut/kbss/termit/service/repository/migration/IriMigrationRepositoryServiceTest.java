@@ -37,6 +37,7 @@ import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,11 +75,6 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     private static final Comparator<AbstractTerm> TERM_LABEL_COMPARATOR =
             Comparator.comparing(t -> t.getLabel(Environment.LANGUAGE));
-
-    /** Relations linking a snapshot to the asset it is a version of. */
-    private static final Set<URI> IS_VERSION_OF = Set.of(
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
-            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term));
 
     @Autowired
     private EntityManager em;
@@ -880,7 +876,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
                             }
                         """, URI.class)
                 .setParameter("asset", asset)
-                .setParameter("relations", IS_VERSION_OF)
+                .setParameter("relations", Constants.IS_VERSION_OF_RELATIONS)
                 .getResultList());
         assertEquals(1, snapshots.size(), "Expected exactly one snapshot of " + Utils.uriToString(asset));
         return snapshots.getFirst();
@@ -896,7 +892,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
                            }
                        """, URI.class)
                 .setParameter("snapshot", snapshot)
-                .setParameter("relations", IS_VERSION_OF)
+                .setParameter("relations", Constants.IS_VERSION_OF_RELATIONS)
                 .getResultList());
         assertEquals(
                 1, assets.size(), "Expected " + Utils.uriToString(snapshot) + " to be a version of exactly one asset");
