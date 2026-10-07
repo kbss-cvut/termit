@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -73,6 +74,11 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     private static final Comparator<AbstractTerm> TERM_LABEL_COMPARATOR =
             Comparator.comparing(t -> t.getLabel(Environment.LANGUAGE));
+
+    /** Relations linking a snapshot to the asset it is a version of. */
+    private static final Set<URI> IS_VERSION_OF = Set.of(
+            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary),
+            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term));
 
     @Autowired
     private EntityManager em;
@@ -680,11 +686,143 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         assertTrue(e.getMessage().contains("original vocabulary namespace"));
     }
 
+    @Test
+    void migrateIdentifierModifiesVersionOfRelationToTerm() {
+        final Term toMigrate = termsA.getFirst();
+        final Term unchanged = termsA.getLast();
+
+        final Snapshot vocabularySnapshot = vocabularyService.createSnapshot(vocabularyA);
+        final URI toMigrateSnapshot = findSnapshotOf(toMigrate.getUri());
+        final URI unchangedSnapshot = findSnapshotOf(unchanged.getUri());
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params);
+
+        assertEquals(
+                vocabularyA.getUri(),
+                findVersionOf(vocabularySnapshot.getUri()),
+                "Vocabulary snapshot is not a version of the unchanged vocabulary!");
+        assertEquals(
+                iris.newIri(),
+                findVersionOf(toMigrateSnapshot),
+                "Term snapshot is not a version of the migrated term!");
+        assertEquals(
+                unchanged.getUri(),
+                findVersionOf(unchangedSnapshot),
+                "Snapshot of another term is not a version of the unchanged term!");
+    }
+
+    @Test
+    void migrateIdentifierModifiesVersionOfRelationToVocabulary() {
+        final Vocabulary toMigrate = vocabularyA;
+
+        final Snapshot snapshot = vocabularyService.createSnapshot(toMigrate);
+        assertEquals(toMigrate.getUri(), findVersionOf(snapshot.getUri()));
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+
+        assertEquals(
+                iris.newIri(),
+                findVersionOf(snapshot.getUri()),
+                "Snapshot is not a version of the migrated vocabulary!");
+    }
+
+    @Test
+    void migrateIdentifierDoesNotModifyCustomAttributeUsageInSnapshot() {
+        final CustomAttribute toMigrate = generateCustomAttribute();
+        // literal value of the custom attribute
+        final Set<Object> value = Set.of("Value of migrated attribute");
+
+        final Term term = termsA.getFirst();
+        term.setProperties(new HashMap<>(Map.of(toMigrate.getUri().toString(), value)));
+        termService.update(term);
+
+        vocabularyService.createSnapshot(vocabularyA);
+        final URI termSnapshot = findSnapshotOf(term.getUri());
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params);
+
+        final Map<String, Set<Object>> properties =
+                termService.findRequired(termSnapshot).getProperties();
+
+        assertEquals(
+                value, properties.get(iris.originalIri().toString()), "Custom attribute in the snapshot was changed!");
+        assertFalse(properties.containsKey(iris.newIri().toString()), "Custom attribute in the snapshot was migrated!");
+    }
+
+    @Test
+    void migrateIdentifierDoesNotModifyCustomAttributeValueInSnapshot() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term toMigrate = termsA.getFirst();
+
+        final Term term = termsA.getLast();
+        // value of the custom attribute is reference to a term that will be migrated (toMigrate)
+        term.setProperties(new HashMap<>(Map.of(attribute.getUri().toString(), Set.of(toMigrate.getUri()))));
+        termService.update(term);
+
+        vocabularyService.createSnapshot(vocabularyA);
+        final URI termSnapshot = findSnapshotOf(term.getUri());
+
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params);
+
+        final Map<String, Set<Object>> properties =
+                termService.findRequired(termSnapshot).getProperties();
+
+        assertEquals(
+                Set.of(iris.originalIri()),
+                properties.get(attribute.getUri().toString()),
+                "Custom attribute value in the snapshot was migrated!");
+    }
+
     private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {
         return changeRecordDao.findAll(asset).stream()
                 .filter(IdentifierChangeRecord.class::isInstance)
                 .map(IdentifierChangeRecord.class::cast)
                 .toList();
+    }
+
+    /** Finds the snapshot of the asset, fails when the asset does not have exactly one snapshot. */
+    private URI findSnapshotOf(URI asset) {
+        Objects.requireNonNull(asset);
+        final List<URI> snapshots = readOnlyTransactional(() -> em.createNativeQuery("""
+                            SELECT DISTINCT ?snapshot WHERE {
+                                ?snapshot ?isVersionOf ?asset .
+                                FILTER (?isVersionOf IN (?relations))
+                            }
+                        """, URI.class)
+                .setParameter("asset", asset)
+                .setParameter("relations", IS_VERSION_OF)
+                .getResultList());
+        assertEquals(1, snapshots.size(), "Expected exactly one snapshot of " + Utils.uriToString(asset));
+        return snapshots.getFirst();
+    }
+
+    /** Finds the asset the snapshot is a version of, fails when the snapshot is not a version of exactly one asset. */
+    private URI findVersionOf(URI snapshot) {
+        Objects.requireNonNull(snapshot);
+        final List<URI> assets = readOnlyTransactional(() -> em.createNativeQuery("""
+                           SELECT DISTINCT ?asset WHERE {
+                               ?snapshot ?isVersionOf ?asset .
+                               FILTER (?isVersionOf IN (?relations))
+                           }
+                       """, URI.class)
+                .setParameter("snapshot", snapshot)
+                .setParameter("relations", IS_VERSION_OF)
+                .getResultList());
+        assertEquals(
+                1, assets.size(), "Expected " + Utils.uriToString(snapshot) + " to be a version of exactly one asset");
+        return assets.getFirst();
     }
 
     /** Finds the occurrence in the specified graph, fails when the graph does not contain the occurrence. */
