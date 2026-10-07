@@ -324,12 +324,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
+     * @param language Language by which the terms should be sorted.
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAll(vocabulary, pageSpec);
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec, String language) {
+        return termDao.findAll(vocabulary, pageSpec, language);
     }
 
     /**
@@ -340,11 +341,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
+     * @param language Language by which the terms should be sorted.
      * @return List of term DTOs ordered by label in a flat structure
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFlat(vocabulary, pageSpec);
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String language) {
+        return termDao.findAllFlat(vocabulary, pageSpec, language);
     }
 
     /**
@@ -355,13 +357,15 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @return List of term DTOs ordered by label in a flat structure
+     * @param language Language by which the terms should be sorted.
      * @param includeTerms Identifier of terms that should be additionally included in the result
-     * @see #findAllFlat(Vocabulary, Pageable)
+     * @return List of term DTOs ordered by label in a flat structure
+     * @see #findAllFlat(Vocabulary, Pageable, String)
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
-        return termDao.findAllFlat(vocabulary, pageSpec, includeTerms);
+    public List<FlatTermDto> findAllFlat(
+            Vocabulary vocabulary, Pageable pageSpec, String language, Collection<URI> includeTerms) {
+        return termDao.findAllFlat(vocabulary, pageSpec, language, includeTerms);
     }
 
     /**
@@ -382,31 +386,34 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * Gets all terms from the specified vocabulary, regardless of their position in the term hierarchy.
      *
      * <p>This returns the full versions of all terms (complete metadata) contained in vocabulary's glossary, and thus
-     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
+     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable,
+     * String)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @return List of full terms ordered by label
-     * @see #findAll(Vocabulary, Pageable)
+     * @see #findAll(Vocabulary, Pageable, String)
      */
     @Transactional(readOnly = true)
     public List<Term> findAllFull(Vocabulary vocabulary) {
-        return findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        return findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
     }
 
     /**
      * Gets a page of terms from the specified vocabulary, regardless of their position in the term hierarchy.
      *
      * <p>This returns the full versions of the terms (complete metadata) contained in vocabulary's glossary, and thus
-     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable)}.
+     * its performance may be worse. If complete metadata is not required, use {@link #findAll(Vocabulary, Pageable,
+     * String)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @param pageSpec Page specifying result number and position
+     * @param language Language by which the terms should be sorted.
      * @return List of full terms ordered by label
-     * @see #findAll(Vocabulary, Pageable)
+     * @see #findAll(Vocabulary, Pageable, String)
      */
     @Transactional(readOnly = true)
-    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
-        return termDao.findAllFull(vocabulary, pageSpec).stream()
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec, String language) {
+        return termDao.findAllFull(vocabulary, pageSpec, language).stream()
                 .map(this::postLoad)
                 .collect(toList());
     }

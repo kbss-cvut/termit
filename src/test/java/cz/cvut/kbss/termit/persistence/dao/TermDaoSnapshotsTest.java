@@ -68,10 +68,13 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(vocabulary)));
-        final List<Term> snapshots = IntStream.range(0, 5).mapToObj(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(i * 2L);
-            return generateSnapshotStub(term, timestamp);
-        }).collect(Collectors.toList());
+        final List<Term> snapshots = IntStream.range(0, 5)
+                .mapToObj(i -> {
+                    final Instant timestamp =
+                            Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(i * 2L);
+                    return generateSnapshotStub(term, timestamp);
+                })
+                .collect(Collectors.toList());
 
         final List<Snapshot> result = sut.findSnapshots(term);
         assertEquals(snapshots.size(), result.size());
@@ -109,12 +112,20 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
                 final ValueFactory vf = connection.getValueFactory();
                 final IRI stubIri = vf.createIRI(stub.getUri().toString());
                 connection.begin();
-                connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term),
-                        vf.createIRI(term.getUri().toString()), vf.createIRI(vocSnapshotUri.toString()));
-                connection.add(stubIri,
+                connection.add(
+                        stubIri,
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term),
+                        vf.createIRI(term.getUri().toString()),
+                        vf.createIRI(vocSnapshotUri.toString()));
+                connection.add(
+                        stubIri,
                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_date_and_time_of_creation_of_version),
-                        vf.createLiteral(Date.from(timestamp)), vf.createIRI(vocSnapshotUri.toString()));
-                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term),
+                        vf.createLiteral(Date.from(timestamp)),
+                        vf.createIRI(vocSnapshotUri.toString()));
+                connection.add(
+                        stubIri,
+                        RDF.TYPE,
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term),
                         vf.createIRI(vocSnapshotUri.toString()));
                 connection.commit();
             }
@@ -150,8 +161,8 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
         IntStream.range(0, 5).forEach(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-                                             .minus((i + 1) * 2L, ChronoUnit.HOURS);
+            final Instant timestamp =
+                    Instant.now().truncatedTo(ChronoUnit.SECONDS).minus((i + 1) * 2L, ChronoUnit.HOURS);
             generateSnapshotStub(term, timestamp);
         });
 
@@ -165,7 +176,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         enableRdfsInference(em);
         final Term term = generateTermWithSnapshot();
 
-        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         assertEquals(Collections.singletonList(new TermDto(term)), result);
     }
 
@@ -196,7 +207,8 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
 
         final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptySet());
         assertThat(result, hasItem(new TermDto(term)));
-        assertTrue(result.stream().noneMatch(dto -> dto.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term)));
+        assertTrue(
+                result.stream().noneMatch(dto -> dto.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_term)));
     }
 
     @Test
@@ -204,8 +216,8 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         enableRdfsInference(em);
         final Term term = generateTermWithSnapshot();
 
-        final List<TermDto> result = sut.findAllRootsInVocabularies(List.of(vocabulary.getUri()), Constants.DEFAULT_PAGE_SPEC,
-                Collections.emptySet());
+        final List<TermDto> result = sut.findAllRootsInVocabularies(
+                List.of(vocabulary.getUri()), Constants.DEFAULT_PAGE_SPEC, Collections.emptySet());
         assertEquals(Collections.singletonList(new TermDto(term)), result);
     }
 

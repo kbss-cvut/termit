@@ -867,16 +867,16 @@ class TermServiceTest {
                 Arguments.of(new TermSelectionParams(false, false, false, false, PageRequest.of(5, 10)), (BiConsumer<
                                 TermRepositoryService, Vocabulary>)
                         (repositoryService, vocabulary) ->
-                                verify(repositoryService).findAll(vocabulary, PageRequest.of(5, 10))),
+                                verify(repositoryService).findAll(vocabulary, PageRequest.of(5, 10), null)),
                 Arguments.of(
                         new TermSelectionParams(true, false, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>)
                                 (repositoryService, vocabulary) -> verify(repositoryService)
-                                        .findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC, List.of())),
+                                        .findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC, null, List.of())),
                 Arguments.of(
                         new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) ->
-                                verify(repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                                verify(repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null)),
                 Arguments.of(
                         new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>)

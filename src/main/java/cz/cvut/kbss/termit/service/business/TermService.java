@@ -173,7 +173,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(selectionParams);
         if (selectionParams.full()) {
             // includeImported is not supported for finding full versions of terms
-            return repositoryService.findAllFull(vocabulary, selectionParams.pageSpec());
+            return repositoryService.findAllFull(vocabulary, selectionParams.pageSpec(), selectionParams.language());
         } else {
             final boolean includeFromOther = selectionParams.includeImported() || selectionParams.includeRelated();
             if (selectionParams.flat()) {
@@ -183,7 +183,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
                     final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
                     return repositoryService.findAllInVocabularies(vocabularies, selectionParams.pageSpec());
                 }
-                return repositoryService.findAll(vocabulary, selectionParams.pageSpec());
+                return repositoryService.findAll(vocabulary, selectionParams.pageSpec(), selectionParams.language());
             }
         }
     }
@@ -883,7 +883,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             final var vocabularies = resolveTargetVocabularies(vocabulary, selectionParams);
             return repositoryService.findAllFlatInVocabularies(vocabularies, selectionParams.pageSpec(), includeTerms);
         }
-        return repositoryService.findAllFlat(vocabulary, selectionParams.pageSpec(), includeTerms);
+        return repositoryService.findAllFlat(
+                vocabulary, selectionParams.pageSpec(), selectionParams.language(), includeTerms);
     }
 
     @Transactional(readOnly = true)
