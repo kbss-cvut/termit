@@ -25,13 +25,13 @@ import cz.cvut.kbss.termit.service.init.lucene.GraphDBLuceneConnectorInitializer
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
-import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.jmx.export.naming.SelfNaming;
@@ -39,6 +39,8 @@ import org.springframework.stereotype.Component;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+
+import jakarta.annotation.Nonnull;
 
 @Component
 @ManagedResource(description = "TermIt administration JMX bean.")
@@ -56,15 +58,17 @@ public class AppAdminBean implements SelfNaming {
     private final GraphDBLuceneConnectorInitializer luceneConnectorInitializer;
 
     @Autowired
-    public AppAdminBean(ApplicationEventPublisher eventPublisher, Postman postman, Configuration config,
-                        GraphDBLuceneConnectorInitializer luceneConnectorInitializer) {
+    public AppAdminBean(
+            ApplicationEventPublisher eventPublisher,
+            Postman postman,
+            Configuration config,
+            GraphDBLuceneConnectorInitializer luceneConnectorInitializer) {
         this.eventPublisher = eventPublisher;
         this.postman = postman;
         this.beanName = config.getJmxBeanName();
         this.luceneConnectorInitializer = luceneConnectorInitializer;
     }
 
-    @CacheEvict(allEntries = true, cacheNames = {"vocabularies", "vocabularyNamespace", "acls"})
     @ManagedOperation(description = "Invalidates the application caches.")
     public void invalidateCaches() {
         LOG.info("Invalidating application caches...");
@@ -81,8 +85,10 @@ public class AppAdminBean implements SelfNaming {
 
     @ManagedOperation(description = "Sends test email to the specified address.")
     public void sendTestEmail(String address) {
-        final Message message = Message.to(address).subject("TermIt Test Email")
-                                       .content("This is a test message from TermIt.").build();
+        final Message message = Message.to(address)
+                .subject("TermIt Test Email")
+                .content("This is a test message from TermIt.")
+                .build();
         postman.sendMessage(message);
     }
 
@@ -98,14 +104,22 @@ public class AppAdminBean implements SelfNaming {
 
     /**
      * Gets health info of the application.
-     * <p>
-     * This method provides basic info on the status of the system.
-     * <p>
-     * TODO Resolve status of services used by TermIt (repository, annotace, mail server - if configured)
+     *
+     * <p>This method provides basic info on the status of the system.
+     *
+     * <p>TODO Resolve status of services used by TermIt (repository, annotace, mail server - if configured)
      *
      * @return Health info object
      */
     public HealthInfo getHealthInfo() {
         return HealthInfo.up();
+    }
+
+    @CacheEvict(
+            allEntries = true,
+            cacheNames = {"vocabularies", "vocabularyNamespace", "acls"})
+    @EventListener(EvictCacheEvent.class)
+    public void on() {
+        LOG.debug("Cleared spring cached entries.");
     }
 }
