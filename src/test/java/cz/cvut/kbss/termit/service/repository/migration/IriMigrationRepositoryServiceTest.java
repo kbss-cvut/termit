@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -498,7 +499,9 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri(), previousNamespace);
         final IriMigrationParams params = new IriMigrationParams();
 
-        assertThrows(InvalidParameterException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
+        final TermItException e = assertThrows(
+                InvalidParameterException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
+        assertTrue(e.getMessage().contains("does not start with Vocabulary namespace"));
     }
 
     @Test
@@ -509,9 +512,10 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri(), vocabularyA.getPreferredNamespaceUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
 
-        assertThrows(
+        final TermItException e = assertThrows(
                 InvalidParameterException.class,
                 () -> transactional(() -> sut.migrateIdentifierInternal(iris, IriMigrationType.TERM, params)));
+        assertTrue(e.getMessage().contains("does not start with Vocabulary namespace"));
     }
 
     // ensures terms within invalid namespace can be migrated to a correct one
@@ -614,13 +618,66 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
                 .filter(UpdateChangeRecord.class::isInstance)
                 .map(UpdateChangeRecord.class::cast)
                 .filter(record ->
-                        record.getChangedAttribute().equals(Vocabulary_.preferredNamespacePrefixPropertyIRI.toURI()))
+                        record.getChangedAttribute().equals(Vocabulary_.preferredNamespaceUriPropertyIRI.toURI()))
                 .toList();
 
         assertEquals(1, records.size());
         final UpdateChangeRecord record = records.getFirst();
         assertEquals(Set.of(originalNamespace), record.getOriginalValue());
         assertEquals(Set.of(newNamespace), record.getNewValue());
+    }
+
+    @Test
+    void migrateIdentifierThrowsWhenEntityWithTheNewIdentifierAlreadyExists() {
+        final IriMigrationPair iris = new IriMigrationPair(
+                termsA.getFirst().getUri(), termsB.getFirst().getUri());
+        final IriMigrationParams params = new IriMigrationParams();
+
+        final TermItException e = assertThrows(
+                InvalidParameterException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
+        assertTrue(e.getMessage().contains("already exists"));
+    }
+
+    @Test
+    void migrateIdentifierDoesNotMigrateTermsAlreadyInNewNamespace() {
+        final Term alreadyMigrated = termsA.getFirst();
+        final String namespace = generateNamespace();
+        final URI alreadyMigratedUri =
+                URI.create(namespace + IdentifierResolver.extractIdentifierFragment(alreadyMigrated.getUri()));
+        // prepare already migrated term
+        transactional(() -> {
+            iriMigrationDao.migrateIdentifier(new IriMigrationPair(alreadyMigrated.getUri(), alreadyMigratedUri));
+        });
+        alreadyMigrated.setUri(alreadyMigratedUri);
+
+        final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(namespace));
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+
+        // no identifier change record was created
+        assertEquals(0, findIdentifierChangeRecords(alreadyMigrated).size());
+    }
+
+    @Test
+    void migrateIdentifierThrowsForVocabularyNamespaceMigrationWhenTermIsNotInVocabularyOriginalNamespace() {
+        final Term illegalTerm = termsA.getFirst();
+        final String namespace = generateNamespace();
+        final URI termUri = URI.create(namespace + IdentifierResolver.extractIdentifierFragment(illegalTerm.getUri()));
+        // prepare term that is not in the vocabulary namespace
+        transactional(() -> {
+            iriMigrationDao.migrateIdentifier(new IriMigrationPair(illegalTerm.getUri(), termUri));
+        });
+        illegalTerm.setUri(termUri);
+
+        final String newNamespace = generateNamespace();
+        final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
+
+        final TermItException e = assertThrows(
+                InvalidParameterException.class,
+                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params));
+        assertTrue(e.getMessage().contains("original vocabulary namespace"));
     }
 
     private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {
