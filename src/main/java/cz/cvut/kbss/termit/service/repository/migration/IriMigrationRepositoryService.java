@@ -14,6 +14,8 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,7 +32,7 @@ import java.time.Instant;
  * @see IriMigrationType
  */
 @Service
-public class IriMigrationRepositoryService {
+public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
     private static final Logger LOG = LoggerFactory.getLogger(IriMigrationRepositoryService.class);
     private final IriMigrationDao iriMigrationDao;
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
@@ -42,6 +44,7 @@ public class IriMigrationRepositoryService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public IriMigrationRepositoryService(
+            LongRunningTasksRegistry longRunningTasksRegistry,
             IriMigrationDao iriMigrationDao,
             ChangeTrackingContextResolver changeTrackingContextResolver,
             TermRepositoryService termRepositoryService,
@@ -50,6 +53,7 @@ public class IriMigrationRepositoryService {
             ChangeRecordDao changeRecordDao,
             SecurityUtils securityUtils,
             ApplicationEventPublisher applicationEventPublisher) {
+        super(longRunningTasksRegistry);
         this.iriMigrationDao = iriMigrationDao;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
         this.termRepositoryService = termRepositoryService;
@@ -72,13 +76,23 @@ public class IriMigrationRepositoryService {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void migrateIdentifier(
-            IriMigrationPair iriMigrationPair, IriMigrationType migrationType, IriMigrationParams params) {
-        migrateIdentifierInternal(iriMigrationPair, migrationType, params);
-        LOG.debug("Evicting all application caches, Identifier migrated {}", iriMigrationPair);
-        applicationEventPublisher.publishEvent(new EvictCacheEvent(this));
+            IriMigrationPair iriMigrationPair,
+            IriMigrationType migrationType,
+            IriMigrationParams params,
+            IriMigrationLongRunningTask task) {
+        try {
+            task.markStarted();
+            notifyMigrationTaskChanged(task);
+            migrateIdentifierInternal(iriMigrationPair, migrationType, params);
+            LOG.debug("Evicting all application caches, Identifier migrated {}", iriMigrationPair);
+            applicationEventPublisher.publishEvent(new EvictCacheEvent(this));
+        } finally {
+            task.markAsDone();
+            notifyMigrationTaskChanged(task);
+        }
     }
 
-    /** @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams) */
+    /** @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams, IriMigrationLongRunningTask) */
     @Transactional(propagation = Propagation.MANDATORY)
     void migrateIdentifierInternal(IriMigrationPair iris, IriMigrationType migrationType, IriMigrationParams params) {
         ensureExists(iris, migrationType);
@@ -136,5 +150,9 @@ public class IriMigrationRepositoryService {
         } finally {
             changedAsset.setUri(iris.originalIri());
         }
+    }
+
+    public void notifyMigrationTaskChanged(IriMigrationLongRunningTask task) {
+        notifyTaskChanged(task);
     }
 }

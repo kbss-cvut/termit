@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.service.repository.migration.IriMigrationLongRunningTask;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationRepositoryService;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationType;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
@@ -84,7 +85,9 @@ public class IriMigrationService {
                     + " is not authorized to migrate identifier " + Utils.uriToString(iris.originalIri()) + ".");
         }
         LOG.info("Migrating {} identifier: {}", migrationType.name(), iris);
-        repositoryService.migrateIdentifier(iris, migrationType, params);
+        IriMigrationLongRunningTask longRunningTask = new IriMigrationLongRunningTask();
+        repositoryService.notifyMigrationTaskChanged(longRunningTask);
+        repositoryService.migrateIdentifier(iris, migrationType, params, longRunningTask);
         LOG.debug("Migrated {} identifier: {}", migrationType.name(), iris);
     }
 
