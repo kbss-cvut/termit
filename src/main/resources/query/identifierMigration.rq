@@ -4,6 +4,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 # Replaces any occurrence of ?originalIri with ?newIri
 # Prevents snapshot modification except rewiring the is-version-of relations
 #   to maintain the link to the snapshotted entity
+# Prevents identifier change record modification
 
 DELETE {
     GRAPH ?graph {
@@ -34,8 +35,13 @@ WHERE {
         ||
         # Unless rewiring the is-version-of-* relation
         # ?graph can be version of vocabulary if ?predicate is version-of-*
-        (?predicate IN (dd:is-version-of-vocabulary, dd:is-version-of-term))
+        (?predicate IN (dd:is-version-of-vocabulary, dd:is-version-of-term) && (?subject != ?originalIri))
     )
+
+    # Prevent identifier change records modification
+    FILTER NOT EXISTS {
+        ?subject a <http://onto.fel.cvut.cz/ontologies/application/termit/identifier-change> .
+    }
 
     # bind new values replacing the original IRI
     BIND(
