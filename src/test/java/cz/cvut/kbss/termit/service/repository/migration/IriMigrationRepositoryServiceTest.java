@@ -633,6 +633,41 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         assertEquals(Set.of(newNamespace), record.getNewValue());
     }
 
+    // the context is discarded, to disable rdfs inference for other tests
+    @DirtiesContext
+    @Test
+    void migrateIdentifierDoesNotModifyIdentifierChangeRecords() {
+        final Term toMigrate = termsA.getFirst();
+        final URI originalIri = toMigrate.getUri();
+        final IriMigrationParams params = new IriMigrationParams();
+
+        final IriMigrationPair firstMigration = iriMigration(originalIri);
+        sut.migrateIdentifier(firstMigration, IriMigrationType.TERM, params);
+
+        // a new term reuses the identifier released by the first migration
+        final Term reusingTerm = generateTerm(vocabularyA);
+        reusingTerm.setUri(originalIri);
+        termService.persistRoot(reusingTerm, vocabularyA);
+
+        final IriMigrationPair secondMigration = iriMigration(originalIri);
+        sut.migrateIdentifier(secondMigration, IriMigrationType.TERM, params);
+
+        // change records are searched by the current identifier of the asset
+        toMigrate.setUri(firstMigration.newIri());
+        // the search requires the hierarchy of change record classes from the ontology
+        enableRdfsInference(em);
+
+        final List<IdentifierChangeRecord> records = findIdentifierChangeRecords(toMigrate);
+
+        assertEquals(1, records.size());
+        final IdentifierChangeRecord record = records.getFirst();
+        assertEquals(
+                originalIri,
+                record.getOriginalIdentifier(),
+                "Original identifier in the identifier change record of the first migration was changed!");
+        assertEquals(firstMigration.newIri(), record.getChangedEntity());
+    }
+
     @Test
     void migrateIdentifierThrowsWhenEntityWithTheNewIdentifierAlreadyExists() {
         final IriMigrationPair iris = new IriMigrationPair(
@@ -783,6 +818,49 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
                 Set.of(iris.originalIri()),
                 properties.get(attribute.getUri().toString()),
                 "Custom attribute value in the snapshot was migrated!");
+    }
+
+    @Test
+    void migrateIdentifierThrowsForIdentifierOfVocabularySnapshot() {
+        vocabularyService.createSnapshot(vocabularyA);
+        final URI vocabularySnapshot = findSnapshotOf(vocabularyA.getUri());
+        final IriMigrationPair iris = iriMigration(vocabularySnapshot);
+        final IriMigrationParams params = new IriMigrationParams();
+
+        final TermItException e = assertThrows(
+                InvalidParameterException.class,
+                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params));
+        assertTrue(e.getMessage().contains("snapshot"));
+    }
+
+    @Test
+    void migrateIdentifierThrowsForIdentifierOfTermSnapshot() {
+        vocabularyService.createSnapshot(vocabularyA);
+        final URI termSnapshot = findSnapshotOf(termsA.getFirst().getUri());
+        final IriMigrationPair iris = iriMigration(termSnapshot);
+        final IriMigrationParams params = new IriMigrationParams();
+
+        final TermItException e = assertThrows(
+                InvalidParameterException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
+        assertTrue(e.getMessage().contains("snapshot"));
+    }
+
+    @Test
+    void migrationIsReversible() {
+        final Vocabulary toMigrate = vocabularyA;
+        final URI originalNamespace = URI.create(toMigrate.getPreferredNamespaceUri());
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
+
+        final IriMigrationPair reverseIris = new IriMigrationPair(iris.newIri(), iris.originalIri());
+        final IriMigrationParams reverseParams = new IriMigrationParams(originalNamespace);
+
+        sut.migrateIdentifier(reverseIris, IriMigrationType.VOCABULARY, reverseParams);
+
+        assertTrue(askGraphExists(iris.originalIri()));
+        assertFalse(askGraphExists(iris.newIri()));
     }
 
     private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {

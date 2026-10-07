@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.repository.migration;
 
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
@@ -10,6 +11,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
@@ -92,7 +94,10 @@ public class IriMigrationAction implements Runnable {
     }
 
     private void ensureNotExists(URI resource) {
-        if (!iriMigrationDao.getEntityTypes(resource).isEmpty()) {
+        final Optional<URI> type = iriMigrationDao.getEntityTypes(resource).stream()
+                .filter(t -> !t.toString().equals(RDFS.RESOURCE))
+                .findAny();
+        if (type.isPresent()) {
             throw new InvalidParameterException("Resource " + Utils.uriToString(resource) + " already exists!");
         }
     }
@@ -108,16 +113,25 @@ public class IriMigrationAction implements Runnable {
         }
     }
 
+    private void ensureNotSnapshot(SupportsSnapshots supportsSnapshots) {
+        if (supportsSnapshots.isSnapshot()) {
+            throw new InvalidParameterException("Identifier of snapshot cannot be migrated!");
+        }
+    }
+
     private void validateVocabularyMigration() {
-        if (!(changedAsset instanceof Vocabulary) || !changedAsset.getUri().equals(iris.originalIri())) {
+        if (!(changedAsset instanceof Vocabulary vocabulary)
+                || !changedAsset.getUri().equals(iris.originalIri())) {
             throw new InvalidParameterException("Changed asset is not expected Vocabulary!");
         }
+        ensureNotSnapshot(vocabulary);
     }
 
     private void validateTermMigration() {
         if (!(changedAsset instanceof Term term) || !changedAsset.getUri().equals(iris.originalIri())) {
             throw new InvalidParameterException("Changed asset is not expected Term!");
         }
+        ensureNotSnapshot(term);
 
         // ensure the new term IRI is inside vocabulary namespace
         final String vocabularyNamespace = Optional.ofNullable(params.preferredNamespaceUri())
