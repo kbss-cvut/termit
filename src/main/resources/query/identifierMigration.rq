@@ -37,10 +37,14 @@ WHERE {
         (?predicate IN (?isVersionOfRelations) && (?subject != ?originalIri))
     )
 
-    # Prevent identifier change records modification
-    FILTER NOT EXISTS {
-        ?subject a ?identifierChangeType .
-    }
+    # Prevent change record modification
+    FILTER (
+        # allow rewiring change records to modified entity
+        ?predicate = dd:has-changed-entity
+        ||
+        # prevent other modifications to identifier change records
+        NOT EXISTS { ?subject a ?identifierChangeType }
+    )
 
     # bind new values replacing the original IRI
     BIND(
