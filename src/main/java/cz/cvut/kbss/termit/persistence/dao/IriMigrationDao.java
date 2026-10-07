@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord_;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -36,15 +37,27 @@ public class IriMigrationDao {
      */
     public void migrateIdentifier(IriMigrationPair iris) {
         try {
-            Query query = em.createNativeQuery(Utils.loadQuery("identifierMigration.rq"));
-            bind(query, iris);
-            query.executeUpdate(); // execute for all named graphs
+            Query namedGraphQuery = constructMigrationQuery(iris, false);
+            namedGraphQuery.executeUpdate();
 
-            query.setParameter("graph", Constants.DEFAULT_GRAPH);
-            query.executeUpdate(); // execute only for the default graph
+            Query defaultGraphQuery = constructMigrationQuery(iris, true);
+            defaultGraphQuery.setParameter("graph", Constants.DEFAULT_GRAPH);
+            defaultGraphQuery.executeUpdate();
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to migrate identifier: " + iris, e);
         }
+    }
+
+    private Query constructMigrationQuery(IriMigrationPair iris, boolean defaultGraph) {
+        String insertPattern = "?newSubject ?newPredicate ?newObject .";
+        if (!defaultGraph) {
+            insertPattern = "GRAPH ?graph { " + insertPattern + " }";
+        }
+        final String queryString =
+                Utils.loadQuery("identifierMigration.rq").replace("##$INSERT_PATTERN$##", insertPattern);
+        Query query = em.createNativeQuery(queryString);
+        bind(query, iris);
+        return query;
     }
 
     /**
@@ -131,7 +144,10 @@ public class IriMigrationDao {
      * @param iris the pair of IRIs for migration
      */
     private static void bind(Query query, IriMigrationPair iris) {
-        query.setParameter("originalIri", iris.originalIri()).setParameter("newIri", iris.newIri());
+        query.setParameter("originalIri", iris.originalIri())
+                .setParameter("newIri", iris.newIri())
+                .setParameter("isVersionOfRelations", Constants.IS_VERSION_OF_RELATIONS)
+                .setParameter("identifierChangeType", IdentifierChangeRecord_.entityClassIRI);
     }
 
     public void evictCache() {
