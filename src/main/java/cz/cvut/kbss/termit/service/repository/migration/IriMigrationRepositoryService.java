@@ -156,6 +156,7 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         record.setTimestamp(Instant.now());
         record.setAuthor(author);
         record.setOriginalIdentifier(iris.originalIri());
+        record.setNewIdentifier(iris.newIri());
 
         assert changedAsset.getUri().equals(iris.originalIri());
         try {
