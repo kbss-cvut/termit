@@ -4,7 +4,9 @@ import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.IriMigratedEvent;
+import cz.cvut.kbss.termit.event.IriMigrationFailedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
@@ -89,6 +91,12 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
             applicationEventPublisher.publishEvent(new IriMigratedEvent(this, migrationType, iriMigrationPair));
             LOG.debug("Evicting all application caches, Identifier migrated {}", iriMigrationPair);
             applicationEventPublisher.publishEvent(new EvictCacheEvent(this));
+        } catch (TermItException e) {
+            applicationEventPublisher.publishEvent(new IriMigrationFailedEvent(this, e.getMessage(), e.getMessageId()));
+            throw e;
+        } catch (RuntimeException e) {
+            applicationEventPublisher.publishEvent(new IriMigrationFailedEvent(this, e.getMessage(), null));
+            throw e;
         } finally {
             task.markAsDone();
             notifyMigrationTaskChanged(task);

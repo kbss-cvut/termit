@@ -39,7 +39,7 @@ public final class WebSocketDestinations {
     public static final String LONG_RUNNING_TASKS_UPDATE = "/long-running-tasks/update";
 
     /** Used for announcing resource identifier migration */
-    public static final String IDENTIFIER_MIGRATION_COMPLETED = "/migration/identifier";
+    public static final String IDENTIFIER_MIGRATION = "/migration/identifier";
 
     private WebSocketDestinations() {
         throw new AssertionError();
