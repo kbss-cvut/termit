@@ -1,10 +1,12 @@
 package cz.cvut.kbss.termit.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationType;
 import org.springframework.context.ApplicationEvent;
 
 /** Indicates that an identifier of a resource was migrated to a different one. */
+@JsonIgnoreProperties("source")
 public class IriMigratedEvent extends ApplicationEvent {
     /** The type of the entity whose identifier was migrated */
     private final IriMigrationType migrationType;
@@ -17,9 +19,11 @@ public class IriMigratedEvent extends ApplicationEvent {
         this.iris = iris;
     }
 
-    public Payload toPayload() {
-        return new Payload(migrationType, iris);
+    public IriMigrationType getMigrationType() {
+        return migrationType;
     }
 
-    public record Payload(IriMigrationType migrationType, IriMigrationPair iris) {}
+    public IriMigrationPair getIris() {
+        return iris;
+    }
 }
