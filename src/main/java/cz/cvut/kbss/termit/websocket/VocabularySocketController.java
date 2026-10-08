@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import jakarta.annotation.Nonnull;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -39,8 +40,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-
-import jakarta.annotation.Nonnull;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.net.URI;
 import java.util.Collection;
@@ -135,7 +136,7 @@ public class VocabularySocketController extends BaseWebSocketController {
                 getHeaders(event));
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onIdentifierMigrated(IriMigratedEvent event) {
         messagingTemplate.convertAndSend(WebSocketDestinations.IDENTIFIER_MIGRATION_COMPLETED, event.toPayload());
     }
