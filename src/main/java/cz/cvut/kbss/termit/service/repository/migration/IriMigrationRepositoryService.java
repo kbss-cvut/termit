@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.event.IriMigrationFailedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
@@ -15,7 +16,6 @@ import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextR
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
@@ -43,7 +43,6 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
     private final VocabularyRepositoryService vocabularyRepositoryService;
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
     private final ChangeRecordDao changeRecordDao;
-    private final SecurityUtils securityUtils;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public IriMigrationRepositoryService(
@@ -54,7 +53,6 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
             VocabularyRepositoryService vocabularyRepositoryService,
             VocabularyNamespaceResolver vocabularyNamespaceResolver,
             ChangeRecordDao changeRecordDao,
-            SecurityUtils securityUtils,
             ApplicationEventPublisher applicationEventPublisher) {
         super(longRunningTasksRegistry);
         this.iriMigrationDao = iriMigrationDao;
@@ -63,7 +61,6 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.changeRecordDao = changeRecordDao;
-        this.securityUtils = securityUtils;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
@@ -74,6 +71,8 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
      * @param iriMigrationPair The pair of IRIs to migrate
      * @param migrationType the expected type of the entity with the original IRI
      * @param params additional parameters to customize the migration process
+     * @param author the user performing the migration, recorded as the author of the created change records
+     * @param task the long-running task tracking the migration
      * @throws NotFoundException when the entity with the original IRI and the expected type does not exist
      */
     @Async
@@ -82,11 +81,12 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
             IriMigrationPair iriMigrationPair,
             IriMigrationType migrationType,
             IriMigrationParams params,
+            User author,
             IriMigrationLongRunningTask task) {
         try {
             task.markStarted();
             notifyMigrationTaskChanged(task);
-            migrateIdentifierInternal(iriMigrationPair, migrationType, params);
+            migrateIdentifierInternal(iriMigrationPair, migrationType, params, author);
 
             applicationEventPublisher.publishEvent(new IriMigratedEvent(this, migrationType, iriMigrationPair));
             LOG.debug("Evicting all application caches, Identifier migrated {}", iriMigrationPair);
@@ -103,9 +103,13 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         }
     }
 
-    /** @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams, IriMigrationLongRunningTask) */
+    /**
+     * @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams, User,
+     *     IriMigrationLongRunningTask)
+     */
     @Transactional(propagation = Propagation.MANDATORY)
-    void migrateIdentifierInternal(IriMigrationPair iris, IriMigrationType migrationType, IriMigrationParams params) {
+    void migrateIdentifierInternal(
+            IriMigrationPair iris, IriMigrationType migrationType, IriMigrationParams params, User author) {
         ensureExists(iris, migrationType);
         final Asset<?> changedAsset = getChangedAsset(iris, migrationType);
 
@@ -115,13 +119,13 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
                         changeTrackingContextResolver,
                         vocabularyNamespaceResolver,
                         changeRecordDao,
-                        securityUtils.getCurrentUser().toUser(),
+                        author,
                         changedAsset,
                         migrationType,
                         iris,
                         params)
                 .run();
-        createChangeRecord(iris, changedAsset);
+        createChangeRecord(iris, changedAsset, author);
     }
 
     private Asset<?> getChangedAsset(IriMigrationPair pair, IriMigrationType migrationType) {
@@ -140,7 +144,7 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         }
     }
 
-    private void createChangeRecord(IriMigrationPair iris, Asset<?> changedAsset) {
+    private void createChangeRecord(IriMigrationPair iris, Asset<?> changedAsset, User author) {
         if (changedAsset == null) {
             LOG.debug("Skipping identifier migration change record creation for migration: {}", iris);
             return;
@@ -150,7 +154,7 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         // the record must be associated with the new (current) entity identifier
         record.setChangedEntity(iris.newIri());
         record.setTimestamp(Instant.now());
-        record.setAuthor(securityUtils.getCurrentUser().toUser());
+        record.setAuthor(author);
         record.setOriginalIdentifier(iris.originalIri());
 
         assert changedAsset.getUri().equals(iris.originalIri());

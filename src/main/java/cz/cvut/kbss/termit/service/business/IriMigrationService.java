@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
@@ -85,9 +86,11 @@ public class IriMigrationService {
                     + " is not authorized to migrate identifier " + Utils.uriToString(iris.originalIri()) + ".");
         }
         LOG.info("Migrating {} identifier: {}", migrationType.name(), iris);
+        // the author must be resolved here, the security context may not be available in the async thread
+        final User author = securityUtils.getCurrentUser().toUser();
         IriMigrationLongRunningTask longRunningTask = new IriMigrationLongRunningTask();
         repositoryService.notifyMigrationTaskChanged(longRunningTask);
-        repositoryService.migrateIdentifier(iris, migrationType, params, longRunningTask);
+        repositoryService.migrateIdentifier(iris, migrationType, params, author, longRunningTask);
         LOG.debug("Migrated {} identifier: {}", migrationType.name(), iris);
     }
 

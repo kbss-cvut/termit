@@ -65,10 +65,13 @@ class IriMigrationServiceTest {
         final IriMigrationPair iris = new IriMigrationPair(vocabulary.getUri(), Generator.generateUri());
         when(vocabularyRepositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyAuthorizationService.canMigrateIdentifier(vocabulary)).thenReturn(true);
+        final UserAccount user = Generator.generateUserAccount();
+        when(securityUtils.getCurrentUser()).thenReturn(user);
 
         sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
         verify(vocabularyAuthorizationService).canMigrateIdentifier(vocabulary);
-        verify(repositoryService).migrateIdentifier(eq(iris), eq(IriMigrationType.VOCABULARY), eq(params), any());
+        verify(repositoryService)
+                .migrateIdentifier(eq(iris), eq(IriMigrationType.VOCABULARY), eq(params), eq(user.toUser()), any());
     }
 
     @Test
@@ -81,7 +84,7 @@ class IriMigrationServiceTest {
         assertThrows(
                 AuthorizationException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params));
         verify(vocabularyAuthorizationService).canMigrateIdentifier(vocabulary);
-        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any());
+        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -92,7 +95,7 @@ class IriMigrationServiceTest {
 
         assertThrows(NotFoundException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params));
         verify(vocabularyAuthorizationService, never()).canMigrateIdentifier(any());
-        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any());
+        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -101,10 +104,13 @@ class IriMigrationServiceTest {
         final IriMigrationPair iris = new IriMigrationPair(term.getUri(), Generator.generateUri());
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
         when(termAuthorizationService.canMigrateIdentifier(term)).thenReturn(true);
+        final UserAccount user = Generator.generateUserAccount();
+        when(securityUtils.getCurrentUser()).thenReturn(user);
 
         sut.migrateIdentifier(iris, IriMigrationType.TERM, params);
         verify(termAuthorizationService).canMigrateIdentifier(term);
-        verify(repositoryService).migrateIdentifier(eq(iris), eq(IriMigrationType.TERM), eq(params), any());
+        verify(repositoryService)
+                .migrateIdentifier(eq(iris), eq(IriMigrationType.TERM), eq(params), eq(user.toUser()), any());
     }
 
     @Test
@@ -116,7 +122,7 @@ class IriMigrationServiceTest {
 
         assertThrows(AuthorizationException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
         verify(termAuthorizationService).canMigrateIdentifier(term);
-        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any());
+        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -127,7 +133,7 @@ class IriMigrationServiceTest {
 
         assertThrows(NotFoundException.class, () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params));
         verify(termAuthorizationService, never()).canMigrateIdentifier(any());
-        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any());
+        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -138,7 +144,9 @@ class IriMigrationServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(user);
 
         sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params);
-        verify(repositoryService).migrateIdentifier(eq(iris), eq(IriMigrationType.CUSTOM_ATTRIBUTE), eq(params), any());
+        verify(repositoryService)
+                .migrateIdentifier(
+                        eq(iris), eq(IriMigrationType.CUSTOM_ATTRIBUTE), eq(params), eq(user.toUser()), any());
         verifyNoInteractions(vocabularyAuthorizationService, termAuthorizationService);
     }
 
@@ -154,7 +162,7 @@ class IriMigrationServiceTest {
         assertThrows(
                 AuthorizationException.class,
                 () -> sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params));
-        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any());
+        verify(repositoryService, never()).migrateIdentifier(any(), any(), any(), any(), any());
     }
 
     @ParameterizedTest
