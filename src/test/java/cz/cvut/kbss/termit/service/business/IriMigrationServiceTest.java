@@ -12,7 +12,6 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.service.repository.migration.IriMigrationLongRunningTask;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationRepositoryService;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationType;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
@@ -28,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -57,8 +57,6 @@ class IriMigrationServiceTest {
     @InjectMocks
     private IriMigrationService sut;
 
-    private final IriMigrationLongRunningTask task = new IriMigrationLongRunningTask();
-
     private final IriMigrationParams params = new IriMigrationParams(null);
 
     @Test
@@ -70,7 +68,7 @@ class IriMigrationServiceTest {
 
         sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params);
         verify(vocabularyAuthorizationService).canMigrateIdentifier(vocabulary);
-        verify(repositoryService).migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        verify(repositoryService).migrateIdentifier(eq(iris), eq(IriMigrationType.VOCABULARY), eq(params), any());
     }
 
     @Test
@@ -106,7 +104,7 @@ class IriMigrationServiceTest {
 
         sut.migrateIdentifier(iris, IriMigrationType.TERM, params);
         verify(termAuthorizationService).canMigrateIdentifier(term);
-        verify(repositoryService).migrateIdentifier(iris, IriMigrationType.TERM, params, task);
+        verify(repositoryService).migrateIdentifier(eq(iris), eq(IriMigrationType.TERM), eq(params), any());
     }
 
     @Test
@@ -140,7 +138,7 @@ class IriMigrationServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(user);
 
         sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params);
-        verify(repositoryService).migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params, task);
+        verify(repositoryService).migrateIdentifier(eq(iris), eq(IriMigrationType.CUSTOM_ATTRIBUTE), eq(params), any());
         verifyNoInteractions(vocabularyAuthorizationService, termAuthorizationService);
     }
 

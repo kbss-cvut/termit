@@ -41,7 +41,6 @@ import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -111,9 +110,6 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     @MockitoBean
     private TextAnalysisService textAnalysisService; // no-op analysis service
-
-    @MockitoBean
-    private LongRunningTasksRegistry longRunningTasksRegistry;
 
     private Vocabulary vocabularyA;
 
@@ -711,27 +707,6 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void migrateIdentifierDoesNotMigrateTermsAlreadyInNewNamespace() {
-        final Term alreadyMigrated = termsA.getFirst();
-        final String namespace = generateNamespace();
-        final URI alreadyMigratedUri =
-                URI.create(namespace + IdentifierResolver.extractIdentifierFragment(alreadyMigrated.getUri()));
-        // prepare already migrated term
-        transactional(() -> {
-            iriMigrationDao.migrateIdentifier(new IriMigrationPair(alreadyMigrated.getUri(), alreadyMigratedUri));
-        });
-        alreadyMigrated.setUri(alreadyMigratedUri);
-
-        final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
-        final IriMigrationParams params = new IriMigrationParams(URI.create(namespace));
-
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
-
-        // no identifier change record was created
-        assertEquals(0, findIdentifierChangeRecords(alreadyMigrated).size());
-    }
-
-    @Test
     void migrateIdentifierThrowsForVocabularyNamespaceMigrationWhenTermIsNotInVocabularyOriginalNamespace() {
         final Term illegalTerm = termsA.getFirst();
         final String namespace = generateNamespace();
@@ -967,6 +942,31 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
             final Term migrated = termService.findRequired(expectedIri);
             assertEquals(iris.newIri(), migrated.getVocabulary());
         });
+    }
+
+    @Test
+    void migrateIdentifierDoesNotMigrateTermsAlreadyInNewNamespaceWhenOriginalNamespaceIsPrefixOfNewNamespace() {
+        final String originalNamespace = vocabularyA.getPreferredNamespaceUri();
+        final String newNamespace = originalNamespace + "path/";
+        final Term alreadyMigrated = termsA.getFirst();
+        final String fragment = IdentifierResolver.extractIdentifierFragment(alreadyMigrated.getUri());
+        final URI alreadyMigratedUri = URI.create(newNamespace + fragment);
+        // prepare already migrated term
+        transactional(() -> {
+            iriMigrationDao.migrateIdentifier(new IriMigrationPair(alreadyMigrated.getUri(), alreadyMigratedUri));
+        });
+        alreadyMigrated.setUri(alreadyMigratedUri);
+
+        final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+
+        assertTrue(
+                termService.find(URI.create(newNamespace + "path/" + fragment)).isEmpty(),
+                "Term already in the new namespace was migrated again!");
+        assertTrue(termService.find(alreadyMigratedUri).isPresent());
+        assertEquals(0, findIdentifierChangeRecords(alreadyMigrated).size());
     }
 
     private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {

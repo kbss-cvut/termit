@@ -246,11 +246,26 @@ public class IriMigrationAction implements Runnable {
             throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri)
                     + " is not in the original vocabulary namespace " + originalNamespace);
         }
-        final String newTermUriStr = newNamespace + originalTermUriStr.substring(originalNamespace.length());
+
+        final String newTermUriStr =
+                newNamespace + removeNamespace(originalTermUriStr, originalNamespace, newNamespace);
         if (newTermUriStr.equals(originalTermUriStr)) {
             // term is already in correct namespace
             return null;
         }
+
         return new IriMigrationPair(originalTermUri, URI.create(newTermUriStr));
+    }
+
+    private static String removeNamespace(String termUri, String originalNamespace, String newNamespace) {
+        if (termUri.startsWith(newNamespace) && newNamespace.startsWith(originalNamespace)) {
+            // originalNamespace: slovník/pojem/
+            // pojem:             slovník/pojem/special/mujPojem
+            // newNamespace:      slovník/pojem/special
+            // -> newPojem        slovník/pojem/special/mujPojem
+            return termUri.substring(newNamespace.length());
+        }
+
+        return termUri.substring(originalNamespace.length());
     }
 }
