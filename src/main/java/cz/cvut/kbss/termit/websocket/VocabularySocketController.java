@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -139,9 +138,13 @@ public class VocabularySocketController extends BaseWebSocketController {
                 getHeaders(event));
     }
 
-    @EventListener(IriMigrationFailedEvent.class)
-    @TransactionalEventListener(classes = IriMigratedEvent.class, phase = TransactionPhase.AFTER_COMMIT)
-    public void onIdentifierMigration(ApplicationEvent event) {
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onIdentifierMigrated(IriMigratedEvent event) {
+        messagingTemplate.convertAndSend(WebSocketDestinations.IDENTIFIER_MIGRATION, event);
+    }
+
+    @EventListener
+    public void onIdentifierMigrationFailed(IriMigrationFailedEvent event) {
         messagingTemplate.convertAndSend(WebSocketDestinations.IDENTIFIER_MIGRATION, event);
     }
 
