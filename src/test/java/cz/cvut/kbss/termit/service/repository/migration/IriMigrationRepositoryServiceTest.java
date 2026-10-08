@@ -271,7 +271,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(Generator.generateUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        assertThrows(NotFoundException.class, () -> sut.migrateIdentifier(iris, type, params, task));
+        assertThrows(NotFoundException.class, () -> sut.migrateIdentifier(iris, type, params, author, task));
     }
 
     @Test
@@ -285,7 +285,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task);
 
         final Term migrated = termService.findRequired(iris.newIri());
         final Term unchanged = termService.findRequired(related.getUri());
@@ -309,7 +309,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         final Vocabulary migrated = vocabularyService.findRequired(iris.newIri());
         final Vocabulary unchanged = vocabularyService.findRequired(related.getUri());
@@ -339,7 +339,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params, author, task);
 
         final CustomAttribute migrated =
                 dataService.findCustomAttribute(iris.newIri()).orElseThrow();
@@ -373,7 +373,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         assertFalse(askGraphExists(toMigrate.getUri()), "Old vocabulary graph was not migrated!");
         assertTrue(askGraphExists(iris.newIri()), "New vocabulary graph does not exists!");
@@ -398,7 +398,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
     void migrateVocabularyAndAssertTermsNotChanged(Vocabulary toMigrate, IriMigrationParams params) {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         verify(iriMigrationDao, times(1)).migrateIdentifier(any());
         verify(iriMigrationDao).migrateIdentifier(iris);
@@ -417,7 +417,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         verify(iriMigrationDao, times(1 + termsA.size())).migrateIdentifier(any());
 
@@ -448,7 +448,9 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         IriMigrationType type = IriMigrationType.TERM;
         IriMigrationParams params = new IriMigrationParams();
 
-        assertThrows(IllegalTransactionStateException.class, () -> sut.migrateIdentifierInternal(iris, type, params));
+        assertThrows(
+                IllegalTransactionStateException.class,
+                () -> sut.migrateIdentifierInternal(iris, type, params, author));
     }
 
     @Test
@@ -482,7 +484,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task);
 
         // the occurrence must remain in the graph of its target
         final TermOccurrence migratedOcc = findOccurrence(occurrence.getUri(), occurrenceGraph);
@@ -508,7 +510,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         assertTrue(askGraphExists(originalGraph));
         assertFalse(askGraphExists(newGraph));
 
-        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task);
 
         assertFalse(askGraphExists(originalGraph), "Old occurrence graph was not migrated!");
         assertTrue(askGraphExists(newGraph), "New occurrence graph does not exist!");
@@ -532,7 +534,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermItException e = assertThrows(
                 InvalidParameterException.class,
-                () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task));
+                () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task));
         assertTrue(e.getMessage().contains("does not start with Vocabulary namespace"));
     }
 
@@ -546,7 +548,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermItException e = assertThrows(
                 InvalidParameterException.class,
-                () -> transactional(() -> sut.migrateIdentifierInternal(iris, IriMigrationType.TERM, params)));
+                () -> transactional(() -> sut.migrateIdentifierInternal(iris, IriMigrationType.TERM, params, author)));
         assertTrue(e.getMessage().contains("does not start with Vocabulary namespace"));
     }
 
@@ -562,7 +564,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri(), vocabularyNamespace);
         final IriMigrationParams params = new IriMigrationParams();
 
-        assertDoesNotThrow(() -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task));
+        assertDoesNotThrow(() -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task));
 
         assertTrue(termService.find(iris.newIri()).isPresent(), "Term not migrated!");
     }
@@ -578,7 +580,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(assetToMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, type, params, task);
+        sut.migrateIdentifier(iris, type, params, author, task);
 
         // change records are searched by the current identifier of the asset
         assetToMigrate.setUri(iris.newIri());
@@ -605,7 +607,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
         final String newNamespace = params.preferredNamespaceUri().toString();
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         // the search requires the hierarchy of change record classes from the ontology
         enableRdfsInference(em);
@@ -630,6 +632,40 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
     // the context is discarded, to disable rdfs inference for other tests
     @DirtiesContext
     @Test
+    void migrateIdentifierUsesSpecifiedAuthorForAllChangeRecordsInsteadOfCurrentUser() {
+        final User currentUser = Generator.generateUserWithId();
+        transactional(() -> em.persist(currentUser));
+        Environment.setCurrentUser(currentUser);
+
+        final Vocabulary toMigrate = vocabularyA;
+        final IriMigrationPair iris = iriMigration(toMigrate.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
+        final String newNamespace = params.preferredNamespaceUri().toString();
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
+
+        // the search requires the hierarchy of change record classes from the ontology
+        enableRdfsInference(em);
+
+        // change records are searched by the current identifier of the asset
+        toMigrate.setUri(iris.newIri());
+        final List<AbstractChangeRecord> vocabularyRecords = changeRecordDao.findAll(toMigrate);
+        assertFalse(vocabularyRecords.isEmpty());
+        vocabularyRecords.forEach(record -> assertEquals(author, record.getAuthor()));
+
+        for (Term term : termsA) {
+            term.setUri(URI.create(newNamespace + IdentifierResolver.extractIdentifierFragment(term.getUri())));
+            term.setVocabulary(iris.newIri());
+
+            final List<IdentifierChangeRecord> termRecords = findIdentifierChangeRecords(term);
+            assertEquals(1, termRecords.size());
+            assertEquals(author, termRecords.getFirst().getAuthor());
+        }
+    }
+
+    // the context is discarded, to disable rdfs inference for other tests
+    @DirtiesContext
+    @Test
     void migrateIdentifierCreatesPreferredNamespaceChangeRecord() {
         final Vocabulary toMigrate = vocabularyA;
         final String originalNamespace = toMigrate.getPreferredNamespaceUri();
@@ -639,7 +675,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
         final String newNamespace = params.preferredNamespaceUri().toString();
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         // change records are searched by the current identifier of the asset
         toMigrate.setUri(iris.newIri());
@@ -668,7 +704,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationParams params = new IriMigrationParams();
 
         final IriMigrationPair firstMigration = iriMigration(originalIri);
-        sut.migrateIdentifier(firstMigration, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(firstMigration, IriMigrationType.TERM, params, author, task);
 
         // a new term reuses the identifier released by the first migration
         final Term reusingTerm = generateTerm(vocabularyA);
@@ -676,7 +712,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         termService.persistRoot(reusingTerm, vocabularyA);
 
         final IriMigrationPair secondMigration = iriMigration(originalIri);
-        sut.migrateIdentifier(secondMigration, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(secondMigration, IriMigrationType.TERM, params, author, task);
 
         // change records are searched by the current identifier of the asset
         toMigrate.setUri(firstMigration.newIri());
@@ -702,7 +738,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermItException e = assertThrows(
                 InvalidParameterException.class,
-                () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task));
+                () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task));
         assertTrue(e.getMessage().contains("already exists"));
     }
 
@@ -723,7 +759,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermItException e = assertThrows(
                 InvalidParameterException.class,
-                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task));
+                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task));
         assertTrue(e.getMessage().contains("original vocabulary namespace"));
     }
 
@@ -739,7 +775,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task);
 
         assertEquals(
                 vocabularyA.getUri(),
@@ -765,7 +801,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         assertEquals(
                 iris.newIri(),
@@ -789,7 +825,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.CUSTOM_ATTRIBUTE, params, author, task);
 
         final Map<String, Set<Object>> properties =
                 termService.findRequired(termSnapshot).getProperties();
@@ -815,7 +851,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams();
 
-        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task);
 
         final Map<String, Set<Object>> properties =
                 termService.findRequired(termSnapshot).getProperties();
@@ -835,7 +871,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermItException e = assertThrows(
                 InvalidParameterException.class,
-                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task));
+                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task));
         assertTrue(e.getMessage().contains("snapshot"));
     }
 
@@ -848,7 +884,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final TermItException e = assertThrows(
                 InvalidParameterException.class,
-                () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, task));
+                () -> sut.migrateIdentifier(iris, IriMigrationType.TERM, params, author, task));
         assertTrue(e.getMessage().contains("snapshot"));
     }
 
@@ -859,12 +895,12 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(toMigrate.getUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         final IriMigrationPair reverseIris = new IriMigrationPair(iris.newIri(), iris.originalIri());
         final IriMigrationParams reverseParams = new IriMigrationParams(originalNamespace);
 
-        sut.migrateIdentifier(reverseIris, IriMigrationType.VOCABULARY, reverseParams, task);
+        sut.migrateIdentifier(reverseIris, IriMigrationType.VOCABULARY, reverseParams, author, task);
 
         assertTrue(askGraphExists(iris.originalIri()));
         assertFalse(askGraphExists(iris.newIri()));
@@ -885,7 +921,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
         final String newNamespace = params.preferredNamespaceUri().toString();
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         final URI newTermIri = URI.create(newNamespace + IdentifierResolver.extractIdentifierFragment(originalTermIri));
 
@@ -934,7 +970,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         originalIrisToFragments.forEach((originalIri, fragment) -> {
             final URI expectedIri = URI.create(newNamespace + fragment);
@@ -960,7 +996,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
         final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
 
-        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
 
         assertTrue(
                 termService.find(URI.create(newNamespace + "path/" + fragment)).isEmpty(),

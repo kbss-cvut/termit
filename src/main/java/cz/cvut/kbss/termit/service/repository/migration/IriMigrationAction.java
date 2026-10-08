@@ -235,7 +235,7 @@ public class IriMigrationAction implements Runnable {
                     .forEach(termMigration ->
                             // calling internal to stay in the same transaction
                             iriMigrationRepositoryService.migrateIdentifierInternal(
-                                    termMigration, IriMigrationType.TERM, params));
+                                    termMigration, IriMigrationType.TERM, params, author));
         }
         iriMigrationDao.flushChanges();
     }
