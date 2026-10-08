@@ -1,8 +1,10 @@
 package cz.cvut.kbss.termit.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.context.ApplicationEvent;
 
 /** Indicates a failure of identifier migration */
+@JsonIgnoreProperties("source")
 public class IriMigrationFailedEvent extends ApplicationEvent {
     private final String message;
     private final String messageId;
