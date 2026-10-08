@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
-import jakarta.annotation.Nonnull;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -43,6 +42,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.Collection;

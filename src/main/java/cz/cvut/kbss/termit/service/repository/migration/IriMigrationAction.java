@@ -242,15 +242,15 @@ public class IriMigrationAction implements Runnable {
 
     private static IriMigrationPair mapTermUri(URI originalTermUri, String originalNamespace, String newNamespace) {
         final String originalTermUriStr = originalTermUri.toString();
-        if (originalTermUriStr.startsWith(newNamespace)) {
-            // already correct namespace
-            return null;
-        }
         if (!originalTermUriStr.startsWith(originalNamespace)) {
             throw new InvalidParameterException("Term identifier " + Utils.uriToString(originalTermUri)
                     + " is not in the original vocabulary namespace " + originalNamespace);
         }
         final String newTermUriStr = newNamespace + originalTermUriStr.substring(originalNamespace.length());
+        if (newTermUriStr.equals(originalTermUriStr)) {
+            // term is already in correct namespace
+            return null;
+        }
         return new IriMigrationPair(originalTermUri, URI.create(newTermUriStr));
     }
 }

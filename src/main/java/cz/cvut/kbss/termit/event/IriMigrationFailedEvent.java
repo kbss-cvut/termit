@@ -2,9 +2,7 @@ package cz.cvut.kbss.termit.event;
 
 import org.springframework.context.ApplicationEvent;
 
-/**
- * Indicates a failure of identifier migration
- */
+/** Indicates a failure of identifier migration */
 public class IriMigrationFailedEvent extends ApplicationEvent {
     private final String message;
     private final String messageId;
