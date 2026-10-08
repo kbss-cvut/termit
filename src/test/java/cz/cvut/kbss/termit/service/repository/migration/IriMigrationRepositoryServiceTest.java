@@ -218,6 +218,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
         final IdentifierChangeRecord identifierRecord = new IdentifierChangeRecord();
         identifierRecord.setChangedEntity(term.getUri());
+        identifierRecord.setNewIdentifier(term.getUri());
         identifierRecord.setOriginalIdentifier(Generator.generateUri());
         identifierRecord.setTimestamp(Utils.timestamp());
         identifierRecord.setAuthor(author);
