@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.websocket;
 
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.IriMigratedEvent;
+import cz.cvut.kbss.termit.event.IriMigrationFailedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TextAnalysisFailedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
@@ -138,7 +139,12 @@ public class VocabularySocketController extends BaseWebSocketController {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onIdentifierMigrated(IriMigratedEvent event) {
-        messagingTemplate.convertAndSend(WebSocketDestinations.IDENTIFIER_MIGRATION_COMPLETED, event.toPayload());
+        messagingTemplate.convertAndSend(WebSocketDestinations.IDENTIFIER_MIGRATION, event.toPayload());
+    }
+
+    @EventListener
+    public void onIdentifierMigrationFailure(IriMigrationFailedEvent event) {
+        messagingTemplate.convertAndSend(WebSocketDestinations.IDENTIFIER_MIGRATION, event);
     }
 
     protected @Nonnull Map<String, Object> getHeaders(@Nonnull VocabularyEvent event) {
