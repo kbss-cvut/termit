@@ -625,6 +625,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
             assertEquals(1, records.size());
             final IdentifierChangeRecord record = records.getFirst();
             assertEquals(originalIri, record.getOriginalIdentifier());
+            assertEquals(newIri, record.getNewIdentifier());
             assertEquals(newIri, record.getChangedEntity());
         }
     }
