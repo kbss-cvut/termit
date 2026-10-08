@@ -41,6 +41,7 @@ import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -110,6 +111,9 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     @MockitoBean
     private TextAnalysisService textAnalysisService; // no-op analysis service
+
+    @MockitoBean
+    private LongRunningTasksRegistry longRunningTasksRegistry;
 
     private Vocabulary vocabularyA;
 
@@ -928,6 +932,41 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
             assertEquals(
                     newTermIri, migrated.getChangedEntity(), recordType + " does not reference the migrated term!");
         }
+    }
+
+    @Test
+    void migrateIdentifierRemovesOriginalNamespaceFromTermWhenNewNamespaceIsPrefixOfOriginalNamespace() {
+        final String newNamespace = generateNamespace();
+        final String originalNamespace = newNamespace + "path/";
+
+        // prepare the vocabulary with namespace whose prefix is the new namespace
+        transactional(() -> {
+            final Vocabulary managed = vocabularyRepositoryService.findRequired(vocabularyA.getUri());
+            managed.setPreferredNamespaceUri(originalNamespace);
+            // persisted by jopa at the end of transaction
+        });
+        vocabularyA.setPreferredNamespaceUri(originalNamespace);
+
+        // prepare terms in the original namespace
+        final Map<URI, String> originalIrisToFragments = new HashMap<>();
+        transactional(() -> termsA.forEach(term -> {
+            final String fragment = IdentifierResolver.extractIdentifierFragment(term.getUri());
+            final URI originalIri = URI.create(originalNamespace + fragment);
+            iriMigrationDao.migrateIdentifier(new IriMigrationPair(term.getUri(), originalIri));
+            originalIrisToFragments.put(originalIri, fragment);
+        }));
+
+        final IriMigrationPair iris = iriMigration(vocabularyA.getUri());
+        final IriMigrationParams params = new IriMigrationParams(URI.create(newNamespace));
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, task);
+
+        originalIrisToFragments.forEach((originalIri, fragment) -> {
+            final URI expectedIri = URI.create(newNamespace + fragment);
+            assertTrue(termService.find(originalIri).isEmpty(), "Term not migrated!");
+            final Term migrated = termService.findRequired(expectedIri);
+            assertEquals(iris.newIri(), migrated.getVocabulary());
+        });
     }
 
     private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {
