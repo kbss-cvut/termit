@@ -30,8 +30,8 @@ import java.util.Set;
 
 /**
  * Authorizes access to terms.
- * <p>
- * This access is mostly guided by access rules of the vocabulary that contains the term.
+ *
+ * <p>This access is mostly guided by access rules of the vocabulary that contains the term.
  */
 @Service
 public class TermAuthorizationService implements AssetAuthorizationService<AbstractTerm> {
@@ -44,12 +44,12 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
 
     /**
      * Checks if the current user can create a term in the specified target vocabulary.
-     * <p>
-     * A user is authorized to create a term if they are authorized to modify a vocabulary.
+     *
+     * <p>A user is authorized to create a term if they are authorized to modify a vocabulary.
      *
      * @param target Owner of the new term
      * @return {@code true} if the current user is authorized to create term in the specified vocabulary, {@code false}
-     * otherwise
+     *     otherwise
      */
     public boolean canCreateIn(Vocabulary target) {
         return vocabularyAuthorizationService.canModify(target);
@@ -57,13 +57,13 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
 
     /**
      * Checks if the current user can create a child of the specified term.
-     * <p>
-     * A user is authorized to crate a child term of a term if they are authorized to modify the vocabulary that
+     *
+     * <p>A user is authorized to crate a child term of a term if they are authorized to modify the vocabulary that
      * contains the parent term.
      *
      * @param parent Parent term of the new term
-     * @return {@code true} if the current user is authorized to create term in the parent term's vocabulary, {@code
-     * false} otherwise
+     * @return {@code true} if the current user is authorized to create term in the parent term's vocabulary,
+     *     {@code false} otherwise
      */
     public boolean canCreateChild(AbstractTerm parent) {
         return canCreateIn(getVocabulary(parent));
@@ -90,8 +90,8 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
     }
 
     /**
-     * Removes all terms from the collection in-place including their ancestors
-     * if the current user lacks authorization to read their associated vocabulary.
+     * Removes all terms from the collection in-place including their ancestors if the current user lacks authorization
+     * to read their associated vocabulary.
      *
      * @param terms mutable collection of terms to filter
      */
@@ -125,8 +125,8 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
     }
 
     /**
-     * Recursively remove terms and their ancestors from the mutable collection
-     * if they belong in one of {@code unauthorizedVocabularies}.
+     * Recursively remove terms and their ancestors from the mutable collection if they belong in one of
+     * {@code unauthorizedVocabularies}.
      *
      * @param terms mutable collection of terms to filter
      * @param unauthorizedVocabularies vocabulary identifiers to exclude
@@ -145,5 +145,17 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
                 removeTermsFromVocabularies(term.getParentTerms(), unauthorizedVocabularies);
             }
         });
+    }
+
+    /**
+     * Checks whether the current user can migrate the identiifer of the specified asset.
+     *
+     * @param asset Resource access to which is to be authorized
+     * @return {@code true} if the current user can migrate the identifier of the specified asset, {@code false}
+     *     otherwise
+     */
+    @Override
+    public boolean canMigrateIdentifier(AbstractTerm asset) {
+        return vocabularyAuthorizationService.canMigrateIdentifier(getVocabulary(asset));
     }
 }

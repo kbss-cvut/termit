@@ -19,35 +19,27 @@ package cz.cvut.kbss.termit.websocket;
 
 public final class WebSocketDestinations {
 
-    /**
-     * Used for publishing results of validation from server to clients
-     */
+    /** Used for publishing results of validation from server to clients */
     public static final String VOCABULARIES_VALIDATION = "/vocabularies/validation";
 
-    /**
-     * Used for notifying client about a text analysis failure
-     */
+    /** Used for notifying client about a text analysis failure */
     public static final String VOCABULARIES_TEXT_ANALYSIS_FAILED = "/vocabularies/text_analysis/failed";
 
-    /**
-     * Used for notifying client about finishing a text analysis
-     */
+    /** Used for notifying client about finishing a text analysis */
     private static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED = "/vocabularies/text_analysis/finished";
 
-    /**
-     * Used for notifying clients about a text analysis end
-     */
+    /** Used for notifying clients about a text analysis end */
     public static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED_FILE = VOCABULARIES_TEXT_ANALYSIS_FINISHED + "/file";
 
-    /**
-     * Used for notifying clients about a text analysis end
-     */
-    public static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION = VOCABULARIES_TEXT_ANALYSIS_FINISHED + "/term-definition";
+    /** Used for notifying clients about a text analysis end */
+    public static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION =
+            VOCABULARIES_TEXT_ANALYSIS_FINISHED + "/term-definition";
 
-    /**
-     * Used for pushing updates about long-running tasks to clients
-     */
+    /** Used for pushing updates about long-running tasks to clients */
     public static final String LONG_RUNNING_TASKS_UPDATE = "/long-running-tasks/update";
+
+    /** Used for announcing resource identifier migration */
+    public static final String IDENTIFIER_MIGRATION = "/migration/identifier";
 
     private WebSocketDestinations() {
         throw new AssertionError();

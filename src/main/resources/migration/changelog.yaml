@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kbss-cvut/ontology-migration-tool/refs/heads/main/src/main/resources/changelog-scheme.json
+
 changelog:
     -   include:
             file: modelSimplification.yaml
@@ -8,3 +10,11 @@ changelog:
     -   include:
             file: ontologiesReadOnly.yaml
             relativeToChangelogFile: true
+    -   changeSet:
+            id: 11
+            changes:
+                -   type: importFromUrl
+                    # Import data description ontology update https://github.com/kbss-cvut/data-description/pull/33
+                    sourceUrl: https://onto.fel.cvut.cz/ontologies/data-description/version/2.0.0.ttl
+                    graph: http://onto.fel.cvut.cz/ontologies/data-description
+                    replace: true

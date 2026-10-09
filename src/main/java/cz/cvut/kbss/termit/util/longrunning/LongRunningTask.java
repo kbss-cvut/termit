@@ -24,34 +24,36 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * An asynchronously running task that is expected to run for some time.
- */
+/** An asynchronously running task that is expected to run for some time. */
 public interface LongRunningTask {
 
+    /**
+     * Translation key suffix of the task name which is display on the frontend.
+     *
+     * <p>The provided name key is prefixed with {@code longrunningtasks.name.}. Example: name {@code "validation"} will
+     * be translated on frontend as {@code "longrunningtasks.name.validation"}.
+     *
+     * <p>Leave blank to hide the task on the frontend.
+     *
+     * @return
+     */
     @Nullable
     String getName();
 
-    /**
-     * @return true when the task is being actively executed, false otherwise.
-     */
+    /** @return true when the task is being actively executed, false otherwise. */
     boolean isRunning();
 
     /**
      * Returns {@code true} if this task completed.
-     * <p>
-     * Completion may be due to normal termination, an exception, or
-     * cancellation -- in all of these cases, this method will return
-     * {@code true}.
+     *
+     * <p>Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this
+     * method will return {@code true}.
      *
      * @return {@code true} if this task completed
      */
     boolean isDone();
 
-    /**
-     * @return a timestamp of the task execution start,
-     * or empty if the task execution has not yet started.
-     */
+    /** @return a timestamp of the task execution start, or empty if the task execution has not yet started. */
     @Nonnull
     Optional<Instant> startedAt();
 
