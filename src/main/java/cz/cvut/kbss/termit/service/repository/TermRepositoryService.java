@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TermInfoWithParents;
@@ -249,6 +250,16 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         }
         verifyIdentifierUnique(instance);
         pruneAndNormalizeTranslations(instance);
+
+        final String preferredNamespace = namespaceResolver.resolveNamespace(vocabulary.getUri());
+        if (!instance.getUri().toString().startsWith(preferredNamespace)) {
+            throw new ValidationException(
+                            "Term identifier " + Utils.uriToString(instance.getUri())
+                                    + " must be inside Vocabulary preferred namespace: '"
+                                    + preferredNamespace + "'",
+                            "term.created.error.iriNotInVocabularyNamespace")
+                    .addParameter("namespace", preferredNamespace);
+        }
     }
 
     /**

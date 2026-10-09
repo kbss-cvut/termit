@@ -89,7 +89,18 @@ public class Generator {
      * @return Random URI
      */
     public static URI generateUri() {
-        return URI.create(Environment.BASE_URI + "/randomInstance" + randomInt());
+        return generateUri(Environment.BASE_URI);
+    }
+
+    /**
+     * Generates a (pseudo) random URI within the given namespace.
+     *
+     * @param namespace the namespace of the generated URI
+     * @return Random URI with the given namespace
+     */
+    public static URI generateUri(String namespace) {
+        return URI.create(
+                IdentifierResolver.ensureNamespaceSeparatorTermination(namespace) + "randomInstance" + randomInt());
     }
 
     /**
@@ -258,6 +269,8 @@ public class Generator {
         vocabulary.setDescription(MultilingualString.create(
                 "Description of vocabulary " + vocabulary.getPrimaryLabel(), primaryLanguage));
         vocabulary.setRootTerms(new HashSet<>());
+        vocabulary.setPreferredNamespaceUri(
+                IdentifierResolver.ensureNamespaceSeparatorTermination(Environment.BASE_URI));
         return vocabulary;
     }
 
