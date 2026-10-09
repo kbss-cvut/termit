@@ -15,10 +15,11 @@ class VocabularyNamespaceResolverTest {
         final Configuration config = new Configuration();
         config.getNamespace().getTerm().setSeparator("/term");
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setPreferredNamespaceUri(null);
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
 
         sut.setVocabularyPreferredNamespace(vocabulary);
-        assertEquals(vocabulary.getUri() + "/term/",vocabulary.getPreferredNamespaceUri());
+        assertEquals(vocabulary.getUri() + "/term/", vocabulary.getPreferredNamespaceUri());
     }
 
     @Test
@@ -30,12 +31,13 @@ class VocabularyNamespaceResolverTest {
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
 
         sut.setVocabularyPreferredNamespace(vocabulary);
-        assertEquals(vocabulary.getUri() + "/",vocabulary.getPreferredNamespaceUri());
+        assertEquals(vocabulary.getUri() + "/", vocabulary.getPreferredNamespaceUri());
     }
 
     @Test
     void setVocabularyPreferredNamespaceThrowsIllegalArgumentExceptionWhenVocabularyDoesNotHaveIdentifier() {
         final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setPreferredNamespaceUri(null);
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, new Configuration());
         assertThrows(IllegalArgumentException.class, () -> sut.setVocabularyPreferredNamespace(vocabulary));
     }
@@ -45,6 +47,7 @@ class VocabularyNamespaceResolverTest {
         final Configuration config = new Configuration();
         config.getNamespace().getTerm().setSeparator("/term");
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setPreferredNamespaceUri(null);
         final String namespace = vocabulary.getUri() + "/";
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
 
@@ -57,6 +60,7 @@ class VocabularyNamespaceResolverTest {
         final Configuration config = new Configuration();
         config.getNamespace().getTerm().setSeparator("/term");
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setPreferredNamespaceUri(null);
         final VocabularyNamespaceResolver sut = new VocabularyNamespaceResolver(null, config);
 
         sut.setVocabularyPreferredNamespace(vocabulary, null);

@@ -101,9 +101,10 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
 
-        final PersistChangeRecord record = em
-                .createQuery("SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
-                             PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri())
+        final PersistChangeRecord record = em.createQuery(
+                        "SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
+                        PersistChangeRecord.class)
+                .setParameter("vocabularyIri", vocabulary.getUri())
                 .getSingleResult();
         assertNotNull(record);
         assertEquals(user.toUser(), record.getAuthor());
@@ -115,8 +116,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         setPrimaryLabel(vocabulary, "");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
-        assertThat(exception.getMessage(),
-                   containsString("label in the primary vocabulary language must not be blank"));
+        assertThat(
+                exception.getMessage(), containsString("label in the primary vocabulary language must not be blank"));
     }
 
     @Test
@@ -127,8 +128,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
-        assertThat(result.getUri().toString(),
-                   containsString(IdentifierResolver.normalize(getPrimaryLabel(vocabulary))));
+        assertThat(
+                result.getUri().toString(), containsString(IdentifierResolver.normalize(getPrimaryLabel(vocabulary))));
     }
 
     @Test
@@ -156,13 +157,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void persistGeneratesPreferredNamespaceWithVocabularyIdentifierAndTermSeparatorAsValue() {
         final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setPreferredNamespaceUri(null);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
-        assertEquals(result.getUri() + config.getNamespace().getTerm().getSeparator() + "/",
-                     result.getPreferredNamespaceUri());
+        assertEquals(
+                result.getUri() + config.getNamespace().getTerm().getSeparator() + "/",
+                result.getPreferredNamespaceUri());
     }
 
     @Test
@@ -239,9 +242,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(i);
     }
 
-    /**
-     * @see cz.cvut.kbss.termit.util.Constants#SKOS_CONCEPT_MATCH_RELATIONSHIPS
-     */
+    /** @see cz.cvut.kbss.termit.util.Constants#SKOS_CONCEPT_MATCH_RELATIONSHIPS */
     @ParameterizedTest
     @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
     void removeThrowsWhenTermRelationExists(URI relation) {
@@ -282,7 +283,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-
         });
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
@@ -311,8 +311,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
         sut.update(subjectVocabulary);
-        assertThat(em.find(Vocabulary.class, subjectVocabulary.getUri()).getImportedVocabularies(),
-                   anyOf(nullValue(), IsEmptyCollection.empty()));
+        assertThat(
+                em.find(Vocabulary.class, subjectVocabulary.getUri()).getImportedVocabularies(),
+                anyOf(nullValue(), IsEmptyCollection.empty()));
     }
 
     @Test
@@ -333,21 +334,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void importVocabularyImportsAValidVocabulary() {
-        final String skos =
-                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
-                        "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; " +
-                        "    dc:title \"Test\"@en ; " +
-                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
+        final String skos = "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . "
+                + "@prefix dc : <http://purl.org/dc/terms/> . "
+                + "<https://example.org/cs> a skos:ConceptScheme ; "
+                + "    dc:title \"Test\"@en ; "
+                + "    <http://purl.org/dc/terms/language> \"cs\" ."
+                + "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
 
-
-        final MultipartFile mf = new MockMultipartFile(
-                "file",
-                "thesaurus",
-                "text/turtle",
-                skos.getBytes(StandardCharsets.UTF_8)
-        );
+        final MultipartFile mf =
+                new MockMultipartFile("file", "thesaurus", "text/turtle", skos.getBytes(StandardCharsets.UTF_8));
 
         final Vocabulary v = sut.importVocabulary(true, mf);
         assertEquals("Test", getPrimaryLabel(v));
@@ -355,21 +350,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void importVocabularyCorrectlyImportsTurtleFileOnWindows() {
-        final String skos =
-                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
-                        "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; " +
-                        "    dc:title \"Test\"@en ; " +
-                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
-
+        final String skos = "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . "
+                + "@prefix dc : <http://purl.org/dc/terms/> . "
+                + "<https://example.org/cs> a skos:ConceptScheme ; "
+                + "    dc:title \"Test\"@en ; "
+                + "    <http://purl.org/dc/terms/language> \"cs\" ."
+                + "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
 
         final MultipartFile mf = new MockMultipartFile(
-                "file",
-                "thesaurus",
-                "application/octet-stream",
-                skos.getBytes(StandardCharsets.UTF_8)
-        );
+                "file", "thesaurus", "application/octet-stream", skos.getBytes(StandardCharsets.UTF_8));
 
         final Vocabulary v = sut.importVocabulary(true, mf);
         assertEquals("Test", getPrimaryLabel(v));
@@ -377,18 +366,13 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void importVocabularyThrowsExceptionOnMissingConceptScheme() {
-        final String skos =
-                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
-                        "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+        final String skos = "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . "
+                + "@prefix dc : <http://purl.org/dc/terms/> . "
+                + "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
         Assertions.assertThrows(TermItException.class, () -> {
-            final MultipartFile mf = new MockMultipartFile(
-                    "test",
-                    "test",
-                    "text/turtle",
-                    skos.getBytes(StandardCharsets.UTF_8)
-            );
+            final MultipartFile mf =
+                    new MockMultipartFile("test", "test", "text/turtle", skos.getBytes(StandardCharsets.UTF_8));
             final Vocabulary v = sut.importVocabulary(false, mf);
             assertEquals("Test", getPrimaryLabel(v));
         });
@@ -443,21 +427,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void importCreatesDocumentAssociatedWithVocabulary() {
-        final String skos =
-                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
-                        "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; " +
-                        "    dc:title \"Test\"@en ;" +
-                        "    <http://purl.org/dc/terms/language> \"en\" ." +
-                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
+        final String skos = "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . "
+                + "@prefix dc : <http://purl.org/dc/terms/> . "
+                + "<https://example.org/cs> a skos:ConceptScheme ; "
+                + "    dc:title \"Test\"@en ;"
+                + "    <http://purl.org/dc/terms/language> \"en\" ."
+                + "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> ; skos:prefLabel \"a\"@cs . ";
 
-
-        final MultipartFile mf = new MockMultipartFile(
-                "file",
-                "thesaurus",
-                "text/turtle",
-                skos.getBytes(StandardCharsets.UTF_8)
-        );
+        final MultipartFile mf =
+                new MockMultipartFile("file", "thesaurus", "text/turtle", skos.getBytes(StandardCharsets.UTF_8));
 
         final Vocabulary v = sut.importVocabulary(true, mf);
         assertNotNull(v.getDocument());
@@ -469,7 +447,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void updateSavesLabelInNewLanguage() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
-        final MultilingualString expected = new MultilingualString(vocabulary.getLabel().getValue());
+        final MultilingualString expected =
+                new MultilingualString(vocabulary.getLabel().getValue());
 
         final String newCsName = "Nový název";
         expected.set("cs", newCsName);
