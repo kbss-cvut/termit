@@ -727,10 +727,3 @@ termit:reversible-change
         skos:broader     dd:update-of-entity ;
         skos:inScheme    <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         skos:prefLabel   "Reversible Change"@en , "Vratná změna"@cs .
-
-termit:identifier-change
-        a       skos:Concept , owl:Class ;
-        rdfs:subClassOf  dd:update-of-entity ;
-        skos:broader     dd:update-of-entity ;
-        skos:inScheme    <http://onto.fel.cvut.cz/ontologies/application/termit> ;
-        skos:prefLabel   "Change of entity identifier"@en , "Změna identifikátoru entity"@cs .

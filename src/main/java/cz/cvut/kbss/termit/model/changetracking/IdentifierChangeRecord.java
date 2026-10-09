@@ -1,21 +1,21 @@
 package cz.cvut.kbss.termit.model.changetracking;
 
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 
-@OWLClass(iri = Vocabulary.s_c_identifier_change)
+@OWLClass(iri = Vocabulary.s_c_replacement_of_entity)
 public class IdentifierChangeRecord extends AbstractChangeRecord {
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_original_value)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_replaced_entity)
     private URI originalIdentifier;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_new_value)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_replacing_entity)
     private URI newIdentifier;
 
     public IdentifierChangeRecord() {}
