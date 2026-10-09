@@ -231,7 +231,8 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     private static String generateNamespace() {
-        return IdentifierResolver.ensureNamespaceSeparatorTermination(Generator.generateUriString());
+        return IdentifierResolver.ensureNamespaceSeparatorTermination(
+                "http://example.com/" + Generator.randomInt() + "/namespace/");
     }
 
     /**
