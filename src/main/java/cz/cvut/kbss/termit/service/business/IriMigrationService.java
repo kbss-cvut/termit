@@ -91,7 +91,7 @@ public class IriMigrationService {
         IriMigrationLongRunningTask longRunningTask = new IriMigrationLongRunningTask();
         repositoryService.notifyMigrationTaskChanged(longRunningTask);
         repositoryService.migrateIdentifier(iris, migrationType, params, author, longRunningTask);
-        LOG.debug("Migrated {} identifier: {}", migrationType.name(), iris);
+        LOG.debug("Migration of {} identifier: {} scheduled.", migrationType.name(), iris);
     }
 
     private static void validateParameters(IriMigrationType migrationType, IriMigrationParams params) {
