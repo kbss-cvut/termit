@@ -68,6 +68,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -1006,6 +1007,47 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
                 "Term already in the new namespace was migrated again!");
         assertTrue(termService.find(alreadyMigratedUri).isPresent());
         assertEquals(0, findIdentifierChangeRecords(alreadyMigrated).size());
+    }
+
+    @Test
+    void migrateIdentifierChangesIdentifierFoVocabularyWithoutPreferredNamespace() {
+        IriMigrationPair iris = iriMigration(vocabularyA.getUri());
+        IriMigrationParams params = new IriMigrationParams();
+
+        vocabularyA.setPreferredNamespaceUri(null);
+        transactional(() -> {
+            final Vocabulary managed = vocabularyRepositoryService.findRequired(vocabularyA.getUri());
+            managed.setPreferredNamespaceUri(null);
+            // persisted by jopa at the end of transaction
+        });
+
+        assertNull(vocabularyService.findRequired(vocabularyA.getUri()).getPreferredNamespaceUri());
+
+        sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task);
+
+        final Vocabulary migrated = vocabularyService.findRequired(iris.newIri());
+        assertNull(migrated.getPreferredNamespaceUri());
+        assertTrue(vocabularyService.find(iris.originalIri()).isEmpty());
+    }
+
+    @Test
+    void migrateIdentifierThrowInvalidParameterForVocabularyWithoutNamespaceWhenNewNamespaceIsPresent() {
+        IriMigrationPair iris = iriMigration(vocabularyA.getUri());
+        IriMigrationParams params = new IriMigrationParams(URI.create(generateNamespace()));
+
+        vocabularyA.setPreferredNamespaceUri(null);
+        transactional(() -> {
+            final Vocabulary managed = vocabularyRepositoryService.findRequired(vocabularyA.getUri());
+            managed.setPreferredNamespaceUri(null);
+            // persisted by jopa at the end of transaction
+        });
+
+        assertNull(vocabularyService.findRequired(vocabularyA.getUri()).getPreferredNamespaceUri());
+
+        final TermItException e = assertThrows(
+                InvalidParameterException.class,
+                () -> sut.migrateIdentifier(iris, IriMigrationType.VOCABULARY, params, author, task));
+        assertTrue(e.getMessage().contains("without existing namespace"));
     }
 
     private List<IdentifierChangeRecord> findIdentifierChangeRecords(Asset<?> asset) {
