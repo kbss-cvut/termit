@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.repository.migration;
 
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.IriMigratedEvent;
 import cz.cvut.kbss.termit.event.IriMigrationFailedEvent;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.time.Instant;
 
 /**
@@ -86,9 +88,14 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         try {
             task.markStarted();
             notifyMigrationTaskChanged(task);
-            migrateIdentifierInternal(iriMigrationPair, migrationType, params, author);
 
-            applicationEventPublisher.publishEvent(new IriMigratedEvent(this, migrationType, iriMigrationPair));
+            final Asset<?> changedAsset = migrateIdentifierInternal(iriMigrationPair, migrationType, params, author);
+
+            applicationEventPublisher.publishEvent(new IriMigratedEvent(
+                    this,
+                    migrationType,
+                    iriMigrationPair,
+                    getVocabularyUri(changedAsset, iriMigrationPair, migrationType)));
             LOG.debug("Evicting all application caches, Identifier migrated {}", iriMigrationPair);
             applicationEventPublisher.publishEvent(new EvictCacheEvent(this));
         } catch (TermItException e) {
@@ -106,9 +113,10 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
     /**
      * @see #migrateIdentifier(IriMigrationPair, IriMigrationType, IriMigrationParams, User,
      *     IriMigrationLongRunningTask)
+     * @return the changed asset
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    void migrateIdentifierInternal(
+    Asset<?> migrateIdentifierInternal(
             IriMigrationPair iris, IriMigrationType migrationType, IriMigrationParams params, User author) {
         ensureExists(iris, migrationType);
         final Asset<?> changedAsset = getChangedAsset(iris, migrationType);
@@ -126,6 +134,18 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
                         params)
                 .run();
         createChangeRecord(iris, changedAsset, author);
+        return changedAsset;
+    }
+
+    private URI getVocabularyUri(Asset<?> changedAsset, IriMigrationPair iris, IriMigrationType migrationType) {
+        return switch (migrationType) {
+            case VOCABULARY -> iris.newIri();
+            case TERM -> {
+                assert changedAsset != null;
+                yield ((TermDescription) changedAsset).getVocabulary();
+            }
+            default -> null;
+        };
     }
 
     private Asset<?> getChangedAsset(IriMigrationPair pair, IriMigrationType migrationType) {
