@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.MatchType;
@@ -10,6 +11,8 @@ import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -31,10 +34,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -45,6 +50,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                                            "http://onto.fel.cvut.cz/ontologies/ufo/object",
                                            "http://onto.fel.cvut.cz/ontologies/ufo/relator"};
     private static final String INTEGER_PROPERTY = cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT + "/custom-attribute/integerProperty";
+    private static final String MULTILINGUAL_PROPERTY = SKOS.EDITORIAL_NOTE;
     private static boolean initialized = false;
     private static User user;
 
@@ -91,9 +97,12 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
             term.addType(TYPES[Generator.randomIndex(TYPES)]);
             term.setNotations(Set.of(String.valueOf(
                     Constants.LETTERS.charAt(Generator.randomInt(0, Constants.LETTERS.length())))));
-            term.setExamples(Set.of(MultilingualString.create(randomBool ? "Matching" : "Unknown" + " example " + i,
+            term.setExamples(Set.of(MultilingualString.create((randomBool ? "Matching" : "Unknown") + " example " + i,
                                                               Environment.LANGUAGE)));
-            term.setProperties(new HashMap<>(Map.of(INTEGER_PROPERTY, Set.of(i))));
+            term.setProperties(new HashMap<>(Map.of(INTEGER_PROPERTY, Set.of(i),
+                                                    MULTILINGUAL_PROPERTY, Set.of(new MultilingualString(
+                            Map.of(Environment.LANGUAGE, (randomBool ? "Matching" : "Unknown") + " editorial note " + i,
+                                   "cs", randomBool ? "unknown" : "matching"))))));
             newTerms.add(term);
         }
         newTerms.sort(Comparator.comparing(Environment::getPrimaryLabel));
@@ -116,7 +125,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
     @Test
     void advancedSearchReturnsTermsMatchingExactMatchSearchParamWithSpecifiedValue() {
         final SearchParam param = new SearchParam(URI.create(SKOS.NOTATION),
-                                                  Set.of(terms.get(0).getNotations().iterator().next()),
+                                                  Set.of(terms.getFirst().getNotations().iterator().next()),
                                                   MatchType.EXACT_MATCH);
         final List<Term> matchingTerms = terms.stream()
                                               .filter(t -> !Collections.disjoint(t.getNotations(), param.getValue()))
@@ -191,7 +200,7 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
         final Page<SearchResult> result = sut.advancedSearch(new SearchString("", null), Set.of(searchParam),
                                                              Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
         assertEquals(1, result.getNumberOfElements());
-        assertEquals(expected.getUri(), result.getContent().get(0).getUri());
+        assertEquals(expected.getUri(), result.getContent().getFirst().getUri());
     }
 
     @Test
@@ -277,5 +286,52 @@ class SearchDaoAdvancedSearchTest extends BaseDaoTestRunner {
                                                              Set.of(vocabulary.getUri()));
         assertEquals(pageSpec.getPageSize(), result.getNumberOfElements());
         assertEquals(terms.size(), result.getTotalElements());
+    }
+
+    @Test
+    void advancedSearchUsesSpecifiedLanguageWhenSubstringMatchingMultilingualCustomAttributeValues() {
+        transactional(() -> {
+            final CustomAttribute customAtt = new CustomAttribute(URI.create(SKOS.EDITORIAL_NOTE),
+                                                                  MultilingualString.create("Editorial note",
+                                                                                            Environment.LANGUAGE),
+                                                                  null);
+            customAtt.setRange(URI.create(RDF.LANG_STRING));
+            customAtt.setDomain(URI.create(SKOS.CONCEPT));
+            em.persist(customAtt, new EntityDescriptor(URI.create(CustomAttribute.CONTEXT)));
+        });
+        final Set<URI> matchingTermUris = terms.stream().filter(t -> t.getProperties().containsKey(
+                SKOS.EDITORIAL_NOTE) && t.getProperties().get(SKOS.EDITORIAL_NOTE).stream().allMatch(mls -> {
+            final MultilingualString value = (MultilingualString) mls;
+            return value.get(Environment.LANGUAGE).toLowerCase().contains("matching") && !value.get("cs").toLowerCase()
+                                                                                               .contains("matching");
+        })).map(Asset::getUri).collect(Collectors.toSet());
+
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", Environment.LANGUAGE),
+                                                             Set.of(new SearchParam(URI.create(SKOS.EDITORIAL_NOTE),
+                                                                                    Set.of("matching"),
+                                                                                    MatchType.SUBSTRING)),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertEquals(matchingTermUris.size(), result.getTotalElements());
+        result.forEach(s -> assertThat(matchingTermUris, hasItem(s.getUri())));
+    }
+
+    @Test
+    void advancedSearchUsesSpecifiedLanguageWhenExactMatchingMultilingualTermAttribute() {
+        final String searchString = terms.stream().flatMap(t -> t.getExamples().stream())
+                                         .filter(mls -> mls.get(Environment.LANGUAGE).startsWith("Matching"))
+                                         .findFirst()
+                                         .map(mls -> mls.get(Environment.LANGUAGE)).orElse("");
+        assertFalse(searchString.isBlank());
+        final Set<URI> matchingTermUris = terms.stream().filter(t -> t.getExamples().stream().anyMatch(
+                                                       mls -> searchString.equals(mls.get(Environment.LANGUAGE)))).map(Asset::getUri)
+                                               .collect(Collectors.toSet());
+
+        final Page<SearchResult> result = sut.advancedSearch(new SearchString("", Environment.LANGUAGE),
+                                                             Set.of(new SearchParam(URI.create(SKOS.EXAMPLE),
+                                                                                    Set.of(searchString),
+                                                                                    MatchType.EXACT_MATCH)),
+                                                             Constants.DEFAULT_PAGE_SPEC, Set.of(vocabulary.getUri()));
+        assertEquals(matchingTermUris.size(), result.getTotalElements());
+        result.forEach(s -> assertThat(matchingTermUris, hasItem(s.getUri())));
     }
 }

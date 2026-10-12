@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.dto.search.SearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchString;
 import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -112,11 +113,12 @@ public class SearchDao {
     /**
      * Appends string following format {@code (token) OR (token*)} to the {@code builder}.
      * <p>
-     * {@code (token)} allows Lucene to perform text operations (e.g. use <a href="https://lucene.apache.org/core/9_4_2/analysis/common/org/apache/lucene/analysis/cz/CzechStemmer.html">Stemmer</a>)
+     * {@code (token)} allows Lucene to perform text operations (e.g. use <a
+     * href="https://lucene.apache.org/core/9_4_2/analysis/common/org/apache/lucene/analysis/cz/CzechStemmer.html">Stemmer</a>)
      * <p>
      * {@code (token*)} instruct Lucene to perform simple prefix matching on index entries
      *
-     * @param token token to use
+     * @param token   token to use
      * @param builder String builder to which the query should be appended
      * @return the {@code builder}
      */
@@ -131,10 +133,9 @@ public class SearchDao {
     }
 
     /**
-     * Joins the given tokens into a Lucene query following format
-     * {@code (tokens-1) AND ((lastToken) OR (lastToken*))}
+     * Joins the given tokens into a Lucene query following format {@code (tokens-1) AND ((lastToken) OR (lastToken*))}
      *
-     * @param tokens tokens from which query should be constructed
+     * @param tokens      tokens from which query should be constructed
      * @param totalLength the total length of all strings in the {@code tokens} array
      * @return constructed query
      */
@@ -155,11 +156,11 @@ public class SearchDao {
             builder.append(tokens[i]).append(' ');
         }
         builder.append(") AND ((")
-                       .append(tokens[lastIndex])
-                       .append(") OR (")
-                       .append(tokens[lastIndex])
-                       .append(LUCENE_WILDCARD)
-                       .append("))");
+               .append(tokens[lastIndex])
+               .append(") OR (")
+               .append(tokens[lastIndex])
+               .append(LUCENE_WILDCARD)
+               .append("))");
 
         return builder.toString();
     }
@@ -192,7 +193,7 @@ public class SearchDao {
 
         final Page<SearchResult> result;
         if (searchStringBlank) {
-            result = advancedSearchNoFullText(searchParams, pageSpec, allowedVocabularies);
+            result = advancedSearchNoFullText(searchParams, pageSpec, allowedVocabularies, searchString.language());
         } else {
             result = advancedSearchWithFullText(searchString, searchParams, pageSpec, allowedVocabularies);
         }
@@ -222,7 +223,7 @@ public class SearchDao {
                                                         Collection<URI> allowedVocabularies,
                                                         Function<String, T> queryCreator) {
         String queryStr = adjustQueryForLanguage(baseQueryStr, searchString.language());
-        final String filters = buildSearchParamConditions(searchParams);
+        final String filters = buildSearchParamConditions(searchParams, searchString.language());
         queryStr = queryStr.replace("#FACETED_SEARCH_FILTERS#", filters);
         final String luceneQuery = buildLuceneQueryString(searchString.searchString());
 
@@ -242,8 +243,8 @@ public class SearchDao {
                                              Collection<SearchParam> searchParams,
                                              Collection<URI> allowedVocabularies) {
         final TypedQuery<Long> query = initFullTextSearchQuery(ftsResultCountQuery, searchString, searchParams,
-                                                    allowedVocabularies,
-                                                    queryStr -> em.createNativeQuery(queryStr, Long.class));
+                                                               allowedVocabularies,
+                                                               queryStr -> em.createNativeQuery(queryStr, Long.class));
         return query.getSingleResult();
     }
 
@@ -256,13 +257,14 @@ public class SearchDao {
      * @return List of matching results
      */
     private Page<SearchResult> advancedSearchNoFullText(Collection<SearchParam> searchParams,
-                                                        Pageable pageSpec, Collection<URI> allowedVocabularies) {
+                                                        Pageable pageSpec, Collection<URI> allowedVocabularies,
+                                                        String language) {
 
         String queryStr = "SELECT DISTINCT ?entity" +
                 " (GROUP_CONCAT(DISTINCT CONCAT(?label, \"@\", lang(?label)); SEPARATOR=\"" + Constants.GROUP_CONCAT_SEPARATOR + "\") AS ?label)" +
                 " (GROUP_CONCAT(DISTINCT CONCAT(?description, \"@\", lang(?description)); SEPARATOR=\"" + Constants.GROUP_CONCAT_SEPARATOR + "\") AS ?description)" +
                 " ?vocabularyUri ?state ?type WHERE { \n" +
-                buildWhereCondition(searchParams) +
+                buildWhereCondition(searchParams, language) +
                 "} GROUP BY ?entity ?vocabularyUri ?state ?type ORDER BY ?entity";
 
         Query nativeQuery = em.createNativeQuery(queryStr, "FacetedSearchResult");
@@ -274,10 +276,10 @@ public class SearchDao {
         }
 
         return new PageImpl<>(nativeQuery.getResultList(), pageSpec,
-                              getTotalResultCount(searchParams, allowedVocabularies));
+                              getTotalResultCount(searchParams, allowedVocabularies, language));
     }
 
-    private String buildWhereCondition(Collection<SearchParam> searchParams) {
+    private String buildWhereCondition(Collection<SearchParam> searchParams, String language) {
         return "  ?entity a ?type . \n" +
                 "  FILTER (?type = ?term || ?type = ?vocabulary) \n" +
                 "  FILTER NOT EXISTS { ?entity a ?snapshot . } \n" +
@@ -295,7 +297,7 @@ public class SearchDao {
                 "  } \n" +
                 "  OPTIONAL { ?entity ?inVocabulary ?vocabularyUri . } \n" +
                 "  OPTIONAL { ?entity ?hasState ?state . } \n" +
-                buildSearchParamConditions(searchParams);
+                buildSearchParamConditions(searchParams, language);
     }
 
     private static <T extends Query> T setCommonQueryParams(T q, Collection<URI> allowedVocabularies) {
@@ -308,16 +310,17 @@ public class SearchDao {
         return q;
     }
 
-    private long getTotalResultCount(Collection<SearchParam> searchParams, Collection<URI> allowedVocabularies) {
+    private long getTotalResultCount(Collection<SearchParam> searchParams, Collection<URI> allowedVocabularies,
+                                     String language) {
         String queryStr = "SELECT (COUNT(DISTINCT ?entity) AS ?cnt) WHERE { \n" +
-                buildWhereCondition(searchParams) +
+                buildWhereCondition(searchParams, language) +
                 "}";
         TypedQuery<Long> nativeQuery = em.createNativeQuery(queryStr, Long.class);
         setCommonQueryParams(nativeQuery, allowedVocabularies);
         return nativeQuery.getSingleResult();
     }
 
-    private String buildSearchParamConditions(Collection<SearchParam> searchParams) {
+    private String buildSearchParamConditions(Collection<SearchParam> searchParams, String language) {
         final List<SearchParam> relationshipAnnotationParams = searchParams.stream()
                                                                            .filter(p -> p.getProperty().toString()
                                                                                          .equals(Vocabulary.s_p_relationship))
@@ -351,14 +354,26 @@ public class SearchDao {
                                     Collectors.joining(","))).append("))\n");
                     break;
                 case EXACT_MATCH:
-                    // This also handles datatypes, as we transform the variable value to string and compare it with
-                    // a string representation of the parameter value (e.g., "true" for Boolean true)
-                    queryStr.append("FILTER (STR(").append(variable).append(") = \"")
-                            .append(p.getValue().iterator().next().toString()).append("\")\n");
+                    if (language != null && isMultilingualProperty(p.getProperty())) {
+                        queryStr.append("FILTER (STR(").append(variable).append(") = \"")
+                                .append(p.getValue().iterator().next()).append("\" && LANGMATCHES(LANG(")
+                                .append(variable).append("),\"").append(language).append("\"))\n");
+                    } else {
+                        // This also handles datatypes, as we transform the variable value to string and compare it with
+                        // a string representation of the parameter value (e.g., "true" for Boolean true)
+                        queryStr.append("FILTER (STR(").append(variable).append(") = \"")
+                                .append(p.getValue().iterator().next().toString()).append("\")\n");
+                    }
                     break;
                 case SUBSTRING:
-                    queryStr.append("FILTER (CONTAINS(LCASE(STR(").append(variable).append(")), LCASE(\"")
-                            .append(p.getValue().iterator().next()).append("\")))\n");
+                    if (language != null && isMultilingualProperty(p.getProperty())) {
+                        queryStr.append("FILTER (CONTAINS(LCASE(STR(").append(variable).append(")), LCASE(\"")
+                                .append(p.getValue().iterator().next()).append("\")) && LANGMATCHES(LANG(")
+                                .append(variable).append("),\"").append(language).append("\"))\n");
+                    } else {
+                        queryStr.append("FILTER (CONTAINS(LCASE(STR(").append(variable).append(")), LCASE(\"")
+                                .append(p.getValue().iterator().next()).append("\")))\n");
+                    }
                     break;
             }
         }
@@ -433,5 +448,11 @@ public class SearchDao {
         }
 
         return sb.toString();
+    }
+
+    private boolean isMultilingualProperty(URI property) {
+        return Term.MULTILINGUAL_PROPERTIES.contains(property.toString())
+                || dataDao.findCustomAttribute(property)
+                          .map(ca -> RDF.LANG_STRING.equals(ca.getRange().toString())).orElse(false);
     }
 }
