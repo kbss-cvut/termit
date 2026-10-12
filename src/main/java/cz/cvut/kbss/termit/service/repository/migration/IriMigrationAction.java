@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import jakarta.annotation.Nullable;
 
@@ -123,6 +124,13 @@ public class IriMigrationAction implements Runnable {
         if (!(changedAsset instanceof Vocabulary vocabulary)
                 || !changedAsset.getUri().equals(iris.originalIri())) {
             throw new InvalidParameterException("Changed asset is not expected Vocabulary!");
+        }
+
+        boolean hasOriginalNamespace = StringUtils.hasText(vocabulary.getPreferredNamespaceUri());
+        boolean newNamespaceRequested = params.preferredNamespaceUri() != null;
+        if (!hasOriginalNamespace && newNamespaceRequested) {
+            throw new InvalidParameterException(
+                    "Unable to change preferred namespace URI for vocabulary without existing namespace!");
         }
         ensureNotSnapshot(vocabulary);
     }
