@@ -217,7 +217,7 @@ public class RestUtils {
      *
      * @param size Page size
      * @param page Page number
-     * @param sort Sort string in the format "property,direction" (e.g., "label,desc")
+     * @param sort Sort string in the format "attribute,direction" (e.g., "label,desc")
      * @return Page specification with sorting applied
      */
     public static Pageable createPageRequest(Integer size, Integer page, String sort) {
@@ -226,13 +226,13 @@ public class RestUtils {
 
         if (sort != null && !sort.isBlank()) {
             String[] sortParams = sort.split(",");
-            String property = sortParams[0].trim();
+            String attribute = sortParams[0].trim();
             Sort.Direction direction = Sort.Direction.ASC;
 
             if (sortParams.length > 1) {
                 direction = Sort.Direction.fromString(sortParams[1].trim());
             }
-            return PageRequest.of(pageNo, pageSize, Sort.by(direction, property));
+            return PageRequest.of(pageNo, pageSize, Sort.by(direction, attribute));
         }
         return PageRequest.of(pageNo, pageSize);
     }

@@ -8,7 +8,7 @@ public record TermSelectionParams(
         boolean includeImported,
         boolean includeRelated,
         Pageable pageSpec,
-        String language) {
+        String sortLang) {
 
     public TermSelectionParams(Pageable pageSpec) {
         this(false, false, false, false, pageSpec, null);
@@ -20,6 +20,6 @@ public record TermSelectionParams(
     }
 
     public TermSelectionParams withNotFull() {
-        return new TermSelectionParams(flat, false, includeImported, includeRelated, pageSpec, language);
+        return new TermSelectionParams(flat, false, includeImported, includeRelated, pageSpec, sortLang);
     }
 }

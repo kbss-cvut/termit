@@ -404,21 +404,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @param pageSpec Page specification
-     * @param language Language for sorting.
+     * @param sortLang Language for sorting.
      * @return List of vocabulary term DTOs
      */
-    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec, String language) {
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
         Objects.requireNonNull(vocabulary);
         try {
-            final TypedQuery<FlatTermDto> query = findAllFlatQuery(vocabulary, pageSpec, language);
+            final TypedQuery<FlatTermDto> query = findAllFlatQuery(vocabulary, pageSpec, sortLang);
             return executeAndBuildHierarchy(query);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
     }
 
-    private TypedQuery<FlatTermDto> findAllFlatQuery(Vocabulary vocabulary, Pageable pageSpec, String language) {
-        String targetLang = language != null ? language : vocabulary.getPrimaryLanguage();
+    private TypedQuery<FlatTermDto> findAllFlatQuery(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        String targetLang = sortLang != null ? sortLang : vocabulary.getPrimaryLanguage();
         String sortClause = buildSortClause(pageSpec);
 
         return em.createNativeQuery(
@@ -471,13 +471,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @param pageSpec Page specification
-     * @param language Language for sorting.
+     * @param sortLang Language for sorting.
      * @return Flat list of vocabulary term DTOs
      */
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String language) {
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
         Objects.requireNonNull(vocabulary);
         try {
-            return findAllFlatQuery(vocabulary, pageSpec, language).getResultList();
+            return findAllFlatQuery(vocabulary, pageSpec, sortLang).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -489,17 +489,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @param pageSpec Page specification
-     * @param language Language for sorting.
+     * @param sortLang Language for sorting.
      * @param includeTerms Identifier of terms that should be additionally included in the result
      * @return Flat list of vocabulary term DTOs
      * @see #findAllFlat(Pageable, Collection)
      */
     public List<FlatTermDto> findAllFlat(
-            Vocabulary vocabulary, Pageable pageSpec, String language, Collection<URI> includeTerms) {
+            Vocabulary vocabulary, Pageable pageSpec, String sortLang, Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         try {
             final List<FlatTermDto> result =
-                    findAllFlatQuery(vocabulary, pageSpec, language).getResultList();
+                    findAllFlatQuery(vocabulary, pageSpec, sortLang).getResultList();
             loadIncludedTerms(getMissingTerms(result, includeTerms)).forEach(dto -> result.add(new FlatTermDto(dto)));
             return result;
         } catch (RuntimeException e) {
@@ -558,11 +558,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @param pageSpec Page specification
-     * @param language Language for sorting
+     * @param sortLang Language for sorting
      * @return Matching terms, ordered by label
      * @see #findAllFlat(Vocabulary, Pageable, String)
      */
-    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec, String language) {
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         try {
@@ -571,7 +571,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             // The workaround relies on clearing the EntityManager after loading each term
             // The price for this solution is that this method performs poorly for larger vocabularies (hundreds of
             // terms)
-            final List<URI> termIris = findAllTermIris(vocabulary, pageSpec, language);
+            final List<URI> termIris = findAllTermIris(vocabulary, pageSpec, sortLang);
             final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
             return termIris.stream()
                     .map(ti -> {
@@ -589,8 +589,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec, String language) {
-        String targetLang = language != null ? language : vocabulary.getPrimaryLanguage();
+    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        String targetLang = sortLang != null ? sortLang : vocabulary.getPrimaryLanguage();
         String sortClause = buildSortClause(pageSpec);
 
         return em.createNativeQuery(
@@ -1546,9 +1546,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             Sort.Order labelOrder = pageSpec.getSort().getOrderFor("label");
             if (labelOrder != null) {
                 String direction = labelOrder.isAscending() ? "ASC" : "DESC";
-                return "DESC(?hasLocaleLabel) " + direction + "(LCASE(STR(?sortLabel))) " + direction + "(?term)";
+                return "DESC(?hasLocaleLabel) " + direction + "(" + orderSentence("STR(?sortLabel)") + ") " + direction
+                        + "(?term)";
             }
         }
-        return "DESC(?hasLocaleLabel) ASC(LCASE(STR(?sortLabel))) ASC(?term)";
+        return "DESC(?hasLocaleLabel) ASC(" + orderSentence("STR(?sortLabel)") + ") ASC(?term)";
     }
 }
