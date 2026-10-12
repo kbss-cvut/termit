@@ -188,8 +188,8 @@ public class TermController extends BaseController {
                     @RequestParam(name = "includeTerms", required = false, defaultValue = "")
                     List<URI> includeTerms,
             @Parameter(description = "Language for sorting. Sorting is done in the specified language.")
-                    @RequestParam(name = "language", required = false)
-                    String language,
+                    @RequestParam(name = "sortLang", required = false)
+                    String sortLang,
             @Parameter(
                             description =
                                     "Attribute by which the results should be sorted followed by the sort direction (asc or desc).")
@@ -216,12 +216,12 @@ public class TermController extends BaseController {
                     .body(termService.findAll(
                             searchString,
                             vocabulary,
-                            new TermSelectionParams(flat, full, includeImported, includeRelated, pageable, language)));
+                            new TermSelectionParams(flat, full, includeImported, includeRelated, pageable, sortLang)));
         }
 
         if (flat && !includeTerms.isEmpty()) {
             final TermSelectionParams params =
-                    new TermSelectionParams(true, false, includeImported, includeRelated, pageable, language);
+                    new TermSelectionParams(true, false, includeImported, includeRelated, pageable, sortLang);
             return ResponseEntity.ok().headers(headers).body(termService.findAllFlat(vocabulary, includeTerms, params));
         }
 
@@ -232,7 +232,7 @@ public class TermController extends BaseController {
                     .headers(headers)
                     .body(termService.findAll(
                             vocabulary,
-                            new TermSelectionParams(flat, full, includeImported, includeRelated, pageable, language)));
+                            new TermSelectionParams(flat, full, includeImported, includeRelated, pageable, sortLang)));
         });
     }
 

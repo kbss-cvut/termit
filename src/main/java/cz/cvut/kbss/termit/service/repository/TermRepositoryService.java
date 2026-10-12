@@ -335,13 +335,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @param language Language by which the terms should be sorted.
+     * @param sortLang Language by which the terms should be sorted.
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec, String language) {
-        return termDao.findAll(vocabulary, pageSpec, language);
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        return termDao.findAll(vocabulary, pageSpec, sortLang);
     }
 
     /**
@@ -352,12 +352,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @param language Language by which the terms should be sorted.
+     * @param sortLang Language by which the terms should be sorted.
      * @return List of term DTOs ordered by label in a flat structure
      */
     @Transactional(readOnly = true)
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String language) {
-        return termDao.findAllFlat(vocabulary, pageSpec, language);
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        return termDao.findAllFlat(vocabulary, pageSpec, sortLang);
     }
 
     /**
@@ -368,15 +368,15 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @param pageSpec Page specifying result number and position
-     * @param language Language by which the terms should be sorted.
+     * @param sortLang Language by which the terms should be sorted.
      * @param includeTerms Identifier of terms that should be additionally included in the result
      * @return List of term DTOs ordered by label in a flat structure
      * @see #findAllFlat(Vocabulary, Pageable, String)
      */
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlat(
-            Vocabulary vocabulary, Pageable pageSpec, String language, Collection<URI> includeTerms) {
-        return termDao.findAllFlat(vocabulary, pageSpec, language, includeTerms);
+            Vocabulary vocabulary, Pageable pageSpec, String sortLang, Collection<URI> includeTerms) {
+        return termDao.findAllFlat(vocabulary, pageSpec, sortLang, includeTerms);
     }
 
     /**
@@ -418,13 +418,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @param pageSpec Page specifying result number and position
-     * @param language Language by which the terms should be sorted.
+     * @param sortLang Language by which the terms should be sorted.
      * @return List of full terms ordered by label
      * @see #findAll(Vocabulary, Pageable, String)
      */
     @Transactional(readOnly = true)
-    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec, String language) {
-        return termDao.findAllFull(vocabulary, pageSpec, language).stream()
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        return termDao.findAllFull(vocabulary, pageSpec, sortLang).stream()
                 .map(this::postLoad)
                 .collect(toList());
     }

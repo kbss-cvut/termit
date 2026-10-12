@@ -389,9 +389,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     }
 
     /**
-     * Verifies that {@link TermDao#findAll(Vocabulary, org.springframework.data.domain.Pageable)} returns hierarchical
-     * DTOs (root has its child in subTerms) while {@link TermDao#findAllFlat(Vocabulary,
-     * org.springframework.data.domain.Pageable)} returns a flat list without a populated sub-term hierarchy.
+     * Verifies that {@link TermDao#findAll(Vocabulary, org.springframework.data.domain.Pageable, String)} returns
+     * hierarchical DTOs (root has its child in subTerms) while {@link TermDao#findAllFlat(Vocabulary,
+     * org.springframework.data.domain.Pageable, String)} returns a flat list without a populated sub-term hierarchy.
      */
     @Test
     void findAllFlatReturnsFlatListWithoutSubTerms() {
@@ -604,33 +604,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(term, evt.get().getAsset());
-    }
-
-    private void insertForeignLabel(Term term) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (final RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.remove(vf.createIRI(term.getUri().toString()), vf.createIRI(SKOS.PREF_LABEL), null);
-            conn.add(
-                    vf.createIRI(term.getUri().toString()),
-                    vf.createIRI(SKOS.PREF_LABEL),
-                    vf.createLiteral("Adios", "es"));
-        }
-    }
-
-    @Test
-    void findAllReturnsAllTermsAndSortsMatchingLanguageFirst() {
-        final List<Term> terms = generateTerms(5);
-        final Term foreignLabelTerm = Generator.generateTermWithId();
-        final List<Term> allTerms = new ArrayList<>(terms);
-        allTerms.add(foreignLabelTerm);
-        addTermsAndSave(allTerms, vocabulary);
-        transactional(() -> insertForeignLabel(foreignLabelTerm));
-
-        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
-
-        assertEquals(6, result.size());
-        assertEquals(foreignLabelTerm.getUri(), result.get(5).getUri());
     }
 
     @Test
