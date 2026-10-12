@@ -27,7 +27,7 @@ import java.net.URI;
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class MigrationController {
 
-    public static final String PATH = "/migrate";
+    public static final String PATH = "/migration";
 
     private final IriMigrationService iriMigrationService;
 
