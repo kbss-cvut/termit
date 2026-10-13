@@ -688,6 +688,26 @@ termit:custom-attribute
             "Custom attribute"@en , "Vlastní atribut"@cs ;
     rdfs:subClassOf rdf:Property .
 
+termit:custom-attribute-profile
+    a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Custom attribute profile"@en , "Profil vlastních atributů"@cs ;
+    <http://www.w3.org/2004/02/skos/core#definition>
+            "A named set of custom attributes."@en , "Pojmenovaná sada vlastních atributů."@cs .
+
+termit:has-custom-attribute
+    a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Has custom attribute"@en , "Má vlastní atribut"@cs ;
+    <http://www.w3.org/2004/02/skos/core#definition>
+            "Assigns a custom attribute into a profile."@en , "Přiřazuje vlastní atribut do profilu."@cs ;
+    rdfs:domain        termit:custom-attribute-profile ;
+    rdfs:range          termit:custom-attribute .
+
 termit:has-last-backup-datetime
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty ;
         <http://www.w3.org/2004/02/skos/core#broader>
