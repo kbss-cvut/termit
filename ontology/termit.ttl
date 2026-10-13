@@ -690,12 +690,24 @@ termit:custom-attribute
 
 termit:custom-attribute-profile
     a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
+    rdfs:subClassOf  termit:custom-attribute-profile-description ;
+    <http://www.w3.org/2004/02/skos/core#broader>
+            termit:custom-attribute-profile-description ;
     <http://www.w3.org/2004/02/skos/core#inScheme>
             <http://onto.fel.cvut.cz/ontologies/application/termit> ;
     <http://www.w3.org/2004/02/skos/core#prefLabel>
             "Custom attribute profile"@en , "Profil vlastních atributů"@cs ;
     <http://www.w3.org/2004/02/skos/core#definition>
             "A named set of custom attributes."@en , "Pojmenovaná sada vlastních atributů."@cs .
+
+termit:custom-attribute-profile-description
+    a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:Class ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Custom attribute profile description"@en , "Popis profilu vlastních atributů"@cs ;
+    <http://www.w3.org/2004/02/skos/core#definition>
+            "Description of a custom attribute profile - its title and description."@en , "Popis profilu vlastních atributů - jeho název a popis."@cs .
 
 termit:has-custom-attribute
     a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
