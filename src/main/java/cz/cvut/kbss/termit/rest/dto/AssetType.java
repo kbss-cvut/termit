@@ -23,5 +23,6 @@ public enum AssetType {
     FILE,
     TERM,
     CUSTOM_ATTRIBUTE,
+    CUSTOM_ATTRIBUTE_PROFILE,
     COLLECTION,
 }

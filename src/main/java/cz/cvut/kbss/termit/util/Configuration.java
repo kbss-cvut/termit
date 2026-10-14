@@ -505,6 +505,9 @@ public class Configuration {
         /** Namespace for custom attribute identifiers. */
         @NotNull
         String customAttribute = Vocabulary.s_c_custom_attribute;
+        /** Namespace for custom attribute profiles */
+        @NotNull
+        String customAttributeProfile = Vocabulary.s_c_custom_attribute_profile;
         /**
          * Separator of Term namespace from the parent Vocabulary identifier.
          *
@@ -586,6 +589,14 @@ public class Configuration {
 
         public void setCustomAttribute(String customAttribute) {
             this.customAttribute = customAttribute;
+        }
+
+        public String getCustomAttributeProfile() {
+            return customAttributeProfile;
+        }
+
+        public void setCustomAttributeProfile(String customAttributeProfile) {
+            this.customAttributeProfile = customAttributeProfile;
         }
 
         public NamespaceDetail getTerm() {
