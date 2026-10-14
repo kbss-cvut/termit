@@ -95,7 +95,7 @@ public class CustomAttributeProfileService {
     }
 
     private boolean matchingExists(CustomAttribute attribute) {
-        Objects.requireNonNull(attribute.getUri());
+        Objects.requireNonNull(attribute.getUri(), "Custom Attribute must have an identifier!");
         return dataService
                 .findCustomAttribute(attribute.getUri())
                 .map(existing -> {
