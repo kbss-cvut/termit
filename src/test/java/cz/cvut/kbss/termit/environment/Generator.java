@@ -20,10 +20,13 @@ package cz.cvut.kbss.termit.environment;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.jopa.vocabulary.XSD;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.PersonalAccessToken;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -629,5 +632,15 @@ public class Generator {
 
     public static OrderedTermCollection generateOrderedTermCollection(Vocabulary vocabulary) {
         return generateOrderedTermCollection(vocabulary, generateTermsWithIds(5));
+    }
+
+    public static CustomAttribute generateCustomAttribute() {
+        final CustomAttribute attribute = new CustomAttribute(
+                Generator.generateUri(),
+                MultilingualString.create("Custom attribute " + randomInt(), Environment.LANGUAGE),
+                MultilingualString.create("description " + randomInt(), Environment.LANGUAGE));
+        attribute.setDomain(URI.create(SKOS.CONCEPT));
+        attribute.setRange(URI.create(XSD.STRING));
+        return attribute;
     }
 }
