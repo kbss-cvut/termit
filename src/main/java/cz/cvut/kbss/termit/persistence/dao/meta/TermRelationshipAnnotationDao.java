@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao.meta;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
@@ -16,7 +17,6 @@ import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import jakarta.annotation.Nonnull;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.Value;
@@ -27,6 +27,8 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.List;
@@ -39,11 +41,8 @@ public class TermRelationshipAnnotationDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(TermRelationshipAnnotationDao.class);
 
-    private static final List<URI> SYMMETRIC_SKOS_PROPERTIES = List.of(
-            URI.create(SKOS.RELATED_MATCH),
-            URI.create(SKOS.EXACT_MATCH),
-            URI.create(SKOS.RELATED)
-    );
+    private static final List<URI> SYMMETRIC_SKOS_PROPERTIES =
+            List.of(URI.create(SKOS.RELATED_MATCH), URI.create(SKOS.EXACT_MATCH), URI.create(SKOS.RELATED));
 
     private final EntityManager em;
 
@@ -51,8 +50,8 @@ public class TermRelationshipAnnotationDao {
 
     private final DataDao dataDao;
 
-    public TermRelationshipAnnotationDao(EntityManager em, VocabularyContextMapper vocabularyContextMapper,
-                                         DataDao dataDao) {
+    public TermRelationshipAnnotationDao(
+            EntityManager em, VocabularyContextMapper vocabularyContextMapper, DataDao dataDao) {
         this.em = em;
         this.vocabularyContextMapper = vocabularyContextMapper;
         this.dataDao = dataDao;
@@ -68,24 +67,25 @@ public class TermRelationshipAnnotationDao {
     public List<TermRelationshipAnnotation> findAllForSubject(@Nonnull Term term) {
         Objects.requireNonNull(term);
         final URI context = vocabularyContextMapper.getVocabularyContext(term.getVocabulary());
-        return Stream.concat(findAnnotationsForSubject(term, context).stream(),
-                             findAnnotationsForInverseSideOfSkosSymmetricProperties(term).stream()).toList();
+        return Stream.concat(
+                        findAnnotationsForSubject(term, context).stream(),
+                        findAnnotationsForInverseSideOfSkosSymmetricProperties(term).stream())
+                .toList();
     }
 
     private List<TermRelationshipAnnotation> findAnnotationsForSubject(Term term, URI context) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
-                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
-        return (List<TermRelationshipAnnotation>) em.createNativeQuery(
-                                                            """
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
+                List.of(CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
+        return (List<TermRelationshipAnnotation>) em.createNativeQuery("""
                                                                     SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
                                                                     GRAPH ?g {
                                                                     << ?subject ?predicate ?object >> ?attribute ?value . }
                                                                     }""", "TermRelationshipAnnotation")
-                                                    .setParameter("g", context)
-                                                    .setParameter("subject", term)
-                                                    .setParameter("attribute", annotationProperties)
-                                                    .getResultStream()
-                                                    .collect(new TermRelationshipAnnotationCollector());
+                .setParameter("g", context)
+                .setParameter("subject", term)
+                .setParameter("attribute", annotationProperties)
+                .getResultStream()
+                .collect(new TermRelationshipAnnotationCollector());
     }
 
     /**
@@ -95,87 +95,87 @@ public class TermRelationshipAnnotationDao {
      * @return List of resolved annotations
      */
     private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSkosSymmetricProperties(Term term) {
-        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(List.of(
-                CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
+        final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
+                List.of(CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
         // Must use FILTER for ?attribute and ?predicate because setting the value directly results in VALUES clause
         // (which is there because ?subject is projected out of the query)
         // causing incorrect query results, because mismatch in the number of items in VALUES meant UNDEF was used.
-        return (List<TermRelationshipAnnotation>) em.createNativeQuery(
-                                                            """
+        return (List<TermRelationshipAnnotation>) em.createNativeQuery("""
                                                                     SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
                                                                     GRAPH ?g { << ?object ?predicate ?subject >> ?attribute ?value . }
                                                                     FILTER (?attribute IN (?atts))
                                                                     FILTER (?predicate IN (?symmetricSkosProps))
                                                                     FILTER NOT EXISTS { ?object a ?termSnapshot . }
                                                                     }""", "TermRelationshipAnnotation")
-                                                    .setParameter("subject", term)
-                                                    .setParameter("symmetricSkosProps", SYMMETRIC_SKOS_PROPERTIES)
-                                                    .setParameter("atts", annotationProperties)
-                                                    .setParameter("termSnapshot",
-                                                                  URI.create(Vocabulary.s_c_version_of_term))
-                                                    .getResultStream()
-                                                    .collect(new TermRelationshipAnnotationCollector());
+                .setParameter("subject", term)
+                .setParameter("symmetricSkosProps", SYMMETRIC_SKOS_PROPERTIES)
+                .setParameter("atts", annotationProperties)
+                .setParameter("termSnapshot", URI.create(Vocabulary.s_c_version_of_term))
+                .getResultStream()
+                .collect(new TermRelationshipAnnotationCollector());
     }
 
     /**
      * Sets the values of the specified term relationship annotation.
-     * <p>
-     * This method resolves the correct repository context and stores the relationship annotation in the repository.
+     *
+     * <p>This method resolves the correct repository context and stores the relationship annotation in the repository.
      *
      * @param annotation Annotation with values to set
      */
     public void updateTermRelationshipAnnotation(@Nonnull TermRelationshipAnnotation annotation) {
         Objects.requireNonNull(annotation);
-        final Pair<RdfStatement, URI> actualStatementAndContext = resolveActualContextAndStatement(
-                annotation.getRelationship());
+        final Pair<RdfStatement, URI> actualStatementAndContext =
+                resolveActualContextAndStatement(annotation.getRelationship());
 
         removeExistingValues(actualStatementAndContext, annotation.getAttribute());
-        insertAnnotations(actualStatementAndContext.getFirst(), annotation.getAttribute(), annotation.getValue(),
-                          actualStatementAndContext.getSecond());
+        insertAnnotations(
+                actualStatementAndContext.getFirst(),
+                annotation.getAttribute(),
+                annotation.getValue(),
+                actualStatementAndContext.getSecond());
     }
 
     /**
      * Resolves the actual explicit assertion of the specified term relationship, which can possibly be an inferred
      * inverse side of a symmetric SKOS property assertion.
-     * <p>
-     * For this explicit assertion, the repository context is also resolved.
+     *
+     * <p>For this explicit assertion, the repository context is also resolved.
      *
      * @param statement Statement to resolve
      * @return Actual asserted statement and its repository context
      */
     private Pair<RdfStatement, URI> resolveActualContextAndStatement(RdfStatement statement) {
-        final List<Object> resultList = em.createNativeQuery("SELECT ?ss ?p ?oo ?g WHERE {" +
-                                                                     "{" +
-                                                                     "GRAPH ?g {" +
-                                                                     "?s ?p ?o ." +
-                                                                     "BIND(?s AS ?ss)" +
-                                                                     "BIND(?o AS ?oo)" +
-                                                                     "} } UNION {" +
-                                                                     "GRAPH ?g {" +
-                                                                     "?o ?p ?s ." +
-                                                                     "BIND(?o AS ?ss)" +
-                                                                     "BIND(?s AS ?oo)" +
-                                                                     "} } }")
-                                          .setParameter("s", statement.getSubject())
-                                          .setParameter("p", statement.getRelation())
-                                          .setParameter("o", statement.getObject()).getResultList();
+        final List<Object> resultList = em.createNativeQuery("SELECT ?ss ?p ?oo ?g WHERE {" + "{"
+                        + "GRAPH ?g {"
+                        + "?s ?p ?o ."
+                        + "BIND(?s AS ?ss)"
+                        + "BIND(?o AS ?oo)"
+                        + "} } UNION {"
+                        + "GRAPH ?g {"
+                        + "?o ?p ?s ."
+                        + "BIND(?o AS ?ss)"
+                        + "BIND(?s AS ?oo)"
+                        + "} } }")
+                .setParameter("s", statement.getSubject())
+                .setParameter("p", statement.getRelation())
+                .setParameter("o", statement.getObject())
+                .getResultList();
         if (resultList.isEmpty()) {
             LOG.error(
                     "Could not find statement {} or its inverse when resolving term relationship annotation context.",
                     statement);
-            throw new TermRelationshipAnnotationException(
-                    "Did not find statement " + statement + " or its inverse.");
+            throw new TermRelationshipAnnotationException("Did not find statement " + statement + " or its inverse.");
         } else if (resultList.size() > 1) {
             LOG.warn(
                     "Both statement {} and its inverse are explicitly stated in the data. Using the provided statement for relationship annotation.",
                     statement);
-            return new Pair<>(statement, (URI) ((Object[]) resultList.get(0))[3]);
+            return new Pair<>(statement, (URI) ((Object[]) resultList.getFirst())[3]);
         }
-        assert resultList.get(0) instanceof Object[];
-        final Object[] resultRow = (Object[]) resultList.get(0);
+        assert resultList.getFirst() instanceof Object[];
+        final Object[] resultRow = (Object[]) resultList.getFirst();
         assert resultRow.length == 4;
-        return new Pair<>(new RdfStatement((URI) resultRow[0], (URI) resultRow[1], (URI) resultRow[2]),
-                          (URI) resultRow[3]);
+        return new Pair<>(
+                new RdfStatement((URI) resultRow[0], (URI) resultRow[1], (URI) resultRow[2]), (URI) resultRow[3]);
     }
 
     /**
@@ -189,14 +189,19 @@ public class TermRelationshipAnnotationDao {
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
-            final Update u = conn.prepareUpdate("DELETE WHERE {" +
-                                                        "GRAPH ?g {" +
-                                                        "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
-                                                        "} }");
+            final Update u = conn.prepareUpdate("DELETE WHERE {" + "GRAPH ?g {"
+                    + "<< ?subject ?predicate ?object >> ?annotationProperty ?value ."
+                    + "} }");
             u.setBinding("g", Values.iri(annotatedStatement.getSecond().toString()));
-            u.setBinding("subject", Values.iri(annotatedStatement.getFirst().getSubject().toString()));
-            u.setBinding("predicate", Values.iri(annotatedStatement.getFirst().getRelation().toString()));
-            u.setBinding("object", Values.iri(annotatedStatement.getFirst().getObject().toString()));
+            u.setBinding(
+                    "subject",
+                    Values.iri(annotatedStatement.getFirst().getSubject().toString()));
+            u.setBinding(
+                    "predicate",
+                    Values.iri(annotatedStatement.getFirst().getRelation().toString()));
+            u.setBinding(
+                    "object",
+                    Values.iri(annotatedStatement.getFirst().getObject().toString()));
             u.setBinding("annotationProperty", Values.iri(annotationProperty.toString()));
             u.execute();
             conn.commit();
@@ -206,25 +211,34 @@ public class TermRelationshipAnnotationDao {
     /**
      * Inserts new values of the specified term relationship annotation.
      *
-     * @param subject  Term relationship statement being annotated
+     * @param subject Term relationship statement being annotated
      * @param property Annotation property
-     * @param values   Values of the annotation
-     * @param context  Target repository context
+     * @param values Values of the annotation
+     * @param context Target repository context
      */
     private void insertAnnotations(RdfStatement subject, URI property, Set<Object> values, URI context) {
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         final ValueFactory vf = repo.getValueFactory();
         final IRI annProperty = vf.createIRI(property.toString());
-        final Triple subjTriple = vf.createTriple(vf.createIRI(subject.getSubject().toString()),
-                                                  vf.createIRI(subject.getRelation().toString()),
-                                                  vf.createIRI(subject.getObject().toString()));
+        final Triple subjTriple = vf.createTriple(
+                vf.createIRI(subject.getSubject().toString()),
+                vf.createIRI(subject.getRelation().toString()),
+                vf.createIRI(subject.getObject().toString()));
         final IRI contextIri = vf.createIRI(context.toString());
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
             for (final Object value : values) {
-                final Value val = value instanceof URI ? vf.createIRI(value.toString()) :
-                                  Rdf4jUtils.createLiteral(value, null, vf);
-                conn.add(subjTriple, annProperty, val, contextIri);
+                if (value instanceof MultilingualString mls) {
+                    mls.getValue().forEach((lang, label) -> {
+                        final Value val = Rdf4jUtils.createLiteral(label, lang, vf);
+                        conn.add(subjTriple, annProperty, val, contextIri);
+                    });
+                } else {
+                    final Value val = value instanceof URI
+                            ? vf.createIRI(value.toString())
+                            : Rdf4jUtils.createLiteral(value, null, vf);
+                    conn.add(subjTriple, annProperty, val, contextIri);
+                }
             }
             conn.commit();
         }
@@ -240,19 +254,22 @@ public class TermRelationshipAnnotationDao {
     @Nonnull
     public List<AnnotatedTermRelationship> getRelationshipsAnnotatedByTerm(@Nonnull Term term) {
         Objects.requireNonNull(term);
-        return em.createNativeQuery("SELECT ?subject ?predicate ?object ?annotationProperty WHERE {" +
-                                            "GRAPH ?g {" +
-                                            "<< ?subject ?predicate ?object >> ?annotationProperty ?value ." +
-                                            "} }")
-                 .setParameter("value", term).getResultStream().map(obj -> {
+        return em.createNativeQuery("SELECT ?subject ?predicate ?object ?annotationProperty WHERE {" + "GRAPH ?g {"
+                        + "<< ?subject ?predicate ?object >> ?annotationProperty ?value ."
+                        + "} }")
+                .setParameter("value", term)
+                .getResultStream()
+                .map(obj -> {
                     assert obj instanceof Object[];
                     final Object[] row = (Object[]) obj;
                     final URI subject = (URI) row[0];
                     final URI predicate = (URI) row[1];
                     final URI object = (URI) row[2];
                     final URI annotationProperty = (URI) row[3];
-                    return new AnnotatedTermRelationship(em.find(TermInfo.class, subject), predicate,
-                                                         em.find(TermInfo.class, object), annotationProperty);
-                }).toList();
+                    return new AnnotatedTermRelationship(
+                            em.find(TermInfo.class, subject), predicate,
+                            em.find(TermInfo.class, object), annotationProperty);
+                })
+                .toList();
     }
 }

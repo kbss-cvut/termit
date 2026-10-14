@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao.meta;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -66,9 +68,10 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
 
         final Term term = em.find(Term.class, SUBJECT);
         final List<TermRelationshipAnnotation> result = sut.findAllForSubject(term);
-        assertThat(result, hasItem(new TermRelationshipAnnotation(
-                new RdfStatement(SUBJECT, URI.create(SKOS.BROADER), OBJECT),
-                ANNOTATION_PROPERTY, true)));
+        assertThat(
+                result,
+                hasItem(new TermRelationshipAnnotation(
+                        new RdfStatement(SUBJECT, URI.create(SKOS.BROADER), OBJECT), ANNOTATION_PROPERTY, true)));
     }
 
     private void loadData(String data) {
@@ -104,9 +107,10 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
 
         final Term term = em.find(Term.class, OBJECT);
         final List<TermRelationshipAnnotation> result = sut.findAllForSubject(term);
-        assertThat(result, hasItem(new TermRelationshipAnnotation(
-                new RdfStatement(OBJECT, URI.create(SKOS.RELATED), SUBJECT),
-                ANNOTATION_PROPERTY, true)));
+        assertThat(
+                result,
+                hasItem(new TermRelationshipAnnotation(
+                        new RdfStatement(OBJECT, URI.create(SKOS.RELATED), SUBJECT), ANNOTATION_PROPERTY, true)));
     }
 
     @Test
@@ -129,9 +133,8 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
                 """;
         transactional(() -> loadData(data));
-        final TermRelationshipAnnotation annotation =
-                new TermRelationshipAnnotation(new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT),
-                                               ANNOTATION_PROPERTY, true);
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
+                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, true);
 
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
@@ -139,11 +142,15 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertTrue(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(SUBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(OBJECT.toString())),
-                                          vf.createIRI(ANNOTATION_PROPERTY.toString()), vf.createLiteral(true), false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertTrue(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(SUBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(OBJECT.toString())),
+                        vf.createIRI(ANNOTATION_PROPERTY.toString()),
+                        vf.createLiteral(true),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
             }
         });
     }
@@ -170,25 +177,32 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 """;
         transactional(() -> loadData(data));
 
-        final TermRelationshipAnnotation annotation =
-                new TermRelationshipAnnotation(new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT),
-                                               ANNOTATION_PROPERTY, false);
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
+                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
         readOnlyTransactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertFalse(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(SUBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(OBJECT.toString())),
-                                          vf.createIRI(ANNOTATION_PROPERTY.toString()), vf.createLiteral(true), false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
-                assertTrue(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(SUBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(OBJECT.toString())),
-                                          vf.createIRI(ANNOTATION_PROPERTY.toString()), vf.createLiteral(false), false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertFalse(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(SUBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(OBJECT.toString())),
+                        vf.createIRI(ANNOTATION_PROPERTY.toString()),
+                        vf.createLiteral(true),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertTrue(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(SUBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(OBJECT.toString())),
+                        vf.createIRI(ANNOTATION_PROPERTY.toString()),
+                        vf.createLiteral(false),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
             }
         });
     }
@@ -215,25 +229,32 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 """;
         transactional(() -> loadData(data));
 
-        final TermRelationshipAnnotation annotation =
-                new TermRelationshipAnnotation(new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT),
-                                               ANNOTATION_PROPERTY, false);
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
+                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
         readOnlyTransactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertFalse(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(OBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(SUBJECT.toString())),
-                                          vf.createIRI(ANNOTATION_PROPERTY.toString()), vf.createLiteral(true), false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
-                assertTrue(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(OBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(SUBJECT.toString())),
-                                          vf.createIRI(ANNOTATION_PROPERTY.toString()), vf.createLiteral(false), false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertFalse(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(OBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(SUBJECT.toString())),
+                        vf.createIRI(ANNOTATION_PROPERTY.toString()),
+                        vf.createLiteral(true),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertTrue(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(OBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(SUBJECT.toString())),
+                        vf.createIRI(ANNOTATION_PROPERTY.toString()),
+                        vf.createLiteral(false),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
             }
         });
     }
@@ -260,15 +281,16 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 """;
         transactional(() -> loadData(data));
 
-        final Term annotatingTerm = new Term(
-                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/annotating-term"));
+        final Term annotatingTerm =
+                new Term(URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/annotating-term"));
         final List<AnnotatedTermRelationship> result = sut.getRelationshipsAnnotatedByTerm(annotatingTerm);
         assertEquals(1, result.size());
-        assertEquals(SUBJECT, result.get(0).getSubject().getUri());
-        assertEquals(OBJECT, result.get(0).getObject().getUri());
-        assertEquals(URI.create(SKOS.BROADER), result.get(0).getProperty());
-        assertEquals(URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/annotated-by"),
-                     result.get(0).getAnnotationProperty());
+        assertEquals(SUBJECT, result.getFirst().getSubject().getUri());
+        assertEquals(OBJECT, result.getFirst().getObject().getUri());
+        assertEquals(URI.create(SKOS.BROADER), result.getFirst().getProperty());
+        assertEquals(
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/annotated-by"),
+                result.getFirst().getAnnotationProperty());
     }
 
     @Test
@@ -294,25 +316,111 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 """;
         transactional(() -> loadData(data));
 
-        final TermRelationshipAnnotation annotation =
-                new TermRelationshipAnnotation(new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT),
-                                               ANNOTATION_PROPERTY, false);
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
+                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
         readOnlyTransactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection conn = repo.getConnection()) {
-                assertTrue(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(SUBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(OBJECT.toString())),
-                                          vf.createIRI(ANNOTATION_PROPERTY.toString()), vf.createLiteral(false), false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
-                assertTrue(
-                        conn.hasStatement(vf.createTriple(vf.createIRI(SUBJECT.toString()), vf.createIRI(SKOS.RELATED),
-                                                          vf.createIRI(OBJECT.toString())),
-                                          RDFS.COMMENT, null, false,
-                                          vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertTrue(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(SUBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(OBJECT.toString())),
+                        vf.createIRI(ANNOTATION_PROPERTY.toString()),
+                        vf.createLiteral(false),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+                assertTrue(conn.hasStatement(
+                        vf.createTriple(
+                                vf.createIRI(SUBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(OBJECT.toString())),
+                        RDFS.COMMENT,
+                        null,
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit")));
+            }
+        });
+    }
+
+    @Test
+    void findAllForSubjectRetrievesMultilingualAnnotationsForGivenTerm() {
+        final String data = """
+                <http://onto.fel.cvut.cz/ontologies/application/termit> {
+                <http://onto.fel.cvut.cz/ontologies/application/termit> a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/subject> a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> "Subject"@en ;
+                    <http://www.w3.org/2004/02/skos/core#broader> <http://onto.fel.cvut.cz/ontologies/application/termit/object> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/object> a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> "Object"@en .
+                << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#broader> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation> "Česky"@cs .
+                << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#broader> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation> "English"@en .
+                }
+                <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
+                        rdfs:label "Multilingual annotation"@en ;
+                        rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
+                }
+                <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                """;
+        transactional(() -> loadData(data));
+
+        final Term term = em.find(Term.class, SUBJECT);
+        final List<TermRelationshipAnnotation> result = sut.findAllForSubject(term);
+        assertThat(
+                result,
+                hasItem(new TermRelationshipAnnotation(
+                        new RdfStatement(SUBJECT, URI.create(SKOS.BROADER), OBJECT),
+                        URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation"),
+                        new MultilingualString(Map.of("cs", "Česky", "en", "English")))));
+    }
+
+    @Test
+    void updateTermRelationshipAnnotationSavesMultilingualStringValues() {
+        final String data = """
+                <http://onto.fel.cvut.cz/ontologies/application/termit> {
+                <http://onto.fel.cvut.cz/ontologies/application/termit> a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/subject> a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> "Subject"@en ;
+                    <http://www.w3.org/2004/02/skos/core#related> <http://onto.fel.cvut.cz/ontologies/application/termit/object> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/object> a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> "Object"@en .
+                }
+                <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
+                        rdfs:label "Approved"@en ;
+                        rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
+                }
+                <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                """;
+        transactional(() -> loadData(data));
+        final URI annotationProperty =
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation");
+        final MultilingualString value = new MultilingualString(Map.of("cs", "Hodnota", "en", "Value"));
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
+                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), annotationProperty, value);
+
+        transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
+
+        readOnlyTransactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            final ValueFactory vf = repo.getValueFactory();
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                value.getValue()
+                        .forEach((lang, label) -> assertTrue(conn.hasStatement(
+                                vf.createTriple(
+                                        vf.createIRI(SUBJECT.toString()),
+                                        vf.createIRI(SKOS.RELATED),
+                                        vf.createIRI(OBJECT.toString())),
+                                vf.createIRI(annotationProperty.toString()),
+                                vf.createLiteral(label, lang),
+                                false,
+                                vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit"))));
             }
         });
     }
