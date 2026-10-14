@@ -30,7 +30,9 @@ import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary_;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
+import cz.cvut.kbss.termit.persistence.dao.spec.Specification;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -66,6 +68,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
@@ -666,5 +670,27 @@ class DataDaoTest extends BaseDaoTestRunner {
     private static CustomAttribute createCustomAttribute() {
         return new CustomAttribute(
                 Generator.generateUri(), MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
+    }
+
+    @Test
+    void findAllCustomAttributesWithIdentifiersReturnsMatchingAttributes() {
+        Set<CustomAttribute> matchingAttributes = IntStream.range(0, 3)
+                .mapToObj((i) -> Generator.generateCustomAttribute())
+                .collect(Collectors.toUnmodifiableSet());
+        transactional(() -> {
+            matchingAttributes.forEach(sut::persist);
+            // non-matching attributes
+            sut.persist(Generator.generateCustomAttribute());
+            sut.persist(Generator.generateCustomAttribute());
+        });
+
+        Set<URI> identifiers =
+                matchingAttributes.stream().map(HasIdentifier::getUri).collect(Collectors.toUnmodifiableSet());
+        final List<Specification<CustomAttribute>> specs =
+                List.of(CustomAttributeSpecifications.allWithIdentifiers(identifiers));
+
+        final List<CustomAttribute> result = readOnlyTransactional(() -> sut.findAllCustomAttributes(specs));
+        assertEquals(matchingAttributes.size(), result.size());
+        assertTrue(matchingAttributes.containsAll(result));
     }
 }

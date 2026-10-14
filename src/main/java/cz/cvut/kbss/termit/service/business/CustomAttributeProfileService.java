@@ -96,6 +96,8 @@ public class CustomAttributeProfileService {
 
     private boolean matchingExists(CustomAttribute attribute) {
         Objects.requireNonNull(attribute.getUri(), "Custom Attribute must have an identifier!");
+        Objects.requireNonNull(attribute.getRange(), "Custom Attribute must have a range!");
+        Objects.requireNonNull(attribute.getDomain(), "Custom Attribute must have a domain!");
         return dataService
                 .findCustomAttribute(attribute.getUri())
                 .map(existing -> {
@@ -104,7 +106,7 @@ public class CustomAttributeProfileService {
                     if (domainMatches && rangeMatches) {
                         return true;
                     }
-                    throw new CustomAttributeConflictException(domainMatches, rangeMatches, attribute.getUri());
+                    throw new CustomAttributeConflictException(rangeMatches, domainMatches, attribute.getUri());
                 })
                 .orElse(false);
     }
