@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -53,14 +54,6 @@ class CustomAttributeProfileServiceTest {
         copy.setRange(attribute.getRange());
         copy.setAnnotatedRelationships(attribute.getAnnotatedRelationships());
         return copy;
-    }
-
-    private static void assertAttributeEquals(CustomAttribute expected, CustomAttribute actual) {
-        assertEquals(expected, actual);
-        assertEquals(expected.getComment(), actual.getComment());
-        assertEquals(expected.getDomain(), actual.getDomain());
-        assertEquals(expected.getRange(), actual.getRange());
-        assertEquals(expected.getAnnotatedRelationships(), actual.getAnnotatedRelationships());
     }
 
     @Test
@@ -97,7 +90,7 @@ class CustomAttributeProfileServiceTest {
                     .filter(expected::equals)
                     .findFirst()
                     .orElseThrow();
-            assertAttributeEquals(expected, actual);
+            assertEquals(expected, actual);
         }
     }
 
@@ -142,9 +135,12 @@ class CustomAttributeProfileServiceTest {
         assertNotEquals(existing.getDomain(), imported.getDomain());
         when(dataService.findCustomAttribute(existing.getUri())).thenReturn(Optional.of(existing));
 
-        assertThrows(CustomAttributeConflictException.class, () -> sut.importProfile(profileOf(imported)));
+        final String message = assertThrows(
+                        CustomAttributeConflictException.class, () -> sut.importProfile(profileOf(imported)))
+                .getMessage();
         verify(dataService, never()).persistCustomAttribute(any());
         verify(dataService, never()).updateCustomAttribute(any());
+        assertTrue(message.contains("domain"));
     }
 
     @Test
@@ -156,18 +152,39 @@ class CustomAttributeProfileServiceTest {
         assertNotEquals(existing.getRange(), imported.getRange());
         when(dataService.findCustomAttribute(existing.getUri())).thenReturn(Optional.of(existing));
 
-        assertThrows(CustomAttributeConflictException.class, () -> sut.importProfile(profileOf(imported)));
+        final String message = assertThrows(
+                        CustomAttributeConflictException.class, () -> sut.importProfile(profileOf(imported)))
+                .getMessage();
         verify(dataService, never()).persistCustomAttribute(any());
         verify(dataService, never()).updateCustomAttribute(any());
+        assertTrue(message.contains("range"));
     }
 
     @Test
-    void importCustomAttributesReturnsBadRequestWhenCustomAttributesAreMissingIdentifiers() {
+    void importProfileThrowsWhenCustomAttributeHasMissingIdentifier() {
         final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
         profile.getCustomAttributes().forEach(a -> a.setUri(null));
 
         final Exception e = assertThrows(NullPointerException.class, () -> sut.importProfile(profile));
-        assertEquals("Custom Attribute must have an identifier!", e.getMessage());
+        assertTrue(e.getMessage().contains("identifier"));
+    }
+
+    @Test
+    void importProfileThrowsWhenCustomAttributeHasMissingRange() {
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
+        profile.getCustomAttributes().iterator().next().setRange(null);
+
+        final Exception e = assertThrows(NullPointerException.class, () -> sut.importProfile(profile));
+        assertTrue(e.getMessage().contains("range"));
+    }
+
+    @Test
+    void importProfileThrowsWhenCustomAttributeHasMissingDomain() {
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
+        profile.getCustomAttributes().iterator().next().setDomain(null);
+
+        final Exception e = assertThrows(NullPointerException.class, () -> sut.importProfile(profile));
+        assertTrue(e.getMessage().contains("domain"));
     }
 
     static CustomAttributesProfile profileOf(CustomAttribute... attributes) {
