@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.CustomAttributesProfile;
 import cz.cvut.kbss.termit.dto.CustomAttributesProfileDescription;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -35,12 +36,6 @@ public class CustomAttributeProfileService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAttributeProfileService.class);
 
-    /** Media type of a profile. */
-    public static final String MEDIA_TYPE = cz.cvut.kbss.jsonld.JsonLd.MEDIA_TYPE;
-
-    /** File extension of an exported profile. */
-    public static final String FILE_EXTENSION = ".jsonld";
-
     private final DataRepositoryService dataService;
 
     private final JsonMapper jsonLdMapper;
@@ -67,7 +62,7 @@ public class CustomAttributeProfileService {
         LOG.debug("Exporting profile with {} custom attribute(s).", customAttributeUris.size());
         final List<CustomAttribute> attributes = dataService.findCustomAttributes(customAttributeUris);
         final CustomAttributesProfile profile = new CustomAttributesProfile(profileDescription, Set.copyOf(attributes));
-        return new TypeAwareByteArrayResource(jsonLdMapper.writeValueAsBytes(profile), MEDIA_TYPE, FILE_EXTENSION);
+        return new TypeAwareByteArrayResource(jsonLdMapper.writeValueAsBytes(profile), JsonLd.MEDIA_TYPE, ".jsonld");
     }
 
     /**
