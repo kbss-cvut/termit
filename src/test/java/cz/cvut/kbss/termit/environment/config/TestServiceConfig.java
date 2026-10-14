@@ -128,6 +128,11 @@ public class TestServiceConfig {
         return Environment.getObjectMapper();
     }
 
+    @Bean(name = "jsonLdMapper")
+    public JsonMapper jsonLdObjectMapper() {
+        return Environment.getJsonLdObjectMapper();
+    }
+
     @Bean
     public LongRunningTasksRegistry longRunningTasksRegistry(ApplicationEventPublisher publisher) {
         return new LongRunningTasksRegistry(publisher);

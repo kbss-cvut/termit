@@ -22,6 +22,8 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jopa.vocabulary.XSD;
+import cz.cvut.kbss.termit.dto.CustomAttributesProfile;
+import cz.cvut.kbss.termit.dto.CustomAttributesProfileDescription;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
@@ -69,6 +71,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -597,5 +600,19 @@ public class Generator {
         attribute.setDomain(URI.create(SKOS.CONCEPT));
         attribute.setRange(URI.create(XSD.STRING));
         return attribute;
+    }
+
+    public static CustomAttributesProfileDescription generateCustomAttributeProfileDescription() {
+        final CustomAttributesProfileDescription description = new CustomAttributesProfileDescription();
+        description.setUri(Generator.generateUri(cz.cvut.kbss.termit.util.Vocabulary.s_c_custom_attribute_profile));
+        description.setTitle(MultilingualString.create("Test profile", Environment.LANGUAGE));
+        description.setDescription(MultilingualString.create("Test profile description", Environment.LANGUAGE));
+        return description;
+    }
+
+    public static CustomAttributesProfile generateCustomAttributeProfile() {
+        return new CustomAttributesProfile(
+                generateCustomAttributeProfileDescription(),
+                new HashSet<>(Set.of(Generator.generateCustomAttribute(), Generator.generateCustomAttribute())));
     }
 }

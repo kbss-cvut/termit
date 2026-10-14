@@ -1,17 +1,14 @@
 package cz.cvut.kbss.termit.rest;
 
-import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.CustomAttributesProfile;
 import cz.cvut.kbss.termit.dto.CustomAttributesProfileDescription;
-import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.importing.CustomAttributeConflictException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.CustomAttributeProfileService;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +23,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,20 +52,6 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
         setUp(new CustomAttributeProfileController(profileService));
     }
 
-    private static CustomAttributesProfileDescription generateProfileDescription() {
-        final CustomAttributesProfileDescription description = new CustomAttributesProfileDescription();
-        description.setUri(Generator.generateUri(Vocabulary.s_c_custom_attribute_profile));
-        description.setTitle(MultilingualString.create("Test profile", Environment.LANGUAGE));
-        description.setDescription(MultilingualString.create("Test profile description", Environment.LANGUAGE));
-        return description;
-    }
-
-    private static CustomAttributesProfile generateProfile() {
-        return new CustomAttributesProfile(
-                generateProfileDescription(),
-                new HashSet<>(Set.of(Generator.generateCustomAttribute(), Generator.generateCustomAttribute())));
-    }
-
     private void mockExportedProfile(CustomAttributesProfile profile) {
         when(profileService.exportProfile(any(), any()))
                 .thenReturn(new TypeAwareByteArrayResource(
@@ -93,7 +75,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void importCustomAttributesPassesProfileToService() throws Exception {
-        final CustomAttributesProfile profile = generateProfile();
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
 
         requestImport(profile).andExpect(status().isNoContent());
 
@@ -118,7 +100,8 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void importCustomAttributesReturnsBadRequestWhenProfileHasNoCustomAttributes() throws Exception {
-        final CustomAttributesProfile profile = new CustomAttributesProfile(generateProfileDescription(), Set.of());
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
+        profile.setCustomAttributes(Set.of());
 
         requestImport(profile).andExpect(status().isBadRequest());
         verify(profileService, never()).importProfile(any());
@@ -126,7 +109,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void importCustomAttributesReturnsBadRequestWhenProfileHasNoIdentifier() throws Exception {
-        final CustomAttributesProfile profile = generateProfile();
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
         profile.setUri(null);
 
         requestImport(profile).andExpect(status().isBadRequest());
@@ -144,7 +127,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void importCustomAttributesReturnsUnprocessableContentWhenExistingAttributeConflictsWithProfile() throws Exception {
-        final CustomAttributesProfile profile = generateProfile();
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
         doThrow(new CustomAttributeConflictException(false, true, Generator.generateUri()))
                 .when(profileService)
                 .importProfile(any());
@@ -154,10 +137,10 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void exportCustomAttributesPassesProfileDescriptionAndAttributeIdentifiersToService() throws Exception {
-        final CustomAttributesProfileDescription description = generateProfileDescription();
+        final CustomAttributesProfileDescription description = Generator.generateCustomAttributeProfileDescription();
         description.getTitle().set("cs", "Testovací profil");
         final Set<URI> attributeUris = Set.of(Generator.generateUri(), Generator.generateUri());
-        mockExportedProfile(generateProfile());
+        mockExportedProfile(Generator.generateCustomAttributeProfile());
 
         requestExport(description, attributeUris).andExpect(status().isOk());
 
@@ -171,7 +154,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void exportCustomAttributesReturnsProfileAsAttachmentNamedAfterProfileIdentifier() throws Exception {
-        final CustomAttributesProfile profile = generateProfile();
+        final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
         mockExportedProfile(profile);
         final String expectedContent = toJsonLd(profile);
 
@@ -193,7 +176,8 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void exportCustomAttributesReturnsBadRequestWhenAttributeIdentifiersAreMissing() throws Exception {
-        requestExport(generateProfileDescription(), Set.of()).andExpect(status().isBadRequest());
+        requestExport(Generator.generateCustomAttributeProfileDescription(), Set.of())
+                .andExpect(status().isBadRequest());
         verify(profileService, never()).exportProfile(any(), any());
     }
 
@@ -209,7 +193,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void exportCustomAttributesReturnsBadRequestWhenProfileIdentifierIsMissing() throws Exception {
-        final CustomAttributesProfileDescription description = generateProfileDescription();
+        final CustomAttributesProfileDescription description = Generator.generateCustomAttributeProfileDescription();
         description.setUri(null);
 
         requestExport(description, Set.of(Generator.generateUri())).andExpect(status().isBadRequest());
@@ -218,7 +202,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
 
     @Test
     void exportCustomAttributesReturnsBadRequestWhenProfileTitleIsMissing() throws Exception {
-        final CustomAttributesProfileDescription description = generateProfileDescription();
+        final CustomAttributesProfileDescription description = Generator.generateCustomAttributeProfileDescription();
         description.setTitle(null);
 
         requestExport(description, Set.of(Generator.generateUri())).andExpect(status().isBadRequest());
