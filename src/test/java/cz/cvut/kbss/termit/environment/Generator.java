@@ -45,11 +45,15 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.SkosCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -59,6 +63,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -584,5 +589,44 @@ public class Generator {
         token.setOwner(owner);
         token.setCreated(Utils.timestamp());
         return token;
+    }
+
+    private static void populateSkosCollection(SkosCollection<?> skosCollection) {
+        skosCollection.setUri(generateUri());
+        final MultilingualString label =
+                MultilingualString.create("SKOS collection-" + randomInt(), Environment.LANGUAGE);
+        skosCollection.setLabel(label);
+        final MultilingualString description = MultilingualString.create(
+                "description of collection " + label.get(Environment.LANGUAGE), Environment.LANGUAGE);
+        skosCollection.setDescription(description);
+    }
+
+    public static TermCollection generateTermCollection(Vocabulary vocabulary, Collection<Term> members) {
+        final TermCollection collection = new TermCollection();
+        populateSkosCollection(collection);
+        collection.setMembers(members.stream().map(HasIdentifier::getUri).collect(Collectors.toSet()));
+        members.forEach(t -> t.setVocabulary(vocabulary.getUri()));
+        collection.setVocabulary(vocabulary.getUri());
+        return collection;
+    }
+
+    public static TermCollection generateTermCollection(Vocabulary vocabulary) {
+        return generateTermCollection(vocabulary, generateTermsWithIds(5));
+    }
+
+    public static OrderedTermCollection generateOrderedTermCollection(Vocabulary vocabulary, Collection<Term> members) {
+        final OrderedTermCollection collection = new OrderedTermCollection();
+        populateSkosCollection(collection);
+        collection.setMembers(new ArrayList<>());
+        members.forEach(m -> {
+            collection.addMember(m.getUri());
+            m.setVocabulary(vocabulary.getUri());
+        });
+        collection.setVocabulary(vocabulary.getUri());
+        return collection;
+    }
+
+    public static OrderedTermCollection generateOrderedTermCollection(Vocabulary vocabulary) {
+        return generateOrderedTermCollection(vocabulary, generateTermsWithIds(5));
     }
 }
