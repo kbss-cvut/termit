@@ -27,6 +27,7 @@ import org.springframework.web.accept.ContentNegotiationManager;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import static cz.cvut.kbss.termit.environment.Environment.createByteArrayMessageConverter;
 import static cz.cvut.kbss.termit.environment.Environment.createDefaultMessageConverter;
 import static cz.cvut.kbss.termit.environment.Environment.createJsonLdMessageConverter;
 import static cz.cvut.kbss.termit.environment.Environment.createResourceMessageConverter;
@@ -34,9 +35,7 @@ import static cz.cvut.kbss.termit.environment.Environment.createStringEncodingMe
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Common configuration for REST controller tests.
- */
+/** Common configuration for REST controller tests. */
 public class BaseControllerTestRunner {
 
     protected ObjectMapper objectMapper;
@@ -50,12 +49,16 @@ public class BaseControllerTestRunner {
     }
 
     public void setUp(Object controller) {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new RestExceptionHandler())
-                                      .setMessageConverters(createJsonLdMessageConverter(),
-                                              createDefaultMessageConverter(), createStringEncodingMessageConverter(),
-                                              createResourceMessageConverter())
-                                      .setContentNegotiationManager(new ContentNegotiationManager())
-                                      .build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new RestExceptionHandler())
+                .setMessageConverters(
+                        createByteArrayMessageConverter(),
+                        createJsonLdMessageConverter(),
+                        createDefaultMessageConverter(),
+                        createStringEncodingMessageConverter(),
+                        createResourceMessageConverter())
+                .setContentNegotiationManager(new ContentNegotiationManager())
+                .build();
     }
 
     protected void setupObjectMappers() {
@@ -82,8 +85,8 @@ public class BaseControllerTestRunner {
     void verifyLocationEquals(String expectedPath, MvcResult result) {
         final String locationHeader = result.getResponse().getHeader(HttpHeaders.LOCATION);
         assertNotNull(locationHeader);
-        final String path = locationHeader.substring(0,
-                locationHeader.indexOf('?') != -1 ? locationHeader.indexOf('?') : locationHeader.length());
+        final String path = locationHeader.substring(
+                0, locationHeader.indexOf('?') != -1 ? locationHeader.indexOf('?') : locationHeader.length());
         assertEquals("http://localhost" + expectedPath, path);
     }
 }

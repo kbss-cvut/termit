@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -46,6 +47,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -258,5 +261,20 @@ public class DataRepositoryService {
 
             dataDao.evictCacheForContexts(contextsToEvict);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<CustomAttribute> findCustomAttributes(Set<URI> customAttributes) {
+        final List<CustomAttribute> result = dataDao.findAllCustomAttributes(
+                List.of(CustomAttributeSpecifications.allWithIdentifiers(customAttributes)));
+        if (result.size() != customAttributes.size()) {
+            final String missing = result.stream()
+                    .map(HasIdentifier::getUri)
+                    .filter(Predicate.not(customAttributes::contains))
+                    .map(Utils::uriToString)
+                    .collect(Collectors.joining(", "));
+            throw new NotFoundException("Following custom attributes were not found: " + missing);
+        }
+        return result;
     }
 }
