@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.Set;
 
 @OWLClass(iri = SKOS.COLLECTION)
@@ -78,5 +79,20 @@ public class SkosCollectionDto implements HasIdentifier, HasTypes {
     @Override
     public void setTypes(Set<String> types) {
         this.types = types;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof SkosCollectionDto that)) return false;
+        return Objects.equals(uri, that.uri)
+                && Objects.equals(label, that.label)
+                && Objects.equals(description, that.description)
+                && Objects.equals(vocabulary, that.vocabulary)
+                && Objects.equals(types, that.types);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uri, label, description, vocabulary, types);
     }
 }

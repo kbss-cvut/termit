@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -11,6 +12,7 @@ import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -140,5 +147,27 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         assertEquals(2, result.size());
         assertEquals(expected, result.stream().map(TypeAwareEntity::getUri).collect(Collectors.toSet()));
         result.forEach(e -> assertTrue(e.isTerm()));
+    }
+
+    @Test
+    void orderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
+        final OrderedTermCollection collection = sut.findOrdered(orderedCollectionB.getUri(), vocabulary);
+        assertThat(collection.getTypes(), hasItem(SKOS.COLLECTION));
+
+        final SkosCollectionDto dto = sut.findDto(orderedCollectionB.getUri());
+        assertThat(dto.getTypes(), hasItems(SKOS.ORDERED_COLLECTION));
+    }
+
+    @Test
+    void unorderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
+        final Matcher<Iterable<? super String>> typeMatcher =
+                allOf(hasItem(SKOS.COLLECTION), not(hasItem(SKOS.ORDERED_COLLECTION)));
+
+        final TermCollection collection = sut.findUnordered(unorderedCollectionA.getUri(), vocabulary);
+        assertThat(collection.getTypes(), typeMatcher);
+
+        final SkosCollectionDto dto = sut.findDto(unorderedCollectionA.getUri());
+        // DTO is SKOS Collection, the type of the entity is not included in types
+        assertTrue(dto.getTypes().isEmpty());
     }
 }
