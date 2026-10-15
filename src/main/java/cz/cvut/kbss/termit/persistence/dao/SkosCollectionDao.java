@@ -73,7 +73,14 @@ public class SkosCollectionDao {
                     "Failed to find all SKOS collections in Vocabulary " + Utils.uriToString(vocabulary.getUri()), e);
         }
     }
-    ;
+
+    public SkosCollectionDto findDto(URI collectionUri) {
+        try {
+            return em.find(SkosCollectionDto.class, collectionUri);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find SKOS collection DTO " + Utils.uriToString(collectionUri), e);
+        }
+    }
 
     /**
      * Finds collection with the given identifier and returns its representation as unordered collection.
@@ -100,18 +107,8 @@ public class SkosCollectionDao {
         }
     }
 
-    private List<URI> findTypes(URI entity) {
-        return em.createNativeQuery("SELECT DISTINCT ?type WHERE { ?x a ?type }", URI.class)
-                .setParameter("x", entity)
-                .getResultList();
-    }
-
-    public SkosCollection<?> find(URI collectionUri, Vocabulary vocabulary) {
-        return em.find(SkosCollection.class, collectionUri, descriptor(vocabulary));
-    }
-
     /** @implSpec The stream must be closed */
-    public Stream<TypeAwareEntity> findMembers(OrderedTermCollection collection, Pageable pageable) {
+    public Stream<TypeAwareEntity> findMembers(SkosCollection<?> collection, Pageable pageable) {
         try {
             final Set<URI> identifiers = collection.getMembers().stream()
                     .skip(pageable.getOffset())
