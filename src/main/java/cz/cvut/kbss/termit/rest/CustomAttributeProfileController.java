@@ -33,6 +33,7 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 import java.util.Set;
 
 @Tag(name = "Custom attribute profiles", description = "Management API for custom attribute profiles")
@@ -105,8 +106,11 @@ public class CustomAttributeProfileController {
                 profileDescription.getUri(),
                 customAttributeUris.size());
         final TypeAwareResource profile = profileService.exportProfile(profileDescription, customAttributeUris);
-        final String title = IdentifierResolver.sanitizeFileName(
-                IdentifierResolver.extractIdentifierFragment(profileDescription.getUri()));
+        final String title = Optional.of(profileDescription.getUri())
+                .map(IdentifierResolver::extractIdentifierFragment)
+                .map(IdentifierResolver::normalizeToAscii)
+                .map(IdentifierResolver::sanitizeFileName)
+                .orElseThrow();
         final String filename = title + profile.getFileExtension().orElse("");
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(profile.getMediaType().orElse(JsonLd.MEDIA_TYPE)))
