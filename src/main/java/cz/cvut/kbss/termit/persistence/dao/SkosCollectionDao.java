@@ -4,9 +4,13 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.model.AbstractTerm_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
@@ -19,15 +23,20 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.orderSentence;
 
 @Repository
 public class SkosCollectionDao {
@@ -44,6 +53,10 @@ public class SkosCollectionDao {
                 FILTER(?type IN (?collectionTypes)) .
             }
             """;
+
+    /** Property identifiers representing a label of collection member */
+    private static final Set<URI> MEMBER_LABEL_PROPERTIES =
+            Set.of(AbstractTerm_.labelPropertyIRI.toURI(), SkosCollection_.labelPropertyIRI.toURI());
 
     protected final URI unorderedUri = TermCollection_.entityClassIRI.toURI();
     protected final URI orderedUri = OrderedTermCollection_.entityClassIRI.toURI();
@@ -140,23 +153,105 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Resolves the members of the collection along with their type.
+     * Resolves a page of members of the ordered collection along with their type.
      *
-     * @implSpec The stream must be closed
+     * @param collection the collection whose members should be resolved
+     * @param pageable page specification
+     * @return members of the requested page in the order of the collection
      */
-    public Stream<TypeAwareEntity> findMembers(SkosCollection<?> collection, Pageable pageable) {
+    public List<TypeAwareEntity> findMembers(OrderedTermCollection collection, Pageable pageable) {
+        if (pageable.isUnpaged() || pageable.getSort().isSorted()) {
+            throw new InvalidParameterException("Page specification must be paged and unsorted! "
+                    + "Ordered collections are always sorted by the collection order.");
+        }
         try {
-            final Set<URI> identifiers = collection.getMembers().stream()
+            final List<URI> identifiers = collection.getMembers().stream()
                     .skip(pageable.getOffset())
                     .limit(pageable.getPageSize())
-                    .collect(Collectors.toSet());
-            return findEntitiesWithType(identifiers).getResultStream();
+                    .toList();
+            return findEntitiesWithType(identifiers);
         } catch (RuntimeException e) {
             throw new PersistenceException(
-                    "Failed to find typped members of ordered SKOS collection "
-                            + Utils.uriToString(collection.getUri()),
+                    "Failed to find typed members of ordered SKOS collection " + Utils.uriToString(collection.getUri()),
                     e);
         }
+    }
+
+    /**
+     * Resolves a page of members of the unordered collection along with their type.
+     *
+     * <p>Members are sorted by their label ({@link SKOS#PREF_LABEL} of terms, {@link DC.Terms#TITLE} of collections).
+     * Members with a label in the specified language are placed first. The sort direction is taken from the
+     * {@code label} property of the page sort specification, ascending by default.
+     *
+     * @param collection the collection whose members should be resolved
+     * @param pageable page specification
+     * @param language language of the labels used for sorting
+     * @return members of the requested page sorted by their label
+     */
+    public List<TypeAwareEntity> findMembers(TermCollection collection, Pageable pageable, String language) {
+        Objects.requireNonNull(language, "Language must not be null");
+        try {
+            final List<URI> identifiers = em.createNativeQuery("""
+                            SELECT DISTINCT ?member WHERE {
+                                ?collection ?hasMember ?member .
+                                OPTIONAL {
+                                    # label in primary language
+                                    ?member ?primaryLabelProperty ?primaryLabel .
+                                    FILTER(?primaryLabelProperty IN (?labelProperties))
+                                    FILTER(lang(?primaryLabel) = ?language)
+                                }
+                                OPTIONAL {
+                                    ?member ?anyLabelProperty ?anyLabel .
+                                    FILTER(?anyLabelProperty IN (?labelProperties))
+                                }
+                                BIND(COALESCE(?primaryLabel, ?anyLabel) AS ?sortLabel)
+                                BIND(IF(BOUND(?primaryLabel), 1, 0) AS ?hasLocaleLabel)
+                            } ORDER BY
+                            """ + buildSortClause(pageable), URI.class)
+                    .setParameter("collection", collection.getUri())
+                    .setParameter("hasMember", TermCollection_.membersPropertyIRI.toURI())
+                    .setParameter("labelProperties", MEMBER_LABEL_PROPERTIES)
+                    .setParameter("language", language)
+                    .setFirstResult((int) pageable.getOffset())
+                    .setMaxResults(pageable.getPageSize())
+                    .getResultList();
+            return findEntitiesWithType(identifiers);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to find typed members of SKOS collection " + Utils.uriToString(collection.getUri()), e);
+        }
+    }
+
+    /**
+     * Builds the sort clause for {@link #findMembers(TermCollection, Pageable, String)}, prioritizing members with a
+     * label in the requested language and applying the direction requested for the {@code label} property.
+     */
+    private static String buildSortClause(Pageable pageable) {
+        final Sort.Order labelOrder = pageable.getSort().getOrderFor("label");
+        final String direction = labelOrder != null && labelOrder.isDescending() ? "DESC" : "ASC";
+        return "DESC(?hasLocaleLabel) " + direction + "(" + orderSentence("STR(?sortLabel)") + ") " + direction
+                + "(?entity)";
+    }
+
+    /**
+     * Resolves types of the given entities.
+     *
+     * @param identifiers identifiers of the entities
+     * @return entities in the order of {@code identifiers}
+     */
+    private List<TypeAwareEntity> findEntitiesWithType(List<URI> identifiers) {
+        if (identifiers.isEmpty()) {
+            return List.of();
+        }
+        @SuppressWarnings("unchecked")
+        final List<TypeAwareEntity> entities =
+                entitiesWithTypeQuery(identifiers).getResultList();
+        // map of entity URI to the type aware entity
+        final Map<URI, TypeAwareEntity> byUri =
+                entities.stream().collect(Collectors.toMap(TypeAwareEntity::getUri, Function.identity()));
+        // extract type aware entity from the map in the requested identifiers order
+        return identifiers.stream().map(byUri::get).map(Objects::requireNonNull).toList();
     }
 
     /**
@@ -167,7 +262,7 @@ public class SkosCollectionDao {
      */
     public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri) {
         final TypeAwareEntity entity =
-                (TypeAwareEntity) findEntitiesWithType(Set.of(collectionUri)).getSingleResult();
+                (TypeAwareEntity) entitiesWithTypeQuery(Set.of(collectionUri)).getSingleResult();
         if (entity != null) {
             if (entity.isOrderedCollection()) {
                 return OrderedTermCollection.class;
@@ -179,7 +274,7 @@ public class SkosCollectionDao {
         return null;
     }
 
-    private Query findEntitiesWithType(Set<URI> identifiers) {
+    private Query entitiesWithTypeQuery(Collection<URI> identifiers) {
         return em.createNativeQuery("""
                  SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
                      ?entity a ?type .

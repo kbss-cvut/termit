@@ -16,12 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Service
 public class SkosCollectionRepositoryService {
@@ -35,36 +32,42 @@ public class SkosCollectionRepositoryService {
     }
 
     /**
-     * Loads members of the collection and maps them to respective entity instances.
-     *
-     * <p>Possible entity objects are:
-     *
-     * <ul>
-     *   <li>{@link cz.cvut.kbss.termit.dto.TermInfo}
-     *   <li>{@link cz.cvut.kbss.termit.dto.SkosCollectionDto}
-     * </ul>
+     * Loads members of the ordered collection and maps them to respective entity instances.
      *
      * @param collection The collection whose members should be loaded
      * @param pageable page specification
-     * @return list of entities that are part of the collection
+     * @return page of entities that are part of the collection, in the order of the collection
+     * @see #resolveEntity(TypeAwareEntity)
      */
-    @Transactional
-    public Page<HasIdentifier> findMembers(SkosCollection<?> collection, Pageable pageable) {
-        final Map<URI, HasIdentifier> resolvedEntities =
-                new HashMap<>(Math.min(collection.getMembers().size(), pageable.getPageSize()));
-        try (Stream<TypeAwareEntity> stream = collectionDao.findMembers(collection, pageable)) {
-            stream.map(this::resolveEntity).forEach(entity -> {
-                Objects.requireNonNull(entity);
-                resolvedEntities.put(entity.getUri(), entity);
-            });
-        }
-
-        final List<HasIdentifier> data = collection.getMembers().stream()
-                .skip(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .map(resolvedEntities::get)
-                .toList();
+    @Transactional(readOnly = true)
+    public Page<HasIdentifier> findMembers(OrderedTermCollection collection, Pageable pageable) {
+        final List<HasIdentifier> data = resolveEntities(collectionDao.findMembers(collection, pageable));
         return new PageImpl<>(data, pageable, collection.getMembers().size());
+    }
+
+    /**
+     * Loads members of the collection sorted by their label and maps them to respective entity instances.
+     *
+     * <p>Members with a label in the specified language are prioritized.
+     *
+     * @param collection The collection whose members should be loaded
+     * @param pageable page specification, the sort direction is taken from the {@code label} property
+     * @param language language of the labels used for sorting
+     * @return page of entities that are part of the collection
+     * @see #resolveEntity(TypeAwareEntity)
+     */
+    @Transactional(readOnly = true)
+    public Page<HasIdentifier> findMembers(TermCollection collection, Pageable pageable, String language) {
+        final List<HasIdentifier> data = resolveEntities(collectionDao.findMembers(collection, pageable, language));
+        return new PageImpl<>(data, pageable, collection.getMembers().size());
+    }
+
+    /** @see #resolveEntity(TypeAwareEntity) */
+    private List<HasIdentifier> resolveEntities(List<TypeAwareEntity> entities) {
+        return entities.stream()
+                .map(this::resolveEntity)
+                .map(Objects::requireNonNull)
+                .toList();
     }
 
     /**
@@ -74,24 +77,31 @@ public class SkosCollectionRepositoryService {
      * @param vocabulary the vocabulary to which the collection belongs
      * @return the resolved {@link TermCollection} or {@link OrderedTermCollection}
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<SkosCollection<?>> find(URI collectionUri, Vocabulary vocabulary) {
         return Optional.ofNullable(collectionDao.findCollectionType(collectionUri))
                 .map(type -> collectionDao.find(type, collectionUri, vocabulary));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<TermCollection> findUnordered(URI collectionUri, Vocabulary vocabulary) {
         return Optional.ofNullable(collectionDao.find(TermCollection.class, collectionUri, vocabulary));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<OrderedTermCollection> findOrdered(URI collectionUri, Vocabulary vocabulary) {
         return Optional.ofNullable(collectionDao.find(OrderedTermCollection.class, collectionUri, vocabulary));
     }
 
     /**
      * Loads the respective entity object depending on the type of the entity.
+     *
+     * <p>Possible entity objects are:
+     *
+     * <ul>
+     *   <li>{@link cz.cvut.kbss.termit.dto.TermInfo}
+     *   <li>{@link cz.cvut.kbss.termit.dto.SkosCollectionDto}
+     * </ul>
      *
      * @param entity the entity with its type
      * @return the loaded entity
