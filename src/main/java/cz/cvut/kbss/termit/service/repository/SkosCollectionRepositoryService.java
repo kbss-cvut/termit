@@ -9,6 +9,8 @@ import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.SkosCollectionDao;
 import cz.cvut.kbss.termit.util.Utils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +49,7 @@ public class SkosCollectionRepositoryService {
      * @return list of entities that are part of the collection
      */
     @Transactional
-    public List<HasIdentifier> findMembers(SkosCollection<?> collection, Pageable pageable) {
+    public Page<HasIdentifier> findMembers(SkosCollection<?> collection, Pageable pageable) {
         final Map<URI, HasIdentifier> resolvedEntities =
                 new HashMap<>(Math.min(collection.getMembers().size(), pageable.getPageSize()));
         try (Stream<TypeAwareEntity> stream = collectionDao.findMembers(collection, pageable)) {
@@ -57,11 +59,12 @@ public class SkosCollectionRepositoryService {
             });
         }
 
-        return collection.getMembers().stream()
+        final List<HasIdentifier> data = collection.getMembers().stream()
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .map(resolvedEntities::get)
                 .toList();
+        return new PageImpl<>(data, pageable, collection.getMembers().size());
     }
 
     /**

@@ -16,6 +16,7 @@ import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -94,7 +95,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
             em.persist(unrelated, descriptorFactory.vocabularyDescriptor(anotherVocabulary));
         });
 
-        final List<SkosCollectionDto> result = sut.findAll(vocabulary, Pageable.ofSize(10));
+        final List<SkosCollectionDto> result =
+                sut.findAll(vocabulary, Pageable.ofSize(10)).getContent();
 
         assertEquals(2, result.size());
         final List<URI> identifiers = result.stream().map(HasIdentifier::getUri).toList();
@@ -114,7 +116,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         allCollections.add(unorderedCollection.getUri());
         allCollections.add(orderedCollection.getUri());
 
-        final List<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 2));
+        final List<SkosCollectionDto> result =
+                sut.findAll(vocabulary, PageRequest.of(1, 2)).getContent();
 
         assertEquals(2, result.size());
         result.forEach(dto -> assertThat(allCollections, hasItem(dto.getUri())));
@@ -143,7 +146,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllReturnsEmptyListForPageBeyondLastCollection() {
-        final List<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 10));
+        final Page<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 10));
         assertTrue(result.isEmpty());
     }
 
