@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,20 @@ public class SkosCollectionService {
             SkosCollectionRepositoryService repositoryService, VocabularyService vocabularyService) {
         this.repositoryService = repositoryService;
         this.vocabularyService = vocabularyService;
+    }
+
+    @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#skosCollection.vocabulary)")
+    public void update(SkosCollection<?> skosCollection) {
+        final Vocabulary vocabulary = vocabularyService.getReference(skosCollection.getVocabulary());
+        repositoryService.update(skosCollection, vocabulary);
+    }
+
+    @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#skosCollection.vocabulary)")
+    public void persist(SkosCollection<?> skosCollection) {
+        final Vocabulary vocabulary = vocabularyService.getReference(skosCollection.getVocabulary());
+        repositoryService.persist(skosCollection, vocabulary);
     }
 
     @Transactional(readOnly = true)
