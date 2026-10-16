@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -89,7 +90,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         orderedCollection.getMembers().add(collectionIndex, unorderedCollection.getUri());
         transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
 
-        final List<HasIdentifier> result = new ArrayList<>(sut.findMembers(orderedCollection, pageable));
+        final List<HasIdentifier> result =
+                new ArrayList<>(sut.findMembers(orderedCollection, pageable).getContent());
 
         assertEquals(orderedCollection.getMembers().size(), result.size());
 
@@ -113,7 +115,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void findMembersReturnsOnlyMembersOfRequestedPage() {
-        final List<HasIdentifier> result = sut.findMembers(orderedCollection, PageRequest.of(1, 2));
+        final List<HasIdentifier> result =
+                sut.findMembers(orderedCollection, PageRequest.of(1, 2)).getContent();
 
         assertEquals(2, result.size());
         result.forEach(Assertions::assertNotNull);
@@ -134,7 +137,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void findMembersReturnsEmptyListForPageBeyondLastMember() {
-        final List<HasIdentifier> result = sut.findMembers(orderedCollection, PageRequest.of(1, 10));
+        final Page<HasIdentifier> result = sut.findMembers(orderedCollection, PageRequest.of(1, 10));
         assertTrue(result.isEmpty());
     }
 
@@ -144,7 +147,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         orderedCollection.getMembers().add(collectionIndex, unorderedCollection.getUri());
         transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
 
-        final List<HasIdentifier> result = sut.findMembers(orderedCollection, PageRequest.of(1, 2));
+        final List<HasIdentifier> result =
+                sut.findMembers(orderedCollection, PageRequest.of(1, 2)).getContent();
 
         assertEquals(2, result.size());
         final HasIdentifier nestedCollection = result.get(collectionIndex - 2);

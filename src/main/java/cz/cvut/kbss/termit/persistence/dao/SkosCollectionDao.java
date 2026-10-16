@@ -16,6 +16,8 @@ import cz.cvut.kbss.termit.model.collection.TermCollection_;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -48,12 +50,12 @@ public class SkosCollectionDao {
      * Finds all collections (both ordered and unordered) in the given vocabulary.
      *
      * @param vocabulary the vocabulary of the collections
-     * @return List of collection DTOs
+     * @return Page of collection DTOs
      */
-    public List<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
+    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
         try {
-            return em.createNativeQuery("""
+            final List<SkosCollectionDto> data = em.createNativeQuery("""
                     SELECT DISTINCT ?collection WHERE {
                         ?collection a ?type ;
                             ?inScheme ?vocabulary .
@@ -67,6 +69,7 @@ public class SkosCollectionDao {
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
+            return new PageImpl<>(data, pageable, 0); // TODO: total
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find all SKOS collections in Vocabulary " + Utils.uriToString(vocabulary.getUri()), e);
