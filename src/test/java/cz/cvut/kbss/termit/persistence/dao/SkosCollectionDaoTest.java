@@ -116,11 +116,11 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         allCollections.add(unorderedCollection.getUri());
         allCollections.add(orderedCollection.getUri());
 
-        final List<SkosCollectionDto> result =
-                sut.findAll(vocabulary, PageRequest.of(1, 2)).getContent();
+        final Page<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 2));
 
-        assertEquals(2, result.size());
+        assertEquals(2, result.getSize());
         result.forEach(dto -> assertThat(allCollections, hasItem(dto.getUri())));
+        assertEquals(allCollections.size(), result.getTotalElements());
     }
 
     @Test

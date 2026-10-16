@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -17,8 +18,8 @@ import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
@@ -30,6 +31,20 @@ import java.util.stream.Stream;
 
 @Repository
 public class SkosCollectionDao {
+
+    /**
+     * Matches all collections (both ordered and unordered) in a vocabulary.
+     *
+     * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, Vocabulary)}
+     */
+    private static final String COLLECTIONS_IN_VOCABULARY_WHERE_CLAUSE = """
+            WHERE {
+                ?collection a ?type ;
+                    ?inScheme ?vocabulary .
+                FILTER(?type IN (?collectionTypes)) .
+            }
+            """;
+
     protected final URI unorderedUri = TermCollection_.entityClassIRI.toURI();
     protected final URI orderedUri = OrderedTermCollection_.entityClassIRI.toURI();
 
@@ -55,25 +70,43 @@ public class SkosCollectionDao {
     public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
         try {
-            final List<SkosCollectionDto> data = em.createNativeQuery("""
-                    SELECT DISTINCT ?collection WHERE {
-                        ?collection a ?type ;
-                            ?inScheme ?vocabulary .
-                        FILTER(?type IN (?collectionTypes)) .
-                    } ORDER BY ?collection
-                    """, SkosCollectionDto.class)
-                    .setParameter("vocabulary", vocabulary.getUri())
-                    .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
-                    .setParameter("collectionTypes", Set.of(orderedUri, unorderedUri))
+            final List<SkosCollectionDto> data = bindCollectionsInVocabulary(
+                            em.createNativeQuery(
+                                    "SELECT DISTINCT ?collection " + COLLECTIONS_IN_VOCABULARY_WHERE_CLAUSE
+                                            + " ORDER BY ?collection",
+                                    SkosCollectionDto.class),
+                            vocabulary)
                     .setDescriptor(descriptor(vocabulary))
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
-            return new PageImpl<>(data, pageable, 0); // TODO: total
+            return PageableExecutionUtils.getPage(data, pageable, () -> countAll(vocabulary));
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find all SKOS collections in Vocabulary " + Utils.uriToString(vocabulary.getUri()), e);
         }
+    }
+
+    /**
+     * Counts all collections (both ordered and unordered) in the given vocabulary.
+     *
+     * @param vocabulary the vocabulary of the collections
+     * @return the total number of collections
+     */
+    private long countAll(Vocabulary vocabulary) {
+        return bindCollectionsInVocabulary(
+                        em.createNativeQuery(
+                                "SELECT (COUNT(DISTINCT ?collection) AS ?count) "
+                                        + COLLECTIONS_IN_VOCABULARY_WHERE_CLAUSE,
+                                Long.class),
+                        vocabulary)
+                .getSingleResult();
+    }
+
+    private <T> TypedQuery<T> bindCollectionsInVocabulary(TypedQuery<T> query, Vocabulary vocabulary) {
+        return query.setParameter("vocabulary", vocabulary.getUri())
+                .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
+                .setParameter("collectionTypes", Set.of(orderedUri, unorderedUri));
     }
 
     public SkosCollectionDto findDto(URI collectionUri) {
