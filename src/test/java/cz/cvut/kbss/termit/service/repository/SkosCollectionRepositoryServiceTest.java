@@ -123,7 +123,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     private void loadAndAssertOrder(OrderedTermCollection collection) {
         final List<URI> initialOrder = new ArrayList<>(collection.getMembers());
 
-        final OrderedTermCollection managedOrdered = sut.findOrdered(collection.getUri(), vocabulary);
+        final OrderedTermCollection managedOrdered =
+                sut.findOrdered(collection.getUri(), vocabulary).orElseThrow();
         assertOrder(initialOrder, managedOrdered.getMembers());
     }
 

@@ -17,6 +17,7 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
+/** Description of {@link SKOS#COLLECTION SKOS Collection} without its members */
 @OWLClass(iri = SKOS.COLLECTION)
 @JsonPropertyOrder({"uri", "label", "description", "vocabulary"})
 public class SkosCollectionDto implements HasIdentifier, HasTypes {

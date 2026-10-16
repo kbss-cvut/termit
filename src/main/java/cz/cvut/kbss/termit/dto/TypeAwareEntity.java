@@ -46,7 +46,11 @@ public class TypeAwareEntity {
     }
 
     public boolean isCollection() {
-        return types.contains(SKOS.COLLECTION) || types.contains(SKOS.ORDERED_COLLECTION);
+        return types.contains(SKOS.COLLECTION) || isOrderedCollection();
+    }
+
+    public boolean isOrderedCollection() {
+        return types.contains(SKOS.ORDERED_COLLECTION);
     }
 
     public URI getUri() {
