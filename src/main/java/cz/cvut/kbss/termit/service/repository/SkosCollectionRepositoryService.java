@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.SkosCollectionDao;
@@ -48,12 +49,17 @@ public class SkosCollectionRepositoryService {
         final Map<URI, HasIdentifier> resolvedEntities =
                 new HashMap<>(Math.min(collection.getMembers().size(), pageable.getPageSize()));
         try (Stream<TypeAwareEntity> stream = collectionDao.findMembers(collection, pageable)) {
-            stream.map(e -> resolveEntity(e)).forEach(entity -> {
+            stream.map(this::resolveEntity).forEach(entity -> {
                 resolvedEntities.put(entity.getUri(), entity);
             });
         }
 
         return collection.getMembers().stream().map(resolvedEntities::get).toList();
+    }
+
+    @Transactional
+    public OrderedTermCollection findOrdered(URI collectionUri, Vocabulary vocabulary) {
+        return collectionDao.findOrdered(collectionUri, vocabulary);
     }
 
     /**
