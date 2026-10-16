@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -51,11 +52,11 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     private Vocabulary vocabulary;
     private Descriptor vocabularyDescriptor;
 
-    private List<Term> membersA;
-    private TermCollection unorderedCollectionA;
+    private List<Term> unorderedMembers;
+    private TermCollection unorderedCollection;
 
-    private List<Term> membersB;
-    private OrderedTermCollection orderedCollectionB;
+    private List<Term> orderedMembers;
+    private OrderedTermCollection orderedCollection;
 
     @BeforeEach
     void setUp() {
@@ -64,14 +65,14 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         vocabularyDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> vocabularyDao.persist(vocabulary));
 
-        membersA = Generator.generateTermsWithIds(5);
-        unorderedCollectionA = Generator.generateTermCollection(vocabulary, membersA);
+        unorderedMembers = Generator.generateTermsWithIds(5);
+        unorderedCollection = Generator.generateTermCollection(vocabulary, unorderedMembers);
 
-        membersB = Generator.generateTermsWithIds(5);
-        orderedCollectionB = Generator.generateOrderedTermCollection(vocabulary, membersB);
+        orderedMembers = Generator.generateTermsWithIds(5);
+        orderedCollection = Generator.generateOrderedTermCollection(vocabulary, orderedMembers);
 
         transactional(() -> {
-            Stream.of(membersA, membersB, Set.of(unorderedCollectionA, orderedCollectionB))
+            Stream.of(unorderedMembers, orderedMembers, Set.of(unorderedCollection, orderedCollection))
                     .flatMap(Collection::stream)
                     .forEach(e -> em.persist(e, vocabularyDescriptor));
         });
@@ -97,32 +98,51 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         assertEquals(2, result.size());
         final List<URI> identifiers = result.stream().map(HasIdentifier::getUri).toList();
-        assertTrue(identifiers.contains(unorderedCollectionA.getUri()));
-        assertTrue(identifiers.contains(orderedCollectionB.getUri()));
+        assertTrue(identifiers.contains(unorderedCollection.getUri()));
+        assertTrue(identifiers.contains(orderedCollection.getUri()));
+    }
+
+    @Test
+    void findDtoReturnsDtoOfOrderedCollection() {
+        final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
+        // DTO represents SKOS Collection, the only expected additional type is ordered collection
+        expectedDto.setTypes(Set.of(SKOS.ORDERED_COLLECTION));
+
+        final SkosCollectionDto result = sut.findDto(orderedCollection.getUri());
+        assertEquals(expectedDto, result);
+    }
+
+    @Test
+    void findDtoReturnsDtoOfUnorderedCollection() {
+        final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(unorderedCollection);
+        expectedDto.setTypes(Set.of());
+
+        final SkosCollectionDto result = sut.findDto(unorderedCollection.getUri());
+        assertEquals(expectedDto, result);
     }
 
     @Test
     void findMembersReturnsStreamOfTypeAwareEntitiesWithLoadedTypes() {
-        orderedCollectionB.getMembers().add(1, unorderedCollectionA.getUri());
-        orderedCollectionB.getMembers().sort(Comparator.comparing(URI::toString));
+        orderedCollection.getMembers().add(1, unorderedCollection.getUri());
+        orderedCollection.getMembers().sort(Comparator.comparing(URI::toString));
 
         transactional(() -> {
-            em.merge(orderedCollectionB, vocabularyDescriptor);
+            em.merge(orderedCollection, vocabularyDescriptor);
         });
 
         final List<TypeAwareEntity> result =
-                sut.findMembers(orderedCollectionB, Pageable.ofSize(100)).toList();
+                sut.findMembers(orderedCollection, Pageable.ofSize(100)).toList();
 
-        assertEquals(orderedCollectionB.getMembers().size(), result.size());
+        assertEquals(orderedCollection.getMembers().size(), result.size());
         final List<URI> resultIdentifiers = identifiers(result);
         resultIdentifiers.sort(Comparator.comparing(URI::toString));
-        assertEquals(orderedCollectionB.getMembers(), resultIdentifiers);
+        assertEquals(orderedCollection.getMembers(), resultIdentifiers);
 
-        final List<URI> orderedMemberUris = identifiersFromEntity(membersB);
+        final List<URI> orderedMemberUris = identifiersFromEntity(orderedMembers);
 
         result.forEach(e -> {
             assertFalse(e.getTypes().isEmpty());
-            if (e.getUri().equals(unorderedCollectionA.getUri())) {
+            if (e.getUri().equals(unorderedCollection.getUri())) {
                 assertTrue(e.isCollection());
                 assertFalse(e.isTerm());
             } else {
@@ -136,11 +156,11 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     @Test
     void findMembersRespectsPagination() {
         final List<TypeAwareEntity> result;
-        try (final Stream<TypeAwareEntity> stream = sut.findMembers(orderedCollectionB, PageRequest.of(1, 2))) {
+        try (final Stream<TypeAwareEntity> stream = sut.findMembers(orderedCollection, PageRequest.of(1, 2))) {
             result = stream.toList();
         }
 
-        final Set<URI> expected = new HashSet<>(orderedCollectionB.getMembers().subList(2, 4));
+        final Set<URI> expected = new HashSet<>(orderedCollection.getMembers().subList(2, 4));
         assertEquals(2, result.size());
         assertEquals(expected, result.stream().map(TypeAwareEntity::getUri).collect(Collectors.toSet()));
         result.forEach(e -> assertTrue(e.isTerm()));
@@ -148,10 +168,10 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void orderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
-        final OrderedTermCollection collection = sut.findOrdered(orderedCollectionB.getUri(), vocabulary);
+        final OrderedTermCollection collection = sut.findOrdered(orderedCollection.getUri(), vocabulary);
         assertThat(collection.getTypes(), hasItem(SKOS.COLLECTION));
 
-        final SkosCollectionDto dto = sut.findDto(orderedCollectionB.getUri());
+        final SkosCollectionDto dto = sut.findDto(orderedCollection.getUri());
         assertThat(dto.getTypes(), hasItems(SKOS.ORDERED_COLLECTION));
     }
 
@@ -159,10 +179,10 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     void unorderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
         // the type of the entity itself is not included in types field
 
-        final TermCollection collection = sut.findUnordered(unorderedCollectionA.getUri(), vocabulary);
+        final TermCollection collection = sut.findUnordered(unorderedCollection.getUri(), vocabulary);
         assertTrue(collection.getTypes().isEmpty());
 
-        final SkosCollectionDto dto = sut.findDto(unorderedCollectionA.getUri());
+        final SkosCollectionDto dto = sut.findDto(unorderedCollection.getUri());
         assertTrue(dto.getTypes().isEmpty());
     }
 }
