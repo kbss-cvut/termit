@@ -51,10 +51,6 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
     @Types
     private Set<String> types;
 
-    public SkosCollection() {
-        addType(SKOS.COLLECTION);
-    }
-
     public abstract T getMembers();
 
     public abstract void setMembers(T members);
