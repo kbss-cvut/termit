@@ -103,4 +103,8 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
     public void setTypes(Set<String> types) {
         this.types = types;
     }
+
+    public void setPrimaryLanguage(String primaryLanguage) {
+        this.primaryLanguage = primaryLanguage;
+    }
 }

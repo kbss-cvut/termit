@@ -312,6 +312,8 @@ public class SkosCollectionController extends BaseController {
                 .body(result.getContent());
     }
 
+    // TODO add endpoint to get all collections in vocabulary (paginated)
+
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
         return resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
     }

@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -23,13 +22,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class SkosCollectionRepositoryService {
-    /** Allowed member types for SKOS collection */
-    private static final Set<String> MEMBER_TYPES = Set.of(SKOS.CONCEPT, SKOS.COLLECTION);
-
     private final SkosCollectionDao collectionDao;
     private final TermRepositoryService termRepositoryService;
     private final Validator validator;
@@ -134,6 +129,7 @@ public class SkosCollectionRepositoryService {
         if (!existing.getVocabulary().equals(vocabulary.getUri())) {
             throw new ValidationException("Vocabulary of SKOS collection cannot be changed!");
         }
+        collection.setPrimaryLanguage(existing.getPrimaryLanguage());
         validate(collection);
     }
 
@@ -143,22 +139,23 @@ public class SkosCollectionRepositoryService {
         collectionDao
                 .findEntitiesWithType(collection.getMembers())
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
+        if (collection.getPrimaryLanguage() == null) {
+            throw new ValidationException("Collection has no primary language!");
+        }
     }
 
     /**
-     * Ensures that the given entity has at least one of the {@link #MEMBER_TYPES}.
+     * Ensures that the given entity is valid member of SKOS Collection. Valid members are Concepts or another
+     * Collections.
      *
      * @param entity the entity to check
      */
     private static void ensureHasCorrectMemberType(TypeAwareEntity entity) {
         Objects.requireNonNull(entity.getTypes(), "Entity must have types!");
-        for (final String memberType : MEMBER_TYPES) {
-            if (entity.getTypes().contains(memberType)) {
-                return;
-            }
+        if (!entity.isTerm() && !entity.isCollection()) {
+            throw new ValidationException("Illegal member in SKOS collection, The entity: "
+                    + Utils.uriToString(entity.getUri()) + " is not allowed type.");
         }
-        throw new ValidationException("Illegal member in SKOS collection, The entity: "
-                + Utils.uriToString(entity.getUri()) + " is not allowed type.");
     }
 
     @Transactional
