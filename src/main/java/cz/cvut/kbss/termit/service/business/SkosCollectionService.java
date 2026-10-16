@@ -38,6 +38,8 @@ public class SkosCollectionService {
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#skosCollection.vocabulary)")
     public void persist(SkosCollection<?> skosCollection) {
         final Vocabulary vocabulary = vocabularyService.getReference(skosCollection.getVocabulary());
+        final String lang = vocabularyService.getPrimaryLanguage(vocabulary.getUri());
+        skosCollection.setPrimaryLanguage(lang);
         repositoryService.persist(skosCollection, vocabulary);
     }
 
@@ -53,11 +55,10 @@ public class SkosCollectionService {
     @Transactional(readOnly = true)
     public Page<HasIdentifier> findMembersFromUnordered(URI collectionUri, URI vocabularyUri, Pageable pageable) {
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
-        final String lang = vocabularyService.getPrimaryLanguage(vocabularyUri);
         final TermCollection collection = repositoryService
                 .findUnordered(collectionUri, vocabulary)
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
-        return repositoryService.findMembers(collection, pageable, lang);
+        return repositoryService.findMembers(collection, pageable, collection.getPrimaryLanguage());
     }
 
     @Transactional(readOnly = true)

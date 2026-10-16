@@ -231,7 +231,7 @@ public class SkosCollectionDao {
         final Sort.Order labelOrder = pageable.getSort().getOrderFor("label");
         final String direction = labelOrder != null && labelOrder.isDescending() ? "DESC" : "ASC";
         return "DESC(?hasLocaleLabel) " + direction + "(" + orderSentence("STR(?sortLabel)") + ") " + direction
-                + "(?entity)";
+                + "(?member)";
     }
 
     /**
@@ -257,8 +257,10 @@ public class SkosCollectionDao {
                     .map(Objects::requireNonNull)
                     .toList();
         } catch (RuntimeException e) {
-            throw new PersistenceException("Failed to find typed entities with identifiers: "
-                    + identifiers.stream().map(Utils::uriToString).collect(Collectors.joining(", ")));
+            throw new PersistenceException(
+                    "Failed to find typed entities with identifiers: "
+                            + identifiers.stream().map(Utils::uriToString).collect(Collectors.joining(", ")),
+                    e);
         }
     }
 
