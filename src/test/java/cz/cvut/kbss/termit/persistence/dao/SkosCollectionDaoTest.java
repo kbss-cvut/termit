@@ -12,7 +12,6 @@ import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -160,14 +157,12 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void unorderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
-        final Matcher<Iterable<? super String>> typeMatcher =
-                allOf(hasItem(SKOS.COLLECTION), not(hasItem(SKOS.ORDERED_COLLECTION)));
+        // the type of the entity itself is not included in types field
 
         final TermCollection collection = sut.findUnordered(unorderedCollectionA.getUri(), vocabulary);
-        assertThat(collection.getTypes(), typeMatcher);
+        assertTrue(collection.getTypes().isEmpty());
 
         final SkosCollectionDto dto = sut.findDto(unorderedCollectionA.getUri());
-        // DTO is SKOS Collection, the type of the entity is not included in types
         assertTrue(dto.getTypes().isEmpty());
     }
 }

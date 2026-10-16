@@ -17,7 +17,7 @@ public class OrderedTermCollection extends SkosCollection<List<URI>> {
     private List<URI> members;
 
     public OrderedTermCollection() {
-        this.addType(SKOS.ORDERED_COLLECTION);
+        this.addType(SKOS.COLLECTION);
     }
 
     @Override
