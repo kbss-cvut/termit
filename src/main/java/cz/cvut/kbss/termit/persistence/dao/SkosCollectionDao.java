@@ -240,18 +240,26 @@ public class SkosCollectionDao {
      * @param identifiers identifiers of the entities
      * @return entities in the order of {@code identifiers}
      */
-    private List<TypeAwareEntity> findEntitiesWithType(List<URI> identifiers) {
+    public List<TypeAwareEntity> findEntitiesWithType(Collection<URI> identifiers) {
         if (identifiers.isEmpty()) {
             return List.of();
         }
-        @SuppressWarnings("unchecked")
-        final List<TypeAwareEntity> entities =
-                entitiesWithTypeQuery(identifiers).getResultList();
-        // map of entity URI to the type aware entity
-        final Map<URI, TypeAwareEntity> byUri =
-                entities.stream().collect(Collectors.toMap(TypeAwareEntity::getUri, Function.identity()));
-        // extract type aware entity from the map in the requested identifiers order
-        return identifiers.stream().map(byUri::get).map(Objects::requireNonNull).toList();
+        try {
+            @SuppressWarnings("unchecked")
+            final List<TypeAwareEntity> entities =
+                    entitiesWithTypeQuery(identifiers).getResultList();
+            // map of entity URI to the type aware entity
+            final Map<URI, TypeAwareEntity> byUri =
+                    entities.stream().collect(Collectors.toMap(TypeAwareEntity::getUri, Function.identity()));
+            // extract type aware entity from the map in the requested identifiers order
+            return identifiers.stream()
+                    .map(byUri::get)
+                    .map(Objects::requireNonNull)
+                    .toList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find typed entities with identifiers: "
+                    + identifiers.stream().map(Utils::uriToString).collect(Collectors.joining(", ")));
+        }
     }
 
     /**
@@ -282,5 +290,27 @@ public class SkosCollectionDao {
                  } GROUP BY ?entity
                  """.formatted(Constants.GROUP_CONCAT_SEPARATOR), TypeAwareEntity.RESULTSET_MAPPING)
                 .setParameter("ids", identifiers);
+    }
+
+    public void update(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        try {
+            em.merge(skosCollection, descriptor(vocabulary));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to update SKOS collection " + Utils.uriToString(skosCollection.getUri()) + " in vocabulary "
+                            + Utils.uriToString(vocabulary.getUri()),
+                    e);
+        }
+    }
+
+    public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        try {
+            em.persist(skosCollection, descriptor(vocabulary));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to persist SKOS collection " + Utils.uriToString(skosCollection.getUri())
+                            + " in vocabulary " + Utils.uriToString(vocabulary.getUri()),
+                    e);
+        }
     }
 }

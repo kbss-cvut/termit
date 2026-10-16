@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
@@ -15,20 +17,28 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.validation.Validator;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class SkosCollectionRepositoryService {
+    /** Allowed member types for SKOS collection */
+    private static final Set<String> MEMBER_TYPES = Set.of(SKOS.CONCEPT, SKOS.COLLECTION);
+
     private final SkosCollectionDao collectionDao;
     private final TermRepositoryService termRepositoryService;
+    private final Validator validator;
 
     public SkosCollectionRepositoryService(
-            SkosCollectionDao collectionDao, TermRepositoryService termRepositoryService) {
+            SkosCollectionDao collectionDao, TermRepositoryService termRepositoryService, Validator validator) {
         this.collectionDao = collectionDao;
         this.termRepositoryService = termRepositoryService;
+        this.validator = validator;
     }
 
     /**
@@ -115,5 +125,50 @@ public class SkosCollectionRepositoryService {
             return collectionDao.findDto(entity.getUri());
         }
         throw new ValidationException("Illegal entity in SKOS collection: " + Utils.uriToString(entity.getUri()));
+    }
+
+    protected void preUpdate(SkosCollection<?> collection, Vocabulary vocabulary) {
+        final SkosCollection<?> existing = find(collection.getUri(), vocabulary)
+                .orElseThrow(() ->
+                        new NotFoundException("Skos collection not found: " + Utils.uriToString(collection.getUri())));
+        if (!existing.getVocabulary().equals(vocabulary.getUri())) {
+            throw new ValidationException("Vocabulary of SKOS collection cannot be changed!");
+        }
+        validate(collection);
+    }
+
+    protected void validate(SkosCollection<?> collection) {
+        BaseRepositoryService.validate(collection, validator);
+        collectionDao
+                .findEntitiesWithType(collection.getMembers())
+                .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
+    }
+
+    /**
+     * Ensures that the given entity has at least one of the {@link #MEMBER_TYPES}.
+     *
+     * @param entity the entity to check
+     */
+    private static void ensureHasCorrectMemberType(TypeAwareEntity entity) {
+        Objects.requireNonNull(entity.getTypes(), "Entity must have types!");
+        for (final String memberType : MEMBER_TYPES) {
+            if (entity.getTypes().contains(memberType)) {
+                return;
+            }
+        }
+        throw new ValidationException("Illegal member in SKOS collection, The entity: "
+                + Utils.uriToString(entity.getUri()) + " is not allowed type.");
+    }
+
+    @Transactional
+    public void update(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        preUpdate(skosCollection, vocabulary);
+        collectionDao.update(skosCollection, vocabulary);
+    }
+
+    @Transactional
+    public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        validate(skosCollection);
+        collectionDao.persist(skosCollection, vocabulary);
     }
 }
