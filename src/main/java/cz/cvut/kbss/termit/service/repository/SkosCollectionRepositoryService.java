@@ -17,6 +17,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -52,11 +53,16 @@ public class SkosCollectionRepositoryService {
                 new HashMap<>(Math.min(collection.getMembers().size(), pageable.getPageSize()));
         try (Stream<TypeAwareEntity> stream = collectionDao.findMembers(collection, pageable)) {
             stream.map(this::resolveEntity).forEach(entity -> {
+                Objects.requireNonNull(entity);
                 resolvedEntities.put(entity.getUri(), entity);
             });
         }
 
-        return collection.getMembers().stream().map(resolvedEntities::get).toList();
+        return collection.getMembers().stream()
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .map(resolvedEntities::get)
+                .toList();
     }
 
     /**
