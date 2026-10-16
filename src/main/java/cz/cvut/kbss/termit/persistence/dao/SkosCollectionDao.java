@@ -58,7 +58,7 @@ public class SkosCollectionDao {
                         ?collection a ?type ;
                             ?inScheme ?vocabulary .
                         FILTER(?type IN (?collectionTypes)) .
-                    }
+                    } ORDER BY ?collection
                     """, SkosCollectionDto.class)
                     .setParameter("vocabulary", vocabulary.getUri())
                     .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)

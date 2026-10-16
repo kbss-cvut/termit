@@ -43,12 +43,11 @@ public class SkosCollectionRepositoryService {
      * </ul>
      *
      * @param collection The collection whose members should be loaded
-     * @param vocabulary the vocabulary to which the collection belongs
      * @param pageable page specification
      * @return list of entities that are part of the collection
      */
     @Transactional
-    public List<HasIdentifier> findMembers(SkosCollection<?> collection, Vocabulary vocabulary, Pageable pageable) {
+    public List<HasIdentifier> findMembers(SkosCollection<?> collection, Pageable pageable) {
         final Map<URI, HasIdentifier> resolvedEntities =
                 new HashMap<>(Math.min(collection.getMembers().size(), pageable.getPageSize()));
         try (Stream<TypeAwareEntity> stream = collectionDao.findMembers(collection, pageable)) {

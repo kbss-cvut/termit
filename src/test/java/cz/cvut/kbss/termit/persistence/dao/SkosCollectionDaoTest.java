@@ -103,6 +103,51 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void findAllRespectsPagination() {
+        final List<TermCollection> additional = Stream.generate(() -> Generator.generateTermCollection(vocabulary))
+                .limit(3)
+                .toList();
+
+        transactional(() -> additional.forEach(c -> em.persist(c, vocabularyDescriptor)));
+
+        final Set<URI> allCollections = new HashSet<>(identifiersFromEntity(additional));
+        allCollections.add(unorderedCollection.getUri());
+        allCollections.add(orderedCollection.getUri());
+
+        final List<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 2));
+
+        assertEquals(2, result.size());
+        result.forEach(dto -> assertThat(allCollections, hasItem(dto.getUri())));
+    }
+
+    @Test
+    void findAllReturnsDisjointPagesCoveringAllCollections() {
+        final List<TermCollection> additional = Stream.generate(() -> Generator.generateTermCollection(vocabulary))
+                .limit(3)
+                .toList();
+        transactional(() -> additional.forEach(c -> em.persist(c, vocabularyDescriptor)));
+
+        final Set<URI> allCollections = new HashSet<>(identifiersFromEntity(additional));
+        allCollections.add(unorderedCollection.getUri());
+        allCollections.add(orderedCollection.getUri());
+
+        final int pageSize = 2;
+        final List<URI> found = new ArrayList<>();
+        for (int page = 0; page * pageSize < allCollections.size(); page++) {
+            sut.findAll(vocabulary, PageRequest.of(page, pageSize)).forEach(dto -> found.add(dto.getUri()));
+        }
+
+        assertEquals(allCollections.size(), found.size());
+        assertEquals(allCollections, new HashSet<>(found));
+    }
+
+    @Test
+    void findAllReturnsEmptyListForPageBeyondLastCollection() {
+        final List<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 10));
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     void findDtoReturnsDtoOfOrderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
         // DTO represents SKOS Collection, the only expected additional type is ordered collection
@@ -164,6 +209,49 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         assertEquals(2, result.size());
         assertEquals(expected, result.stream().map(TypeAwareEntity::getUri).collect(Collectors.toSet()));
         result.forEach(e -> assertTrue(e.isTerm()));
+    }
+
+    @Test
+    void findMembersReturnsRemainingMembersOnLastPartialPage() {
+        // Request the last page of the ordered collection which is not full (e.g. PageRequest.of(2, 2) for 5 members)
+        // and verify that only the remaining members (subList(4, 5)) are returned.
+        final List<TypeAwareEntity> result;
+        try (final Stream<TypeAwareEntity> stream = sut.findMembers(orderedCollection, PageRequest.of(2, 2))) {
+            result = stream.toList();
+        }
+
+        final List<URI> expected = orderedCollection.getMembers().subList(4, 5);
+        assertEquals(expected, identifiers(result));
+    }
+
+    @Test
+    void findMembersReturnsEmptyStreamForPageBeyondLastMember() {
+        // Request a page whose offset is greater than the number of collection members
+        // and verify that the returned stream is empty.
+        final List<TypeAwareEntity> result;
+        try (final Stream<TypeAwareEntity> stream = sut.findMembers(orderedCollection, PageRequest.of(1, 10))) {
+            result = stream.toList();
+        }
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findMembersOfUnorderedCollectionReturnsDisjointPagesCoveringAllMembers() {
+        // Iterate over all pages of the unordered collection with a small page size
+        // and verify that no member appears on more than one page
+        // and the union of all pages equals all members of the collection.
+        final int pageSize = 2;
+        final List<URI> found = new ArrayList<>();
+        for (int page = 0; page * pageSize < unorderedMembers.size(); page++) {
+            final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary);
+            try (final Stream<TypeAwareEntity> stream = sut.findMembers(collection, PageRequest.of(page, pageSize))) {
+                stream.forEach(e -> found.add(e.getUri()));
+            }
+        }
+
+        assertEquals(unorderedMembers.size(), found.size());
+        assertEquals(new HashSet<>(identifiersFromEntity(unorderedMembers)), new HashSet<>(found));
     }
 
     @Test
