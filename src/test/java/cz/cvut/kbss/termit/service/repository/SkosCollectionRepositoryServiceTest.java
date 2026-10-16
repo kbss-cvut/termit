@@ -5,7 +5,6 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
-import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -42,16 +41,17 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     @Autowired
     private VocabularyDao vocabularyDao;
 
+    @Autowired
+    private DtoMapper dtoMapper;
+
     private Vocabulary vocabulary;
     private Descriptor vocabularyDescriptor;
 
-    private List<Term> membersA;
-    private TermCollection unorderedCollectionA;
+    private List<Term> unorderedMembers;
+    private TermCollection unorderedCollection;
 
-    private List<Term> membersB;
-    private OrderedTermCollection orderedCollectionB;
-
-    private final DtoMapper dtoMapper = new DtoMapperImpl();
+    private List<Term> orderedMembers;
+    private OrderedTermCollection orderedCollection;
 
     @BeforeEach
     void setUp() {
@@ -60,14 +60,14 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         vocabularyDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> vocabularyDao.persist(vocabulary));
 
-        membersA = Generator.generateTermsWithIds(5);
-        unorderedCollectionA = Generator.generateTermCollection(vocabulary, membersA);
+        unorderedMembers = Generator.generateTermsWithIds(5);
+        unorderedCollection = Generator.generateTermCollection(vocabulary, unorderedMembers);
 
-        membersB = Generator.generateTermsWithIds(5);
-        orderedCollectionB = Generator.generateOrderedTermCollection(vocabulary, membersB);
+        orderedMembers = Generator.generateTermsWithIds(5);
+        orderedCollection = Generator.generateOrderedTermCollection(vocabulary, orderedMembers);
 
         transactional(() -> {
-            Stream.of(membersA, membersB, Set.of(unorderedCollectionA, orderedCollectionB))
+            Stream.of(unorderedMembers, orderedMembers, Set.of(unorderedCollection, orderedCollection))
                     .flatMap(Collection::stream)
                     .forEach(e -> em.persist(e, vocabularyDescriptor));
         });
@@ -76,21 +76,21 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void findMembersMapsIdentifiersToRespectiveEntities() {
         final int collectionIndex = 3;
-        orderedCollectionB.getMembers().add(collectionIndex, unorderedCollectionA.getUri());
-        transactional(() -> em.merge(orderedCollectionB, vocabularyDescriptor));
+        orderedCollection.getMembers().add(collectionIndex, unorderedCollection.getUri());
+        transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
 
         final List<HasIdentifier> result =
-                new ArrayList<>(sut.findMembers(orderedCollectionB, vocabulary, Pageable.ofSize(100)));
+                new ArrayList<>(sut.findMembers(orderedCollection, vocabulary, Pageable.ofSize(100)));
 
-        assertEquals(orderedCollectionB.getMembers().size(), result.size());
+        assertEquals(orderedCollection.getMembers().size(), result.size());
 
         final HasIdentifier nestedCollection = result.remove(collectionIndex);
         assertInstanceOf(SkosCollectionDto.class, nestedCollection);
-        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(unorderedCollectionA);
+        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(unorderedCollection);
         expectedDto.setTypes(Set.of()); // JOPA excludes
         assertEquals(expectedDto, nestedCollection);
         final List<TermInfo> expectedTerms =
-                membersB.stream().map(Term::toTermInfo).toList();
+                orderedMembers.stream().map(Term::toTermInfo).toList();
         assertEquals(expectedTerms, result);
     }
 }
