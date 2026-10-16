@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.model.collection;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
@@ -26,8 +25,6 @@ import java.util.Set;
 @OWLClass(iri = SKOS.COLLECTION)
 public abstract class SkosCollection<T extends Collection<URI>> extends Asset<MultilingualString>
         implements HasTypes, HasPrimaryLanguage {
-    @Id
-    private URI uri;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
@@ -65,14 +62,6 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
 
     public boolean hasMember(URI member) {
         return getMembers().contains(member);
-    }
-
-    public URI getUri() {
-        return uri;
-    }
-
-    public void setUri(URI uri) {
-        this.uri = uri;
     }
 
     @Override

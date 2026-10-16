@@ -181,6 +181,32 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         loadAndAssertOrder(orderedCollection);
     }
 
+    @Test
+    void persistPersistsValidUnorderedCollection() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+
+        sut.persist(collection, vocabulary);
+
+        final TermCollection managed = readOnlyTransactional(
+                () -> sut.findUnordered(collection.getUri(), vocabulary).orElseThrow());
+        assertEquals(collection.getUri(), managed.getUri());
+        assertEquals(collection.getLabel(), managed.getLabel());
+        assertEquals(collection.getMembers(), managed.getMembers());
+    }
+
+    @Test
+    void persistPersistsValidOrderedCollection() {
+        final OrderedTermCollection collection = Generator.generateOrderedTermCollection(vocabulary, orderedMembers);
+
+        sut.persist(collection, vocabulary);
+
+        final OrderedTermCollection managed = readOnlyTransactional(
+                () -> sut.findOrdered(collection.getUri(), vocabulary).orElseThrow());
+        assertEquals(collection.getUri(), managed.getUri());
+        assertEquals(collection.getLabel(), managed.getLabel());
+        assertEquals(collection.getMembers(), managed.getMembers());
+    }
+
     private void loadAndAssertOrder(OrderedTermCollection collection) {
         final List<URI> initialOrder = new ArrayList<>(collection.getMembers());
 
