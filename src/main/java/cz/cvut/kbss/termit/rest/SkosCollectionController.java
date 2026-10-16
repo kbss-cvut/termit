@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
-import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SkosCollectionService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -34,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
@@ -322,7 +322,7 @@ public class SkosCollectionController extends BaseController {
         ensureCollectionInVocabulary(collection, vocabularyUri);
         collectionService.persist(collection);
         LOG.debug("Collection {} created in vocabulary {}.", collection, vocabularyUri);
-        return ResponseEntity.created(generateCollectionLocation(localName, collection.getUri()))
+        return ResponseEntity.created(generateCollectionLocation(vocabularyUri, collection.getUri()))
                 .build();
     }
 
@@ -339,17 +339,20 @@ public class SkosCollectionController extends BaseController {
         LOG.debug("Collection {} updated.", collection);
     }
 
-    /**
-     * Generates location of the specified collection, independently of the type-specific endpoint path used to create
-     * it.
-     */
-    private static URI generateCollectionLocation(String localName, URI collectionUri) {
-        return RestUtils.createLocationFromCurrentContextWithPathAndQuery(
-                PATH + "/{name}",
-                COLLECTION_NAMESPACE_PARAM,
-                IdentifierResolver.extractIdentifierNamespace(collectionUri),
-                localName,
-                IdentifierResolver.extractIdentifierFragment(collectionUri));
+    /** Generates location of the specified collection. */
+    private static URI generateCollectionLocation(URI vocabularyUri, URI collectionUri) {
+        final String vocabularyNamespace = IdentifierResolver.extractIdentifierNamespace(vocabularyUri);
+        final String vocabularyLocalName = IdentifierResolver.extractIdentifierFragment(vocabularyUri);
+
+        final String collectionNamespace = IdentifierResolver.extractIdentifierNamespace(collectionUri);
+        final String collectionLocalName = IdentifierResolver.extractIdentifierFragment(collectionUri);
+
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .queryParam(QueryParams.NAMESPACE, vocabularyNamespace)
+                .queryParam(COLLECTION_NAMESPACE_PARAM, collectionNamespace)
+                .path(PATH + "/{collectionLocalName}")
+                .buildAndExpand(vocabularyLocalName, collectionLocalName)
+                .toUri();
     }
 
     /**
