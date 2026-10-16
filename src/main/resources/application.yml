@@ -78,6 +78,8 @@ termit:
             separator: /soubor
         snapshot:
             separator: /verze
+        collection:
+          separator: /kolekce
     file:
         storage: /tmp/termit
     changetracking:
