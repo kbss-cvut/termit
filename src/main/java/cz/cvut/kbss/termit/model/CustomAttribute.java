@@ -7,6 +7,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 
 import java.net.URI;
 import java.util.Set;
@@ -26,11 +27,9 @@ public class CustomAttribute extends RdfsResource {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_relationship)
     private Set<URI> annotatedRelationships;
 
-    public CustomAttribute() {
-    }
+    public CustomAttribute() {}
 
-    public CustomAttribute(URI uri, MultilingualString label,
-                           MultilingualString comment) {
+    public CustomAttribute(URI uri, MultilingualString label, MultilingualString comment) {
         super(uri, label, comment, RDF.PROPERTY);
     }
 
@@ -56,5 +55,18 @@ public class CustomAttribute extends RdfsResource {
 
     public void setAnnotatedRelationships(Set<URI> annotatedRelationships) {
         this.annotatedRelationships = annotatedRelationships;
+    }
+
+    /**
+     * Checks if this custom attribute is symmetric.
+     *
+     * <p>I.e., if the attribute is used to establish a relationship between A and B, there must also exist relationship
+     * between B and A.
+     *
+     * @return {@code true} if this custom attribute is symmetric, {@code false} otherwise
+     */
+    public boolean isSymmetric() {
+        // TODO Use JOPA OWL constant when available in the next release
+        return hasType(OWL.SYMMETRICPROPERTY.stringValue());
     }
 }
