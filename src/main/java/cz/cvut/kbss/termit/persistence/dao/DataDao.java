@@ -218,7 +218,7 @@ public class DataDao {
         if (resources.isEmpty()) {
             return Optional.empty();
         }
-        final RdfsResource result = resources.get(0);
+        final RdfsResource result = resources.getFirst();
         result.setTypes(resources.stream().flatMap(r -> r.getTypes().stream()).collect(Collectors.toSet()));
         return Optional.of(result);
     }

@@ -667,4 +667,24 @@ class DataDaoTest extends BaseDaoTestRunner {
         return new CustomAttribute(
                 Generator.generateUri(), MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
     }
+
+    @Test
+    void findAllSymmetricCustomAttributesReturnsSymmetricCustomAttributes() {
+        final CustomAttribute pOne = createCustomAttribute();
+        pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        // TODO Use JOPA OWL constant when available in the next release
+        pOne.addType(org.eclipse.rdf4j.model.vocabulary.OWL.SYMMETRICPROPERTY.stringValue());
+        final CustomAttribute pTwo = createCustomAttribute();
+        pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pTwo.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        transactional(() -> {
+            em.persist(pOne);
+            em.persist(pTwo);
+        });
+
+        final List<CustomAttribute> result =
+                sut.findAllCustomAttributes(List.of(CustomAttributeSpecifications.isSymmetric()));
+        assertEquals(List.of(pOne), result);
+    }
 }
