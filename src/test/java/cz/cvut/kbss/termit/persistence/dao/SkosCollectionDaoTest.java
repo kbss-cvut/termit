@@ -168,7 +168,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void orderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
-        final OrderedTermCollection collection = sut.findOrdered(orderedCollection.getUri(), vocabulary);
+        final OrderedTermCollection collection =
+                sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
         assertThat(collection.getTypes(), hasItem(SKOS.COLLECTION));
 
         final SkosCollectionDto dto = sut.findDto(orderedCollection.getUri());
@@ -176,10 +177,10 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void unorderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
+    void unorderedCollectionHasNoAdditionalTypeWhenRetrievedFromRepository() {
         // the type of the entity itself is not included in types field
 
-        final TermCollection collection = sut.findUnordered(unorderedCollection.getUri(), vocabulary);
+        final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary);
         assertTrue(collection.getTypes().isEmpty());
 
         final SkosCollectionDto dto = sut.findDto(unorderedCollection.getUri());

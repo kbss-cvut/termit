@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -27,9 +28,6 @@ import java.util.stream.Stream;
 
 @Repository
 public class SkosCollectionDao {
-    protected final Class<TermCollection> unorderedType = TermCollection.class;
-    protected final Class<OrderedTermCollection> orderedType = OrderedTermCollection.class;
-
     protected final URI unorderedUri = TermCollection_.entityClassIRI.toURI();
     protected final URI orderedUri = OrderedTermCollection_.entityClassIRI.toURI();
 
@@ -65,6 +63,7 @@ public class SkosCollectionDao {
                     .setParameter("vocabulary", vocabulary.getUri())
                     .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
                     .setParameter("collectionTypes", Set.of(orderedUri, unorderedUri))
+                    .setDescriptor(descriptor(vocabulary))
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
@@ -83,51 +82,74 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Finds collection with the given identifier and returns its representation as unordered collection.
+     * Retrieves the collection of the requested type.
      *
-     * @param unorderedCollectionUri collection identifier
-     * @return the unordered collection representation
-     * @implNote Note that ordered collection can be represented as unordered collection too
+     * @param clazz the type of the collection
+     * @param collectionUri the identifier of the collection
+     * @param vocabulary the vocabulary of the collection
+     * @return the collection or {@code null} when not found
+     * @param <T> {@link TermCollection} or {@link OrderedTermCollection}
+     * @implNote Note that ordered collection can be represented as unordered, but its updates are in such case
+     *     prohibited.
      */
-    public TermCollection findUnordered(URI unorderedCollectionUri, Vocabulary vocabulary) {
+    public <T extends SkosCollection<?>> T find(Class<T> clazz, URI collectionUri, Vocabulary vocabulary) {
         try {
-            return em.find(unorderedType, unorderedCollectionUri, descriptor(vocabulary));
+            return em.find(clazz, collectionUri, descriptor(vocabulary));
         } catch (RuntimeException e) {
             throw new PersistenceException(
-                    "Failed to find unordered term collection " + Utils.uriToString(unorderedCollectionUri), e);
+                    "Failed to find SKOS collection " + Utils.uriToString(collectionUri) + " using type "
+                            + clazz.getSimpleName(),
+                    e);
         }
     }
 
-    public OrderedTermCollection findOrdered(URI orderedCollectionUri, Vocabulary vocabulary) {
-        try {
-            return em.find(orderedType, orderedCollectionUri, descriptor(vocabulary));
-        } catch (RuntimeException e) {
-            throw new PersistenceException(
-                    "Failed to find ordered term collection " + Utils.uriToString(orderedCollectionUri), e);
-        }
-    }
-
-    /** @implSpec The stream must be closed */
+    /**
+     * Resolves the members of the collection along with their type.
+     *
+     * @implSpec The stream must be closed
+     */
     public Stream<TypeAwareEntity> findMembers(SkosCollection<?> collection, Pageable pageable) {
         try {
             final Set<URI> identifiers = collection.getMembers().stream()
                     .skip(pageable.getOffset())
                     .limit(pageable.getPageSize())
                     .collect(Collectors.toSet());
-            return em.createNativeQuery(
-                            """
-                    SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
-                        ?entity a ?type .
-                        FILTER(?entity IN (?ids))
-                    } GROUP BY ?entity
-                    """.formatted(Constants.GROUP_CONCAT_SEPARATOR), TypeAwareEntity.RESULTSET_MAPPING)
-                    .setParameter("ids", identifiers)
-                    .getResultStream();
+            return findEntitiesWithType(identifiers).getResultStream();
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find typped members of ordered SKOS collection "
                             + Utils.uriToString(collection.getUri()),
                     e);
         }
+    }
+
+    /**
+     * Resolves the type of the given collection.
+     *
+     * @param collectionUri the identifier of the collection
+     * @return {@link TermCollection} or {@link OrderedTermCollection}
+     */
+    public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri) {
+        final TypeAwareEntity entity =
+                (TypeAwareEntity) findEntitiesWithType(Set.of(collectionUri)).getSingleResult();
+        if (entity != null) {
+            if (entity.isOrderedCollection()) {
+                return OrderedTermCollection.class;
+            }
+            if (entity.isCollection()) {
+                return TermCollection.class;
+            }
+        }
+        return null;
+    }
+
+    private Query findEntitiesWithType(Set<URI> identifiers) {
+        return em.createNativeQuery("""
+                 SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
+                     ?entity a ?type .
+                     FILTER(?entity IN (?ids))
+                 } GROUP BY ?entity
+                 """.formatted(Constants.GROUP_CONCAT_SEPARATOR), TypeAwareEntity.RESULTSET_MAPPING)
+                .setParameter("ids", identifiers);
     }
 }
