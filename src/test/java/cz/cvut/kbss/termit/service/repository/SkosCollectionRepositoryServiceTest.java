@@ -19,8 +19,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -53,6 +55,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     private List<Term> orderedMembers;
     private OrderedTermCollection orderedCollection;
 
+    private final Pageable pageable = Pageable.ofSize(1000);
+
     @BeforeEach
     void setUp() {
         enableRdfsInference(em);
@@ -62,6 +66,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         unorderedMembers = Generator.generateTermsWithIds(5);
         unorderedCollection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        unorderedCollection.setTypes(Set.of());
 
         orderedMembers = Generator.generateTermsWithIds(5);
         orderedCollection = Generator.generateOrderedTermCollection(vocabulary, orderedMembers);
@@ -79,18 +84,56 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         orderedCollection.getMembers().add(collectionIndex, unorderedCollection.getUri());
         transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
 
-        final List<HasIdentifier> result =
-                new ArrayList<>(sut.findMembers(orderedCollection, vocabulary, Pageable.ofSize(100)));
+        final List<HasIdentifier> result = new ArrayList<>(sut.findMembers(orderedCollection, vocabulary, pageable));
 
         assertEquals(orderedCollection.getMembers().size(), result.size());
 
         final HasIdentifier nestedCollection = result.remove(collectionIndex);
         assertInstanceOf(SkosCollectionDto.class, nestedCollection);
         final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(unorderedCollection);
-        expectedDto.setTypes(Set.of()); // JOPA excludes
         assertEquals(expectedDto, nestedCollection);
         final List<TermInfo> expectedTerms =
                 orderedMembers.stream().map(Term::toTermInfo).toList();
         assertEquals(expectedTerms, result);
+    }
+
+    @Test
+    void findMembersMaintainsMemberOrder() {
+        final List<URI> initialOrder = new ArrayList<>(orderedCollection.getMembers());
+        final List<URI> actualMembers = sut.findMembers(orderedCollection, vocabulary, pageable).stream()
+                .map(HasIdentifier::getUri)
+                .toList();
+        assertOrder(initialOrder, actualMembers);
+    }
+
+    @Test
+    void orderedCollectionMaintainsMemberOrderWhenLoadedFromRepository() {
+        loadAndAssertOrder(orderedCollection);
+
+        final List<URI> members = orderedCollection.getMembers();
+        Collections.swap(members, 1, 3);
+
+        transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
+        em.clear();
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        loadAndAssertOrder(orderedCollection);
+    }
+
+    private void loadAndAssertOrder(OrderedTermCollection collection) {
+        final List<URI> initialOrder = new ArrayList<>(collection.getMembers());
+
+        final OrderedTermCollection managedOrdered = sut.findOrdered(collection.getUri(), vocabulary);
+        assertOrder(initialOrder, managedOrdered.getMembers());
+    }
+
+    private <T> void assertOrder(List<T> expectedOrder, List<T> actualOrder) {
+        assertEquals(expectedOrder.size(), actualOrder.size());
+        for (int i = 0; i < actualOrder.size(); i++) {
+            final T expected = expectedOrder.get(i);
+            final T actual = actualOrder.get(i);
+
+            assertEquals(expected, actual, "Order differs at index " + i);
+        }
     }
 }
