@@ -139,6 +139,7 @@ public class SkosCollectionRepositoryService {
 
     protected void validate(SkosCollection<?> collection) {
         BaseRepositoryService.validate(collection, validator);
+        Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
         collectionDao
                 .findEntitiesWithType(collection.getMembers())
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
