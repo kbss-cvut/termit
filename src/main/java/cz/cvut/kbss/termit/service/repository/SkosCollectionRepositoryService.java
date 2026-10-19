@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
@@ -35,6 +36,11 @@ public class SkosCollectionRepositoryService {
         this.collectionDao = collectionDao;
         this.termRepositoryService = termRepositoryService;
         this.validator = validator;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
+        return collectionDao.findAll(vocabulary, pageable);
     }
 
     /**

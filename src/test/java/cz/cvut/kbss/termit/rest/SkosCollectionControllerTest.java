@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -24,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
@@ -42,6 +44,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -219,6 +222,66 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
                 .andExpect(status().isOk());
         verify(collectionServiceMock).findMembersFromOrdered(COLLECTION_URI, VOCABULARY_URI, pageRequest);
+    }
+
+    private List<SkosCollectionDto> generateCollectionDtos(int count) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> Generator.generateTermCollection(vocabulary))
+                .map(Environment.getDtoMapper()::skosCollectionToDto)
+                .toList();
+    }
+
+    @Test
+    void getAllReturnsCollectionsFromVocabularyWithTotalCountHeader() throws Exception {
+        final PageRequest pageRequest = PageRequest.of(1, 5);
+        final List<SkosCollectionDto> collections = generateCollectionDtos(pageRequest.getPageSize());
+        final int totalCount = 12;
+        when(collectionServiceMock.findAll(VOCABULARY_URI, pageRequest))
+                .thenReturn(new PageImpl<>(collections, pageRequest, totalCount));
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH, VOCABULARY_NAME)
+                        .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
+                        .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        final List<SkosCollectionDto> result = readValue(mvcResult, new TypeReference<>() {});
+        assertEquals(
+                collections.stream().map(SkosCollectionDto::getUri).toList(),
+                result.stream().map(SkosCollectionDto::getUri).toList());
+        assertEquals(Integer.toString(totalCount), mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    void getAllResolvesVocabularyIdentifierInSpecifiedVocabularyNamespace() throws Exception {
+        when(collectionServiceMock.findAll(any(), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get(PATH, VOCABULARY_NAME).param(QueryParams.NAMESPACE, VOCABULARY_NAMESPACE))
+                .andExpect(status().isOk());
+
+        verify(idResolverMock).resolveIdentifier(VOCABULARY_NAMESPACE, VOCABULARY_NAME);
+        verify(collectionServiceMock).findAll(eq(VOCABULARY_URI), any());
+    }
+
+    @Test
+    void getAllPassesPageSpecificationToService() throws Exception {
+        final PageRequest pageRequest = PageRequest.of(2, 5);
+        when(collectionServiceMock.findAll(VOCABULARY_URI, pageRequest))
+                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
+
+        mockMvc.perform(get(PATH, VOCABULARY_NAME)
+                        .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
+                        .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
+                .andExpect(status().isOk());
+
+        verify(collectionServiceMock).findAll(VOCABULARY_URI, pageRequest);
+    }
+
+    @Test
+    void getAllReturnsNotFoundWhenServiceThrowsNotFoundException() throws Exception {
+        when(collectionServiceMock.findAll(eq(VOCABULARY_URI), any())).thenThrow(NotFoundException.class);
+
+        mockMvc.perform(get(PATH, VOCABULARY_NAME)).andExpect(status().isNotFound());
     }
 
     private static <T extends SkosCollection<?>> void assertCollectionEquals(T expected, T actual) {
