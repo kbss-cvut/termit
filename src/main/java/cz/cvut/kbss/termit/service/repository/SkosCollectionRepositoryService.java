@@ -127,7 +127,8 @@ public class SkosCollectionRepositoryService {
         final SkosCollection<?> existing = find(collection.getUri(), vocabulary)
                 .orElseThrow(() ->
                         new NotFoundException("Skos collection not found: " + Utils.uriToString(collection.getUri())));
-        if (!existing.getVocabulary().equals(vocabulary.getUri())) {
+        if (!existing.getVocabulary().equals(vocabulary.getUri())
+                || !collection.getVocabulary().equals(vocabulary.getUri())) {
             throw new ValidationException("Vocabulary of SKOS collection cannot be changed!");
         }
         if (!collection.getClass().equals(existing.getClass())) {
@@ -144,6 +145,9 @@ public class SkosCollectionRepositoryService {
     protected void validate(SkosCollection<?> collection) {
         BaseRepositoryService.validate(collection, validator);
         Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
+        if (collection.getMembers() != null && collection.getMembers().contains(collection.getUri())) {
+            throw new ValidationException("Collection must not be member of itself!");
+        }
         collectionDao
                 .findEntitiesWithType(collection.getMembers())
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
