@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
@@ -167,6 +168,18 @@ public class SkosCollectionRepositoryService {
     @Transactional
     public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
         validate(skosCollection);
+        verifyIdentifierUnique(skosCollection);
         collectionDao.persist(skosCollection, vocabulary);
+    }
+
+    @Transactional
+    public boolean exists(URI collectionUri) {
+        return collectionDao.exists(collectionUri);
+    }
+
+    protected void verifyIdentifierUnique(SkosCollection<?> instance) {
+        if (exists(instance.getUri())) {
+            throw ResourceExistsException.create(instance.getClass().getSimpleName(), instance.getUri());
+        }
     }
 }
