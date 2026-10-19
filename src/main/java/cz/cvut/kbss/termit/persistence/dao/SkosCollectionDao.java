@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
@@ -271,15 +272,22 @@ public class SkosCollectionDao {
      * @return {@link TermCollection} or {@link OrderedTermCollection}
      */
     public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri) {
-        final TypeAwareEntity entity =
-                (TypeAwareEntity) entitiesWithTypeQuery(Set.of(collectionUri)).getSingleResult();
-        if (entity != null) {
-            if (entity.isOrderedCollection()) {
-                return OrderedTermCollection.class;
+        try {
+            final TypeAwareEntity entity = (TypeAwareEntity)
+                    entitiesWithTypeQuery(Set.of(collectionUri)).getSingleResult();
+            if (entity != null) {
+                if (entity.isOrderedCollection()) {
+                    return OrderedTermCollection.class;
+                }
+                if (entity.isCollection()) {
+                    return TermCollection.class;
+                }
             }
-            if (entity.isCollection()) {
-                return TermCollection.class;
-            }
+        } catch (NoResultException e) {
+            return null;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to find type for SKOS collection: " + Utils.uriToString(collectionUri), e);
         }
         return null;
     }
@@ -313,6 +321,19 @@ public class SkosCollectionDao {
                     "Failed to persist SKOS collection " + Utils.uriToString(skosCollection.getUri())
                             + " in vocabulary " + Utils.uriToString(vocabulary.getUri()),
                     e);
+        }
+    }
+
+    public boolean exists(URI collectionUri) {
+        Objects.requireNonNull(collectionUri);
+        try {
+            return em.createNativeQuery("ASK { ?x a ?type . }", Boolean.class)
+                    .setParameter("x", collectionUri)
+                    .setParameter("type", collectionUri)
+                    .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to check existance of SKOS collection " + Utils.uriToString(collectionUri), e);
         }
     }
 }
