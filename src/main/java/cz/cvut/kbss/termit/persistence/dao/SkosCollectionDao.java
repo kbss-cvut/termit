@@ -50,12 +50,10 @@ public class SkosCollectionDao {
      *
      * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, Vocabulary)}
      */
-    private static final String COLLECTIONS_IN_VOCABULARY_WHERE_CLAUSE = """
-            WHERE {
-                ?collection a ?type ;
-                    ?inScheme ?vocabulary .
-                FILTER(?type IN (?collectionTypes)) .
-            }
+    private static final String COLLECTIONS_IN_VOCABULARY_PATTERN = """
+            ?collection a ?type ;
+                ?inScheme ?vocabulary .
+            FILTER(?type IN (?collectionTypes)) .
             """;
 
     /** Property identifiers representing a label of collection member */
@@ -81,18 +79,30 @@ public class SkosCollectionDao {
     /**
      * Finds all collections (both ordered and unordered) in the given vocabulary.
      *
+     * <p>Collections are sorted by their label in the primary language of the vocabulary. The sort direction is taken
+     * from the {@code label} property of the page sort specification, ascending by default.
+     *
      * @param vocabulary the vocabulary of the collections
      * @return Page of collection DTOs
      */
     public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
+        Objects.requireNonNull(vocabulary.getPrimaryLanguage(), "Vocabulary primary language must not be null");
         try {
             final List<SkosCollectionDto> data = bindCollectionsInVocabulary(
                             em.createNativeQuery(
-                                    "SELECT DISTINCT ?collection " + COLLECTIONS_IN_VOCABULARY_WHERE_CLAUSE
-                                            + " ORDER BY ?collection",
+                                    """
+                                    SELECT DISTINCT ?collection WHERE {
+                                    """ + COLLECTIONS_IN_VOCABULARY_PATTERN + """
+                                        ?collection ?hasLabel ?label .
+                                        FILTER(lang(?label) = ?language)
+                                    } ORDER BY
+                                    """
+                                            + buildSortClause(pageable, "?label", "?collection"),
                                     SkosCollectionDto.class),
                             vocabulary)
+                    .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
+                    .setParameter("language", vocabulary.getPrimaryLanguage())
                     .setDescriptor(descriptor(vocabulary))
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
@@ -113,8 +123,8 @@ public class SkosCollectionDao {
     private long countAll(Vocabulary vocabulary) {
         return bindCollectionsInVocabulary(
                         em.createNativeQuery(
-                                "SELECT (COUNT(DISTINCT ?collection) AS ?count) "
-                                        + COLLECTIONS_IN_VOCABULARY_WHERE_CLAUSE,
+                                "SELECT (COUNT(DISTINCT ?collection) AS ?count) WHERE { "
+                                        + COLLECTIONS_IN_VOCABULARY_PATTERN + " }",
                                 Long.class),
                         vocabulary)
                 .getSingleResult();
@@ -198,7 +208,8 @@ public class SkosCollectionDao {
     public List<TypeAwareEntity> findMembers(TermCollection collection, Pageable pageable, String language) {
         Objects.requireNonNull(language, "Language must not be null");
         try {
-            final List<URI> identifiers = em.createNativeQuery("""
+            final List<URI> identifiers = em.createNativeQuery(
+                            """
                             SELECT DISTINCT ?member WHERE {
                                 ?collection ?hasMember ?member .
                                 OPTIONAL {
@@ -213,8 +224,8 @@ public class SkosCollectionDao {
                                 }
                                 BIND(COALESCE(?primaryLabel, ?anyLabel) AS ?sortLabel)
                                 BIND(IF(BOUND(?primaryLabel), 1, 0) AS ?hasLocaleLabel)
-                            } ORDER BY
-                            """ + buildSortClause(pageable), URI.class)
+                            } ORDER BY DESC(?hasLocaleLabel)
+                            """ + buildSortClause(pageable, "?sortLabel", "?member"), URI.class)
                     .setParameter("collection", collection.getUri())
                     .setParameter("hasMember", TermCollection_.membersPropertyIRI.toURI())
                     .setParameter("labelProperties", MEMBER_LABEL_PROPERTIES)
@@ -233,14 +244,17 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Builds the sort clause for {@link #findMembers(TermCollection, Pageable, String)}, prioritizing members with a
-     * label in the requested language and applying the direction requested for the {@code label} property.
+     * Builds the sort clause for {@link #findAll(Vocabulary, Pageable)} and {@link #findMembers(TermCollection,
+     * Pageable, String)}, sorting by the label and then by the entity identifier in the direction requested for the
+     * {@code label} property.
+     *
+     * @param label the variable representing the label used for sorting, e.g. {@code "?sortLabel"}
+     * @param entity the variable representing the sorted entity, e.g. {@code "?member"}
      */
-    private static String buildSortClause(Pageable pageable) {
+    private static String buildSortClause(Pageable pageable, String label, String entity) {
         final Sort.Order labelOrder = pageable.getSort().getOrderFor("label");
         final String direction = labelOrder != null && labelOrder.isDescending() ? "DESC" : "ASC";
-        return "DESC(?hasLocaleLabel) " + direction + "(" + orderSentence("STR(?sortLabel)") + ") " + direction
-                + "(?member)";
+        return direction + "(" + orderSentence("STR(" + label + ")") + ") " + direction + "(" + entity + ")";
     }
 
     /**
