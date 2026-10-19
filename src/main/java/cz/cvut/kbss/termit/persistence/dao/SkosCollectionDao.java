@@ -348,11 +348,11 @@ public class SkosCollectionDao {
         try {
             return em.createNativeQuery("ASK { ?x a ?type . }", Boolean.class)
                     .setParameter("x", collectionUri)
-                    .setParameter("type", collectionUri)
+                    .setParameter("type", TermCollection_.entityClassIRI)
                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(
-                    "Failed to check existance of SKOS collection " + Utils.uriToString(collectionUri), e);
+                    "Failed to check existence of SKOS collection " + Utils.uriToString(collectionUri), e);
         }
     }
 }
