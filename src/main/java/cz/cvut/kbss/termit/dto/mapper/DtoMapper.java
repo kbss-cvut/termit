@@ -45,8 +45,10 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
@@ -122,4 +124,10 @@ public abstract class DtoMapper {
     public abstract FullTermDtoWithAncestors withAncestors(Term term, Set<TermInfoWithParents> ancestors);
 
     public abstract SkosCollectionDto skosCollectionToDto(SkosCollection<?> entity);
+
+    @AfterMapping
+    protected void transferEntityType(SkosCollection<?> entity, @MappingTarget SkosCollectionDto dto) {
+        dto.addType(EntityToOwlClassMapper.getOwlClassForEntity(entity.getClass()));
+        dto.getTypes().remove(EntityToOwlClassMapper.getOwlClassForEntity(dto.getClass()));
+    }
 }

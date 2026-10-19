@@ -1,14 +1,19 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
@@ -28,12 +33,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
@@ -72,7 +84,6 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         unorderedMembers = Generator.generateTermsWithIds(5);
         unorderedCollection = Generator.generateTermCollection(vocabulary, unorderedMembers);
-        unorderedCollection.setTypes(Set.of());
 
         orderedMembers = Generator.generateTermsWithIds(5);
         orderedCollection = Generator.generateOrderedTermCollection(vocabulary, orderedMembers);
@@ -171,10 +182,9 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     void orderedCollectionMaintainsMemberOrderWhenLoadedFromRepository() {
         loadAndAssertOrder(orderedCollection);
 
-        final List<URI> members = orderedCollection.getMembers();
-        Collections.swap(members, 1, 3);
+        Collections.swap(orderedCollection.getMembers(), 1, 3);
 
-        transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
+        sut.update(orderedCollection, vocabulary);
         em.clear();
         em.getEntityManagerFactory().getCache().evictAll();
 
@@ -205,6 +215,239 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         assertEquals(collection.getUri(), managed.getUri());
         assertEquals(collection.getLabel(), managed.getLabel());
         assertEquals(collection.getMembers(), managed.getMembers());
+    }
+
+    @Test
+    void findReturnsEmptyOptionalWhenCollectionDoesNotExist() {
+        final Optional<SkosCollection<?>> result = sut.find(Generator.generateUri(), vocabulary);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void updateThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        final NotFoundException ex = assertThrows(NotFoundException.class, () -> sut.update(collection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("not found"));
+        assertThat(ex.getMessage(), containsString(collection.getUri().toString()));
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenOrderedCollectionIsUpdatedAsUnordered() {
+        final TermCollection update = new TermCollection();
+        update.setUri(orderedCollection.getUri());
+        update.setLabel(orderedCollection.getLabel());
+        update.setVocabulary(vocabulary.getUri());
+        update.setMembers(new HashSet<>(orderedCollection.getMembers()));
+        update.setTypes(Set.of());
+
+        final ValidationException ex = assertThrows(ValidationException.class, () -> sut.update(update, vocabulary));
+        assertThat(ex.getMessage(), containsString(OrderedTermCollection.class.getSimpleName()));
+        assertThat(ex.getMessage(), containsString("as " + TermCollection.class.getSimpleName()));
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenUnorderedCollectionIsUpdatedAsOrdered() {
+        final OrderedTermCollection update = new OrderedTermCollection();
+        update.setUri(unorderedCollection.getUri());
+        update.setLabel(unorderedCollection.getLabel());
+        update.setVocabulary(vocabulary.getUri());
+        update.setMembers(new ArrayList<>(unorderedCollection.getMembers()));
+
+        final ValidationException ex = assertThrows(ValidationException.class, () -> sut.update(update, vocabulary));
+        assertThat(ex.getMessage(), containsString(TermCollection.class.getSimpleName()));
+        assertThat(ex.getMessage(), containsString("as " + OrderedTermCollection.class.getSimpleName()));
+    }
+
+    @Test
+    void persistPersistsUnorderedCollectionWithoutMembers() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, List.of());
+        collection.setMembers(Set.of());
+
+        sut.persist(collection, vocabulary);
+
+        final TermCollection managed = readOnlyTransactional(
+                () -> sut.findUnordered(collection.getUri(), vocabulary).orElseThrow());
+        assertTrue(managed.getMembers().isEmpty());
+    }
+
+    @Test
+    void persistPersistsOrderedCollectionWithoutMembers() {
+        final OrderedTermCollection collection = Generator.generateOrderedTermCollection(vocabulary, List.of());
+        collection.setMembers(null);
+
+        sut.persist(collection, vocabulary);
+
+        final OrderedTermCollection managed = readOnlyTransactional(
+                () -> sut.findOrdered(collection.getUri(), vocabulary).orElseThrow());
+        assertNull(managed.getMembers());
+    }
+
+    @Test
+    void persistThrowsNotFoundExceptionWhenMemberDoesNotExist() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        final URI missingMember = Generator.generateUri();
+        collection.addMember(missingMember);
+
+        final NotFoundException ex = assertThrows(NotFoundException.class, () -> sut.persist(collection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("not found"));
+        assertThat(ex.getMessage(), containsString(missingMember.toString()));
+    }
+
+    @Test
+    void updateThrowsNotFoundExceptionWhenMemberDoesNotExist() {
+        unorderedCollection.setMembers(new HashSet<>(unorderedCollection.getMembers()));
+        final URI missingMember = Generator.generateUri();
+        unorderedCollection.addMember(missingMember);
+
+        final NotFoundException ex =
+                assertThrows(NotFoundException.class, () -> sut.update(unorderedCollection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("not found"));
+        assertThat(ex.getMessage(), containsString(missingMember.toString()));
+    }
+
+    @Test
+    void persistThrowsValidationExceptionWhenCollectionIsMemberOfItself() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        collection.addMember(collection.getUri());
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("member of itself"));
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenUnorderedCollectionIsMemberOfItself() {
+        unorderedCollection.addMember(unorderedCollection.getUri());
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.update(unorderedCollection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("member of itself"));
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenOrderedCollectionIsMemberOfItself() {
+        orderedCollection.addMember(orderedCollection.getUri());
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.update(orderedCollection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("member of itself"));
+    }
+
+    @Test
+    void updateUpdatesLabelOfCollection() {
+        final String updatedLabel = "Updated Label";
+        orderedCollection.getLabel().set(Environment.LANGUAGE, updatedLabel);
+
+        sut.update(orderedCollection, vocabulary);
+        em.clear();
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertEquals(updatedLabel, updated.getLabel().get(Environment.LANGUAGE));
+    }
+
+    @Test
+    void updateRejectsChangeOfCollectionVocabulary() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> vocabularyDao.persist(anotherVocabulary));
+        unorderedCollection.setVocabulary(anotherVocabulary.getUri());
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.update(unorderedCollection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("vocabulary"));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("cannot be changed"));
+    }
+
+    @Test
+    void persistThrowsValidationExceptionWhenMemberIsNotTermOrCollection() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        collection.addMember(vocabulary.getUri());
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("illegal member"));
+        assertThat(ex.getMessage(), containsString(vocabulary.getUri().toString()));
+    }
+
+    @Test
+    void persistPersistsCollectionWithNestedCollectionMember() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        collection.addMember(orderedCollection.getUri());
+        collection.addMember(unorderedCollection.getUri());
+
+        sut.persist(collection, vocabulary);
+
+        final TermCollection managed = readOnlyTransactional(
+                () -> sut.findUnordered(collection.getUri(), vocabulary).orElseThrow());
+        assertEquals(collection.getMembers(), managed.getMembers());
+    }
+
+    @Test
+    void persistThrowsValidationExceptionWhenLabelInPrimaryLanguageIsMissing() {
+        final String otherLanguage = "cs";
+        assertNotEquals(Environment.LANGUAGE, otherLanguage);
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        collection.setLabel(MultilingualString.create("Kolekce", otherLanguage));
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
+        assertThat(ex.getMessage(), containsString("label"));
+        assertThat(ex.getMessage(), containsStringIgnoringCase("primary"));
+    }
+
+    @Test
+    void persistThrowsValidationExceptionWhenPrimaryLanguageIsNull() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+        collection.setPrimaryLanguage(null);
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
+        assertThat(ex.getMessage(), containsString("primaryLanguage"));
+    }
+
+    @Test
+    void findReturnsOrderedCollectionAsOrderedTermCollection() {
+        final SkosCollection<?> result =
+                sut.find(orderedCollection.getUri(), vocabulary).orElseThrow();
+
+        final OrderedTermCollection ordered = assertInstanceOf(OrderedTermCollection.class, result);
+        assertEquals(orderedCollection.getUri(), ordered.getUri());
+        assertEquals(orderedCollection.getMembers(), ordered.getMembers());
+    }
+
+    @Test
+    void findReturnsUnorderedCollectionAsTermCollection() {
+        final SkosCollection<?> result =
+                sut.find(unorderedCollection.getUri(), vocabulary).orElseThrow();
+
+        final TermCollection unordered = assertInstanceOf(TermCollection.class, result);
+        assertEquals(unorderedCollection.getUri(), unordered.getUri());
+        assertEquals(unorderedCollection.getMembers(), unordered.getMembers());
+    }
+
+    @Test
+    void findMembersOfUnorderedCollectionMapsIdentifiersToRespectiveEntities() {
+        unorderedCollection.addMember(orderedCollection.getUri());
+        transactional(() -> em.merge(unorderedCollection, vocabularyDescriptor));
+
+        final List<HasIdentifier> result = sut.findMembers(unorderedCollection, pageable, Environment.LANGUAGE)
+                .getContent();
+
+        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(orderedCollection);
+
+        final Set<HasIdentifier> expected = new HashSet<>();
+        unorderedMembers.forEach(t -> expected.add(t.toTermInfo()));
+        expected.add(expectedDto);
+
+        assertEquals(expected.size(), result.size());
+        assertEquals(expected, new HashSet<>(result));
+        final HasIdentifier nestedCollection = result.stream()
+                .filter(e -> e.getUri().equals(orderedCollection.getUri()))
+                .findFirst()
+                .orElseThrow();
+        assertInstanceOf(SkosCollectionDto.class, nestedCollection);
+        assertEquals(expectedDto, nestedCollection);
     }
 
     private void loadAndAssertOrder(OrderedTermCollection collection) {

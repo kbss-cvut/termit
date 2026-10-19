@@ -258,9 +258,10 @@ public class SkosCollectionDao {
             final List<TypeAwareEntity> entities =
                     entitiesWithTypeQuery(identifiers).getResultList();
             if (entities.size() != identifiers.size()) {
-                final String missing = entities.stream()
-                        .map(TypeAwareEntity::getUri)
-                        .filter(Predicate.not(identifiers::contains))
+                final Set<URI> foundEntities =
+                        entities.stream().map(TypeAwareEntity::getUri).collect(Collectors.toSet());
+                final String missing = identifiers.stream()
+                        .filter(Predicate.not(foundEntities::contains))
                         .map(Utils::uriToString)
                         .collect(Collectors.joining(", "));
                 throw new NotFoundException("Resource(s) not found: " + missing);

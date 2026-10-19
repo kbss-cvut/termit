@@ -599,6 +599,7 @@ public class Generator {
         final MultilingualString description = MultilingualString.create(
                 "description of collection " + label.get(Environment.LANGUAGE), Environment.LANGUAGE);
         skosCollection.setDescription(description);
+        skosCollection.setPrimaryLanguage(Environment.LANGUAGE);
     }
 
     public static TermCollection generateTermCollection(Vocabulary vocabulary, Collection<Term> members) {
