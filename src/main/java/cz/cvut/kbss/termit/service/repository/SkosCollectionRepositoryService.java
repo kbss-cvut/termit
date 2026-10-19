@@ -130,7 +130,14 @@ public class SkosCollectionRepositoryService {
         if (!existing.getVocabulary().equals(vocabulary.getUri())) {
             throw new ValidationException("Vocabulary of SKOS collection cannot be changed!");
         }
-        collection.setPrimaryLanguage(existing.getPrimaryLanguage());
+        if (!collection.getClass().equals(existing.getClass())) {
+            throw new ValidationException(
+                    "Unable to update " + existing.getClass().getSimpleName() + " SKOS collection as "
+                            + collection.getClass().getSimpleName());
+        }
+        if (collection.getPrimaryLanguage() == null) {
+            collection.setPrimaryLanguage(existing.getPrimaryLanguage());
+        }
         validate(collection);
     }
 
@@ -140,9 +147,6 @@ public class SkosCollectionRepositoryService {
         collectionDao
                 .findEntitiesWithType(collection.getMembers())
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
-        if (collection.getPrimaryLanguage() == null) {
-            throw new ValidationException("Collection has no primary language!");
-        }
     }
 
     /**
