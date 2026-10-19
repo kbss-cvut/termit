@@ -156,6 +156,57 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         assertTrue(result.isEmpty());
     }
 
+    private List<SkosCollectionDto> generateCollectionsWithLabelsAndFindAll(
+            Pageable pageable, MultilingualString... labels) {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(anotherVocabulary);
+        transactional(() -> {
+            vocabularyDao.persist(anotherVocabulary);
+            for (MultilingualString label : labels) {
+                final TermCollection collection = Generator.generateTermCollection(anotherVocabulary, List.of());
+                collection.setLabel(label);
+                em.persist(collection, descriptor);
+            }
+        });
+        return sut.findAll(anotherVocabulary, pageable).getContent();
+    }
+
+    private static List<String> labels(List<SkosCollectionDto> collections) {
+        return collections.stream()
+                .map(c -> c.getLabel().get(Environment.LANGUAGE))
+                .toList();
+    }
+
+    @Test
+    void findAllSortsCollectionsByLabelInVocabularyPrimaryLanguage() {
+        final String otherLanguage = "cs";
+        assertNotEquals(Environment.LANGUAGE, otherLanguage);
+
+        // label in the primary language sorts the opposite way than the label in the other language
+        final MultilingualString zulu = MultilingualString.create("Zulu", Environment.LANGUAGE);
+        zulu.set(otherLanguage, "Alpha");
+        final List<SkosCollectionDto> result = generateCollectionsWithLabelsAndFindAll(
+                PageRequest.of(0, 10),
+                MultilingualString.create("Delta", Environment.LANGUAGE),
+                zulu,
+                MultilingualString.create("alpha", Environment.LANGUAGE),
+                MultilingualString.create("Čep", Environment.LANGUAGE),
+                MultilingualString.create("Cep", Environment.LANGUAGE));
+
+        assertEquals(List.of("alpha", "Cep", "Čep", "Delta", "Zulu"), labels(result));
+    }
+
+    @Test
+    void findAllSortsCollectionsByLabelDescendingWhenRequested() {
+        final List<SkosCollectionDto> result = generateCollectionsWithLabelsAndFindAll(
+                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")),
+                MultilingualString.create("Beta", Environment.LANGUAGE),
+                MultilingualString.create("Gamma", Environment.LANGUAGE),
+                MultilingualString.create("Alpha", Environment.LANGUAGE));
+
+        assertEquals(List.of("Gamma", "Beta", "Alpha"), labels(result));
+    }
+
     @Test
     void findDtoReturnsDtoOfOrderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
