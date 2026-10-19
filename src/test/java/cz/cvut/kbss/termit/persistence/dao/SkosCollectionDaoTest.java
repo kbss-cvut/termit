@@ -410,4 +410,19 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
                 .setParameter("label", oldLabel, Environment.LANGUAGE)
                 .getSingleResult());
     }
+
+    @Test
+    void existsReturnsTrueWhenUnorderedCollectionExists() {
+        assertTrue(sut.exists(unorderedCollection.getUri()));
+    }
+
+    @Test
+    void existsReturnsTrueWhenOrderedCollectionExists() {
+        assertTrue(sut.exists(orderedCollection.getUri()));
+    }
+
+    @Test
+    void existsReturnsFalseWhenCollectionDoesNotExist() {
+        assertFalse(sut.exists(Generator.generateUri()));
+    }
 }
