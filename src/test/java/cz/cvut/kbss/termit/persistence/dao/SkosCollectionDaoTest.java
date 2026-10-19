@@ -11,7 +11,9 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.SkosCollection_;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +40,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SkosCollectionDaoTest extends BaseDaoTestRunner {
@@ -156,8 +159,6 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     @Test
     void findDtoReturnsDtoOfOrderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
-        // DTO represents SKOS Collection, the only expected additional type is ordered collection
-        expectedDto.setTypes(Set.of(SKOS.ORDERED_COLLECTION));
 
         final SkosCollectionDto result = sut.findDto(orderedCollection.getUri());
         assertEquals(expectedDto, result);
@@ -166,7 +167,6 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     @Test
     void findDtoReturnsDtoOfUnorderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(unorderedCollection);
-        expectedDto.setTypes(Set.of());
 
         final SkosCollectionDto result = sut.findDto(unorderedCollection.getUri());
         assertEquals(expectedDto, result);
@@ -362,5 +362,52 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         final SkosCollectionDto dto = sut.findDto(unorderedCollection.getUri());
         assertTrue(dto.getTypes().isEmpty());
+    }
+
+    @Test
+    void findReturnsNullWhenCollectionBelongsToDifferentVocabulary() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> vocabularyDao.persist(anotherVocabulary));
+
+        assertNull(sut.find(TermCollection.class, unorderedCollection.getUri(), anotherVocabulary));
+    }
+
+    @Test
+    void persistPersistsCollectionIntoVocabularyContext() {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
+
+        transactional(() -> sut.persist(collection, vocabulary));
+
+        assertTrue(em.createNativeQuery("ASK { GRAPH ?ctx { ?x a ?type ; ?hasMember ?member . } }", Boolean.class)
+                .setParameter("ctx", vocabulary.getUri())
+                .setParameter("x", collection.getUri())
+                .setParameter("type", URI.create(SKOS.COLLECTION))
+                .setParameter("hasMember", TermCollection_.membersPropertyIRI.toURI())
+                .setParameter("member", unorderedMembers.getFirst().getUri())
+                .getSingleResult());
+    }
+
+    @Test
+    void updateMergesCollectionIntoVocabularyContext() {
+        final String oldLabel = orderedCollection.getLabel().get(Environment.LANGUAGE);
+        final String updatedLabel = "Updated label";
+        orderedCollection.getLabel().set(Environment.LANGUAGE, updatedLabel);
+
+        transactional(() -> sut.update(orderedCollection, vocabulary));
+
+        // assert updated label in correct graph
+        assertTrue(em.createNativeQuery("ASK { GRAPH ?ctx { ?x ?hasLabel ?label . } }", Boolean.class)
+                .setParameter("ctx", vocabulary.getUri())
+                .setParameter("x", orderedCollection.getUri())
+                .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
+                .setParameter("label", updatedLabel, Environment.LANGUAGE)
+                .getSingleResult());
+
+        // assert old label removed
+        assertFalse(em.createNativeQuery("ASK { ?x ?hasLabel ?label . }", Boolean.class)
+                .setParameter("x", orderedCollection.getUri())
+                .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
+                .setParameter("label", oldLabel, Environment.LANGUAGE)
+                .getSingleResult());
     }
 }
