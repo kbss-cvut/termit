@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
@@ -25,6 +26,12 @@ public class SkosCollectionService {
             SkosCollectionRepositoryService repositoryService, VocabularyService vocabularyService) {
         this.repositoryService = repositoryService;
         this.vocabularyService = vocabularyService;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SkosCollectionDto> findAll(URI vocabularyUri, Pageable pageable) {
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+        return repositoryService.findAll(vocabulary, pageable);
     }
 
     @Transactional

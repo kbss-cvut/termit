@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
@@ -57,6 +58,40 @@ public class SkosCollectionController extends BaseController {
             IdentifierResolver idResolver, Configuration config, SkosCollectionService collectionService) {
         super(idResolver, config);
         this.collectionService = collectionService;
+    }
+
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets collections from the vocabulary with the specified identifier. "
+                    + "Collections are ordered by their labels in the vocabulary primary language.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Page of collections in the vocabulary."),
+        @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
+    })
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<List<SkosCollectionDto>> getAll(
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                    @RequestParam(name = QueryParams.PAGE_SIZE, required = false)
+                    Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                    @RequestParam(name = QueryParams.PAGE, required = false)
+                    Integer pageNo) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        final Page<SkosCollectionDto> result =
+                collectionService.findAll(vocabularyUri, createPageRequest(pageSize, pageNo));
+        return ResponseEntity.ok()
+                .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
+                .body(result.getContent());
     }
 
     @Operation(
@@ -311,8 +346,6 @@ public class SkosCollectionController extends BaseController {
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());
     }
-
-    // TODO add endpoint to get all collections in vocabulary (paginated)
 
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
         return resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
