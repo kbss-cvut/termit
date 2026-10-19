@@ -10,7 +10,9 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractTerm_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
@@ -35,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.orderSentence;
@@ -171,6 +174,8 @@ public class SkosCollectionDao {
                     .limit(pageable.getPageSize())
                     .toList();
             return findEntitiesWithType(identifiers);
+        } catch (TermItException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find typed members of ordered SKOS collection " + Utils.uriToString(collection.getUri()),
@@ -218,6 +223,9 @@ public class SkosCollectionDao {
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
             return findEntitiesWithType(identifiers);
+        } catch (TermItException e) {
+
+            throw e;
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find typed members of SKOS collection " + Utils.uriToString(collection.getUri()), e);
@@ -242,13 +250,21 @@ public class SkosCollectionDao {
      * @return entities in the order of {@code identifiers}
      */
     public List<TypeAwareEntity> findEntitiesWithType(Collection<URI> identifiers) {
-        if (identifiers.isEmpty()) {
+        if (identifiers == null || identifiers.isEmpty()) {
             return List.of();
         }
         try {
             @SuppressWarnings("unchecked")
             final List<TypeAwareEntity> entities =
                     entitiesWithTypeQuery(identifiers).getResultList();
+            if (entities.size() != identifiers.size()) {
+                final String missing = entities.stream()
+                        .map(TypeAwareEntity::getUri)
+                        .filter(Predicate.not(identifiers::contains))
+                        .map(Utils::uriToString)
+                        .collect(Collectors.joining(", "));
+                throw new NotFoundException("Resource(s) not found: " + missing);
+            }
             // map of entity URI to the type aware entity
             final Map<URI, TypeAwareEntity> byUri =
                     entities.stream().collect(Collectors.toMap(TypeAwareEntity::getUri, Function.identity()));
@@ -257,6 +273,8 @@ public class SkosCollectionDao {
                     .map(byUri::get)
                     .map(Objects::requireNonNull)
                     .toList();
+        } catch (TermItException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find typed entities with identifiers: "

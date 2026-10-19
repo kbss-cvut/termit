@@ -16,6 +16,8 @@ import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
@@ -37,6 +39,7 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
     @OWLObjectProperty(iri = SKOS.IN_SCHEME)
     private URI vocabulary;
 
+    @NotNull
     @JsonIgnore
     @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" + """
             SELECT DISTINCT ?lang WHERE {
