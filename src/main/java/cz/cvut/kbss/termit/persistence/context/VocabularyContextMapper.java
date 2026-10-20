@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.persistence.context;
 
+import cz.cvut.kbss.termit.exception.AmbiguousRepositoryContextException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 
 import java.net.URI;
@@ -47,7 +48,7 @@ public interface VocabularyContextMapper {
      *
      * @param vocabularyUri Vocabulary identifier
      * @return Repository context identifier
-     * @throws cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException In case multiple contexts for a
+     * @throws AmbiguousRepositoryContextException In case multiple contexts for a
      *                                                                           vocabulary are found
      */
     URI getVocabularyContext(URI vocabularyUri);
