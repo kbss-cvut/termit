@@ -98,19 +98,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *     {@link #referencesToTermExist(AbstractTerm)}
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
-                WHERE {
-                    GRAPH ?context {
-                        FILTER NOT EXISTS {
-                            ?context a ?versionOfVocabulary .
-                        }
-                        ?other ?relation ?term .
-                        ?context a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
-                        FILTER (?relation NOT IN (
-                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
-                        ))
+            WHERE {
+                GRAPH ?context {
+                    FILTER NOT EXISTS {
+                        ?context a ?versionOfVocabulary .
                     }
+                    ?other ?relation ?term .
+                    ?context a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                    FILTER (?relation NOT IN (
+                        <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+                    ))
                 }
-                """;
+            }
+            """;
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -699,7 +699,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      */
     private Set<TermInfo> getSubTerms(HasIdentifier parent) {
         return subTermsCache.getOrCompute(
-                parent.getUri(), (k) -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet()));
+                parent.getUri(), _ -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet()));
     }
 
     /**
@@ -1365,6 +1365,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         if (SKOS.NARROWER.equals(evt.getProperty()) || SKOS.NARROW_MATCH.equals(evt.getProperty())) {
             subTermsCache.evict(evt.getTermUri());
         }
+        em.getEntityManagerFactory().getCache().evict(Term.class, evt.getTermUri(), null);
+        evt.getContext()
+                .ifPresent(ctx -> em.getEntityManagerFactory().getCache().evict(Term.class, evt.getTermUri(), ctx));
         // related, relatedMatch and exactMatch inverse are loaded separately and not cached
     }
 
@@ -1503,12 +1506,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
         try {
             em.createNativeQuery("""
-                        DELETE {
-                            GRAPH ?context {
-                                ?other ?relation ?term .
-                            }
-                        }
-                        """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
+                                         DELETE {
+                                             GRAPH ?context {
+                                                 ?other ?relation ?term .
+                                             }
+                                         }
+                                         """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
                     .setParameter("term", toRemove.getUri())
                     .setParameter(
                             "versionOfVocabulary",

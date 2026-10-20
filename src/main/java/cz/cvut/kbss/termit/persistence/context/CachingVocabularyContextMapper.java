@@ -40,8 +40,8 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
  * Caching implementation of the {@link VocabularyContextMapper}.
- * <p>
- * Context map is loaded on startup and reloaded every time a vocabulary is created.
+ *
+ * <p>Context map is loaded on startup and reloaded every time a vocabulary is created.
  */
 @Component
 @Profile("!no-cache")
@@ -56,24 +56,20 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
         super(em);
     }
 
-    /**
-     * Loads vocabulary context info into memory (cache).
-     */
+    /** Loads vocabulary context info into memory (cache). */
     @EventListener(value = {VocabularyCreatedEvent.class, EvictCacheEvent.class})
     public void load() {
         this.contexts = new HashMap<>();
-        em.createNativeQuery("SELECT ?v ?g WHERE { " +
-                                     "GRAPH ?g { " +
-                                     "?v a ?type . " +
-                                     "}}")
-          .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-          .getResultStream().forEach(row -> {
-              assert row instanceof Object[];
-              assert ((Object[]) row).length == 2;
-              final Object[] bindingSet = (Object[]) row;
-              final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], k -> new ArrayList<>());
-              ctx.add((URI) bindingSet[1]);
-          });
+        em.createNativeQuery("SELECT ?v ?g WHERE { " + "GRAPH ?g { " + "?v a ?type . " + "}}")
+                .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
+                .getResultStream()
+                .forEach(row -> {
+                    assert row instanceof Object[];
+                    assert ((Object[]) row).length == 2;
+                    final Object[] bindingSet = (Object[]) row;
+                    final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], _ -> new ArrayList<>());
+                    ctx.add((URI) bindingSet[1]);
+                });
     }
 
     @Override
@@ -90,8 +86,9 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     @Override
     public URI getVocabularyContext(URI vocabularyUri) {
         if (!contexts.containsKey(vocabularyUri)) {
-            LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
-                      uriToString(vocabularyUri));
+            LOG.trace(
+                    "No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
+                    uriToString(vocabularyUri));
             return vocabularyUri;
         }
         final List<URI> vocabularyContexts = contexts.get(vocabularyUri);

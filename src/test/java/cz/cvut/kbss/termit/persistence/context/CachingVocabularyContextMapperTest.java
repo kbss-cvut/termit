@@ -57,7 +57,7 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
 
     private Map<Vocabulary, URI> generateVocabularies() {
         final Map<Vocabulary, URI> map = new HashMap<>();
-        transactional(() -> IntStream.range(0, Generator.randomInt(2, 5)).forEach(i -> {
+        transactional(() -> IntStream.range(0, Generator.randomInt(2, 5)).forEach(_ -> {
             final Vocabulary v = Generator.generateVocabularyWithId();
             final URI context = Generator.randomBoolean() ? Generator.generateUri() : v.getUri();
             final Descriptor descriptor = new EntityDescriptor(context);
