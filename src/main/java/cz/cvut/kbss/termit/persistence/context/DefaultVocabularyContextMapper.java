@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
+import cz.cvut.kbss.termit.exception.AmbiguousRepositoryContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -66,7 +66,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
                       uriToString(vocabularyUri));
             return vocabularyUri;
         } catch (NoUniqueResultException e) {
-            throw new AmbiguousVocabularyContextException(
+            throw new AmbiguousRepositoryContextException(
                     "Multiple repository contexts found for vocabulary " + uriToString(vocabularyUri));
         }
     }
@@ -82,7 +82,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (NoUniqueResultException e) {
-            throw new AmbiguousVocabularyContextException(
+            throw new AmbiguousRepositoryContextException(
                     "Multiple vocabularies found in context " + uriToString(contextUri));
         }
     }

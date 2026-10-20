@@ -339,8 +339,9 @@ class DataDaoTest extends BaseDaoTestRunner {
         final List<RdfsResource> result = sut.findAllProperties();
         assertFalse(result.isEmpty());
         final Optional<RdfsResource> firstName = result.stream()
-                .filter(r -> r.getUri().equals(URI.create(Vocabulary.s_p_has_first_name)))
-                .findAny();
+                                                       .filter(r -> r.getUri()
+                                                                     .equals(URI.create(Vocabulary.s_p_has_first_name)))
+                                                       .findAny();
         assertTrue(firstName.isPresent());
         assertEquals(2, firstName.get().getLabel().getLanguages().size());
     }
@@ -370,13 +371,37 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.insertRawData(quads));
         readOnlyTransactional(() -> assertTrue(em.createNativeQuery(
-                        "ASK WHERE { GRAPH ?ctx { ?x a ?type . ?y a ?type . ?x ?related ?y . } }", Boolean.class)
-                .setParameter("x", termOne)
-                .setParameter("y", termTwo)
-                .setParameter("ctx", context)
-                .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
-                .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
-                .getSingleResult()));
+                                                         "ASK WHERE { GRAPH ?ctx { ?x a ?type . ?y a ?type . ?x ?related ?y . } }", Boolean.class)
+                                                 .setParameter("x", termOne)
+                                                 .setParameter("y", termTwo)
+                                                 .setParameter("ctx", context)
+                                                 .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
+                                                 .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
+                                                 .getSingleResult()));
+    }
+
+    @Test
+    void removeRawDataRemovesSpecifiedQuadsFromRepository() {
+        final URI context = Generator.generateUri();
+        final URI termOne = Generator.generateUri();
+        final URI termTwo = Generator.generateUri();
+        final List<Quad> toRemove = List.of(
+                new Quad(termOne, URI.create(SKOS.RELATED.stringValue()), termTwo, context));
+
+        transactional(() -> em.createNativeQuery("INSERT DATA { GRAPH ?ctx { ?x ?y ?z . } }")
+                              .setParameter("ctx", context)
+                              .setParameter("x", termOne)
+                              .setParameter("y", URI.create(SKOS.RELATED.stringValue()))
+                              .setParameter("z", termTwo).executeUpdate());
+        transactional(() -> sut.removeRawData(toRemove));
+
+        readOnlyTransactional(() -> assertFalse(em.createNativeQuery(
+                                                         "ASK WHERE { GRAPH ?ctx { ?x ?y ?z . } }", Boolean.class)
+                                                 .setParameter("x", termOne)
+                                                 .setParameter("y", URI.create(SKOS.RELATED.stringValue()))
+                                                 .setParameter("z", termTwo)
+                                                 .setParameter("ctx", context)
+                                                 .getSingleResult()));
     }
 
     @Test
@@ -563,11 +588,11 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertEquals(0, usage.getTotalElements());
 
             boolean typeAssertionExists = em.createNativeQuery(
-                            "ASK WHERE { GRAPH ?ctx { ?x a ?type . } }", Boolean.class)
-                    .setParameter("x", URI.create(termIri.stringValue()))
-                    .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
-                    .setParameter("ctx", URI.create(context.stringValue()))
-                    .getSingleResult();
+                                                    "ASK WHERE { GRAPH ?ctx { ?x a ?type . } }", Boolean.class)
+                                            .setParameter("x", URI.create(termIri.stringValue()))
+                                            .setParameter("type", URI.create(SKOS.CONCEPT.stringValue()))
+                                            .setParameter("ctx", URI.create(context.stringValue()))
+                                            .getSingleResult();
             assertTrue(typeAssertionExists);
         });
     }
@@ -606,12 +631,12 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertEquals(0, usage.getTotalElements());
 
             final boolean relatedStatementExists = em.createNativeQuery(
-                            "ASK WHERE { GRAPH ?ctx { ?x ?related ?y . } }", Boolean.class)
-                    .setParameter("x", URI.create(termOne.stringValue()))
-                    .setParameter("y", URI.create(termTwo.stringValue()))
-                    .setParameter("related", relation)
-                    .setParameter("ctx", URI.create(context.stringValue()))
-                    .getSingleResult();
+                                                             "ASK WHERE { GRAPH ?ctx { ?x ?related ?y . } }", Boolean.class)
+                                                     .setParameter("x", URI.create(termOne.stringValue()))
+                                                     .setParameter("y", URI.create(termTwo.stringValue()))
+                                                     .setParameter("related", relation)
+                                                     .setParameter("ctx", URI.create(context.stringValue()))
+                                                     .getSingleResult();
             assertTrue(relatedStatementExists);
         });
     }
@@ -640,10 +665,10 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         readOnlyTransactional(() -> {
             final boolean usageExists = em.createNativeQuery("""
-                ASK { ?subject ?attribute ?value .}
-            """, Boolean.class)
-                    .setParameter("attribute", attribute.getUri())
-                    .getSingleResult();
+                                                                         ASK { ?subject ?attribute ?value .}
+                                                                     """, Boolean.class)
+                                          .setParameter("attribute", attribute.getUri())
+                                          .getSingleResult();
 
             assertTrue(usageExists, "Remove attribute usage must not affect snapshots");
         });

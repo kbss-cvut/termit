@@ -18,10 +18,10 @@
 package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
-import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
-import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.exception.AmbiguousRepositoryContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -97,10 +96,10 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
         }
         final List<URI> vocabularyContexts = contexts.get(vocabularyUri);
         if (vocabularyContexts.size() > 1) {
-            throw new AmbiguousVocabularyContextException(
+            throw new AmbiguousRepositoryContextException(
                     "Multiple repository contexts found for vocabulary " + uriToString(vocabularyUri));
         }
-        return vocabularyContexts.get(0);
+        return vocabularyContexts.getFirst();
     }
 
     @Override
