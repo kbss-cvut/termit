@@ -19,8 +19,8 @@ package cz.cvut.kbss.termit.exception;
 
 /**
  * Indicates a mismatch between assets and repository contexts.
- * <p>
- * This may be, for example, that versions of an asset were found in multiple contexts, and it was not possible to
+ *
+ * <p>This may be, for example, that versions of an asset were found in multiple contexts, and it was not possible to
  * determine which one to use.
  */
 public class AmbiguousRepositoryContextException extends TermItException {
