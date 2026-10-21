@@ -22,6 +22,8 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +43,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.containsStringIgnoringCase;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -448,6 +451,86 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
                 .orElseThrow();
         assertInstanceOf(SkosCollectionDto.class, nestedCollection);
         assertEquals(expectedDto, nestedCollection);
+    }
+
+    @Test
+    void updateMemberPositionThrowsForNegativePosition() {
+        final URI member = Generator.generateUri();
+        assertThrows(
+                ValidationException.class,
+                () -> sut.updateMemberPosition(orderedCollection, vocabulary, member, -1, 1));
+        assertThrows(
+                ValidationException.class,
+                () -> sut.updateMemberPosition(orderedCollection, vocabulary, member, 1, -1));
+        assertDoesNotThrow(() -> sut.updateMemberPosition(orderedCollection, vocabulary, member, 0, 0));
+    }
+
+    @Test
+    void updateMemberPositionMovesMemberToLastPositionWhenNewPositionIsOutOfBounds() {
+        final int originalPos = 3;
+        final int newPos = 999;
+        final URI member = orderedCollection.getMembers().get(originalPos);
+        final URI lastMember = orderedCollection.getMembers().getLast();
+
+        sut.updateMemberPosition(orderedCollection, vocabulary, member, originalPos, newPos);
+
+        assertEquals(member, orderedCollection.getMembers().getLast());
+        assertEquals(lastMember, orderedCollection.getMembers().get(orderedMembers.size() - 2));
+        assertEquals(
+                orderedMembers.get(originalPos + 1).getUri(),
+                orderedCollection.getMembers().get(originalPos));
+        assertEquals(orderedMembers.size(), orderedCollection.getMembers().size());
+    }
+
+    @Test
+    void updateMemberPositionMovesMemberToFirstPosition() {
+        final int originalPos = 2;
+        final int newPos = 0;
+        final URI member = orderedCollection.getMembers().get(originalPos);
+        final URI firstMember = orderedCollection.getMembers().getFirst();
+
+        sut.updateMemberPosition(orderedCollection, vocabulary, member, originalPos, newPos);
+
+        assertEquals(member, orderedCollection.getMembers().getFirst());
+        assertEquals(firstMember, orderedCollection.getMembers().get(1));
+        assertEquals(orderedMembers.size(), orderedCollection.getMembers().size());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2, 1", "1, 2", "0,1", "4, 3"})
+    void updateMemberPositionMovesMemberToAdjacentPosition(int originalPos, int newPos) {
+        assert Math.abs(originalPos - newPos) == 1;
+
+        final URI member = orderedCollection.getMembers().get(originalPos);
+        final URI curMember = orderedCollection.getMembers().get(newPos);
+        final List<URI> expectedOrder = new ArrayList<>(orderedCollection.getMembers());
+        Collections.swap(expectedOrder, originalPos, newPos);
+
+        sut.updateMemberPosition(orderedCollection, vocabulary, member, originalPos, newPos);
+
+        assertEquals(member, orderedCollection.getMembers().get(newPos));
+        assertEquals(curMember, orderedCollection.getMembers().get(originalPos));
+        assertOrder(expectedOrder, orderedCollection.getMembers());
+    }
+
+    @Test
+    void updateMemberPositionUpdatesTheCollection() {
+        final int originalPos = 1;
+        final int newPos = 4;
+        final URI member = orderedCollection.getMembers().get(originalPos);
+        final List<URI> expectedOrder = new ArrayList<>(orderedCollection.getMembers());
+        expectedOrder.remove(originalPos);
+        expectedOrder.add(newPos, member);
+
+        sut.updateMemberPosition(orderedCollection, vocabulary, member, originalPos, newPos);
+        em.clear();
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final List<URI> updatedMembers = sut.findOrdered(orderedCollection.getUri(), vocabulary)
+                .orElseThrow()
+                .getMembers();
+        assertEquals(member, updatedMembers.get(newPos));
+        assertOrder(expectedOrder, updatedMembers);
     }
 
     private void loadAndAssertOrder(OrderedTermCollection collection) {
