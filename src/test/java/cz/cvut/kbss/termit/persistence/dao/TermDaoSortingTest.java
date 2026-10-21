@@ -125,4 +125,47 @@ class TermDaoSortingTest extends BaseTermDaoTestRunner {
         assertEquals(expected.get(1).getUri(), result.get(1).getUri());
         assertEquals(expected.get(2).getUri(), result.get(2).getUri());
     }
+
+    @Test
+    void findAllFlatSortsByAlphabeticallyFirstNotation() {
+        Term t1 = createTerm("Term1", "en");
+        t1.setNotations(new java.util.HashSet<>(Arrays.asList("B-2", "A-2")));
+        Term t2 = createTerm("Term2", "en");
+        t2.setNotations(new java.util.HashSet<>(java.util.Collections.singletonList("A-3")));
+        Term t3 = createTerm("Term3", "en");
+        t3.setNotations(new java.util.HashSet<>(Arrays.asList("C-4", "D-6", "A-1")));
+        Term t4 = createTerm("Term4", "en");
+        t4.setNotations(new java.util.HashSet<>(java.util.Collections.singletonList("B-1")));
+
+        addTermsAndSave(Arrays.asList(t1, t2, t3, t4));
+
+        List<FlatTermDto> asc =
+                sut.findAllFlat(vocabulary, PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "notation")), "en");
+        assertEquals(
+                Arrays.asList("Term3", "Term1", "Term2", "Term4"),
+                asc.stream().map(t -> t.getLabel().get("en")).toList());
+
+        List<FlatTermDto> desc =
+                sut.findAllFlat(vocabulary, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "notation")), "en");
+        assertEquals(
+                Arrays.asList("Term3", "Term1", "Term4", "Term2"),
+                desc.stream().map(t -> t.getLabel().get("en")).toList());
+    }
+
+    @Test
+    void findAllFlatKeepsTermsWithoutNotationAtBottom() {
+        Term t1 = createTerm("Term1", "en");
+        t1.setNotations(new java.util.HashSet<>(java.util.Collections.singletonList("A-1")));
+        Term t2 = createTerm("Term2", "en");
+        Term t3 = createTerm("Term3", "en");
+        t3.setNotations(new java.util.HashSet<>(java.util.Collections.singletonList("B-1")));
+
+        addTermsAndSave(Arrays.asList(t1, t2, t3));
+
+        List<FlatTermDto> asc =
+                sut.findAllFlat(vocabulary, PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "notation")), "en");
+        assertEquals(
+                Arrays.asList("Term1", "Term3", "Term2"),
+                asc.stream().map(t -> t.getLabel().get("en")).toList());
+    }
 }
