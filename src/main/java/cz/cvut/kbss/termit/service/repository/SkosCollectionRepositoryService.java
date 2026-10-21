@@ -21,9 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Validator;
 
 import java.net.URI;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class SkosCollectionRepositoryService {
@@ -96,6 +100,11 @@ public class SkosCollectionRepositoryService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<SkosCollectionDto> findDto(URI collectionUri) {
+        return Optional.ofNullable(collectionDao.findDto(collectionUri));
+    }
+
+    @Transactional(readOnly = true)
     public Optional<TermCollection> findUnordered(URI collectionUri, Vocabulary vocabulary) {
         return Optional.ofNullable(collectionDao.find(TermCollection.class, collectionUri, vocabulary));
     }
@@ -146,17 +155,31 @@ public class SkosCollectionRepositoryService {
         if (collection.getPrimaryLanguage() == null) {
             collection.setPrimaryLanguage(existing.getPrimaryLanguage());
         }
-        validate(collection);
+
+        validate(collection, getAddedMembers(collection, existing));
     }
 
-    protected void validate(SkosCollection<?> collection) {
+    protected Set<URI> getAddedMembers(SkosCollection<?> updatedCollection, SkosCollection<?> existingCollection) {
+        final Set<URI> existingMembers = new HashSet<>(existingCollection.getMembers());
+        return updatedCollection.getMembers().stream()
+                .dropWhile(existingMembers::contains)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Validates the given collection and the provided members.
+     *
+     * @param collection the collection to validate
+     * @param members members that should be validated, allows to validate only a subset of collection members
+     */
+    protected void validate(SkosCollection<?> collection, Collection<URI> members) {
         BaseRepositoryService.validate(collection, validator);
         Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
-        if (collection.getMembers() != null && collection.getMembers().contains(collection.getUri())) {
+        if (members.contains(collection.getUri())) {
             throw new ValidationException("Collection must not be member of itself!");
         }
         collectionDao
-                .findEntitiesWithType(collection.getMembers())
+                .findEntitiesWithType(members)
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
     }
 
@@ -182,7 +205,7 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
-        validate(skosCollection);
+        validate(skosCollection, skosCollection.getMembers());
         verifyIdentifierUnique(skosCollection);
         collectionDao.persist(skosCollection, vocabulary);
     }

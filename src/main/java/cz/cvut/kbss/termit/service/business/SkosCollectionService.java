@@ -9,6 +9,8 @@ import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +21,7 @@ import java.net.URI;
 
 @Service
 public class SkosCollectionService {
+    private static final Logger log = LoggerFactory.getLogger(SkosCollectionService.class);
     private final SkosCollectionRepositoryService repositoryService;
     private final VocabularyService vocabularyService;
 
@@ -68,11 +71,12 @@ public class SkosCollectionService {
         return repositoryService.findMembers(collection, pageable, collection.getPrimaryLanguage());
     }
 
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")
     @Transactional(readOnly = true)
-    public SkosCollection<?> findRequired(URI collectionUri, URI vocabularyUri) {
-        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+    public SkosCollectionDto findRequiredDto(URI collectionUri, URI vocabularyUri) {
         return repositoryService
-                .find(collectionUri, vocabulary)
+                .findDto(collectionUri)
+                .filter(dto -> dto.getVocabulary().equals(vocabularyUri))
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
     }
 
@@ -90,5 +94,6 @@ public class SkosCollectionService {
                 .findOrdered(collectionUri, vocabulary)
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
         repositoryService.updateMemberPosition(collection, vocabulary, memberIri, originalPos, newPos);
+        // the update itself is fast, the transaction commit is what takes long
     }
 }
