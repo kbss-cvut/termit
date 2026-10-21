@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -162,7 +163,7 @@ public class SkosCollectionRepositoryService {
     protected Set<URI> getAddedMembers(SkosCollection<?> updatedCollection, SkosCollection<?> existingCollection) {
         final Set<URI> existingMembers = new HashSet<>(existingCollection.getMembers());
         return updatedCollection.getMembers().stream()
-                .dropWhile(existingMembers::contains)
+                .filter(Predicate.not(existingMembers::contains))
                 .collect(Collectors.toSet());
     }
 
@@ -175,7 +176,7 @@ public class SkosCollectionRepositoryService {
     protected void validate(SkosCollection<?> collection, Collection<URI> members) {
         BaseRepositoryService.validate(collection, validator);
         Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
-        if (members.contains(collection.getUri())) {
+        if (members != null && members.contains(collection.getUri())) {
             throw new ValidationException("Collection must not be member of itself!");
         }
         collectionDao
@@ -231,15 +232,19 @@ public class SkosCollectionRepositoryService {
         if (originalPos < 0 || newPos < 0) {
             throw new ValidationException("Illegal member position in SKOS collection! Position mut not be negative!");
         }
+        if (originalPos == newPos) {
+            return;
+        }
 
         final List<URI> members = collection.getMembers();
-        originalPos = Math.clamp(originalPos, 0, members.size());
-        newPos = Math.clamp(newPos, 0, members.size());
+        originalPos = Math.clamp(originalPos, 0, members.size() - 1);
+        newPos = Math.clamp(newPos, 0, members.size() - 1); // the original position is removed from the list
 
         if (!members.get(originalPos).equals(memberIri)) {
             throw new ValidationException(
                     "Illegal member position in SKOS collection! Member not found at specified position!");
         }
+
         members.remove(originalPos);
         members.add(newPos, memberIri);
         update(collection, vocabulary);
