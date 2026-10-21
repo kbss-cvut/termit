@@ -144,6 +144,12 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         return canCreate();
     }
 
+    public boolean canRead(URI vocabularyIri) {
+        Objects.requireNonNull(vocabularyIri);
+        final Vocabulary vocabulary = new Vocabulary(vocabularyIri);
+        return canRead(vocabulary);
+    }
+
     @Override
     public boolean canRead(Vocabulary asset) {
         Objects.requireNonNull(asset);

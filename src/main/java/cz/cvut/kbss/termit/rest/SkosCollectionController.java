@@ -225,7 +225,7 @@ public class SkosCollectionController extends BaseController {
     @GetMapping(
             value = "/{collectionLocalName}",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public SkosCollection<?> getById(
+    public SkosCollectionDto getById(
             @Parameter(
                             description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                             example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
@@ -248,7 +248,7 @@ public class SkosCollectionController extends BaseController {
                     String collectionNamespace) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
-        return collectionService.findRequired(collectionUri, vocabularyUri);
+        return collectionService.findRequiredDto(collectionUri, vocabularyUri);
     }
 
     @Operation(
