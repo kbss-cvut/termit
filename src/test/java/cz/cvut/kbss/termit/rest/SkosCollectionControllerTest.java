@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
@@ -44,7 +45,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -64,6 +67,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     private static final URI VOCABULARY_URI = URI.create(VOCABULARY_NAMESPACE + VOCABULARY_NAME);
     private static final String COLLECTION_NAMESPACE = VOCABULARY_URI + "/collection/";
     private static final URI COLLECTION_URI = URI.create(COLLECTION_NAMESPACE + COLLECTION_NAME);
+    private static final String MEMBER_POSITIONS_PATH = PATH + "/ordered/{collection}/members/positions";
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration config;
@@ -126,9 +130,9 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE))
                 .andExpect(status().isOk())
                 .andReturn();
-        final TermCollection result = readValue(mvcResult, TermCollection.class);
+        final SkosCollectionDto result = readValue(mvcResult, SkosCollectionDto.class);
         assertEquals(collection.getUri(), result.getUri());
-        assertEquals(collection.getMembers(), result.getMembers());
+        assertEquals(collection.getLabel(), result.getLabel());
         verify(collectionServiceMock).findRequiredDto(COLLECTION_URI, VOCABULARY_URI);
     }
 
@@ -449,5 +453,42 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .contentType(JsonLd.MEDIA_TYPE))
                 .andExpect(status().isBadRequest());
         verify(collectionServiceMock, never()).update(any());
+    }
+
+    @Test
+    void updateOrderedMemberPositionPassesResolvedIdentifiersAndPositionsToService() throws Exception {
+        final URI memberIri = Generator.generateUri();
+        mockMvc.perform(post(MEMBER_POSITIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param("memberIri", memberIri.toString())
+                        .param("originalPos", "2")
+                        .param("newPos", "5"))
+                .andExpect(status().isNoContent());
+        verify(collectionServiceMock).updateOrderedMemberPosition(COLLECTION_URI, VOCABULARY_URI, memberIri, 2, 5);
+    }
+
+    @Test
+    void updateOrderedMemberPositionReturnsBadRequestWhenPositionIsMissing() throws Exception {
+        mockMvc.perform(post(MEMBER_POSITIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param("memberIri", Generator.generateUri().toString())
+                        .param("originalPos", "0"))
+                .andExpect(status().isBadRequest());
+        verify(collectionServiceMock, never()).updateOrderedMemberPosition(any(), any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void updateOrderedMemberPositionReturnsConflictWhenServiceThrowsValidationException() throws Exception {
+        final URI memberIri = Generator.generateUri();
+        doThrow(new ValidationException("Invalid position"))
+                .when(collectionServiceMock)
+                .updateOrderedMemberPosition(COLLECTION_URI, VOCABULARY_URI, memberIri, -1, 1);
+
+        mockMvc.perform(post(MEMBER_POSITIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param("memberIri", memberIri.toString())
+                        .param("originalPos", "-1")
+                        .param("newPos", "1"))
+                .andExpect(status().isConflict());
     }
 }
