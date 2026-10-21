@@ -88,6 +88,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
     private static final URI TERM_FROM_VOCABULARY = URI.create(SKOS.IN_SCHEME);
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
+    private static final URI NOTATION_PROP = URI.create(SKOS.NOTATION);
 
     /**
      * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
@@ -418,10 +419,24 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     private TypedQuery<FlatTermDto> findAllFlatQuery(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
-        String targetLang = sortLang != null ? sortLang : vocabulary.getPrimaryLanguage();
-        String sortClause = buildSortClause(pageSpec);
+        return createFindAllInVocabularyQuery(vocabulary, pageSpec, sortLang, FlatTermDto.class);
+    }
 
-        return em.createNativeQuery(
+    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        return createFindAllInVocabularyQuery(vocabulary, pageSpec, sortLang, URI.class)
+                .getResultList();
+    }
+
+    private <T> TypedQuery<T> createFindAllInVocabularyQuery(
+            Vocabulary vocabulary, Pageable pageSpec, String sortLang, Class<T> resultType) {
+        final String targetLang = sortLang != null ? sortLang : vocabulary.getPrimaryLanguage();
+        final String sortClause = buildSortClause(pageSpec);
+
+        final boolean sortByNotation = pageSpec.getSort().getOrderFor("notation") != null;
+        final String notationPattern = sortByNotation ? "OPTIONAL { ?term ?hasNotation ?rawNotation . } " : "";
+        final String groupBy = sortByNotation ? "GROUP BY ?term " : "";
+
+        final TypedQuery<T> query = em.createNativeQuery(
                         "SELECT DISTINCT ?term WHERE {" + "GRAPH ?context { "
                                 + "?term a ?type ;"
                                 + "?inVocabulary ?vocabulary ."
@@ -431,11 +446,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                 + "  FILTER(lang(?primaryLabel) = ?targetLang) "
                                 + "} "
                                 + "OPTIONAL { ?term ?hasLabel ?anyLabel . } "
+                                + notationPattern
                                 + "BIND(COALESCE(?primaryLabel, ?anyLabel) AS ?sortLabel) "
                                 + "BIND(IF(BOUND(?primaryLabel), 1, 0) AS ?hasLocaleLabel) "
-                                + " } ORDER BY "
+                                + " } " + groupBy + "ORDER BY "
                                 + sortClause,
-                        FlatTermDto.class)
+                        resultType)
                 .setParameter("context", context(vocabulary))
                 .setParameter("type", typeUri)
                 .setParameter("vocabulary", vocabulary.getUri())
@@ -444,6 +460,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                 .setParameter("targetLang", targetLang)
                 .setMaxResults(pageSpec.getPageSize())
                 .setFirstResult((int) pageSpec.getOffset());
+        if (sortByNotation) {
+            query.setParameter("hasNotation", NOTATION_PROP);
+        }
+        return query;
     }
 
     private List<TermDto> executeAndBuildHierarchy(TypedQuery<FlatTermDto> query) {
@@ -587,34 +607,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
-        String targetLang = sortLang != null ? sortLang : vocabulary.getPrimaryLanguage();
-        String sortClause = buildSortClause(pageSpec);
-
-        return em.createNativeQuery(
-                        "SELECT DISTINCT ?term WHERE {" + "GRAPH ?context { "
-                                + "?term a ?type ."
-                                + "}" + "?term ?inVocabulary ?vocabulary ."
-                                + "OPTIONAL { "
-                                + "  ?term ?hasLabel ?primaryLabel . "
-                                + "  FILTER(lang(?primaryLabel) = ?targetLang) "
-                                + "} " + "OPTIONAL { ?term ?hasLabel ?anyLabel . } "
-                                + "BIND(COALESCE(?primaryLabel, ?anyLabel) AS ?sortLabel) "
-                                + "BIND(IF(BOUND(?primaryLabel), 1, 0) AS ?hasLocaleLabel) "
-                                + " } ORDER BY "
-                                + sortClause,
-                        URI.class)
-                .setParameter("type", typeUri)
-                .setParameter("context", context(vocabulary))
-                .setParameter("vocabulary", vocabulary.getUri())
-                .setParameter("hasLabel", LABEL_PROP)
-                .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                .setParameter("targetLang", targetLang)
-                .setMaxResults(pageSpec.getPageSize())
-                .setFirstResult((int) pageSpec.getOffset())
-                .getResultList();
     }
 
     /**
@@ -1543,9 +1535,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      */
     private String buildSortClause(Pageable pageSpec) {
         if (pageSpec.getSort().isSorted()) {
-            Sort.Order labelOrder = pageSpec.getSort().getOrderFor("label");
+            final Sort.Order notationOrder = pageSpec.getSort().getOrderFor("notation");
+            if (notationOrder != null) {
+                final String direction = notationOrder.isAscending() ? "ASC" : "DESC";
+                final String agg = notationOrder.isAscending() ? "MIN" : "MAX";
+                return "DESC(MAX(IF(BOUND(?rawNotation), 1, 0))) " + direction + "(" + agg
+                        + "(STR(?rawNotation))) ASC(?term)";
+            }
+
+            final Sort.Order labelOrder = pageSpec.getSort().getOrderFor("label");
             if (labelOrder != null) {
-                String direction = labelOrder.isAscending() ? "ASC" : "DESC";
+                final String direction = labelOrder.isAscending() ? "ASC" : "DESC";
                 return "DESC(?hasLocaleLabel) " + direction + "(" + orderSentence("STR(?sortLabel)") + ") " + direction
                         + "(?term)";
             }
