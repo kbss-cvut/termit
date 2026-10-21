@@ -51,4 +51,12 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
                 NotFoundException.class,
                 () -> sut.findMembersFromOrdered(Generator.generateUri(), vocabulary.getUri(), Pageable.ofSize(10)));
     }
+
+    @Test
+    void updateOrderedMemberPositionThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
+        assertThrows(
+                NotFoundException.class,
+                () -> sut.updateOrderedMemberPosition(
+                        Generator.generateUri(), vocabulary.getUri(), Generator.generateUri(), 0, 1));
+    }
 }

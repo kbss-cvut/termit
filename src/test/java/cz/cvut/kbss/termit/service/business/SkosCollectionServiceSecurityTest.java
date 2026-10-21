@@ -201,4 +201,28 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
         orderedCollection.getMembers().remove(2);
         assertDoesNotThrow(() -> sut.update(orderedCollection));
     }
+
+    @Test
+    void updateOrderedMemberPositionThrowsForUserWithoutWriteAccess() {
+        grantAccess(AccessLevel.READ);
+        assertThrows(
+                AccessDeniedException.class,
+                () -> sut.updateOrderedMemberPosition(
+                        orderedCollection.getUri(),
+                        vocabulary.getUri(),
+                        orderedCollection.getMembers().getFirst(),
+                        0,
+                        1));
+    }
+
+    @Test
+    void updateOrderedMemberPositionDoesNotThrowForUserWithWriteAccess() {
+        grantAccess(AccessLevel.WRITE);
+        assertDoesNotThrow(() -> sut.updateOrderedMemberPosition(
+                orderedCollection.getUri(),
+                vocabulary.getUri(),
+                orderedCollection.getMembers().getFirst(),
+                0,
+                1));
+    }
 }
