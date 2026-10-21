@@ -34,8 +34,8 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findRequiredThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
-        assertThrows(NotFoundException.class, () -> sut.findRequired(Generator.generateUri(), vocabulary.getUri()));
+    void findRequiredDtoThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
+        assertThrows(NotFoundException.class, () -> sut.findRequiredDto(Generator.generateUri(), vocabulary.getUri()));
     }
 
     @Test
