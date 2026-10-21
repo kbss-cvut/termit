@@ -128,15 +128,16 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findRequiredSucceedsForUserWithVocabularyReadAccess() {
+    void findRequiredDtoSucceedsForUserWithVocabularyReadAccess() {
         grantAccess(AccessLevel.READ);
-        assertDoesNotThrow(() -> sut.findRequired(unorderedCollection.getUri(), vocabulary.getUri()));
+        assertDoesNotThrow(() -> sut.findRequiredDto(unorderedCollection.getUri(), vocabulary.getUri()));
     }
 
     @Test
-    void findRequiredThrowsAccessDeniedForUserWithoutVocabularyReadAccess() {
+    void findRequiredDtoThrowsAccessDeniedForUserWithoutVocabularyReadAccess() {
         assertThrows(
-                AccessDeniedException.class, () -> sut.findRequired(unorderedCollection.getUri(), vocabulary.getUri()));
+                AccessDeniedException.class,
+                () -> sut.findRequiredDto(unorderedCollection.getUri(), vocabulary.getUri()));
     }
 
     @Test

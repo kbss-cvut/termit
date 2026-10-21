@@ -89,7 +89,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
 
         collection = generateCollection();
 
-        lenient().doReturn(collection).when(collectionServiceMock).findRequired(COLLECTION_URI, VOCABULARY_URI);
+        lenient().doReturn(collection).when(collectionServiceMock).findRequiredDto(COLLECTION_URI, VOCABULARY_URI);
 
         lenient().when(config.getNamespace().getVocabulary()).thenReturn(VOCABULARY_NAMESPACE);
         lenient()
@@ -127,7 +127,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         final TermCollection result = readValue(mvcResult, TermCollection.class);
         assertEquals(collection.getUri(), result.getUri());
         assertEquals(collection.getMembers(), result.getMembers());
-        verify(collectionServiceMock).findRequired(COLLECTION_URI, VOCABULARY_URI);
+        verify(collectionServiceMock).findRequiredDto(COLLECTION_URI, VOCABULARY_URI);
     }
 
     @Test
@@ -136,7 +136,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(QueryParams.NAMESPACE, VOCABULARY_NAMESPACE)
                         .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE))
                 .andExpect(status().isOk());
-        verify(collectionServiceMock).findRequired(COLLECTION_URI, VOCABULARY_URI);
+        verify(collectionServiceMock).findRequiredDto(COLLECTION_URI, VOCABULARY_URI);
         verify(idResolverMock).resolveIdentifier(VOCABULARY_NAMESPACE, VOCABULARY_NAME);
     }
 
@@ -144,12 +144,13 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     void getByIdReturnsBadRequestWhenCollectionNamespaceIsMissing() throws Exception {
         mockMvc.perform(get(PATH + "/{collectionName}", VOCABULARY_NAME, COLLECTION_NAME))
                 .andExpect(status().isBadRequest());
-        verify(collectionServiceMock, never()).findRequired(any(), any());
+        verify(collectionServiceMock, never()).findRequiredDto(any(), any());
     }
 
     @Test
     void getByIdReturnsNotFoundWhenServiceThrowsNotFoundException() throws Exception {
-        when(collectionServiceMock.findRequired(COLLECTION_URI, VOCABULARY_URI)).thenThrow(NotFoundException.class);
+        when(collectionServiceMock.findRequiredDto(COLLECTION_URI, VOCABULARY_URI))
+                .thenThrow(NotFoundException.class);
 
         mockMvc.perform(get(PATH + "/{collectionName}", VOCABULARY_NAME, COLLECTION_NAME)
                         .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE))
