@@ -129,6 +129,7 @@ public class SkosCollectionRepositoryService {
         throw new ValidationException("Illegal entity in SKOS collection: " + Utils.uriToString(entity.getUri()));
     }
 
+    @Transactional(readOnly = true)
     protected void preUpdate(SkosCollection<?> collection, Vocabulary vocabulary) {
         final SkosCollection<?> existing = find(collection.getUri(), vocabulary)
                 .orElseThrow(() ->
@@ -186,14 +187,38 @@ public class SkosCollectionRepositoryService {
         collectionDao.persist(skosCollection, vocabulary);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean exists(URI collectionUri) {
         return collectionDao.exists(collectionUri);
     }
 
+    @Transactional(readOnly = true)
     protected void verifyIdentifierUnique(SkosCollection<?> instance) {
         if (exists(instance.getUri())) {
             throw ResourceExistsException.create(instance.getClass().getSimpleName(), instance.getUri());
         }
+    }
+
+    @Transactional
+    public void updateMemberPosition(
+            OrderedTermCollection collection, Vocabulary vocabulary, URI memberIri, int originalPos, int newPos) {
+        Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
+        Objects.requireNonNull(memberIri, "Member identifier must not be null!");
+        Objects.requireNonNull(collection.getMembers(), "Collection members must not be null!");
+        if (originalPos < 0 || newPos < 0) {
+            throw new ValidationException("Illegal member position in SKOS collection! Position mut not be negative!");
+        }
+
+        final List<URI> members = collection.getMembers();
+        originalPos = Math.clamp(originalPos, 0, members.size());
+        newPos = Math.clamp(newPos, 0, members.size());
+
+        if (!members.get(originalPos).equals(memberIri)) {
+            throw new ValidationException(
+                    "Illegal member position in SKOS collection! Member not found at specified position!");
+        }
+        members.remove(originalPos);
+        members.add(newPos, memberIri);
+        update(collection, vocabulary);
     }
 }

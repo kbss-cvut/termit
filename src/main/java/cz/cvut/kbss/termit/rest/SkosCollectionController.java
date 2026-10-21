@@ -347,6 +347,53 @@ public class SkosCollectionController extends BaseController {
                 .body(result.getContent());
     }
 
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Updates the position of the member in the ordered collection")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "The member position was updated"),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(
+                responseCode = "409",
+                description = "When the specified positions or the member identifier are invalid.")
+    })
+    @PostMapping(
+            value = "/ordered/{collectionLocalName}/members/positions",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateOrderedMemberPosition(
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_LOCAL_NAME_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String collectionLocalName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_NAMESPACE_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
+                    String collectionNamespace,
+            @Parameter(description = "The identifier of the member in the collection") @RequestParam(name = "memberIri")
+                    URI memberIri,
+            @Parameter(description = "The original position of the member in the collection")
+                    @RequestParam(name = "originalPos")
+                    int originalPos,
+            @Parameter(description = "The new position of the member in the collection") @RequestParam(name = "newPos")
+                    int newPos) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        collectionService.updateOrderedMemberPosition(collectionUri, vocabularyUri, memberIri, originalPos, newPos);
+    }
+
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
         return resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
     }

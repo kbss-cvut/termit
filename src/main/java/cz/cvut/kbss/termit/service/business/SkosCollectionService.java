@@ -80,4 +80,15 @@ public class SkosCollectionService {
         return new NotFoundException("Collection " + Utils.uriToString(collectionUri) + " not found in vocabulary "
                 + Utils.uriToString(vocabularyUri));
     }
+
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    @Transactional
+    public void updateOrderedMemberPosition(
+            URI collectionUri, URI vocabularyUri, URI memberIri, int originalPos, int newPos) {
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+        final OrderedTermCollection collection = repositoryService
+                .findOrdered(collectionUri, vocabulary)
+                .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
+        repositoryService.updateMemberPosition(collection, vocabulary, memberIri, originalPos, newPos);
+    }
 }
