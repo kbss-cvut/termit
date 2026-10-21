@@ -9,6 +9,8 @@ import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,8 @@ import java.util.stream.Stream;
 
 @Component
 public class SymmetricCustomAttributeSynchronizer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SymmetricCustomAttributeSynchronizer.class);
 
     private final DataDao dataDao;
 
@@ -54,6 +58,10 @@ public class SymmetricCustomAttributeSynchronizer {
         updates.stream()
                 .filter(record -> symmetricCustomAtts.contains(record.getChangedAttribute()))
                 .forEach(record -> {
+                    LOG.debug(
+                            "Synchronizing values of symmetric custom attribute {} on update of {}.",
+                            Utils.uriToString(record.getChangedAttribute()),
+                            Utils.uriToString(record.getChangedEntity()));
                     assert Utils.emptyIfNull(record.getOriginalValue()).stream().allMatch(o -> o instanceof URI);
                     assert Utils.emptyIfNull(record.getNewValue()).stream().allMatch(o -> o instanceof URI);
                     final Set<URI> original = Utils.emptyIfNull(record.getOriginalValue()).stream()
@@ -82,6 +90,10 @@ public class SymmetricCustomAttributeSynchronizer {
                                     record.getChangedAttribute().toString(),
                                     q.context())))
                             .toList());
+                    LOG.trace(
+                            "Added inverse assertions for: {}, removed inverse assertions for: {}",
+                            addedValues,
+                            removedValues);
                 });
     }
 
