@@ -361,6 +361,28 @@ public class SkosCollectionDao {
         }
     }
 
+    /**
+     * Removes the specified collection from the context of the specified vocabulary.
+     *
+     * @param skosCollection the collection to remove
+     * @param vocabulary the vocabulary of the collection
+     */
+    public void remove(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        Objects.requireNonNull(skosCollection.getUri(), "Collection identifier must not be null!");
+        try {
+            em.remove(skosCollection);
+            em.getEntityManagerFactory()
+                    .getCache()
+                    .evict(SkosCollectionDto.class, skosCollection.getUri(), vocabulary.getUri());
+            em.getEntityManagerFactory().getCache().evict(SkosCollectionDto.class, skosCollection.getUri(), null);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to remove SKOS collection " + Utils.uriToString(skosCollection.getUri())
+                            + " from vocabulary " + Utils.uriToString(vocabulary.getUri()),
+                    e);
+        }
+    }
+
     public boolean exists(URI collectionUri) {
         Objects.requireNonNull(collectionUri);
         try {

@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection_;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection_;
@@ -498,5 +499,49 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         SkosCollectionDto updated = readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri()));
         assertEquals(updatedLabel, updated.getLabel().get(Environment.LANGUAGE));
+    }
+
+    @Test
+    void removeRemovesUnorderedCollectionFromVocabularyContext() {
+        transactional(() -> {
+            SkosCollection<?> collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary);
+            sut.remove(collection, vocabulary);
+        });
+
+        assertFalse(sut.exists(unorderedCollection.getUri()));
+        assertFalse(em.createNativeQuery("ASK { GRAPH ?ctx { ?x ?y ?z . } }", Boolean.class)
+                .setParameter("ctx", vocabulary.getUri())
+                .setParameter("x", unorderedCollection.getUri())
+                .getSingleResult());
+    }
+
+    @Test
+    void removeRemovesOrderedCollectionFromVocabularyContext() {
+        transactional(() -> {
+            SkosCollection<?> collection =
+                    sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
+            sut.remove(collection, vocabulary);
+        });
+
+        assertFalse(sut.exists(orderedCollection.getUri()));
+        assertFalse(em.createNativeQuery("ASK { GRAPH ?ctx { ?x ?y ?z . } }", Boolean.class)
+                .setParameter("ctx", vocabulary.getUri())
+                .setParameter("x", orderedCollection.getUri())
+                .getSingleResult());
+    }
+
+    @Test
+    void removeEvictsCollectionDtoFromCache() {
+        // load the DTO into the cache
+        final SkosCollectionDto cached = readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri()));
+        assertEquals(orderedCollection.getUri(), cached.getUri());
+
+        transactional(() -> {
+            SkosCollection<?> collection =
+                    sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
+            sut.remove(collection, vocabulary);
+        });
+
+        assertNull(readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri())));
     }
 }

@@ -45,6 +45,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -531,6 +532,30 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
                 .getMembers();
         assertEquals(member, updatedMembers.get(newPos));
         assertOrder(expectedOrder, updatedMembers);
+    }
+
+    @Test
+    void removeRemovesUnorderedCollection() {
+        transactional(() -> {
+            SkosCollection<?> collection =
+                    sut.find(unorderedCollection.getUri(), vocabulary).orElseThrow();
+            sut.remove(collection, vocabulary);
+        });
+
+        assertTrue(sut.find(unorderedCollection.getUri(), vocabulary).isEmpty());
+        assertFalse(sut.exists(unorderedCollection.getUri()));
+    }
+
+    @Test
+    void removeRemovesOrderedCollection() {
+        transactional(() -> {
+            SkosCollection<?> collection =
+                    sut.find(orderedCollection.getUri(), vocabulary).orElseThrow();
+            sut.remove(collection, vocabulary);
+        });
+
+        assertTrue(sut.find(orderedCollection.getUri(), vocabulary).isEmpty());
+        assertFalse(sut.exists(orderedCollection.getUri()));
     }
 
     private void loadAndAssertOrder(OrderedTermCollection collection) {
