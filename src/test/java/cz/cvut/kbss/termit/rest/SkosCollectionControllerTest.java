@@ -298,6 +298,12 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         assertEquals(expected.getMembers(), actual.getMembers());
     }
 
+    private static void assertCollectionEquals(SkosCollectionDto expected, SkosCollectionDto actual) {
+        assertEquals(expected.getUri(), actual.getUri());
+        assertEquals(expected.getLabel(), actual.getLabel());
+        assertEquals(expected.getVocabulary(), actual.getVocabulary());
+    }
+
     @Test
     void createPassesUnorderedCollectionToService() throws Exception {
         mockMvc.perform(post(PATH, VOCABULARY_NAME)
@@ -390,11 +396,10 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .contentType(JsonLd.MEDIA_TYPE))
                 .andExpect(status().isNoContent());
 
-        final ArgumentCaptor<SkosCollection<?>> captor = ArgumentCaptor.captor();
+        final ArgumentCaptor<SkosCollectionDto> captor = ArgumentCaptor.captor();
         verify(collectionServiceMock).update(captor.capture());
 
-        final TermCollection result = assertInstanceOf(TermCollection.class, captor.getValue());
-        assertCollectionEquals(collection, result);
+        assertCollectionEquals(Environment.getDtoMapper().skosCollectionToDto(collection), captor.getValue());
     }
 
     @Test
@@ -407,11 +412,10 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .contentType(JsonLd.MEDIA_TYPE))
                 .andExpect(status().isNoContent());
 
-        final ArgumentCaptor<SkosCollection<?>> captor = ArgumentCaptor.captor();
+        final ArgumentCaptor<SkosCollectionDto> captor = ArgumentCaptor.captor();
         verify(collectionServiceMock).update(captor.capture());
 
-        final OrderedTermCollection result = assertInstanceOf(OrderedTermCollection.class, captor.getValue());
-        assertCollectionEquals(orderedCollection, result);
+        assertCollectionEquals(Environment.getDtoMapper().skosCollectionToDto(orderedCollection), captor.getValue());
     }
 
     @Test

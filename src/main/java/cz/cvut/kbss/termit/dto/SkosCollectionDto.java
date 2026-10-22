@@ -96,4 +96,8 @@ public class SkosCollectionDto implements HasIdentifier, HasTypes {
     public int hashCode() {
         return Objects.hash(uri, label, description, vocabulary, types);
     }
+
+    public boolean isOrdered() {
+        return hasType(SKOS.ORDERED_COLLECTION);
+    }
 }

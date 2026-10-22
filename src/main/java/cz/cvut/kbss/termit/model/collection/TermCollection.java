@@ -34,7 +34,7 @@ public class TermCollection extends SkosCollection<Set<URI>> {
     @PrePersist
     @PreUpdate
     private void validateSave() {
-        if (getTypes() != null && getTypes().contains(SKOS.ORDERED_COLLECTION)) {
+        if (getTypes() != null && isOrdered()) {
             throw new ValidationException("Ordered collection must not be modified as unordered one!");
         }
     }

@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
@@ -24,11 +25,15 @@ public class SkosCollectionService {
     private static final Logger log = LoggerFactory.getLogger(SkosCollectionService.class);
     private final SkosCollectionRepositoryService repositoryService;
     private final VocabularyService vocabularyService;
+    private final DtoMapper dtoMapper;
 
     public SkosCollectionService(
-            SkosCollectionRepositoryService repositoryService, VocabularyService vocabularyService) {
+            SkosCollectionRepositoryService repositoryService,
+            VocabularyService vocabularyService,
+            DtoMapper dtoMapper) {
         this.repositoryService = repositoryService;
         this.vocabularyService = vocabularyService;
+        this.dtoMapper = dtoMapper;
     }
 
     @Transactional(readOnly = true)
@@ -39,9 +44,14 @@ public class SkosCollectionService {
 
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#skosCollection.vocabulary)")
-    public void update(SkosCollection<?> skosCollection) {
+    public void update(SkosCollectionDto skosCollection) {
         final Vocabulary vocabulary = vocabularyService.getReference(skosCollection.getVocabulary());
-        repositoryService.update(skosCollection, vocabulary);
+        final SkosCollection<?> existing = repositoryService
+                .find(skosCollection.getUri(), vocabulary)
+                .filter(c -> c.isOrdered() == skosCollection.isOrdered())
+                .orElseThrow(() -> notFound(skosCollection.getUri(), vocabulary.getUri()));
+        dtoMapper.updateCollectionFromDto(skosCollection, existing);
+        repositoryService.update(existing, vocabulary);
     }
 
     @Transactional

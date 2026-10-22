@@ -110,4 +110,8 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
     public void setPrimaryLanguage(String primaryLanguage) {
         this.primaryLanguage = primaryLanguage;
     }
+
+    public boolean isOrdered() {
+        return hasType(SKOS.ORDERED_COLLECTION);
+    }
 }

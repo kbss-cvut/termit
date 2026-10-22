@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -58,6 +59,8 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
 
     private OrderedTermCollection orderedCollection;
 
+    private SkosCollectionDto collectionDto;
+
     // restricted user
     private User author;
 
@@ -93,6 +96,7 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
                 .flatMap(Collection::stream)
                 .forEach(e -> em.persist(e, vocabularyDescriptor)));
 
+        collectionDto = Environment.getDtoMapper().skosCollectionToDto(unorderedCollection);
         Environment.setCurrentUser(author);
     }
 
@@ -191,15 +195,14 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
     @Test
     void updateThrowsForUserWithoutWriteAccess() {
         grantAccess(AccessLevel.READ);
-        orderedCollection.getMembers().remove(2);
-        assertThrows(AccessDeniedException.class, () -> sut.update(orderedCollection));
+        assertThrows(AccessDeniedException.class, () -> sut.update(collectionDto));
     }
 
     @Test
     void updateDoesNotThrowForUserWithWriteAccess() {
         grantAccess(AccessLevel.WRITE);
-        orderedCollection.getMembers().remove(2);
-        assertDoesNotThrow(() -> sut.update(orderedCollection));
+        collectionDto.getLabel().set(Environment.LANGUAGE, "new label");
+        assertDoesNotThrow(() -> sut.update(collectionDto));
     }
 
     @Test
