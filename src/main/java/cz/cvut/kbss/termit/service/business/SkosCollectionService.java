@@ -90,6 +90,16 @@ public class SkosCollectionService {
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
     }
 
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    @Transactional
+    public void remove(URI collectionUri, URI vocabularyUri) {
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+        final SkosCollection<?> collection = repositoryService
+                .find(collectionUri, vocabulary)
+                .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
+        repositoryService.remove(collection, vocabulary);
+    }
+
     private NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
         return new NotFoundException("Collection " + Utils.uriToString(collectionUri) + " not found in vocabulary "
                 + Utils.uriToString(vocabularyUri));

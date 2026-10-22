@@ -211,6 +211,11 @@ public class SkosCollectionRepositoryService {
         collectionDao.persist(skosCollection, vocabulary);
     }
 
+    @Transactional
+    public void remove(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        collectionDao.remove(skosCollection, vocabulary);
+    }
+
     @Transactional(readOnly = true)
     public boolean exists(URI collectionUri) {
         return collectionDao.exists(collectionUri);

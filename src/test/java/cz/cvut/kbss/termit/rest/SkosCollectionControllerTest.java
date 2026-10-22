@@ -52,6 +52,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -406,7 +407,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     void updateOrderedPassesOrderedCollectionToService() throws Exception {
         final OrderedTermCollection orderedCollection = generateOrderedCollection();
 
-        mockMvc.perform(put(PATH + "/ordered/{collection}", VOCABULARY_NAME, COLLECTION_NAME)
+        mockMvc.perform(put(PATH + "/{collection}", VOCABULARY_NAME, COLLECTION_NAME)
                         .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
                         .content(toJsonLd(orderedCollection))
                         .contentType(JsonLd.MEDIA_TYPE))
@@ -494,5 +495,29 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param("originalPos", "-1")
                         .param("newPos", "1"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void removePassesResolvedIdentifiersToService() throws Exception {
+        mockMvc.perform(delete(PATH + "/{collection}", VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE))
+                .andExpect(status().isNoContent());
+        verify(collectionServiceMock).remove(COLLECTION_URI, VOCABULARY_URI);
+    }
+
+    @Test
+    void removeReturnsBadRequestWhenCollectionNamespaceIsMissing() throws Exception {
+        mockMvc.perform(delete(PATH + "/{collection}", VOCABULARY_NAME, COLLECTION_NAME))
+                .andExpect(status().isBadRequest());
+        verify(collectionServiceMock, never()).remove(any(), any());
+    }
+
+    @Test
+    void removeReturnsNotFoundWhenServiceThrowsNotFoundException() throws Exception {
+        doThrow(NotFoundException.class).when(collectionServiceMock).remove(COLLECTION_URI, VOCABULARY_URI);
+
+        mockMvc.perform(delete(PATH + "/{collection}", VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE))
+                .andExpect(status().isNotFound());
     }
 }

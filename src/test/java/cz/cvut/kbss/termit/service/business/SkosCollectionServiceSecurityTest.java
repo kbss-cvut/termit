@@ -228,4 +228,16 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
                 0,
                 1));
     }
+
+    @Test
+    void removeThrowsForUserWithoutWriteAccess() {
+        grantAccess(AccessLevel.READ);
+        assertThrows(AccessDeniedException.class, () -> sut.remove(unorderedCollection.getUri(), vocabulary.getUri()));
+    }
+
+    @Test
+    void removeDoesNotThrowForUserWithWriteAccess() {
+        grantAccess(AccessLevel.WRITE);
+        assertDoesNotThrow(() -> sut.remove(unorderedCollection.getUri(), vocabulary.getUri()));
+    }
 }
