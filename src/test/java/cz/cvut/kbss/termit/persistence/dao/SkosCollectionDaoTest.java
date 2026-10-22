@@ -476,4 +476,27 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     void existsReturnsFalseWhenCollectionDoesNotExist() {
         assertFalse(sut.exists(Generator.generateUri()));
     }
+
+    @Test
+    void updateUpdatesCollectionWithNewLabel() {
+        final String updatedLabel = "Updated label";
+        orderedCollection.getLabel().set(Environment.LANGUAGE, updatedLabel);
+
+        transactional(() -> sut.update(orderedCollection, vocabulary));
+
+        OrderedTermCollection updated = readOnlyTransactional(
+                () -> sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary));
+        assertEquals(updatedLabel, updated.getLabel().get(Environment.LANGUAGE));
+    }
+
+    @Test
+    void updateUpdatesCollectionDtoWithNewLabel() {
+        final String updatedLabel = "Updated label";
+        orderedCollection.getLabel().set(Environment.LANGUAGE, updatedLabel);
+
+        transactional(() -> sut.update(orderedCollection, vocabulary));
+
+        SkosCollectionDto updated = readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri()));
+        assertEquals(updatedLabel, updated.getLabel().get(Environment.LANGUAGE));
+    }
 }

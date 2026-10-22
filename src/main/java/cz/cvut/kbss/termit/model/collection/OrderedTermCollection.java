@@ -29,4 +29,9 @@ public class OrderedTermCollection extends SkosCollection<List<URI>> {
     public void setMembers(List<URI> members) {
         this.members = members;
     }
+
+    @Override
+    public boolean isOrdered() {
+        return true;
+    }
 }

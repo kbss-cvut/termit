@@ -37,7 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
@@ -115,6 +117,9 @@ public class SkosCollectionController extends BaseController {
                     @RequestParam(name = QueryParams.NAMESPACE, required = false)
                     Optional<String> namespace,
             @Parameter(description = "The new collection.") @RequestBody TermCollection collection) {
+        if (collection.getMembers() == null) {
+            collection.setMembers(Collections.emptySet());
+        }
         return persistCollection(localName, namespace, collection);
     }
 
@@ -139,13 +144,16 @@ public class SkosCollectionController extends BaseController {
                     @RequestParam(name = QueryParams.NAMESPACE, required = false)
                     Optional<String> namespace,
             @Parameter(description = "The new collection.") @RequestBody OrderedTermCollection collection) {
+        if (collection.getMembers() == null) {
+            collection.setMembers(Collections.emptyList());
+        }
         return persistCollection(localName, namespace, collection);
     }
 
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
             description =
-                    "Updates the unordered collection with the specified local name from the vocabulary with the specified identifier.")
+                    "Updates the collection with the specified local name from the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Collection successfully updated."),
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
@@ -174,44 +182,12 @@ public class SkosCollectionController extends BaseController {
                             example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
                     @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
                     String collectionNamespace,
-            @Parameter(description = "Updated collection data.") @RequestBody TermCollection collection) {
-        updateCollection(localName, collectionLocalName, namespace, collectionNamespace, collection);
-    }
-
-    @Operation(
-            security = {@SecurityRequirement(name = "bearer-key")},
-            description =
-                    "Updates the ordered collection with the specified local name from the vocabulary with the specified identifier.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Collection successfully updated."),
-        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
-        @ApiResponse(responseCode = "409", description = "Collection data invalid.")
-    })
-    @PutMapping(value = "/ordered/{collectionLocalName}", consumes = JsonLd.MEDIA_TYPE)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateOrdered(
-            @Parameter(
-                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                    @PathVariable
-                    String localName,
-            @Parameter(
-                            description = ApiDoc.ID_COLLECTION_LOCAL_NAME_DESCRIPTION,
-                            example = ApiDoc.ID_COLLECTION_LOCAL_NAME_EXAMPLE)
-                    @PathVariable
-                    String collectionLocalName,
-            @Parameter(
-                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                    Optional<String> namespace,
-            @Parameter(
-                            description = ApiDoc.ID_COLLECTION_NAMESPACE_DESCRIPTION,
-                            example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
-                    @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
-                    String collectionNamespace,
-            @Parameter(description = "Updated collection data.") @RequestBody OrderedTermCollection collection) {
-        updateCollection(localName, collectionLocalName, namespace, collectionNamespace, collection);
+            @Parameter(description = "Updated collection data.") @RequestBody SkosCollectionDto collection) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        verifyRequestAndEntityIdentifier(collection, resolveIdentifier(collectionNamespace, collectionLocalName));
+        ensureCollectionInVocabulary(collection, vocabularyUri);
+        collectionService.update(collection);
+        LOG.debug("Collection {} updated.", collection);
     }
 
     @Operation(
@@ -408,19 +384,6 @@ public class SkosCollectionController extends BaseController {
                 .build();
     }
 
-    private void updateCollection(
-            String localName,
-            String collectionLocalName,
-            Optional<String> namespace,
-            String collectionNamespace,
-            SkosCollection<?> collection) {
-        final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        verifyRequestAndEntityIdentifier(collection, resolveIdentifier(collectionNamespace, collectionLocalName));
-        ensureCollectionInVocabulary(collection, vocabularyUri);
-        collectionService.update(collection);
-        LOG.debug("Collection {} updated.", collection);
-    }
-
     /** Generates location of the specified collection. */
     private static URI generateCollectionLocation(URI vocabularyUri, URI collectionUri) {
         final String vocabularyNamespace = IdentifierResolver.extractIdentifierNamespace(vocabularyUri);
@@ -444,7 +407,16 @@ public class SkosCollectionController extends BaseController {
      * @param vocabularyUri Vocabulary identifier resolved from request
      */
     private static void ensureCollectionInVocabulary(SkosCollection<?> collection, URI vocabularyUri) {
-        if (!vocabularyUri.equals(collection.getVocabulary())) {
+        assertVocabulariesEqual(collection.getVocabulary(), vocabularyUri);
+    }
+
+    private static void ensureCollectionInVocabulary(SkosCollectionDto collection, URI vocabularyUri) {
+        assertVocabulariesEqual(collection.getVocabulary(), vocabularyUri);
+    }
+
+    private static void assertVocabulariesEqual(URI vocabularyUri, URI vocabularyUri2) {
+        Objects.requireNonNull(vocabularyUri);
+        if (!Objects.equals(vocabularyUri, vocabularyUri2)) {
             throw new ValidationException("The vocabulary " + vocabularyUri
                     + ", resolved from request URL, does not match the vocabulary of the specified collection.");
         }

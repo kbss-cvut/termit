@@ -126,8 +126,12 @@ public abstract class DtoMapper {
     public abstract SkosCollectionDto skosCollectionToDto(SkosCollection<?> entity);
 
     @AfterMapping
+    @SuppressWarnings("unused") // executed after skosCollectionToDto mapping
     protected void transferEntityType(SkosCollection<?> entity, @MappingTarget SkosCollectionDto dto) {
         dto.addType(EntityToOwlClassMapper.getOwlClassForEntity(entity.getClass()));
         dto.getTypes().remove(EntityToOwlClassMapper.getOwlClassForEntity(dto.getClass()));
     }
+
+    @Mapping(target = "primaryLanguage", ignore = true)
+    public abstract void updateCollectionFromDto(SkosCollectionDto source, @MappingTarget SkosCollection<?> target);
 }

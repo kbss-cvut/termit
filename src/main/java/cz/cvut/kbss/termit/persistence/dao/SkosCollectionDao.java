@@ -338,6 +338,10 @@ public class SkosCollectionDao {
     public void update(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
         try {
             em.merge(skosCollection, descriptor(vocabulary));
+            em.getEntityManagerFactory()
+                    .getCache()
+                    .evict(SkosCollectionDto.class, skosCollection.getUri(), vocabulary.getUri());
+            em.getEntityManagerFactory().getCache().evict(SkosCollectionDto.class, skosCollection.getUri(), null);
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to update SKOS collection " + Utils.uriToString(skosCollection.getUri()) + " in vocabulary "
