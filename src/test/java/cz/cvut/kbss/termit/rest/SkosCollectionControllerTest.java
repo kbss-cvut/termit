@@ -37,6 +37,7 @@ import tools.jackson.core.type.TypeReference;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
@@ -539,10 +540,14 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        final List<HasIdentifier> result =
-                jsonLdObjectMapper.readValue(mvcResult.getResponse().getContentAsByteArray(), new TypeReference<>() {});
-        List<URI> expectedUris = options.stream().map(HasIdentifier::getUri).toList();
-        List<URI> returnedUris = result.stream().map(HasIdentifier::getUri).toList();
+        final Map<String, ?> result = readValue(mvcResult, new TypeReference<>() {});
+        final List<URI> expectedUris =
+                options.stream().map(HasIdentifier::getUri).toList();
+        // items are in @graph, with @id aliased to "uri" by the context
+        final List<URI> returnedUris = ((List<?>) result.get(JsonLd.GRAPH))
+                .stream()
+                        .map(item -> URI.create(((Map<?, ?>) item).get("uri").toString()))
+                        .toList();
         assertEquals(expectedUris, returnedUris);
         assertEquals(Integer.toString(totalCount), mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER));
     }
@@ -577,5 +582,16 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
 
         verify(collectionServiceMock)
                 .findAddMemberOptions(eq(COLLECTION_URI), eq(VOCABULARY_URI), eq(searchString), any());
+    }
+
+    @Test
+    void addMemberPassesIdentifiersToService() throws Exception {
+        final URI member = Generator.generateUri();
+        mockMvc.perform(post(PATH + "/{collectionLocalName}/members", VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param("member", member.toString()))
+                .andExpect(status().isNoContent());
+
+        verify(collectionServiceMock).addMember(COLLECTION_URI, VOCABULARY_URI, member);
     }
 }

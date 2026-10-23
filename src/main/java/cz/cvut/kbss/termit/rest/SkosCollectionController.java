@@ -408,6 +408,14 @@ public class SkosCollectionController extends BaseController {
         collectionService.updateOrderedMemberPosition(collectionUri, vocabularyUri, memberIri, originalPos, newPos);
     }
 
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Retrieves a list of Terms and collections from the vocabulary that can be added to the collection.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "The paginated list of members"),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+    })
     @GetMapping(value = "/{collectionLocalName}/members/options", produces = JsonLd.MEDIA_TYPE)
     public ResponseEntity<List<HasIdentifier>> findAddMemberOptions(
             @Parameter(
@@ -442,6 +450,47 @@ public class SkosCollectionController extends BaseController {
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());
+    }
+
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description =
+                    "Retrieves a list of Terms and collections from the vocabulary that can be added to the collection.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "The paginated list of members"),
+        @ApiResponse(
+                responseCode = "404",
+                description = "The vocabulary, collection or the specified member was not found."),
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PostMapping("/{collectionLocalName}/members")
+    public void addMember(
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_LOCAL_NAME_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String collectionLocalName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_NAMESPACE_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
+                    String collectionNamespace,
+            @Parameter(description = "IRI of the member that should be added to the collection.")
+                    @RequestParam(name = "member")
+                    URI member) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        collectionService.addMember(collectionUri, vocabularyUri, member);
     }
 
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {

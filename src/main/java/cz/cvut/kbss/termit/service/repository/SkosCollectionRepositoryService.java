@@ -268,4 +268,10 @@ public class SkosCollectionRepositoryService {
                 .findAddMemberOptions(collectionUri, vocabulary, searchString, pageRequest)
                 .map(this::resolveEntity);
     }
+
+    @Transactional
+    public void addMember(SkosCollection<?> collection, Vocabulary vocabulary, URI member) {
+        collection.addMember(member);
+        update(collection, vocabulary);
+    }
 }

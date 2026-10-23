@@ -24,7 +24,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -785,7 +784,6 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void findAddMemberOptionsReturnsEmptyPageWhenAllEntitiesAreMembers() {
         unorderedCollection.getMembers().addAll(membersNotInUnorderedCollection());
         transactional(() -> sut.update(unorderedCollection, vocabulary));

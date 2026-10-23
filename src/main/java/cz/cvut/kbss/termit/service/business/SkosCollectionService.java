@@ -124,4 +124,14 @@ public class SkosCollectionService {
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
         return repositoryService.findAddMemberOptions(collectionUri, vocabulary, searchString, pageRequest);
     }
+
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    @Transactional
+    public void addMember(URI collectionUri, URI vocabularyUri, URI member) {
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+        final SkosCollection<?> collection = repositoryService
+                .find(collectionUri, vocabulary)
+                .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
+        repositoryService.addMember(collection, vocabulary, member);
+    }
 }
