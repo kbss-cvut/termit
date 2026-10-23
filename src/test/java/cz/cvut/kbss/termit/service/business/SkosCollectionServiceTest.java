@@ -64,4 +64,11 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     void removeThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
         assertThrows(NotFoundException.class, () -> sut.remove(Generator.generateUri(), vocabulary.getUri()));
     }
+
+    @Test
+    void addMemberThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
+        assertThrows(
+                NotFoundException.class,
+                () -> sut.addMember(Generator.generateUri(), vocabulary.getUri(), Generator.generateUri()));
+    }
 }

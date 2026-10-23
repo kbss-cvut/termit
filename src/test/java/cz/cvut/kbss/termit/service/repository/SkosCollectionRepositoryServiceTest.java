@@ -40,9 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.containsStringIgnoringCase;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -231,8 +229,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     void updateThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
         final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
         final NotFoundException ex = assertThrows(NotFoundException.class, () -> sut.update(collection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("not found"));
-        assertThat(ex.getMessage(), containsString(collection.getUri().toString()));
+        assertThat(ex.getMessage()).containsIgnoringCase("not found");
+        assertThat(ex.getMessage()).contains(collection.getUri().toString());
     }
 
     @Test
@@ -245,8 +243,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         update.setTypes(Set.of());
 
         final ValidationException ex = assertThrows(ValidationException.class, () -> sut.update(update, vocabulary));
-        assertThat(ex.getMessage(), containsString(OrderedTermCollection.class.getSimpleName()));
-        assertThat(ex.getMessage(), containsString("as " + TermCollection.class.getSimpleName()));
+        assertThat(ex.getMessage()).contains(OrderedTermCollection.class.getSimpleName());
+        assertThat(ex.getMessage()).contains("as " + TermCollection.class.getSimpleName());
     }
 
     @Test
@@ -258,8 +256,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         update.setMembers(new ArrayList<>(unorderedCollection.getMembers()));
 
         final ValidationException ex = assertThrows(ValidationException.class, () -> sut.update(update, vocabulary));
-        assertThat(ex.getMessage(), containsString(TermCollection.class.getSimpleName()));
-        assertThat(ex.getMessage(), containsString("as " + OrderedTermCollection.class.getSimpleName()));
+        assertThat(ex.getMessage()).contains(TermCollection.class.getSimpleName());
+        assertThat(ex.getMessage()).contains("as " + OrderedTermCollection.class.getSimpleName());
     }
 
     @Test
@@ -293,8 +291,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         collection.addMember(missingMember);
 
         final NotFoundException ex = assertThrows(NotFoundException.class, () -> sut.persist(collection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("not found"));
-        assertThat(ex.getMessage(), containsString(missingMember.toString()));
+        assertThat(ex.getMessage()).containsIgnoringCase("not found");
+        assertThat(ex.getMessage()).contains(missingMember.toString());
     }
 
     @Test
@@ -305,8 +303,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final NotFoundException ex =
                 assertThrows(NotFoundException.class, () -> sut.update(unorderedCollection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("not found"));
-        assertThat(ex.getMessage(), containsString(missingMember.toString()));
+        assertThat(ex.getMessage()).containsIgnoringCase("not found");
+        assertThat(ex.getMessage()).contains(missingMember.toString());
     }
 
     @Test
@@ -316,7 +314,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("member of itself"));
+        assertThat(ex.getMessage()).containsIgnoringCase("member of itself");
     }
 
     @Test
@@ -325,7 +323,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.update(unorderedCollection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("member of itself"));
+        assertThat(ex.getMessage()).containsIgnoringCase("member of itself");
     }
 
     @Test
@@ -334,7 +332,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.update(orderedCollection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("member of itself"));
+        assertThat(ex.getMessage()).containsIgnoringCase("member of itself");
     }
 
     @Test
@@ -359,8 +357,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.update(unorderedCollection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("vocabulary"));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("cannot be changed"));
+        assertThat(ex.getMessage()).containsIgnoringCase("vocabulary");
+        assertThat(ex.getMessage()).containsIgnoringCase("cannot be changed");
     }
 
     @Test
@@ -370,8 +368,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("illegal member"));
-        assertThat(ex.getMessage(), containsString(vocabulary.getUri().toString()));
+        assertThat(ex.getMessage()).containsIgnoringCase("illegal member");
+        assertThat(ex.getMessage()).contains(vocabulary.getUri().toString());
     }
 
     @Test
@@ -396,8 +394,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
-        assertThat(ex.getMessage(), containsString("label"));
-        assertThat(ex.getMessage(), containsStringIgnoringCase("primary"));
+        assertThat(ex.getMessage()).contains("label");
+        assertThat(ex.getMessage()).containsIgnoringCase("primary");
     }
 
     @Test
@@ -407,7 +405,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
         final ValidationException ex =
                 assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
-        assertThat(ex.getMessage(), containsString("primaryLanguage"));
+        assertThat(ex.getMessage()).contains("primaryLanguage");
     }
 
     @Test
@@ -613,5 +611,29 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
 
             assertEquals(expected, actual, "Order differs at index " + i);
         }
+    }
+
+    @Test
+    void addMemberAddsMemberToUnorderedCollection() {
+        final Term newMember = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> em.persist(newMember, vocabularyDescriptor));
+
+        sut.addMember(unorderedCollection, vocabulary, newMember.getUri());
+
+        TermCollection updated =
+                sut.findUnordered(unorderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).contains(newMember.getUri());
+    }
+
+    @Test
+    void addMemberAddsMemberToFirstPositionInOrderedCollection() {
+        final Term newMember = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> em.persist(newMember, vocabularyDescriptor));
+
+        sut.addMember(orderedCollection, vocabulary, newMember.getUri());
+
+        OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertEquals(updated.getMembers().getFirst(), newMember.getUri());
     }
 }
