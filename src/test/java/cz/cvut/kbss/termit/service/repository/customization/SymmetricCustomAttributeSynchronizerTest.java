@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetChangesRecordedEvent;
+import cz.cvut.kbss.termit.event.CustomAttributeMadeSymmetricEvent;
 import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
@@ -179,5 +180,26 @@ class SymmetricCustomAttributeSynchronizerTest extends BaseServiceTestRunner {
         // TODO Use JOPA OWL constant when available in the next release
         att.addType(OWL.SYMMETRICPROPERTY.stringValue());
         return att;
+    }
+
+    @Test
+    void onCustomAttributeMadeSymmetricInsertsInverseStatementsForExistingAttributeAssertionsIntoCorrectContexts() {
+        final CustomAttribute att = initSymmetricCustomAttribute();
+        final Term tOne = Generator.generateTermWithId();
+        final Term tTwo = Generator.generateTermWithId();
+        tOne.setProperties(Map.of(att.getUri().toString(), Set.of(tTwo.getUri())));
+        transactional(() -> {
+            em.persist(att, new EntityDescriptor(URI.create(CustomAttribute.CONTEXT)));
+            em.persist(tOne, new EntityDescriptor(tOne.getUri()));
+            em.persist(tTwo, new EntityDescriptor(tTwo.getUri()));
+        });
+
+        sut.onCustomAttributeMadeSymmetric(new CustomAttributeMadeSymmetricEvent(this, att));
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?tTwo ?att ?tOne } }", Boolean.class)
+                .setParameter("tTwo", tTwo)
+                .setParameter("att", att)
+                .setParameter("tOne", tOne)
+                .setParameter("g", tTwo)
+                .getSingleResult());
     }
 }

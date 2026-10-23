@@ -1,7 +1,10 @@
 package cz.cvut.kbss.termit.service.repository.customization;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.event.AssetChangesRecordedEvent;
+import cz.cvut.kbss.termit.event.CustomAttributeMadeSymmetricEvent;
 import cz.cvut.kbss.termit.event.TermReferencesUpdatedEvent;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.context.AssetContextMapper;
@@ -34,11 +37,17 @@ public class SymmetricCustomAttributeSynchronizer {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final EntityManager em;
+
     public SymmetricCustomAttributeSynchronizer(
-            DataDao dataDao, AssetContextMapper contextMapper, ApplicationEventPublisher eventPublisher) {
+            DataDao dataDao,
+            AssetContextMapper contextMapper,
+            ApplicationEventPublisher eventPublisher,
+            EntityManager em) {
         this.dataDao = dataDao;
         this.contextMapper = contextMapper;
         this.eventPublisher = eventPublisher;
+        this.em = em;
     }
 
     @Transactional
@@ -102,5 +111,20 @@ public class SymmetricCustomAttributeSynchronizer {
             final URI ctx = contextMapper.getContext(value);
             return new Quad(value, property, subject, ctx);
         });
+    }
+
+    @Transactional
+    @EventListener
+    public void onCustomAttributeMadeSymmetric(CustomAttributeMadeSymmetricEvent event) {
+        final CustomAttribute att = event.getAtt();
+        LOG.debug("Custom attribute {} marked as symmetric. Generating missing inverse statements.", att);
+        em.createNativeQuery("""
+                                     INSERT {
+                                       GRAPH ?g { ?y ?att ?x }
+                                     } WHERE {
+                                       ?x ?att ?y .
+                                       GRAPH ?g { ?y a ?type }
+                                     }
+                                     """).setParameter("att", att).executeUpdate();
     }
 }
