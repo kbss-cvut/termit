@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -32,12 +33,9 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -45,6 +43,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SkosCollectionDaoTest extends BaseDaoTestRunner {
+    private static final Pageable PAGEABLE_ALL = PageRequest.ofSize(Integer.MAX_VALUE);
+
     @Autowired
     private EntityManager em;
 
@@ -86,27 +86,67 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         });
     }
 
-    private static List<URI> identifiers(Collection<TypeAwareEntity> collection) {
-        return new ArrayList<>(collection.stream().map(TypeAwareEntity::getUri).toList());
+    private static List<URI> identifiers(Collection<? extends HasIdentifier> collection) {
+        return new ArrayList<>(collection.stream().map(HasIdentifier::getUri).toList());
     }
 
-    private static List<URI> identifiersFromEntity(Collection<? extends HasIdentifier> collection) {
-        return new ArrayList<>(collection.stream().map(HasIdentifier::getUri).toList());
+    /** Creates a term in the {@link #vocabulary} with the label in the vocabulary primary language. */
+    private Term termWithLabel(String label) {
+        return termWithLabel(vocabulary, label);
+    }
+
+    /** Creates a term in the {@link #vocabulary} with the specified label. */
+    private Term termWithLabel(MultilingualString label) {
+        return termWithLabel(vocabulary, label);
+    }
+
+    /** Creates a term in the vocabulary with the label in the vocabulary primary language. */
+    private static Term termWithLabel(Vocabulary vocabulary, String label) {
+        return termWithLabel(vocabulary, MultilingualString.create(label, vocabulary.getPrimaryLanguage()));
+    }
+
+    private static Term termWithLabel(Vocabulary vocabulary, MultilingualString label) {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setLabel(label);
+        return term;
+    }
+
+    /** Creates terms in the vocabulary with the labels in the vocabulary primary language, in the order of labels. */
+    private static List<Term> termsWithLabels(Vocabulary vocabulary, String... labels) {
+        return Stream.of(labels).map(label -> termWithLabel(vocabulary, label)).toList();
+    }
+
+    /** Creates an empty collection in the vocabulary with the label in the vocabulary primary language. */
+    private static TermCollection collectionWithLabel(Vocabulary vocabulary, String label) {
+        return collectionWithLabel(vocabulary, MultilingualString.create(label, vocabulary.getPrimaryLanguage()));
+    }
+
+    private static TermCollection collectionWithLabel(Vocabulary vocabulary, MultilingualString label) {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, List.of());
+        collection.setLabel(label);
+        return collection;
+    }
+
+    /** Persists the vocabulary along with the specified entities into the vocabulary context. */
+    private void persistVocabulary(Vocabulary vocabulary, Collection<? extends HasIdentifier> entities) {
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> {
+            vocabularyDao.persist(vocabulary);
+            entities.forEach(e -> em.persist(e, descriptor));
+        });
     }
 
     @Test
     void findAllReturnsAllCollectionsInVocabulary() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final TermCollection unrelated = Generator.generateTermCollection(anotherVocabulary);
-        transactional(() -> {
-            em.persist(unrelated, descriptorFactory.vocabularyDescriptor(anotherVocabulary));
-        });
+        persistVocabulary(anotherVocabulary, List.of(unrelated));
 
         final List<SkosCollectionDto> result =
                 sut.findAll(vocabulary, Pageable.ofSize(10)).getContent();
 
         assertEquals(2, result.size());
-        final List<URI> identifiers = result.stream().map(HasIdentifier::getUri).toList();
+        final List<URI> identifiers = identifiers(result);
         assertTrue(identifiers.contains(unorderedCollection.getUri()));
         assertTrue(identifiers.contains(orderedCollection.getUri()));
     }
@@ -119,14 +159,14 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> additional.forEach(c -> em.persist(c, vocabularyDescriptor)));
 
-        final Set<URI> allCollections = new HashSet<>(identifiersFromEntity(additional));
+        final Set<URI> allCollections = new HashSet<>(identifiers(additional));
         allCollections.add(unorderedCollection.getUri());
         allCollections.add(orderedCollection.getUri());
 
         final Page<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 2));
 
         assertEquals(2, result.getSize());
-        result.forEach(dto -> assertThat(allCollections, hasItem(dto.getUri())));
+        assertThat(result).map(SkosCollectionDto::getUri).isSubsetOf(allCollections);
         assertEquals(allCollections.size(), result.getTotalElements());
     }
 
@@ -137,7 +177,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
                 .toList();
         transactional(() -> additional.forEach(c -> em.persist(c, vocabularyDescriptor)));
 
-        final Set<URI> allCollections = new HashSet<>(identifiersFromEntity(additional));
+        final Set<URI> allCollections = new HashSet<>(identifiers(additional));
         allCollections.add(unorderedCollection.getUri());
         allCollections.add(orderedCollection.getUri());
 
@@ -160,15 +200,10 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     private List<SkosCollectionDto> generateCollectionsWithLabelsAndFindAll(
             Pageable pageable, MultilingualString... labels) {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
-        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(anotherVocabulary);
-        transactional(() -> {
-            vocabularyDao.persist(anotherVocabulary);
-            for (MultilingualString label : labels) {
-                final TermCollection collection = Generator.generateTermCollection(anotherVocabulary, List.of());
-                collection.setLabel(label);
-                em.persist(collection, descriptor);
-            }
-        });
+        final List<TermCollection> collections = Stream.of(labels)
+                .map(label -> collectionWithLabel(anotherVocabulary, label))
+                .toList();
+        persistVocabulary(anotherVocabulary, collections);
         return sut.findAll(anotherVocabulary, pageable).getContent();
     }
 
@@ -240,15 +275,13 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         resultIdentifiers.sort(Comparator.comparing(URI::toString));
         assertEquals(orderedCollection.getMembers(), resultIdentifiers);
 
-        final List<URI> orderedMemberUris = identifiersFromEntity(orderedMembers);
-
         result.forEach(e -> {
             assertFalse(e.getTypes().isEmpty());
             if (e.getUri().equals(unorderedCollection.getUri())) {
                 assertTrue(e.isCollection());
                 assertFalse(e.isTerm());
             } else {
-                assertTrue(orderedMemberUris.contains(e.getUri()));
+                assertThat(e.getUri()).isIn(orderedCollection.getMembers());
                 assertTrue(e.isTerm());
                 assertFalse(e.isCollection());
             }
@@ -261,7 +294,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         final Set<URI> expected = new HashSet<>(orderedCollection.getMembers().subList(2, 4));
         assertEquals(2, result.size());
-        assertEquals(expected, result.stream().map(TypeAwareEntity::getUri).collect(Collectors.toSet()));
+        assertThat(identifiers(result)).containsAll(expected);
         result.forEach(e -> assertTrue(e.isTerm()));
     }
 
@@ -291,17 +324,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         }
 
         assertEquals(unorderedMembers.size(), found.size());
-        assertEquals(new HashSet<>(identifiersFromEntity(unorderedMembers)), new HashSet<>(found));
-    }
-
-    private Term termWithLabel(String label) {
-        return termWithLabel(MultilingualString.create(label, Environment.LANGUAGE));
-    }
-
-    private Term termWithLabel(MultilingualString label) {
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        term.setLabel(label);
-        return term;
+        assertThat(found).containsAll(unorderedCollection.getMembers());
     }
 
     private TermCollection persistUnorderedCollection(Collection<? extends HasIdentifier> members) {
@@ -320,14 +343,13 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final Term alpha = termWithLabel("alpha");
         final Term ccep = termWithLabel("Čep");
         final Term cep = termWithLabel("Cep");
-        final TermCollection bravo = Generator.generateTermCollection(vocabulary, List.of());
-        bravo.setLabel(MultilingualString.create("Bravo", Environment.LANGUAGE));
+        final TermCollection bravo = collectionWithLabel(vocabulary, "Bravo");
 
         final TermCollection collection = persistUnorderedCollection(List.of(delta, alpha, ccep, bravo, cep));
 
         final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(0, 10), Environment.LANGUAGE);
 
-        assertEquals(identifiersFromEntity(List.of(alpha, bravo, cep, ccep, delta)), identifiers(result));
+        assertEquals(identifiers(List.of(alpha, bravo, cep, ccep, delta)), identifiers(result));
     }
 
     @Test
@@ -340,7 +362,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final List<TypeAwareEntity> result = sut.findMembers(
                 collection, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")), Environment.LANGUAGE);
 
-        assertEquals(identifiersFromEntity(List.of(gamma, beta, alpha)), identifiers(result));
+        assertEquals(identifiers(List.of(gamma, beta, alpha)), identifiers(result));
     }
 
     @Test
@@ -356,11 +378,11 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         final List<TypeAwareEntity> ascending =
                 sut.findMembers(collection, PageRequest.of(0, 10), Environment.LANGUAGE);
-        assertEquals(identifiersFromEntity(List.of(yankee, zulu, alphaOther, betaOther)), identifiers(ascending));
+        assertEquals(identifiers(List.of(yankee, zulu, alphaOther, betaOther)), identifiers(ascending));
 
         final List<TypeAwareEntity> descending = sut.findMembers(
                 collection, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")), Environment.LANGUAGE);
-        assertEquals(identifiersFromEntity(List.of(zulu, yankee, betaOther, alphaOther)), identifiers(descending));
+        assertEquals(identifiers(List.of(zulu, yankee, betaOther, alphaOther)), identifiers(descending));
     }
 
     @Test
@@ -375,34 +397,31 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final TermCollection collection = persistUnorderedCollection(List.of(second, first));
 
         assertEquals(
-                identifiersFromEntity(List.of(first, second)),
+                identifiers(List.of(first, second)),
                 identifiers(sut.findMembers(collection, PageRequest.of(0, 10), Environment.LANGUAGE)));
         assertEquals(
-                identifiersFromEntity(List.of(second, first)),
+                identifiers(List.of(second, first)),
                 identifiers(sut.findMembers(collection, PageRequest.of(0, 10), "cs")));
     }
 
     @Test
     void findMembersOfUnorderedCollectionReturnsSortedPage() {
-        final List<Term> terms = Stream.of("Echo", "Alpha", "Delta", "Bravo", "Charlie")
-                .map(this::termWithLabel)
-                .toList();
-        final TermCollection collection = persistUnorderedCollection(terms);
+        final List<Term> terms = termsWithLabels(vocabulary, "Alpha", "Bravo", "Charlie", "Delta", "Echo");
+        final TermCollection collection = persistUnorderedCollection(terms.reversed());
 
         final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(1, 2), Environment.LANGUAGE);
 
-        // Charlie, Delta
-        assertEquals(identifiersFromEntity(List.of(terms.get(4), terms.get(2))), identifiers(result));
+        assertEquals(identifiers(terms.subList(2, 4)), identifiers(result));
     }
 
     @Test
     void orderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
         final OrderedTermCollection collection =
                 sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
-        assertThat(collection.getTypes(), hasItem(SKOS.COLLECTION));
+        assertThat(collection.getTypes()).contains(SKOS.COLLECTION);
 
         final SkosCollectionDto dto = sut.findDto(orderedCollection.getUri());
-        assertThat(dto.getTypes(), hasItems(SKOS.ORDERED_COLLECTION));
+        assertThat(dto.getTypes()).contains(SKOS.ORDERED_COLLECTION);
     }
 
     @Test
@@ -543,5 +562,320 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         });
 
         assertNull(readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri())));
+    }
+
+    private Page<TypeAwareEntity> findAddMemberOptions(
+            SkosCollection<?> collection, Vocabulary vocabulary, Pageable pageable) {
+        return findAddMemberOptions(collection, vocabulary, null, pageable);
+    }
+
+    private Page<TypeAwareEntity> findAddMemberOptions(
+            SkosCollection<?> collection, Vocabulary vocabulary, String searchString, Pageable pageable) {
+        return readOnlyTransactional(
+                () -> sut.findAddMemberOptions(collection.getUri(), vocabulary, searchString, pageable));
+    }
+
+    private List<URI> findAddMemberOptionIdentifiers(
+            SkosCollection<?> collection, Vocabulary vocabulary, Pageable pageable) {
+        return identifiers(
+                findAddMemberOptions(collection, vocabulary, pageable).getContent());
+    }
+
+    /** Members that are not contained in {@link #unorderedCollection} */
+    private Set<URI> membersNotInUnorderedCollection() {
+        final Set<URI> options = new HashSet<>(orderedCollection.getMembers());
+        options.add(orderedCollection.getUri());
+        return options;
+    }
+
+    /**
+     * Persists the vocabulary with the specified entities and an empty collection into the vocabulary context.
+     *
+     * @return the empty collection
+     */
+    private TermCollection persistVocabularyWithEmptyCollection(
+            Vocabulary vocabulary, Collection<? extends HasIdentifier> entities) {
+        final TermCollection collection = Generator.generateTermCollection(vocabulary, List.of());
+        persistVocabulary(
+                vocabulary,
+                Stream.concat(entities.stream(), Stream.of(collection)).toList());
+        return collection;
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsTermsAndCollectionsFromTheSameVocabulary() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> anotherTerms = termsWithLabels(anotherVocabulary, "Alpha", "Bravo", "Charlie");
+        final TermCollection anotherCollection = collectionWithLabel(anotherVocabulary, "Delta");
+        persistVocabulary(
+                anotherVocabulary,
+                Stream.concat(anotherTerms.stream(), Stream.of(anotherCollection))
+                        .toList());
+
+        final List<Term> additionalTerms = termsWithLabels(vocabulary, "Echo", "Foxtrot");
+        transactional(() -> additionalTerms.forEach(t -> em.persist(t, vocabularyDescriptor)));
+
+        final Page<TypeAwareEntity> result = findAddMemberOptions(orderedCollection, vocabulary, PAGEABLE_ALL);
+
+        final List<URI> expectedAddableMembers = Stream.of(
+                        Set.of(unorderedCollection.getUri()),
+                        unorderedCollection.getMembers(),
+                        identifiers(additionalTerms))
+                .flatMap(Collection::stream)
+                .toList();
+
+        assertEquals(expectedAddableMembers.size(), result.getNumberOfElements());
+        assertThat(identifiers(result.getContent())).isSubsetOf(expectedAddableMembers);
+    }
+
+    @Test
+    void findAddMemberOptionsExcludesMembersOfUnorderedCollection() {
+        final List<URI> result = findAddMemberOptionIdentifiers(unorderedCollection, vocabulary, PAGEABLE_ALL);
+
+        assertThat(result).doesNotContainAnyElementsOf(unorderedCollection.getMembers());
+        assertTrue(result.containsAll(orderedCollection.getMembers()));
+    }
+
+    @Test
+    void findAddMemberOptionsExcludesMembersOfOrderedCollection() {
+        final List<URI> result = findAddMemberOptionIdentifiers(orderedCollection, vocabulary, PAGEABLE_ALL);
+
+        assertThat(result).doesNotContainAnyElementsOf(orderedCollection.getMembers());
+        assertTrue(result.containsAll(unorderedCollection.getMembers()));
+    }
+
+    @Test
+    void findAddMemberOptionsExcludesCollectionItself() {
+        final List<URI> result = findAddMemberOptionIdentifiers(unorderedCollection, vocabulary, PAGEABLE_ALL);
+
+        assertThat(result).doesNotContain(unorderedCollection.getUri()).contains(orderedCollection.getUri());
+    }
+
+    @Test
+    void findAddMemberOptionsExcludesCollectionAlreadyBeingMember() {
+        final TermCollection nested = Generator.generateTermCollection(vocabulary, List.of());
+        final TermCollection collection = persistUnorderedCollection(List.of(nested));
+
+        final List<URI> result = findAddMemberOptionIdentifiers(collection, vocabulary, PAGEABLE_ALL);
+
+        assertThat(result)
+                .doesNotContain(nested.getUri())
+                .contains(unorderedCollection.getUri(), orderedCollection.getUri());
+    }
+
+    @Test
+    void findAddMemberOptionsSortsTermsByLabelAscendingByDefault() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = termsWithLabels(anotherVocabulary, "Alpha", "Bravo", "Charlie", "Delta");
+        final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms.reversed());
+
+        final List<URI> result = findAddMemberOptionIdentifiers(collection, anotherVocabulary, PAGEABLE_ALL);
+
+        assertEquals(identifiers(terms), result);
+    }
+
+    @Test
+    void findAddMemberOptionsSortsTermsByLabelDescendingWhenRequested() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final Term alpha = termWithLabel(anotherVocabulary, "Alpha");
+        final Term bravo = termWithLabel(anotherVocabulary, "Bravo");
+        final Term charlie = termWithLabel(anotherVocabulary, "Charlie");
+        // would be the last one if it was not placed before terms
+        final TermCollection alphaCollection = collectionWithLabel(anotherVocabulary, "Alpha");
+        final TermCollection collection = persistVocabularyWithEmptyCollection(
+                anotherVocabulary, List.of(alpha, bravo, alphaCollection, charlie));
+
+        final List<URI> result = findAddMemberOptionIdentifiers(
+                collection, anotherVocabulary, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")));
+
+        assertEquals(identifiers(List.of(alphaCollection, charlie, bravo, alpha)), result);
+    }
+
+    @Test
+    void findAddMemberOptionsSortsCollectionsByLabel() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final Term alpha = termWithLabel(anotherVocabulary, "Alpha");
+        final Term bravo = termWithLabel(anotherVocabulary, "Bravo");
+        // collection labels sort after term labels
+        final TermCollection yankee = collectionWithLabel(anotherVocabulary, "Yankee");
+        final TermCollection zulu = collectionWithLabel(anotherVocabulary, "Zulu");
+        final TermCollection collection =
+                persistVocabularyWithEmptyCollection(anotherVocabulary, List.of(bravo, zulu, alpha, yankee));
+
+        final List<URI> result = findAddMemberOptionIdentifiers(collection, anotherVocabulary, PAGEABLE_ALL);
+
+        assertEquals(identifiers(List.of(yankee, zulu, alpha, bravo)), result);
+    }
+
+    @Test
+    void findAddMemberOptionsUsesLabelInVocabularyPrimaryLanguage() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final String primaryLanguage = anotherVocabulary.getPrimaryLanguage();
+        final String otherLanguage = "cs";
+        assertNotEquals(otherLanguage, primaryLanguage);
+
+        // the label in the primary language sorts the opposite way than the label in the other language
+        final MultilingualString firstLabel = MultilingualString.create("Alpha", primaryLanguage);
+        firstLabel.set(otherLanguage, "Zulu");
+        final MultilingualString secondLabel = MultilingualString.create("Zulu", primaryLanguage);
+        secondLabel.set(otherLanguage, "Alpha");
+        final Term first = termWithLabel(anotherVocabulary, firstLabel);
+        final Term second = termWithLabel(anotherVocabulary, secondLabel);
+        final TermCollection collection =
+                persistVocabularyWithEmptyCollection(anotherVocabulary, List.of(second, first));
+
+        final List<URI> result = findAddMemberOptionIdentifiers(collection, anotherVocabulary, PAGEABLE_ALL);
+
+        assertEquals(identifiers(List.of(first, second)), result);
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsEntitiesWithResolvedTypes() {
+        final List<TypeAwareEntity> result = findAddMemberOptions(unorderedCollection, vocabulary, PAGEABLE_ALL)
+                .getContent();
+
+        assertEquals(membersNotInUnorderedCollection(), new HashSet<>(identifiers(result)));
+        result.forEach(e -> {
+            if (e.getUri().equals(orderedCollection.getUri())) {
+                assertTrue(e.isCollection());
+                assertTrue(e.isOrderedCollection());
+                assertFalse(e.isTerm());
+            } else {
+                assertTrue(e.isTerm());
+                assertFalse(e.isCollection());
+            }
+        });
+    }
+
+    @Test
+    void findAddMemberOptionsRespectsPagination() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = termsWithLabels(anotherVocabulary, "Alpha", "Bravo", "Charlie", "Delta", "Echo");
+        final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms.reversed());
+
+        final List<URI> result = findAddMemberOptionIdentifiers(collection, anotherVocabulary, PageRequest.of(1, 2));
+
+        assertEquals(identifiers(terms.subList(2, 4)), result);
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsDisjointPagesCoveringAllOptions() {
+        final Set<URI> options = membersNotInUnorderedCollection();
+
+        final int pageSize = 4;
+        final List<URI> found = new ArrayList<>();
+        for (int page = 0; page * pageSize < options.size(); page++) {
+            found.addAll(
+                    findAddMemberOptionIdentifiers(unorderedCollection, vocabulary, PageRequest.of(page, pageSize)));
+        }
+
+        assertEquals(options.size(), found.size());
+        assertThat(found).containsAll(options);
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsTotalCountOfAllOptions() {
+        final int pageSize = 2;
+
+        final Page<TypeAwareEntity> result =
+                findAddMemberOptions(unorderedCollection, vocabulary, PageRequest.ofSize(pageSize));
+
+        assertEquals(pageSize, result.getNumberOfElements());
+        assertEquals(membersNotInUnorderedCollection().size(), result.getTotalElements());
+    }
+
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    void findAddMemberOptionsReturnsEmptyPageWhenAllEntitiesAreMembers() {
+        unorderedCollection.getMembers().addAll(membersNotInUnorderedCollection());
+        transactional(() -> sut.update(unorderedCollection, vocabulary));
+
+        final Page<TypeAwareEntity> result = findAddMemberOptions(unorderedCollection, vocabulary, PAGEABLE_ALL);
+
+        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsOnlyTermsAndCollectionsWithLabelContainingSearchString() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = termsWithLabels(anotherVocabulary, "Main street", "Side street", "Park");
+        final TermCollection streetCollection = collectionWithLabel(anotherVocabulary, "Streets");
+        final TermCollection parkCollection = collectionWithLabel(anotherVocabulary, "Parks");
+        final TermCollection collection = persistVocabularyWithEmptyCollection(
+                anotherVocabulary,
+                Stream.concat(terms.stream(), Stream.of(streetCollection, parkCollection))
+                        .toList());
+
+        final Page<TypeAwareEntity> result =
+                findAddMemberOptions(collection, anotherVocabulary, "street", PAGEABLE_ALL);
+
+        assertEquals(
+                identifiers(List.of(streetCollection, terms.get(0), terms.get(1))), identifiers(result.getContent()));
+    }
+
+    @Test
+    void findAddMemberOptionsMatchesSearchStringIgnoringCase() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = termsWithLabels(anotherVocabulary, "Alpha", "ALPHABET", "Bravo");
+        final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms);
+
+        final Page<TypeAwareEntity> result = findAddMemberOptions(collection, anotherVocabulary, "aLpHa", PAGEABLE_ALL);
+
+        // alpha and alphabet
+        assertEquals(identifiers(terms.subList(0, 2)), identifiers(result.getContent()));
+    }
+
+    @Test
+    void findAddMemberOptionsMatchesSearchStringOnlyInVocabularyPrimaryLanguageLabel() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final String primaryLanguage = anotherVocabulary.getPrimaryLanguage();
+        final String otherLanguage = "cs";
+        assertNotEquals(otherLanguage, primaryLanguage);
+
+        final MultilingualString matchingLabel = MultilingualString.create("Street", primaryLanguage);
+        matchingLabel.set(otherLanguage, "Ulice");
+        final MultilingualString nonMatchingLabel = MultilingualString.create("Road", primaryLanguage);
+        nonMatchingLabel.set(otherLanguage, "Street");
+        final Term matching = termWithLabel(anotherVocabulary, matchingLabel);
+        final Term nonMatching = termWithLabel(anotherVocabulary, nonMatchingLabel);
+        final TermCollection collection =
+                persistVocabularyWithEmptyCollection(anotherVocabulary, List.of(matching, nonMatching));
+
+        final Page<TypeAwareEntity> result =
+                findAddMemberOptions(collection, anotherVocabulary, "street", PAGEABLE_ALL);
+
+        assertEquals(identifiers(List.of(matching)), identifiers(result.getContent()));
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsTotalCountOfOptionsMatchingSearchString() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = termsWithLabels(anotherVocabulary, "Street 1", "Street 2", "Street 3", "Park");
+        final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms);
+        final int pageSize = 2;
+
+        final Page<TypeAwareEntity> result =
+                findAddMemberOptions(collection, anotherVocabulary, "street", PageRequest.ofSize(pageSize));
+
+        assertEquals(pageSize, result.getNumberOfElements());
+        assertEquals(3, result.getTotalElements());
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsAllOptionsWhenSearchStringIsEmpty() {
+        final Page<TypeAwareEntity> result = findAddMemberOptions(unorderedCollection, vocabulary, "", PAGEABLE_ALL);
+
+        assertEquals(membersNotInUnorderedCollection(), new HashSet<>(identifiers(result.getContent())));
+        assertEquals(membersNotInUnorderedCollection().size(), result.getTotalElements());
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsEmptyPageWhenNoLabelContainsSearchString() {
+        final Page<TypeAwareEntity> result =
+                findAddMemberOptions(unorderedCollection, vocabulary, "no label contains this string", PAGEABLE_ALL);
+
+        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
     }
 }

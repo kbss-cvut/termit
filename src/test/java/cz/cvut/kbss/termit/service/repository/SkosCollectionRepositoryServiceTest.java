@@ -558,6 +558,45 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         assertFalse(sut.exists(orderedCollection.getUri()));
     }
 
+    @Test
+    void findAddMemberOptionsMapsIdentifiersToRespectiveEntities() {
+        final List<HasIdentifier> result = sut.findAddMemberOptions(
+                        unorderedCollection.getUri(), vocabulary, null, pageable)
+                .getContent();
+
+        final Set<HasIdentifier> expected = new HashSet<>();
+        orderedMembers.forEach(t -> expected.add(t.toTermInfo()));
+
+        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(orderedCollection);
+        expected.add(expectedDto);
+
+        assertEquals(expected.size(), result.size());
+        assertEquals(expected, new HashSet<>(result));
+
+        final HasIdentifier collectionOption = result.stream()
+                .filter(e -> e.getUri().equals(orderedCollection.getUri()))
+                .findFirst()
+                .orElseThrow();
+        assertInstanceOf(SkosCollectionDto.class, collectionOption);
+        assertEquals(expectedDto, collectionOption);
+
+        result.stream()
+                .filter(e -> !e.getUri().equals(orderedCollection.getUri()))
+                .forEach(e -> assertInstanceOf(TermInfo.class, e));
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsOnlyOptionsMatchingSearchString() {
+        final Term matching = orderedMembers.get(2);
+        final String searchString = matching.getLabel().get(Environment.LANGUAGE);
+
+        final Page<HasIdentifier> result =
+                sut.findAddMemberOptions(unorderedCollection.getUri(), vocabulary, searchString, pageable);
+
+        assertEquals(List.of(matching.toTermInfo()), result.getContent());
+        assertEquals(1, result.getTotalElements());
+    }
+
     private void loadAndAssertOrder(OrderedTermCollection collection) {
         final List<URI> initialOrder = new ArrayList<>(collection.getMembers());
 
