@@ -618,11 +618,9 @@ public class Generator {
     public static OrderedTermCollection generateOrderedTermCollection(Vocabulary vocabulary, Collection<Term> members) {
         final OrderedTermCollection collection = new OrderedTermCollection();
         populateSkosCollection(collection);
-        collection.setMembers(new ArrayList<>());
-        members.forEach(m -> {
-            collection.addMember(m.getUri());
-            m.setVocabulary(vocabulary.getUri());
-        });
+        collection.setMembers(
+                members.stream().map(HasIdentifier::getUri).collect(Collectors.toCollection(ArrayList::new)));
+        members.forEach(t -> t.setVocabulary(vocabulary.getUri()));
         collection.setVocabulary(vocabulary.getUri());
         return collection;
     }
