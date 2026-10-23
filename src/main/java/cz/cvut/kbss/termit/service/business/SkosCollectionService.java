@@ -119,8 +119,9 @@ public class SkosCollectionService {
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
     @Transactional(readOnly = true)
-    public Page<HasIdentifier> findAddMemberOptions(URI collectionUri, URI vocabularyUri, Pageable pageRequest) {
+    public Page<HasIdentifier> findAddMemberOptions(
+            URI collectionUri, URI vocabularyUri, String searchString, Pageable pageRequest) {
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
-        return repositoryService.findAddMemberOptions(collectionUri, vocabulary, pageRequest);
+        return repositoryService.findAddMemberOptions(collectionUri, vocabulary, searchString, pageRequest);
     }
 }

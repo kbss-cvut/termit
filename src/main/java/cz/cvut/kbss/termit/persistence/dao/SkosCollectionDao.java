@@ -65,7 +65,7 @@ public class SkosCollectionDao {
      * itself) along with their label in the vocabulary language. Collections are bound to {@code ?priority} 0, terms to
      * 1.
      *
-     * @implNote Bindings are applied by {@link #bindAddMemberOptions(Query, URI, Vocabulary)}
+     * @implNote Bindings are applied by {@link #bindAddMemberOptions(Query, URI, Vocabulary, String)}
      */
     private static final String ADD_MEMBER_OPTIONS_PATTERN = """
             GRAPH ?vocabulary {
@@ -90,6 +90,7 @@ public class SkosCollectionDao {
             FILTER NOT EXISTS {
                 ?collection ?hasMember|(?hasMemberList/?listRest*/?listFirst) ?entity .
             }
+            FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
             """;
 
     /** Property identifiers representing a label of collection member */
@@ -443,10 +444,12 @@ public class SkosCollectionDao {
      *
      * @param collectionUri the collection whose members should be excluded
      * @param vocabulary vocabulary of the collection
+     * @param searchString string by which to filter the entities (label), may be {@code null}
      * @param pageRequest page request
      * @return Page of entities with their types that can be added to the collection
      */
-    public Page<TypeAwareEntity> findAddMemberOptions(URI collectionUri, Vocabulary vocabulary, Pageable pageRequest) {
+    public Page<TypeAwareEntity> findAddMemberOptions(
+            URI collectionUri, Vocabulary vocabulary, String searchString, Pageable pageRequest) {
         Objects.requireNonNull(collectionUri, "Collection identifier must not be null");
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
         Objects.requireNonNull(vocabulary.getPrimaryLanguage(), "Vocabulary primary language must not be null");
@@ -460,28 +463,34 @@ public class SkosCollectionDao {
                     ORDER BY ASC(?priority)
                     """ + buildSortClause(pageRequest, "?label", "?entity"),
                     TypeAwareEntity.RESULTSET_MAPPING);
-            bindAddMemberOptions(query, collectionUri, vocabulary);
+            bindAddMemberOptions(query, collectionUri, vocabulary, searchString);
             @SuppressWarnings("unchecked")
             final List<TypeAwareEntity> data = query.setFirstResult((int) pageRequest.getOffset())
                     .setMaxResults(pageRequest.getPageSize())
                     .getResultList();
             return PageableExecutionUtils.getPage(
-                    data, pageRequest, () -> countAddMemberOptions(collectionUri, vocabulary));
+                    data, pageRequest, () -> countAddMemberOptions(collectionUri, vocabulary, searchString));
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find add member options for SKOS collection " + Utils.uriToString(collectionUri), e);
         }
     }
 
-    /** Counts all possible collection members matched by {@link #findAddMemberOptions(URI, Vocabulary, Pageable)}. */
-    private long countAddMemberOptions(URI collectionUri, Vocabulary vocabulary) {
+    /**
+     * Counts all possible collection members matched by {@link #findAddMemberOptions(URI, Vocabulary, String,
+     * Pageable)}.
+     */
+    private long countAddMemberOptions(URI collectionUri, Vocabulary vocabulary, String searchString) {
         final TypedQuery<Long> query = em.createNativeQuery(
                 "SELECT (COUNT(DISTINCT ?entity) AS ?count) WHERE { " + ADD_MEMBER_OPTIONS_PATTERN + " }", Long.class);
-        bindAddMemberOptions(query, collectionUri, vocabulary);
+        bindAddMemberOptions(query, collectionUri, vocabulary, searchString);
         return query.getSingleResult();
     }
 
-    private void bindAddMemberOptions(Query query, URI collectionUri, Vocabulary vocabulary) {
+    private void bindAddMemberOptions(Query query, URI collectionUri, Vocabulary vocabulary, String searchString) {
+        if (searchString == null) {
+            searchString = "";
+        }
         query.setParameter("collection", collectionUri)
                 .setParameter("hasMember", TermCollection_.membersPropertyIRI)
                 .setParameter("hasMemberList", OrderedTermCollection_.membersPropertyIRI)
@@ -493,6 +502,7 @@ public class SkosCollectionDao {
                 .setParameter("collectionTypes", COLLECTION_TYPES)
                 .setParameter("hasCollectionLabel", SkosCollection_.labelPropertyIRI)
                 .setParameter("termType", Term_.entityClassIRI)
-                .setParameter("hasTermLabel", Term_.labelPropertyIRI);
+                .setParameter("hasTermLabel", Term_.labelPropertyIRI)
+                .setParameter("searchString", searchString);
     }
 }
