@@ -132,6 +132,8 @@ public abstract class DtoMapper {
         dto.getTypes().remove(EntityToOwlClassMapper.getOwlClassForEntity(dto.getClass()));
     }
 
+    @Mapping(target = "members", ignore = true)
     @Mapping(target = "primaryLanguage", ignore = true)
+    @Mapping(target = "types", ignore = true)
     public abstract void updateCollectionFromDto(SkosCollectionDto source, @MappingTarget SkosCollection<?> target);
 }
