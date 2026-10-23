@@ -35,6 +35,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.core.type.TypeReference;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -69,6 +70,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     private static final String COLLECTION_NAMESPACE = VOCABULARY_URI + "/collection/";
     private static final URI COLLECTION_URI = URI.create(COLLECTION_NAMESPACE + COLLECTION_NAME);
     private static final String MEMBER_POSITIONS_PATH = PATH + "/ordered/{collection}/members/positions";
+    private static final String ADD_MEMBER_OPTIONS_PATH = PATH + "/{collection}/members/options";
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration config;
@@ -519,5 +521,61 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(delete(PATH + "/{collection}", VOCABULARY_NAME, COLLECTION_NAME)
                         .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void findAddMemberOptionsReturnsTermsAndCollectionsWithTotalCountHeader() throws Exception {
+        final PageRequest pageRequest = PageRequest.of(1, 5);
+        final List<HasIdentifier> options = new ArrayList<>(generateMembers(3));
+        options.addAll(generateCollectionDtos(2));
+        final int totalCount = 12;
+        when(collectionServiceMock.findAddMemberOptions(COLLECTION_URI, VOCABULARY_URI, null, pageRequest))
+                .thenReturn(new PageImpl<>(options, pageRequest, totalCount));
+
+        final MvcResult mvcResult = mockMvc.perform(get(ADD_MEMBER_OPTIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
+                        .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        final List<HasIdentifier> result =
+                jsonLdObjectMapper.readValue(mvcResult.getResponse().getContentAsByteArray(), new TypeReference<>() {});
+        List<URI> expectedUris = options.stream().map(HasIdentifier::getUri).toList();
+        List<URI> returnedUris = result.stream().map(HasIdentifier::getUri).toList();
+        assertEquals(expectedUris, returnedUris);
+        assertEquals(Integer.toString(totalCount), mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    void findAddMemberOptionsPassesPageSpecificationToService() throws Exception {
+        final PageRequest pageRequest = PageRequest.of(2, 5);
+        when(collectionServiceMock.findAddMemberOptions(COLLECTION_URI, VOCABULARY_URI, null, pageRequest))
+                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
+
+        mockMvc.perform(get(ADD_MEMBER_OPTIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
+                        .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
+                .andExpect(status().isOk());
+
+        verify(collectionServiceMock).findAddMemberOptions(COLLECTION_URI, VOCABULARY_URI, null, pageRequest);
+    }
+
+    @Test
+    void findAddMemberOptionsPassesSearchStringToService() throws Exception {
+        final String searchString = "locality";
+        when(collectionServiceMock.findAddMemberOptions(any(), any(), any(), any()))
+                .thenReturn(Page.empty());
+
+        mockMvc.perform(get(ADD_MEMBER_OPTIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param("searchString", searchString)
+                        .param(PAGE, "0")
+                        .param(PAGE_SIZE, "5"))
+                .andExpect(status().isOk());
+
+        verify(collectionServiceMock)
+                .findAddMemberOptions(eq(COLLECTION_URI), eq(VOCABULARY_URI), eq(searchString), any());
     }
 }
