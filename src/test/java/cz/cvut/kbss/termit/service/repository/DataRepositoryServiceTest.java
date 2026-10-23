@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.CustomAttributeMadeSymmetricEvent;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -11,15 +12,19 @@ import cz.cvut.kbss.termit.model.CustomAttribute_;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.URI;
 import java.util.List;
@@ -31,8 +36,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -49,6 +57,9 @@ class DataRepositoryServiceTest {
 
     @Spy
     final IdentifierResolver idResolver = new IdentifierResolver(config);
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private DataRepositoryService sut;
@@ -197,5 +208,30 @@ class DataRepositoryServiceTest {
         sut.removeCustomAttribute(uri, true);
 
         verify(dataDao).evictCacheForContexts(affectedContexts);
+    }
+
+    @Test
+    void updateCustomAttributePublishesEventWhenItWasMadeSymmetricInUpdate() {
+        final CustomAttribute existing =
+                new CustomAttribute(Generator.generateUri(), MultilingualString.create("Custom attribute", "en"), null);
+        existing.setDomain(URI.create(SKOS.CONCEPT));
+        existing.setRange(URI.create(SKOS.CONCEPT));
+        assertFalse(existing.isSymmetric());
+        when(dataDao.findCustomAttribute(existing.getUri())).thenReturn(Optional.of(existing));
+        final CustomAttribute updated = new CustomAttribute(existing.getUri(), existing.getLabel(), null);
+        updated.setDomain(URI.create(SKOS.CONCEPT));
+        updated.setRange(URI.create(SKOS.CONCEPT));
+        // TODO Use JOPA OWL constant when available in the next release
+        updated.addType(OWL.SYMMETRICPROPERTY.stringValue());
+
+        sut.updateCustomAttribute(updated);
+        assertTrue(existing.isSymmetric());
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        final ApplicationEvent event = captor.getValue();
+        assertInstanceOf(CustomAttributeMadeSymmetricEvent.class, event);
+        assertEquals(
+                existing.getUri(),
+                ((CustomAttributeMadeSymmetricEvent) event).getAtt().getUri());
     }
 }
