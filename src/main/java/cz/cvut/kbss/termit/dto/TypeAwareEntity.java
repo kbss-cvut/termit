@@ -4,6 +4,8 @@ import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Constants;
 
 import java.net.URI;
@@ -21,12 +23,12 @@ import java.util.Set;
                         @VariableResult(name = "types", type = String.class)
                     })
         })
-public class TypeAwareEntity {
+public class TypeAwareEntity implements HasIdentifier, HasTypes {
     public static final String RESULTSET_MAPPING = "TypeAwareEntity";
 
-    private final URI uri;
+    private URI uri;
 
-    private final Set<String> types;
+    private Set<String> types;
 
     public TypeAwareEntity(URI uri, Set<String> types) {
         this.uri = uri;
@@ -53,11 +55,23 @@ public class TypeAwareEntity {
         return types.contains(SKOS.ORDERED_COLLECTION);
     }
 
+    @Override
     public URI getUri() {
         return uri;
     }
 
+    @Override
+    public void setUri(URI uri) {
+        this.uri = uri;
+    }
+
+    @Override
     public Set<String> getTypes() {
         return types;
+    }
+
+    @Override
+    public void setTypes(Set<String> types) {
+        this.types = types;
     }
 }

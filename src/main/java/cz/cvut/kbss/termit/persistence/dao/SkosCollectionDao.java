@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
@@ -14,6 +15,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractTerm_;
+import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
@@ -51,17 +53,53 @@ public class SkosCollectionDao {
      * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, Vocabulary)}
      */
     private static final String COLLECTIONS_IN_VOCABULARY_PATTERN = """
-            ?collection a ?type ;
-                ?inScheme ?vocabulary .
-            FILTER(?type IN (?collectionTypes)) .
+            GRAPH ?vocabulary {
+                ?collection a ?type ;
+                    ?inScheme ?vocabulary .
+                FILTER(?type IN (?collectionTypes)) .
+            }
+            """;
+
+    /**
+     * Matches collections and terms in a vocabulary that are not members of a collection (excluding the collection
+     * itself) along with their label in the vocabulary language. Collections are bound to {@code ?priority} 0, terms to
+     * 1.
+     *
+     * @implNote Bindings are applied by {@link #bindAddMemberOptions(Query, URI, Vocabulary)}
+     */
+    private static final String ADD_MEMBER_OPTIONS_PATTERN = """
+            GRAPH ?vocabulary {
+                {
+                    # a different collection in vocabulary
+                    ?entity a ?type .
+                    FILTER(?type IN (?collectionTypes))
+                    FILTER(?entity != ?collection)
+                    ?entity ?hasCollectionLabel ?label .
+                    BIND(0 AS ?priority)
+                } UNION {
+                    # a term in vocabulary
+                    ?entity a ?type .
+                    FILTER(?type = ?termType)
+                    ?entity ?hasTermLabel ?label .
+                    BIND(1 AS ?priority)
+                }
+                ?entity ?inScheme ?vocabulary .
+                FILTER(lang(?label) = ?language)
+            }
+            # filter non-members
+            FILTER NOT EXISTS {
+                ?collection ?hasMember|(?hasMemberList/?listRest*/?listFirst) ?entity .
+            }
             """;
 
     /** Property identifiers representing a label of collection member */
     private static final Set<URI> MEMBER_LABEL_PROPERTIES =
             Set.of(AbstractTerm_.labelPropertyIRI.toURI(), SkosCollection_.labelPropertyIRI.toURI());
 
-    protected final URI unorderedUri = TermCollection_.entityClassIRI.toURI();
-    protected final URI orderedUri = OrderedTermCollection_.entityClassIRI.toURI();
+    protected static final URI UNORDERED_URI = TermCollection_.entityClassIRI.toURI();
+    protected static final URI ORDERED_URI = OrderedTermCollection_.entityClassIRI.toURI();
+
+    private static final Set<URI> COLLECTION_TYPES = Set.of(ORDERED_URI, UNORDERED_URI);
 
     private final EntityManager em;
 
@@ -133,7 +171,7 @@ public class SkosCollectionDao {
     private <T> TypedQuery<T> bindCollectionsInVocabulary(TypedQuery<T> query, Vocabulary vocabulary) {
         return query.setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
-                .setParameter("collectionTypes", Set.of(orderedUri, unorderedUri));
+                .setParameter("collectionTypes", COLLECTION_TYPES);
     }
 
     public SkosCollectionDto findDto(URI collectionUri) {
@@ -394,5 +432,67 @@ public class SkosCollectionDao {
             throw new PersistenceException(
                     "Failed to check existence of SKOS collection " + Utils.uriToString(collectionUri), e);
         }
+    }
+
+    /**
+     * Finds possible collection members (Terms or other Collections) from the vocabulary that are not already present
+     * in the collection.
+     *
+     * <p>All collections are placed before terms, both are sorted by their label. The sort direction is taken from the
+     * {@code label} property of the page sort specification, ascending by default.
+     *
+     * @param collectionUri the collection whose members should be excluded
+     * @param vocabulary vocabulary of the collection
+     * @param pageRequest page request
+     * @return Page of entities with their types that can be added to the collection
+     */
+    public Page<TypeAwareEntity> findAddMemberOptions(URI collectionUri, Vocabulary vocabulary, Pageable pageRequest) {
+        Objects.requireNonNull(collectionUri, "Collection identifier must not be null");
+        Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
+        Objects.requireNonNull(vocabulary.getPrimaryLanguage(), "Vocabulary primary language must not be null");
+        try {
+            final Query query = em.createNativeQuery(
+                    """
+                    SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
+                    """.formatted(Constants.GROUP_CONCAT_SEPARATOR)
+                            + ADD_MEMBER_OPTIONS_PATTERN + """
+                    } GROUP BY ?entity ?priority ?label
+                    ORDER BY ASC(?priority)
+                    """ + buildSortClause(pageRequest, "?label", "?entity"),
+                    TypeAwareEntity.RESULTSET_MAPPING);
+            bindAddMemberOptions(query, collectionUri, vocabulary);
+            @SuppressWarnings("unchecked")
+            final List<TypeAwareEntity> data = query.setFirstResult((int) pageRequest.getOffset())
+                    .setMaxResults(pageRequest.getPageSize())
+                    .getResultList();
+            return PageableExecutionUtils.getPage(
+                    data, pageRequest, () -> countAddMemberOptions(collectionUri, vocabulary));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to find add member options for SKOS collection " + Utils.uriToString(collectionUri), e);
+        }
+    }
+
+    /** Counts all possible collection members matched by {@link #findAddMemberOptions(URI, Vocabulary, Pageable)}. */
+    private long countAddMemberOptions(URI collectionUri, Vocabulary vocabulary) {
+        final TypedQuery<Long> query = em.createNativeQuery(
+                "SELECT (COUNT(DISTINCT ?entity) AS ?count) WHERE { " + ADD_MEMBER_OPTIONS_PATTERN + " }", Long.class);
+        bindAddMemberOptions(query, collectionUri, vocabulary);
+        return query.getSingleResult();
+    }
+
+    private void bindAddMemberOptions(Query query, URI collectionUri, Vocabulary vocabulary) {
+        query.setParameter("collection", collectionUri)
+                .setParameter("hasMember", TermCollection_.membersPropertyIRI)
+                .setParameter("hasMemberList", OrderedTermCollection_.membersPropertyIRI)
+                .setParameter("listRest", URI.create(RDF.REST))
+                .setParameter("listFirst", URI.create(RDF.FIRST))
+                .setParameter("vocabulary", vocabulary.getUri())
+                .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
+                .setParameter("language", vocabulary.getPrimaryLanguage())
+                .setParameter("collectionTypes", COLLECTION_TYPES)
+                .setParameter("hasCollectionLabel", SkosCollection_.labelPropertyIRI)
+                .setParameter("termType", Term_.entityClassIRI)
+                .setParameter("hasTermLabel", Term_.labelPropertyIRI);
     }
 }

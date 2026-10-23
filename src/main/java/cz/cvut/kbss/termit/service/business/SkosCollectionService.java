@@ -116,4 +116,11 @@ public class SkosCollectionService {
         repositoryService.updateMemberPosition(collection, vocabulary, memberIri, originalPos, newPos);
         // the update itself is fast, the transaction commit is what takes long
     }
+
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    @Transactional(readOnly = true)
+    public Page<HasIdentifier> findAddMemberOptions(URI collectionUri, URI vocabularyUri, Pageable pageRequest) {
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+        return repositoryService.findAddMemberOptions(collectionUri, vocabulary, pageRequest);
+    }
 }
