@@ -254,4 +254,17 @@ public class SkosCollectionRepositoryService {
         members.add(newPos, memberIri);
         update(collection, vocabulary);
     }
+
+    /**
+     * Loads entities that can be added to the collection and maps them to respective entity instances.
+     *
+     * @see SkosCollectionDao#findAddMemberOptions(URI, Vocabulary, Pageable)
+     * @see #resolveEntity(TypeAwareEntity)
+     */
+    @Transactional(readOnly = true)
+    public Page<HasIdentifier> findAddMemberOptions(URI collectionUri, Vocabulary vocabulary, Pageable pageRequest) {
+        return collectionDao
+                .findAddMemberOptions(collectionUri, vocabulary, pageRequest)
+                .map(this::resolveEntity);
+    }
 }

@@ -408,6 +408,39 @@ public class SkosCollectionController extends BaseController {
         collectionService.updateOrderedMemberPosition(collectionUri, vocabularyUri, memberIri, originalPos, newPos);
     }
 
+    @GetMapping(value = "/{collectionLocalName}/members/options", produces = JsonLd.MEDIA_TYPE)
+    public ResponseEntity<List<HasIdentifier>> findAddMemberOptions(
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_LOCAL_NAME_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String collectionLocalName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_NAMESPACE_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
+                    String collectionNamespace,
+            @RequestParam(name = QueryParams.PAGE) int page,
+            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) int size) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        Page<HasIdentifier> result =
+                collectionService.findAddMemberOptions(collectionUri, vocabularyUri, createPageRequest(size, page));
+        return ResponseEntity.ok()
+                .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
+                .body(result.getContent());
+    }
+
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
         return resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
     }
