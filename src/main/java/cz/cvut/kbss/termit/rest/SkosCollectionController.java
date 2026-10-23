@@ -430,12 +430,15 @@ public class SkosCollectionController extends BaseController {
                             example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
                     @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
                     String collectionNamespace,
-            @RequestParam(name = QueryParams.PAGE) int page,
-            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) int size) {
+            @Parameter(description = "String by which to filter the options (label).")
+                    @RequestParam(name = "searchString", required = false)
+                    String searchString,
+            @RequestParam(name = QueryParams.PAGE, required = false) Integer page,
+            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer size) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
-        Page<HasIdentifier> result =
-                collectionService.findAddMemberOptions(collectionUri, vocabularyUri, createPageRequest(size, page));
+        Page<HasIdentifier> result = collectionService.findAddMemberOptions(
+                collectionUri, vocabularyUri, searchString, createPageRequest(size, page));
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());
