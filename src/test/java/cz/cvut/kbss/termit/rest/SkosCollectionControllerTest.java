@@ -594,4 +594,15 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
 
         verify(collectionServiceMock).addMember(COLLECTION_URI, VOCABULARY_URI, member);
     }
+
+    @Test
+    void removeMemberPassesIdentifiersToService() throws Exception {
+        final URI member = Generator.generateUri();
+        mockMvc.perform(delete(PATH + "/{collectionLocalName}/members", VOCABULARY_NAME, COLLECTION_NAME)
+                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
+                        .param("member", member.toString()))
+                .andExpect(status().isNoContent());
+
+        verify(collectionServiceMock).removeMember(COLLECTION_URI, VOCABULARY_URI, member);
+    }
 }
