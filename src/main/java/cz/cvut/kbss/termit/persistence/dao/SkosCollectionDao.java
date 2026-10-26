@@ -1,10 +1,12 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
+import cz.cvut.kbss.jopa.model.EntityGraph;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.query.QueryHints;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -504,5 +506,36 @@ public class SkosCollectionDao {
                 .setParameter("termType", Term_.entityClassIRI)
                 .setParameter("hasTermLabel", Term_.labelPropertyIRI)
                 .setParameter("searchString", searchString);
+    }
+
+    public List<SkosCollectionDto> findCollectionsWithMember(URI memberUri) {
+        Objects.requireNonNull(memberUri, "Member URI must not be null");
+        try {
+            EntityGraph<SkosCollectionDto> graph = em.createEntityGraph(SkosCollectionDto.class);
+            graph.addAttributeNodes("vocabulary");
+            return em.createNativeQuery(
+                            """
+                    SELECT DISTINCT ?collection ?vocabulary (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
+                        GRAPH ?vocabulary {
+                            ?collection a ?type ;
+                                ?hasMember|(?hasMemberList/?listRest*/?listFirst) ?member ;
+                                ?inVocabulary ?vocabulary .
+                            FILTER(?type IN (?collectionTypes)) .
+                        }
+                    } GROUP BY ?collection ?vocabulary
+                    """.formatted(Constants.GROUP_CONCAT_SEPARATOR),
+                            SkosCollectionDto.COLLECTION_WITH_VOCABULARY_MAPPING)
+                    .setParameter("hasMember", TermCollection_.membersPropertyIRI)
+                    .setParameter("hasMemberList", OrderedTermCollection_.membersPropertyIRI)
+                    .setParameter("listRest", URI.create(RDF.REST))
+                    .setParameter("listFirst", URI.create(RDF.FIRST))
+                    .setParameter("collectionTypes", COLLECTION_TYPES)
+                    .setParameter("member", memberUri)
+                    .setParameter("inVocabulary", SkosCollection_.vocabularyPropertyIRI)
+                    .setHint(QueryHints.FETCH_GRAPH, graph)
+                    .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException("Failed to find collections with member " + Utils.uriToString(memberUri), e);
+        }
     }
 }

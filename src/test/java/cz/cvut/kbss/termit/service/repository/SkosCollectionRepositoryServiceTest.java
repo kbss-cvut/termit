@@ -636,4 +636,92 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
                 sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
         assertEquals(updated.getMembers().getFirst(), newMember.getUri());
     }
+
+    @Test
+    void findCollectionsWithMemberReturnsOrderedCollectionContainingMember() {
+        final Term member = orderedMembers.get(2);
+
+        final Set<SkosCollection<?>> collections = sut.findCollectionsWithMember(member.getUri());
+        assertEquals(1, collections.size());
+        final OrderedTermCollection ordered = assertInstanceOf(
+                OrderedTermCollection.class, collections.iterator().next());
+        assertEquals(orderedCollection.getUri(), ordered.getUri());
+        assertEquals(orderedCollection.getVocabulary(), ordered.getVocabulary());
+        assertEquals(orderedCollection.getTypes(), ordered.getTypes());
+    }
+
+    @Test
+    void findCollectionsWithMemberReturnsUnorderedCollectionContainingMember() {
+        final Term member = unorderedMembers.get(2);
+
+        final Set<SkosCollection<?>> collections = sut.findCollectionsWithMember(member.getUri());
+        assertEquals(1, collections.size());
+        final TermCollection unordered =
+                assertInstanceOf(TermCollection.class, collections.iterator().next());
+        assertEquals(unorderedCollection.getUri(), unordered.getUri());
+        assertEquals(unorderedCollection.getVocabulary(), unordered.getVocabulary());
+        assertThat(unordered.getTypes()).isEmpty();
+    }
+
+    @Test
+    void findCollectionsWithMemberReturnsAllCollectionsWithTheMember() {
+        final Term member = Generator.generateTermWithId(vocabulary.getUri());
+        orderedCollection.getMembers().add(member.getUri());
+        unorderedCollection.getMembers().add(member.getUri());
+        transactional(() -> Stream.of(member, orderedCollection, unorderedCollection)
+                .forEach(e -> em.merge(e, vocabularyDescriptor)));
+
+        final Set<SkosCollection<?>> collections = sut.findCollectionsWithMember(member.getUri());
+        assertEquals(2, collections.size());
+
+        TermCollection unordered = collections.stream()
+                .filter(e -> e.getUri().equals(unorderedCollection.getUri()))
+                .map(TermCollection.class::cast)
+                .findAny()
+                .orElseThrow();
+        OrderedTermCollection ordered = collections.stream()
+                .filter(e -> e.getUri().equals(orderedCollection.getUri()))
+                .map(OrderedTermCollection.class::cast)
+                .findAny()
+                .orElseThrow();
+
+        assertEquals(unorderedCollection.getMembers(), unordered.getMembers());
+        assertEquals(orderedCollection.getMembers(), ordered.getMembers());
+        assertThat(unordered.getMembers()).contains(member.getUri());
+        assertThat(ordered.getMembers()).contains(member.getUri());
+    }
+
+    @Test
+    void removeMemberFromAllCollectionsRemovesMemberFromOrderedCollection() {
+        final Term member = orderedMembers.get(2);
+
+        sut.removeMemberFromAllCollections(member.getUri());
+
+        final OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).doesNotContain(member.getUri());
+    }
+
+    @Test
+    void removeMemberFromAllCollectionsRemovesMemberFromUnorderedCollection() {
+        final Term member = unorderedMembers.get(2);
+
+        sut.removeMemberFromAllCollections(member.getUri());
+
+        final TermCollection updated =
+                sut.findUnordered(unorderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).doesNotContain(member.getUri());
+    }
+
+    @Test
+    void removeRemovesCollectionFromOtherCollections() {
+        unorderedCollection.getMembers().add(orderedCollection.getUri());
+        sut.update(unorderedCollection, vocabulary);
+
+        sut.remove(orderedCollection, vocabulary);
+
+        final TermCollection updated =
+                sut.findUnordered(unorderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).doesNotContain(orderedCollection.getUri());
+    }
 }
