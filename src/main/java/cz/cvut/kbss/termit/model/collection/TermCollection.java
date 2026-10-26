@@ -9,6 +9,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.exception.ValidationException;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -37,5 +38,13 @@ public class TermCollection extends SkosCollection<Set<URI>> {
         if (getTypes() != null && isOrdered()) {
             throw new ValidationException("Ordered collection must not be modified as unordered one!");
         }
+    }
+
+    @Override
+    public void addMember(URI member) {
+        if (getMembers() == null || getMembers().isEmpty()) {
+            setMembers(new HashSet<>());
+        }
+        getMembers().add(member);
     }
 }

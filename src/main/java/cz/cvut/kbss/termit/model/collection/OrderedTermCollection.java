@@ -7,6 +7,7 @@ import cz.cvut.kbss.jopa.model.annotations.RDFCollection;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @OWLClass(iri = SKOS.ORDERED_COLLECTION)
@@ -37,6 +38,9 @@ public class OrderedTermCollection extends SkosCollection<List<URI>> {
 
     @Override
     public void addMember(URI member) {
+        if (getMembers() == null || getMembers().isEmpty()) {
+            setMembers(new ArrayList<>());
+        }
         getMembers().addFirst(member);
     }
 }
