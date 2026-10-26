@@ -36,6 +36,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
@@ -54,6 +55,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -1118,5 +1120,41 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         ValidationException e = assertThrows(ValidationException.class, () -> sut.addChildTerm(term, parent));
 
         assertEquals("term.created.error.iriNotInVocabularyNamespace", e.getMessageId());
+    }
+
+    @Test
+    void removeTermWithoutParamsThrowsWhenTermIsMemberOfOrderedCollection() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final OrderedTermCollection orderedTermCollection =
+                Generator.generateOrderedTermCollection(vocabulary, List.of(term));
+        transactional(() -> {
+            sut.addRootTermToVocabulary(term, vocabulary);
+            em.persist(orderedTermCollection, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+
+        assertThrows(AssetRemovalException.class, () -> sut.remove(term));
+    }
+
+    @Test
+    void removeTermWithParamsDoesNotBreakOrderedCollectionMembersList() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final OrderedTermCollection orderedTermCollection = Generator.generateOrderedTermCollection(vocabulary);
+        final List<URI> expectedMembers = new ArrayList<>(orderedTermCollection.getMembers());
+        orderedTermCollection.getMembers().add(2, term.getUri());
+        transactional(() -> {
+            sut.addRootTermToVocabulary(term, vocabulary);
+            em.persist(orderedTermCollection, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+
+        sut.remove(new TermRemovalParams(term, SubTermRemovalStrategy.FAIL, false, false));
+
+        final OrderedTermCollection updated = readOnlyTransactional(() -> em.find(
+                OrderedTermCollection.class,
+                orderedTermCollection.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary)));
+        assertFalse(updated.getMembers().contains(term.getUri()));
+
+        assertEquals(expectedMembers.size(), updated.getMembers().size());
+        assertEquals(expectedMembers, updated.getMembers());
     }
 }

@@ -213,7 +213,10 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void remove(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
-        collectionDao.remove(skosCollection, vocabulary);
+        final SkosCollection<?> managed =
+                collectionDao.find(skosCollection.getClass(), skosCollection.getUri(), vocabulary);
+        removeMemberFromAllCollections(managed.getUri());
+        collectionDao.remove(managed, vocabulary);
     }
 
     @Transactional(readOnly = true)
@@ -273,5 +276,35 @@ public class SkosCollectionRepositoryService {
     public void addMember(SkosCollection<?> collection, Vocabulary vocabulary, URI member) {
         collection.addMember(member);
         update(collection, vocabulary);
+    }
+
+    @Transactional
+    public void removeMember(SkosCollection<?> collection, Vocabulary vocabulary, URI member) {
+        collection.removeMember(member);
+        update(collection, vocabulary);
+    }
+
+    @Transactional
+    public void removeMemberFromAllCollections(URI member) {
+        findCollectionsWithMember(member).forEach(collection -> {
+            collection.removeMember(member);
+            // persisted by transaction commit
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public Set<SkosCollection<?>> findCollectionsWithMember(URI member) {
+        return collectionDao.findCollectionsWithMember(member).stream()
+                .map(this::mapToCollection)
+                .collect(Collectors.toSet());
+    }
+
+    @Transactional(readOnly = true)
+    protected SkosCollection<?> mapToCollection(SkosCollectionDto entity) {
+        Vocabulary vocabulary = new Vocabulary(entity.getVocabulary());
+        if (entity.isOrdered()) {
+            return findOrdered(entity.getUri(), vocabulary).orElse(null);
+        }
+        return findUnordered(entity.getUri(), vocabulary).orElse(null);
     }
 }

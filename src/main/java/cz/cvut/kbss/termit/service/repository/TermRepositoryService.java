@@ -47,6 +47,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -85,6 +86,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     private final TermOccurrenceService termOccurrenceService;
 
     private final DataRepositoryService dataService;
+    private final SkosCollectionRepositoryService skosCollectionRepositoryService;
 
     public TermRepositoryService(
             Validator validator,
@@ -94,7 +96,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             TermOccurrenceService termOccurrenceService,
             VocabularyRepositoryService vocabularyService,
             VocabularyNamespaceResolver namespaceResolver,
-            DataRepositoryService dataService) {
+            DataRepositoryService dataService,
+            @Lazy SkosCollectionRepositoryService skosCollectionRepositoryService) {
         super(validator);
         this.idResolver = idResolver;
         this.termDao = termDao;
@@ -103,6 +106,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.termOccurrenceService = termOccurrenceService;
         this.namespaceResolver = namespaceResolver;
         this.dataService = dataService;
+        this.skosCollectionRepositoryService = skosCollectionRepositoryService;
     }
 
     @Override
@@ -697,6 +701,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
         LOG.debug("Applying sub-terms removal strategy for term <{}>", termUri);
         removalParams.subTermsStrategy().apply(removalParams, this);
+
+        // handle removal from collections explicitly to maintain ordered collections linked list
+        skosCollectionRepositoryService.removeMemberFromAllCollections(termUri);
         termDao.flushAndClear();
 
         if (removalParams.removeRelationships()) {
