@@ -55,12 +55,12 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
 
     public abstract void setMembers(T members);
 
-    public void addMember(URI member) {
-        getMembers().add(member);
-    }
+    public abstract void addMember(URI member);
 
     public void removeMember(URI member) {
-        getMembers().remove(member);
+        if (hasMember(member)) {
+            getMembers().remove(member);
+        }
     }
 
     public boolean hasMember(URI member) {
