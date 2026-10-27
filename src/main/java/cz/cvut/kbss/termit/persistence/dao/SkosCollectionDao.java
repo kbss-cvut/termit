@@ -52,7 +52,7 @@ public class SkosCollectionDao {
     /**
      * Matches all collections (both ordered and unordered) in a vocabulary.
      *
-     * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, String, Vocabulary)}
+     * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, String, String, Vocabulary)}
      */
     private static final String COLLECTIONS_IN_VOCABULARY_PATTERN = """
             GRAPH ?vocabulary {
@@ -133,10 +133,18 @@ public class SkosCollectionDao {
     /**
      * Finds all collections (both ordered and unordered) in the given vocabulary.
      *
-     * <p>Collections are sorted by their label in the primary language of the vocabulary. The sort direction is taken
-     * from the {@code label} property of the page sort specification, ascending by default.
+     * <p>The search string is matched against the collection label in the search language. Collections without a label
+     * in the search language are matched by their label in the primary language of the vocabulary.
+     *
+     * <p>Collections with a label in the search language are placed first. Then, collections are sorted by their label
+     * in the primary language of the vocabulary. The sort direction is taken from the {@code label} property of the
+     * page sort specification, ascending by default.
      *
      * @param vocabulary the vocabulary of the collections
+     * @param searchString string the collection label has to contain, all collections are matched when {@code null}
+     * @param searchLanguage language of the search string, defaults to the vocabulary primary language when
+     *     {@code null}
+     * @param pageable page specification
      * @return Page of collection DTOs
      */
     public Page<SkosCollectionDto> findAll(
@@ -169,10 +177,13 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Counts all collections (both ordered and unordered) in the given vocabulary.
+     * Counts all collections (both ordered and unordered) in the given vocabulary matching the search string.
      *
+     * @param searchString string the collection label has to contain
+     * @param searchLanguage language of the search string
      * @param vocabulary the vocabulary of the collections
      * @return the total number of collections
+     * @see #findAll(Vocabulary, String, String, Pageable)
      */
     private long countAll(String searchString, String searchLanguage, Vocabulary vocabulary) {
         return bindCollectionsInVocabulary(

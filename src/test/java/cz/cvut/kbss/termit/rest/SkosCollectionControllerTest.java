@@ -49,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -247,7 +248,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         final PageRequest pageRequest = PageRequest.of(1, 5);
         final List<SkosCollectionDto> collections = generateCollectionDtos(pageRequest.getPageSize());
         final int totalCount = 12;
-        when(collectionServiceMock.findAll(VOCABULARY_URI, null, pageRequest))
+        when(collectionServiceMock.findAll(VOCABULARY_URI, null, null, pageRequest))
                 .thenReturn(new PageImpl<>(collections, pageRequest, totalCount));
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH, VOCABULARY_NAME)
@@ -265,19 +266,19 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllResolvesVocabularyIdentifierInSpecifiedVocabularyNamespace() throws Exception {
-        when(collectionServiceMock.findAll(any(), any(), any())).thenReturn(Page.empty());
+        when(collectionServiceMock.findAll(any(), any(), any(), any())).thenReturn(Page.empty());
 
         mockMvc.perform(get(PATH, VOCABULARY_NAME).param(QueryParams.NAMESPACE, VOCABULARY_NAMESPACE))
                 .andExpect(status().isOk());
 
         verify(idResolverMock).resolveIdentifier(VOCABULARY_NAMESPACE, VOCABULARY_NAME);
-        verify(collectionServiceMock).findAll(eq(VOCABULARY_URI), any(), any());
+        verify(collectionServiceMock).findAll(eq(VOCABULARY_URI), any(), any(), any());
     }
 
     @Test
     void getAllPassesPageSpecificationToService() throws Exception {
         final PageRequest pageRequest = PageRequest.of(2, 5);
-        when(collectionServiceMock.findAll(VOCABULARY_URI, null, pageRequest))
+        when(collectionServiceMock.findAll(VOCABULARY_URI, null, null, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
         mockMvc.perform(get(PATH, VOCABULARY_NAME)
@@ -285,12 +286,36 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
                 .andExpect(status().isOk());
 
-        verify(collectionServiceMock).findAll(VOCABULARY_URI, null, pageRequest);
+        verify(collectionServiceMock).findAll(VOCABULARY_URI, null, null, pageRequest);
+    }
+
+    @Test
+    void getAllPassesSearchStringAndSearchLanguageToService() throws Exception {
+        final String searchString = "locality";
+        final String searchLanguage = "cs";
+        when(collectionServiceMock.findAll(any(), any(), any(), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get(PATH, VOCABULARY_NAME)
+                        .param("searchString", searchString)
+                        .param("searchLanguage", searchLanguage))
+                .andExpect(status().isOk());
+
+        verify(collectionServiceMock).findAll(eq(VOCABULARY_URI), eq(searchString), eq(searchLanguage), any());
+    }
+
+    @Test
+    void getAllPassesNullSearchStringAndSearchLanguageToServiceWhenTheyAreMissing() throws Exception {
+        when(collectionServiceMock.findAll(any(), any(), any(), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get(PATH, VOCABULARY_NAME)).andExpect(status().isOk());
+
+        verify(collectionServiceMock).findAll(eq(VOCABULARY_URI), isNull(), isNull(), any());
     }
 
     @Test
     void getAllReturnsNotFoundWhenServiceThrowsNotFoundException() throws Exception {
-        when(collectionServiceMock.findAll(eq(VOCABULARY_URI), any(), any())).thenThrow(NotFoundException.class);
+        when(collectionServiceMock.findAll(eq(VOCABULARY_URI), any(), any(), any()))
+                .thenThrow(NotFoundException.class);
 
         mockMvc.perform(get(PATH, VOCABULARY_NAME)).andExpect(status().isNotFound());
     }
