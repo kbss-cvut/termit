@@ -724,4 +724,17 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
                 sut.findUnordered(unorderedCollection.getUri(), vocabulary).orElseThrow();
         assertThat(updated.getMembers()).doesNotContain(orderedCollection.getUri());
     }
+
+    @Test
+    void removeRemovesCollectionFromOrderedCollectionKeepingOrderOfOtherMembers() {
+        final List<URI> expectedMembers = new ArrayList<>(orderedCollection.getMembers());
+        orderedCollection.getMembers().add(2, unorderedCollection.getUri());
+        transactional(() -> em.merge(orderedCollection, vocabularyDescriptor));
+
+        sut.remove(unorderedCollection, vocabulary);
+
+        final OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertEquals(expectedMembers, updated.getMembers());
+    }
 }

@@ -59,6 +59,8 @@ public class SkosCollectionDao {
                 ?collection a ?type ;
                     ?inScheme ?vocabulary .
                 FILTER(?type IN (?collectionTypes)) .
+                ?collection ?hasLabel ?label .
+                FILTER(lang(?label) = ?language)
             }
             """;
 
@@ -135,15 +137,11 @@ public class SkosCollectionDao {
                                     """
                                     SELECT DISTINCT ?collection WHERE {
                                     """ + COLLECTIONS_IN_VOCABULARY_PATTERN + """
-                                        ?collection ?hasLabel ?label .
-                                        FILTER(lang(?label) = ?language)
                                     } ORDER BY
                                     """
                                             + buildSortClause(pageable, "?label", "?collection"),
                                     SkosCollectionDto.class),
                             vocabulary)
-                    .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
-                    .setParameter("language", vocabulary.getPrimaryLanguage())
                     .setDescriptor(descriptor(vocabulary))
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
@@ -174,7 +172,9 @@ public class SkosCollectionDao {
     private <T> TypedQuery<T> bindCollectionsInVocabulary(TypedQuery<T> query, Vocabulary vocabulary) {
         return query.setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
-                .setParameter("collectionTypes", COLLECTION_TYPES);
+                .setParameter("collectionTypes", COLLECTION_TYPES)
+                .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
+                .setParameter("language", vocabulary.getPrimaryLanguage());
     }
 
     public SkosCollectionDto findDto(URI collectionUri) {

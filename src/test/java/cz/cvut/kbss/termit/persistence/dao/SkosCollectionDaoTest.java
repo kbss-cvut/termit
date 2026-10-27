@@ -243,6 +243,25 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void findAllTotalCountExcludesCollectionsWithoutLabelInVocabularyPrimaryLanguage() {
+        // collection is not allowed to have missing primary language,
+        // but the test ensures the find and count method use the same query
+        final String otherLanguage = "cs";
+        assertNotEquals(Environment.LANGUAGE, otherLanguage);
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final TermCollection labelled = collectionWithLabel(anotherVocabulary, "Alpha");
+        final TermCollection unlabelled =
+                collectionWithLabel(anotherVocabulary, MultilingualString.create("Beta", otherLanguage));
+        persistVocabulary(anotherVocabulary, List.of(labelled, unlabelled));
+
+        // a full page forces the total count to be queried instead of being derived from the page content
+        final Page<SkosCollectionDto> result = sut.findAll(anotherVocabulary, PageRequest.of(0, 1));
+
+        assertEquals(List.of(labelled.getUri()), identifiers(result.getContent()));
+        assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
     void findDtoReturnsDtoOfOrderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
 
