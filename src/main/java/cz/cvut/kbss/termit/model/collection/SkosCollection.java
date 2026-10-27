@@ -64,7 +64,7 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
     }
 
     public boolean hasMember(URI member) {
-        return getMembers().contains(member);
+        return getMembers() != null && getMembers().contains(member);
     }
 
     @Override

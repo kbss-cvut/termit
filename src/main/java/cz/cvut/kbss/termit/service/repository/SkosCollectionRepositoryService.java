@@ -312,7 +312,7 @@ public class SkosCollectionRepositoryService {
         return findUnordered(entity.getUri(), vocabulary).orElse(null);
     }
 
-    public static NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
+    private static NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
         return new NotFoundException("Collection " + Utils.uriToString(collectionUri) + " not found in vocabulary "
                 + Utils.uriToString(vocabularyUri));
     }

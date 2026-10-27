@@ -229,7 +229,7 @@ public class SkosCollectionDao {
      * @param clazz the type of the collection
      * @param collectionUri the identifier of the collection
      * @param vocabulary the vocabulary of the collection
-     * @return the collection or {@code null} when not found
+     * @return the collection
      * @param <T> {@link TermCollection} or {@link OrderedTermCollection}
      * @implNote Note that ordered collection can be represented as unordered, but its updates are in such case
      *     prohibited.
@@ -563,7 +563,7 @@ public class SkosCollectionDao {
         try {
             EntityGraph<SkosCollectionDto> graph = em.createEntityGraph(SkosCollectionDto.class);
             graph.addAttributeNodes("vocabulary");
-            return em.createNativeQuery(
+            final Query query = em.createNativeQuery(
                             """
                     SELECT DISTINCT ?collection ?vocabulary (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
                         GRAPH ?vocabulary {
@@ -582,8 +582,11 @@ public class SkosCollectionDao {
                     .setParameter("collectionTypes", COLLECTION_TYPES)
                     .setParameter("member", memberUri)
                     .setParameter("inVocabulary", SkosCollection_.vocabularyPropertyIRI)
-                    .setHint(QueryHints.FETCH_GRAPH, graph)
-                    .getResultList();
+                    .setHint(QueryHints.FETCH_GRAPH, graph);
+
+            @SuppressWarnings("unchecked")
+            final List<SkosCollectionDto> result = query.getResultList();
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find collections with member " + Utils.uriToString(memberUri), e);
         }
