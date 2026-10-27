@@ -9,7 +9,6 @@ import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
-import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -101,9 +100,8 @@ public class SkosCollectionService {
         repositoryService.remove(collection, vocabulary);
     }
 
-    private NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
-        return new NotFoundException("Collection " + Utils.uriToString(collectionUri) + " not found in vocabulary "
-                + Utils.uriToString(vocabularyUri));
+    private static NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
+        return SkosCollectionRepositoryService.notFound(collectionUri, vocabularyUri);
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")

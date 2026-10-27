@@ -6,8 +6,10 @@ import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,11 +38,17 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
 
     private Vocabulary vocabulary;
 
+    private TermCollection collection;
+
     @BeforeEach
     void setUp() {
         enableRdfsInference(em);
         vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> vocabularyDao.persist(vocabulary));
+
+        collection = Generator.generateTermCollection(vocabulary);
+        collection.setMembers(new HashSet<>());
+        sut.persist(collection);
     }
 
     @Test
@@ -78,6 +88,41 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         assertThrows(
                 NotFoundException.class,
                 () -> sut.addMember(Generator.generateUri(), vocabulary.getUri(), Generator.generateUri()));
+    }
+
+    @Test
+    void addMemberThrowsNotFoundExceptionWhenMemberDoesNotExist() {
+        final URI missingMember = Generator.generateUri();
+
+        final NotFoundException ex = assertThrows(
+                NotFoundException.class, () -> sut.addMember(collection.getUri(), vocabulary.getUri(), missingMember));
+        assertThat(ex.getMessage()).contains(missingMember.toString());
+    }
+
+    @Test
+    void addMemberThrowsNotFoundExceptionWhenMemberOfOrderedCollectionDoesNotExist() {
+        final URI missingMember = Generator.generateUri();
+
+        final NotFoundException ex = assertThrows(
+                NotFoundException.class, () -> sut.addMember(collection.getUri(), vocabulary.getUri(), missingMember));
+        assertThat(ex.getMessage()).contains(missingMember.toString());
+    }
+
+    @Test
+    void addMemberThrowsValidationExceptionWhenCollectionIsAddedToItself() {
+        final ValidationException ex = assertThrows(
+                ValidationException.class,
+                () -> sut.addMember(collection.getUri(), vocabulary.getUri(), collection.getUri()));
+        assertThat(ex.getMessage()).containsIgnoringCase("member of itself");
+    }
+
+    @Test
+    void addMemberThrowsValidationExceptionWhenMemberIsNotTermOrCollection() {
+        final ValidationException ex = assertThrows(
+                ValidationException.class,
+                () -> sut.addMember(collection.getUri(), vocabulary.getUri(), vocabulary.getUri()));
+        assertThat(ex.getMessage()).containsIgnoringCase("illegal member");
+        assertThat(ex.getMessage()).contains(vocabulary.getUri().toString());
     }
 
     @Test
