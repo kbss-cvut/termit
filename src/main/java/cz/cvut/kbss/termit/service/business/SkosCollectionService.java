@@ -21,7 +21,7 @@ import java.net.URI;
 
 @Service
 public class SkosCollectionService {
-    private static final Logger log = LoggerFactory.getLogger(SkosCollectionService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SkosCollectionService.class);
     private final SkosCollectionRepositoryService repositoryService;
     private final VocabularyService vocabularyService;
     private final DtoMapper dtoMapper;
@@ -52,6 +52,7 @@ public class SkosCollectionService {
                 .orElseThrow(() -> notFound(skosCollection.getUri(), vocabulary.getUri()));
         dtoMapper.updateCollectionFromDto(skosCollection, existing);
         repositoryService.update(existing, vocabulary);
+        LOG.debug("Updated collection <{}>", skosCollection.getUri());
     }
 
     @Transactional
@@ -61,6 +62,7 @@ public class SkosCollectionService {
         final String lang = vocabularyService.getPrimaryLanguage(vocabulary.getUri());
         skosCollection.setPrimaryLanguage(lang);
         repositoryService.persist(skosCollection, vocabulary);
+        LOG.debug("Created new collection <{}> in vocabulary <{}>", skosCollection.getUri(), vocabulary.getUri());
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +100,7 @@ public class SkosCollectionService {
                 .find(collectionUri, vocabulary)
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
         repositoryService.remove(collection, vocabulary);
+        LOG.debug("Removed collection <{}> from vocabulary <{}>", collectionUri, vocabulary.getUri());
     }
 
     private static NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
@@ -114,6 +117,7 @@ public class SkosCollectionService {
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
         repositoryService.updateMemberPosition(collection, vocabulary, memberIri, originalPos, newPos);
         // the update itself is fast, the transaction commit is what takes long
+        LOG.debug("Updated position of member <{}> in collection <{}>", memberIri, collectionUri);
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
@@ -132,6 +136,7 @@ public class SkosCollectionService {
                 .find(collectionUri, vocabulary)
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
         repositoryService.addMember(collection, vocabulary, member);
+        LOG.debug("Added member <{}> to collection <{}>", member, collectionUri);
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
@@ -142,5 +147,6 @@ public class SkosCollectionService {
                 .find(collectionUri, vocabulary)
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
         repositoryService.removeMember(collection, vocabulary, member);
+        LOG.debug("Removed member <{}> from collection <{}>", member, collectionUri);
     }
 }

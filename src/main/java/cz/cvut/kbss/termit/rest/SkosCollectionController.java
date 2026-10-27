@@ -193,8 +193,8 @@ public class SkosCollectionController extends BaseController {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         verifyRequestAndEntityIdentifier(collection, resolveIdentifier(collectionNamespace, collectionLocalName));
         ensureCollectionInVocabulary(collection, vocabularyUri);
+        LOG.debug("Updating collection <{}>", collection.getUri());
         collectionService.update(collection);
-        LOG.debug("Collection {} updated.", collection);
     }
 
     @Operation(
@@ -267,8 +267,8 @@ public class SkosCollectionController extends BaseController {
                     String collectionNamespace) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        LOG.debug("Removing collection <{}> from vocabulary <{}>", collectionUri, vocabularyUri);
         collectionService.remove(collectionUri, vocabularyUri);
-        LOG.debug("Collection {} removed from vocabulary {}.", collectionUri, vocabularyUri);
     }
 
     @Operation(
@@ -411,6 +411,12 @@ public class SkosCollectionController extends BaseController {
                     int newPos) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        LOG.debug(
+                "Updating position for member <{}> in collection <{}> from {} to {}",
+                memberIri,
+                collectionNamespace,
+                originalPos,
+                newPos);
         collectionService.updateOrderedMemberPosition(collectionUri, vocabularyUri, memberIri, originalPos, newPos);
     }
 
@@ -495,6 +501,7 @@ public class SkosCollectionController extends BaseController {
                     URI member) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        LOG.debug("Adding member <{}> to collection <{}>", member, collectionUri);
         collectionService.addMember(collectionUri, vocabularyUri, member);
     }
 
@@ -533,6 +540,7 @@ public class SkosCollectionController extends BaseController {
                     URI member) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        LOG.debug("Removing member <{}> from collection <{}>", member, collectionUri);
         collectionService.removeMember(collectionUri, vocabularyUri, member);
     }
 
@@ -544,8 +552,12 @@ public class SkosCollectionController extends BaseController {
             String localName, Optional<String> namespace, SkosCollection<?> collection) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         ensureCollectionInVocabulary(collection, vocabularyUri);
+        LOG.debug(
+                "Creating {} <{}> in vocabulary <{}>",
+                collection.getClass().getSimpleName(),
+                collection.getUri(),
+                vocabularyUri);
         collectionService.persist(collection);
-        LOG.debug("Collection {} created in vocabulary {}.", collection, vocabularyUri);
         return ResponseEntity.created(generateCollectionLocation(vocabularyUri, collection.getUri()))
                 .build();
     }
