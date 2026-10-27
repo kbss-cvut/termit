@@ -81,7 +81,7 @@ public class SkosCollectionService {
         final TermCollection collection = repositoryService
                 .findUnordered(collectionUri, vocabulary)
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
-        return repositoryService.findMembers(collection, pageable, collection.getPrimaryLanguage());
+        return repositoryService.findMembers(collection, pageable);
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")

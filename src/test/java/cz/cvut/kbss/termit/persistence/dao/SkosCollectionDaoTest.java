@@ -433,8 +433,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         for (int page = 0; page * pageSize < unorderedMembers.size(); page++) {
             final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary)
                     .orElseThrow();
-            sut.findMembers(collection, PageRequest.of(page, pageSize), Environment.LANGUAGE)
-                    .forEach(e -> found.add(e.getUri()));
+            sut.findMembers(collection, PageRequest.of(page, pageSize)).forEach(e -> found.add(e.getUri()));
         }
 
         assertEquals(unorderedMembers.size(), found.size());
@@ -461,7 +460,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         final TermCollection collection = persistUnorderedCollection(List.of(delta, alpha, ccep, bravo, cep));
 
-        final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(0, 10), Environment.LANGUAGE);
+        final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(0, 10));
 
         assertEquals(identifiers(List.of(alpha, bravo, cep, ccep, delta)), identifiers(result));
     }
@@ -473,35 +472,15 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final Term gamma = termWithLabel("Gamma");
         final TermCollection collection = persistUnorderedCollection(List.of(beta, gamma, alpha));
 
-        final List<TypeAwareEntity> result = sut.findMembers(
-                collection, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")), Environment.LANGUAGE);
+        final List<TypeAwareEntity> result =
+                sut.findMembers(collection, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")));
 
         assertEquals(identifiers(List.of(gamma, beta, alpha)), identifiers(result));
     }
 
     @Test
-    void findMembersOfUnorderedCollectionPrioritizesMembersWithLabelInRequestedLanguage() {
-        final String otherLanguage = "cs";
-        assertNotEquals(Environment.LANGUAGE, otherLanguage);
-
-        final Term alphaOther = termWithLabel(MultilingualString.create("Alpha", otherLanguage));
-        final Term betaOther = termWithLabel(MultilingualString.create("Beta", otherLanguage));
-        final Term yankee = termWithLabel("Yankee");
-        final Term zulu = termWithLabel("Zulu");
-        final TermCollection collection = persistUnorderedCollection(List.of(alphaOther, zulu, betaOther, yankee));
-
-        final List<TypeAwareEntity> ascending =
-                sut.findMembers(collection, PageRequest.of(0, 10), Environment.LANGUAGE);
-        assertEquals(identifiers(List.of(yankee, zulu, alphaOther, betaOther)), identifiers(ascending));
-
-        final List<TypeAwareEntity> descending = sut.findMembers(
-                collection, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")), Environment.LANGUAGE);
-        assertEquals(identifiers(List.of(zulu, yankee, betaOther, alphaOther)), identifiers(descending));
-    }
-
-    @Test
-    void findMembersOfUnorderedCollectionUsesLabelInRequestedLanguageForSorting() {
-        // the label in the requested language sorts the opposite way than the label in the other language
+    void findMembersOfUnorderedCollectionUsesLabelInPrimaryLanguageForSorting() {
+        // the label in the primary language sorts the opposite way than the label in the other language
         final MultilingualString firstLabel = MultilingualString.create("Alpha", Environment.LANGUAGE);
         firstLabel.set("cs", "Zulu");
         final MultilingualString secondLabel = MultilingualString.create("Zulu", Environment.LANGUAGE);
@@ -510,12 +489,12 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final Term second = termWithLabel(secondLabel);
         final TermCollection collection = persistUnorderedCollection(List.of(second, first));
 
-        assertEquals(
-                identifiers(List.of(first, second)),
-                identifiers(sut.findMembers(collection, PageRequest.of(0, 10), Environment.LANGUAGE)));
-        assertEquals(
-                identifiers(List.of(second, first)),
-                identifiers(sut.findMembers(collection, PageRequest.of(0, 10), "cs")));
+        final List<TypeAwareEntity> ascending = sut.findMembers(collection, PageRequest.of(0, 10));
+        assertEquals(identifiers(List.of(first, second)), identifiers(ascending));
+
+        final List<TypeAwareEntity> descending =
+                sut.findMembers(collection, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "label")));
+        assertEquals(identifiers(List.of(second, first)), identifiers(descending));
     }
 
     @Test
@@ -523,7 +502,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = termsWithLabels(vocabulary, "Alpha", "Bravo", "Charlie", "Delta", "Echo");
         final TermCollection collection = persistUnorderedCollection(terms.reversed());
 
-        final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(1, 2), Environment.LANGUAGE);
+        final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(1, 2));
 
         assertEquals(identifiers(terms.subList(2, 4)), identifiers(result));
     }

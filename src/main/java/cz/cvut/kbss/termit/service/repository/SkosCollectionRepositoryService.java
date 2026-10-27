@@ -66,17 +66,14 @@ public class SkosCollectionRepositoryService {
     /**
      * Loads members of the collection sorted by their label and maps them to respective entity instances.
      *
-     * <p>Members with a label in the specified language are prioritized.
-     *
      * @param collection The collection whose members should be loaded
      * @param pageable page specification, the sort direction is taken from the {@code label} property
-     * @param language language of the labels used for sorting
      * @return page of entities that are part of the collection
      * @see #resolveEntity(TypeAwareEntity)
      */
     @Transactional(readOnly = true)
-    public Page<HasIdentifier> findMembers(TermCollection collection, Pageable pageable, String language) {
-        final List<HasIdentifier> data = resolveEntities(collectionDao.findMembers(collection, pageable, language));
+    public Page<HasIdentifier> findMembers(TermCollection collection, Pageable pageable) {
+        final List<HasIdentifier> data = resolveEntities(collectionDao.findMembers(collection, pageable));
         return new PageImpl<>(data, pageable, collection.getMembers().size());
     }
 
@@ -93,7 +90,7 @@ public class SkosCollectionRepositoryService {
      *
      * @param collectionUri the identifier of the collection
      * @param vocabulary the vocabulary to which the collection belongs
-     * @return the resolved {@link TermCollection} or {@link OrderedTermCollection}
+     * @return the resolved {@link TermCollection} or {@link OrderedTermCollection} wrapped in an {@code Optional}
      */
     @Transactional(readOnly = true)
     public Optional<SkosCollection<?>> find(URI collectionUri, Vocabulary vocabulary) {
@@ -175,6 +172,7 @@ public class SkosCollectionRepositoryService {
      *
      * @param collection the collection to validate
      * @param members members that should be validated, allows to validate only a subset of collection members
+     * @param vocabulary the vocabulary the members have to belong to
      */
     protected void validate(SkosCollection<?> collection, Collection<URI> members, Vocabulary vocabulary) {
         BaseRepositoryService.validate(collection, validator);

@@ -436,8 +436,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         unorderedCollection.addMember(orderedCollection.getUri());
         transactional(() -> em.merge(unorderedCollection, vocabularyDescriptor));
 
-        final List<HasIdentifier> result = sut.findMembers(unorderedCollection, pageable, Environment.LANGUAGE)
-                .getContent();
+        final List<HasIdentifier> result =
+                sut.findMembers(unorderedCollection, pageable).getContent();
 
         final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(orderedCollection);
 

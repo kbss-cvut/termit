@@ -144,6 +144,12 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         return canCreate();
     }
 
+    /**
+     * Checks if the current user can read the vocabulary with the specified identifier.
+     *
+     * @param vocabularyIri Vocabulary identifier
+     * @return {@code true} if the current user can read the specified vocabulary, {@code false} otherwise
+     */
     public boolean canRead(URI vocabularyIri) {
         Objects.requireNonNull(vocabularyIri);
         final Vocabulary vocabulary = new Vocabulary(vocabularyIri);

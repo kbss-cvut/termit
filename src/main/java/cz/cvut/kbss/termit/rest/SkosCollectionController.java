@@ -66,7 +66,8 @@ public class SkosCollectionController extends BaseController {
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets collections from the vocabulary with the specified identifier. "
-                    + "Collections are ordered by their labels in the vocabulary primary language.")
+                    + "Collections with a label in the search language are placed first, "
+                    + "then ordered by their labels in the vocabulary primary language.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Page of collections in the vocabulary."),
         @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
