@@ -262,7 +262,8 @@ public class SkosCollectionDao {
                     .skip(pageable.getOffset())
                     .limit(pageable.getPageSize())
                     .toList();
-            return findEntitiesWithType(identifiers);
+            Vocabulary reference = new Vocabulary(collection.getVocabulary());
+            return findEntitiesWithType(identifiers, reference);
         } catch (TermItException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -312,7 +313,8 @@ public class SkosCollectionDao {
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
-            return findEntitiesWithType(identifiers);
+            Vocabulary reference = new Vocabulary(collection.getVocabulary());
+            return findEntitiesWithType(identifiers, reference);
         } catch (TermItException e) {
 
             throw e;
@@ -342,14 +344,14 @@ public class SkosCollectionDao {
      * @param identifiers identifiers of the entities
      * @return entities in the order of {@code identifiers}
      */
-    public List<TypeAwareEntity> findEntitiesWithType(Collection<URI> identifiers) {
+    public List<TypeAwareEntity> findEntitiesWithType(Collection<URI> identifiers, Vocabulary vocabulary) {
         if (identifiers == null || identifiers.isEmpty()) {
             return List.of();
         }
         try {
             @SuppressWarnings("unchecked")
             final List<TypeAwareEntity> entities =
-                    entitiesWithTypeQuery(identifiers).getResultList();
+                    entitiesWithTypeQuery(identifiers, vocabulary).getResultList();
             if (entities.size() != identifiers.size()) {
                 final Set<URI> foundEntities =
                         entities.stream().map(TypeAwareEntity::getUri).collect(Collectors.toSet());
@@ -383,10 +385,10 @@ public class SkosCollectionDao {
      * @param collectionUri the identifier of the collection
      * @return {@link TermCollection} or {@link OrderedTermCollection} or {@code null}
      */
-    public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri) {
+    public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri, Vocabulary vocabulary) {
         try {
             final TypeAwareEntity entity = (TypeAwareEntity)
-                    entitiesWithTypeQuery(Set.of(collectionUri)).getSingleResult();
+                    entitiesWithTypeQuery(Set.of(collectionUri), vocabulary).getSingleResult();
             if (entity != null) {
                 if (entity.isOrderedCollection()) {
                     return OrderedTermCollection.class;
@@ -404,13 +406,23 @@ public class SkosCollectionDao {
         return null;
     }
 
-    private Query entitiesWithTypeQuery(Collection<URI> identifiers) {
+    /**
+     * Constructs query returning {@link TypeAwareEntity} that are linked to the {@code vocabulary} via
+     * {@link SKOS#IN_SCHEME inScheme}
+     *
+     * @param identifiers identifiers of entities to find
+     * @param vocabulary vocabulary of the entities
+     */
+    private Query entitiesWithTypeQuery(Collection<URI> identifiers, Vocabulary vocabulary) {
         return em.createNativeQuery("""
                  SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
-                     ?entity a ?type .
+                     ?entity a ?type ;
+                         ?inScheme ?vocabulary .
                      FILTER(?entity IN (?ids))
                  } GROUP BY ?entity
                  """.formatted(Constants.GROUP_CONCAT_SEPARATOR), TypeAwareEntity.RESULTSET_MAPPING)
+                .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
+                .setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("ids", identifiers);
     }
 

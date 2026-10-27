@@ -97,7 +97,7 @@ public class SkosCollectionRepositoryService {
      */
     @Transactional(readOnly = true)
     public Optional<SkosCollection<?>> find(URI collectionUri, Vocabulary vocabulary) {
-        return Optional.ofNullable(collectionDao.findCollectionType(collectionUri))
+        return Optional.ofNullable(collectionDao.findCollectionType(collectionUri, vocabulary))
                 .flatMap(type -> collectionDao.find(type, collectionUri, vocabulary));
     }
 
@@ -160,7 +160,7 @@ public class SkosCollectionRepositoryService {
             collection.setPrimaryLanguage(existing.getPrimaryLanguage());
         }
 
-        validate(collection, getAddedMembers(collection, existing));
+        validate(collection, getAddedMembers(collection, existing), vocabulary);
     }
 
     protected Set<URI> getAddedMembers(SkosCollection<?> updatedCollection, SkosCollection<?> existingCollection) {
@@ -176,14 +176,14 @@ public class SkosCollectionRepositoryService {
      * @param collection the collection to validate
      * @param members members that should be validated, allows to validate only a subset of collection members
      */
-    protected void validate(SkosCollection<?> collection, Collection<URI> members) {
+    protected void validate(SkosCollection<?> collection, Collection<URI> members, Vocabulary vocabulary) {
         BaseRepositoryService.validate(collection, validator);
         Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
         if (members != null && members.contains(collection.getUri())) {
             throw new ValidationException("Collection must not be member of itself!");
         }
         collectionDao
-                .findEntitiesWithType(members)
+                .findEntitiesWithType(members, vocabulary)
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
     }
 
@@ -209,7 +209,7 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
-        validate(skosCollection, skosCollection.getMembers());
+        validate(skosCollection, skosCollection.getMembers(), vocabulary);
         verifyIdentifierUnique(skosCollection);
         collectionDao.persist(skosCollection, vocabulary);
     }

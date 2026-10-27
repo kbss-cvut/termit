@@ -117,15 +117,6 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void addMemberThrowsValidationExceptionWhenMemberIsNotTermOrCollection() {
-        final ValidationException ex = assertThrows(
-                ValidationException.class,
-                () -> sut.addMember(collection.getUri(), vocabulary.getUri(), vocabulary.getUri()));
-        assertThat(ex.getMessage()).containsIgnoringCase("illegal member");
-        assertThat(ex.getMessage()).contains(vocabulary.getUri().toString());
-    }
-
-    @Test
     void updateKeepsEntityTypesUnchanged() {
         OrderedTermCollection entity = Generator.generateOrderedTermCollection(vocabulary);
         entity.setMembers(List.of());

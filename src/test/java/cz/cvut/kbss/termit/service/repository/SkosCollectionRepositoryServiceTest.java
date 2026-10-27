@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -362,14 +363,16 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void persistThrowsValidationExceptionWhenMemberIsNotTermOrCollection() {
+    void persistThrowsNotFoundExceptionWhenMemberIsFromAnotherVocabulary() {
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> vocabularyDao.persist(anotherVocabulary));
+        final Term foreignTerm = Generator.generateTermWithId(anotherVocabulary.getUri());
+        transactional(() -> em.persist(foreignTerm, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
         final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
-        collection.addMember(vocabulary.getUri());
+        collection.addMember(foreignTerm.getUri());
 
-        final ValidationException ex =
-                assertThrows(ValidationException.class, () -> sut.persist(collection, vocabulary));
-        assertThat(ex.getMessage()).containsIgnoringCase("illegal member");
-        assertThat(ex.getMessage()).contains(vocabulary.getUri().toString());
+        final TermItException ex = assertThrows(NotFoundException.class, () -> sut.persist(collection, vocabulary));
+        assertThat(ex.getMessage()).contains(foreignTerm.getUri().toString());
     }
 
     @Test
