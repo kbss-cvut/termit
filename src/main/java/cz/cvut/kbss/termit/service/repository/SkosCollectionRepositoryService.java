@@ -44,8 +44,8 @@ public class SkosCollectionRepositoryService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
-        return collectionDao.findAll(vocabulary, pageable);
+    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, String searchString, Pageable pageable) {
+        return collectionDao.findAll(vocabulary, searchString, pageable);
     }
 
     /**
