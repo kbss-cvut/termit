@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -112,8 +113,8 @@ public class SkosCollectionDao {
     private static final Set<URI> MEMBER_LABEL_PROPERTIES =
             Set.of(AbstractTerm_.labelPropertyIRI.toURI(), SkosCollection_.labelPropertyIRI.toURI());
 
-    protected static final URI UNORDERED_URI = TermCollection_.entityClassIRI.toURI();
-    protected static final URI ORDERED_URI = OrderedTermCollection_.entityClassIRI.toURI();
+    private static final URI UNORDERED_URI = TermCollection_.entityClassIRI.toURI();
+    private static final URI ORDERED_URI = OrderedTermCollection_.entityClassIRI.toURI();
 
     private static final Set<URI> COLLECTION_TYPES = Set.of(ORDERED_URI, UNORDERED_URI);
 
@@ -214,9 +215,9 @@ public class SkosCollectionDao {
                 .setParameter("searchString", searchString);
     }
 
-    public SkosCollectionDto findDto(URI collectionUri) {
+    public Optional<SkosCollectionDto> findDto(URI collectionUri) {
         try {
-            return em.find(SkosCollectionDto.class, collectionUri);
+            return Optional.ofNullable(em.find(SkosCollectionDto.class, collectionUri));
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find SKOS collection DTO " + Utils.uriToString(collectionUri), e);
         }
@@ -233,9 +234,9 @@ public class SkosCollectionDao {
      * @implNote Note that ordered collection can be represented as unordered, but its updates are in such case
      *     prohibited.
      */
-    public <T extends SkosCollection<?>> T find(Class<T> clazz, URI collectionUri, Vocabulary vocabulary) {
+    public <T extends SkosCollection<?>> Optional<T> find(Class<T> clazz, URI collectionUri, Vocabulary vocabulary) {
         try {
-            return em.find(clazz, collectionUri, descriptor(vocabulary));
+            return Optional.ofNullable(em.find(clazz, collectionUri, descriptor(vocabulary)));
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find SKOS collection " + Utils.uriToString(collectionUri) + " using type "
@@ -380,7 +381,7 @@ public class SkosCollectionDao {
      * Resolves the type of the given collection.
      *
      * @param collectionUri the identifier of the collection
-     * @return {@link TermCollection} or {@link OrderedTermCollection}
+     * @return {@link TermCollection} or {@link OrderedTermCollection} or {@code null}
      */
     public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri) {
         try {
@@ -574,5 +575,9 @@ public class SkosCollectionDao {
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find collections with member " + Utils.uriToString(memberUri), e);
         }
+    }
+
+    public void detach(SkosCollection<?> collection) {
+        em.detach(collection);
     }
 }

@@ -98,22 +98,22 @@ public class SkosCollectionRepositoryService {
     @Transactional(readOnly = true)
     public Optional<SkosCollection<?>> find(URI collectionUri, Vocabulary vocabulary) {
         return Optional.ofNullable(collectionDao.findCollectionType(collectionUri))
-                .map(type -> collectionDao.find(type, collectionUri, vocabulary));
+                .flatMap(type -> collectionDao.find(type, collectionUri, vocabulary));
     }
 
     @Transactional(readOnly = true)
     public Optional<SkosCollectionDto> findDto(URI collectionUri) {
-        return Optional.ofNullable(collectionDao.findDto(collectionUri));
+        return collectionDao.findDto(collectionUri);
     }
 
     @Transactional(readOnly = true)
     public Optional<TermCollection> findUnordered(URI collectionUri, Vocabulary vocabulary) {
-        return Optional.ofNullable(collectionDao.find(TermCollection.class, collectionUri, vocabulary));
+        return collectionDao.find(TermCollection.class, collectionUri, vocabulary);
     }
 
     @Transactional(readOnly = true)
     public Optional<OrderedTermCollection> findOrdered(URI collectionUri, Vocabulary vocabulary) {
-        return Optional.ofNullable(collectionDao.find(OrderedTermCollection.class, collectionUri, vocabulary));
+        return collectionDao.find(OrderedTermCollection.class, collectionUri, vocabulary);
     }
 
     /**
@@ -135,16 +135,18 @@ public class SkosCollectionRepositoryService {
             return termRepositoryService.findRequiredTermInfo(entity.getUri());
         }
         if (entity.isCollection()) {
-            return collectionDao.findDto(entity.getUri());
+            return collectionDao.findDto(entity.getUri()).orElseThrow(() -> notFound(entity.getUri(), null));
         }
         throw new ValidationException("Illegal entity in SKOS collection: " + Utils.uriToString(entity.getUri()));
     }
 
     @Transactional(readOnly = true)
     protected void preUpdate(SkosCollection<?> collection, Vocabulary vocabulary) {
+        collectionDao.detach(collection);
         final SkosCollection<?> existing = find(collection.getUri(), vocabulary)
                 .orElseThrow(() ->
                         new NotFoundException("Skos collection not found: " + Utils.uriToString(collection.getUri())));
+        assert collection != existing;
         if (!existing.getVocabulary().equals(vocabulary.getUri())
                 || !collection.getVocabulary().equals(vocabulary.getUri())) {
             throw new ValidationException("Vocabulary of SKOS collection cannot be changed!");
@@ -214,8 +216,9 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void remove(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
-        final SkosCollection<?> managed =
-                collectionDao.find(skosCollection.getClass(), skosCollection.getUri(), vocabulary);
+        final SkosCollection<?> managed = collectionDao
+                .find(skosCollection.getClass(), skosCollection.getUri(), vocabulary)
+                .orElseThrow(() -> notFound(skosCollection.getUri(), vocabulary.getUri()));
         removeMemberFromAllCollections(managed.getUri());
         collectionDao.remove(managed, vocabulary);
     }
@@ -239,7 +242,7 @@ public class SkosCollectionRepositoryService {
         Objects.requireNonNull(memberIri, "Member identifier must not be null!");
         Objects.requireNonNull(collection.getMembers(), "Collection members must not be null!");
         if (originalPos < 0 || newPos < 0) {
-            throw new ValidationException("Illegal member position in SKOS collection! Position mut not be negative!");
+            throw new ValidationException("Illegal member position in SKOS collection! Position must not be negative!");
         }
         if (originalPos == newPos) {
             return;
@@ -307,5 +310,10 @@ public class SkosCollectionRepositoryService {
             return findOrdered(entity.getUri(), vocabulary).orElse(null);
         }
         return findUnordered(entity.getUri(), vocabulary).orElse(null);
+    }
+
+    public static NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
+        return new NotFoundException("Collection " + Utils.uriToString(collectionUri) + " not found in vocabulary "
+                + Utils.uriToString(vocabularyUri));
     }
 }

@@ -40,7 +40,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SkosCollectionDaoTest extends BaseDaoTestRunner {
@@ -360,7 +359,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     void findDtoReturnsDtoOfOrderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
 
-        final SkosCollectionDto result = sut.findDto(orderedCollection.getUri());
+        final SkosCollectionDto result = sut.findDto(orderedCollection.getUri()).orElseThrow();
         assertEquals(expectedDto, result);
     }
 
@@ -368,7 +367,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     void findDtoReturnsDtoOfUnorderedCollection() {
         final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(unorderedCollection);
 
-        final SkosCollectionDto result = sut.findDto(unorderedCollection.getUri());
+        final SkosCollectionDto result =
+                sut.findDto(unorderedCollection.getUri()).orElseThrow();
         assertEquals(expectedDto, result);
     }
 
@@ -431,7 +431,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final int pageSize = 2;
         final List<URI> found = new ArrayList<>();
         for (int page = 0; page * pageSize < unorderedMembers.size(); page++) {
-            final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary);
+            final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary)
+                    .orElseThrow();
             sut.findMembers(collection, PageRequest.of(page, pageSize), Environment.LANGUAGE)
                     .forEach(e -> found.add(e.getUri()));
         }
@@ -529,11 +530,12 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void orderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
-        final OrderedTermCollection collection =
-                sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
+        final OrderedTermCollection collection = sut.find(
+                        OrderedTermCollection.class, orderedCollection.getUri(), vocabulary)
+                .orElseThrow();
         assertThat(collection.getTypes()).contains(SKOS.COLLECTION);
 
-        final SkosCollectionDto dto = sut.findDto(orderedCollection.getUri());
+        final SkosCollectionDto dto = sut.findDto(orderedCollection.getUri()).orElseThrow();
         assertThat(dto.getTypes()).contains(SKOS.ORDERED_COLLECTION);
     }
 
@@ -541,19 +543,21 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     void unorderedCollectionHasNoAdditionalTypeWhenRetrievedFromRepository() {
         // the type of the entity itself is not included in types field
 
-        final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary);
+        final TermCollection collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary)
+                .orElseThrow();
         assertTrue(collection.getTypes().isEmpty());
 
-        final SkosCollectionDto dto = sut.findDto(unorderedCollection.getUri());
+        final SkosCollectionDto dto = sut.findDto(unorderedCollection.getUri()).orElseThrow();
         assertTrue(dto.getTypes().isEmpty());
     }
 
     @Test
-    void findReturnsNullWhenCollectionBelongsToDifferentVocabulary() {
+    void findReturnsEmptyWhenCollectionBelongsToDifferentVocabulary() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> vocabularyDao.persist(anotherVocabulary));
 
-        assertNull(sut.find(TermCollection.class, unorderedCollection.getUri(), anotherVocabulary));
+        assertTrue(sut.find(TermCollection.class, unorderedCollection.getUri(), anotherVocabulary)
+                .isEmpty());
     }
 
     @Test
@@ -618,7 +622,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.update(orderedCollection, vocabulary));
 
         OrderedTermCollection updated = readOnlyTransactional(
-                () -> sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary));
+                () -> sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary)
+                        .orElseThrow());
         assertEquals(updatedLabel, updated.getLabel().get(Environment.LANGUAGE));
     }
 
@@ -629,14 +634,16 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.update(orderedCollection, vocabulary));
 
-        SkosCollectionDto updated = readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri()));
+        SkosCollectionDto updated = readOnlyTransactional(
+                () -> sut.findDto(orderedCollection.getUri()).orElseThrow());
         assertEquals(updatedLabel, updated.getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
     void removeRemovesUnorderedCollectionFromVocabularyContext() {
         transactional(() -> {
-            SkosCollection<?> collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary);
+            SkosCollection<?> collection = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary)
+                    .orElseThrow();
             sut.remove(collection, vocabulary);
         });
 
@@ -650,8 +657,8 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     @Test
     void removeRemovesOrderedCollectionFromVocabularyContext() {
         transactional(() -> {
-            SkosCollection<?> collection =
-                    sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
+            SkosCollection<?> collection = sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary)
+                    .orElseThrow();
             sut.remove(collection, vocabulary);
         });
 
@@ -665,16 +672,18 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     @Test
     void removeEvictsCollectionDtoFromCache() {
         // load the DTO into the cache
-        final SkosCollectionDto cached = readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri()));
+        final SkosCollectionDto cached = readOnlyTransactional(
+                () -> sut.findDto(orderedCollection.getUri()).orElseThrow());
         assertEquals(orderedCollection.getUri(), cached.getUri());
 
         transactional(() -> {
-            SkosCollection<?> collection =
-                    sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary);
+            SkosCollection<?> collection = sut.find(OrderedTermCollection.class, orderedCollection.getUri(), vocabulary)
+                    .orElseThrow();
             sut.remove(collection, vocabulary);
         });
 
-        assertNull(readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri())));
+        assertTrue(readOnlyTransactional(() -> sut.findDto(orderedCollection.getUri()))
+                .isEmpty());
     }
 
     private Page<TypeAwareEntity> findAddMemberOptions(
