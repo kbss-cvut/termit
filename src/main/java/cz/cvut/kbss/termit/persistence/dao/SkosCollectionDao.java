@@ -229,7 +229,7 @@ public class SkosCollectionDao {
      * @param clazz the type of the collection
      * @param collectionUri the identifier of the collection
      * @param vocabulary the vocabulary of the collection
-     * @return the collection
+     * @return the collection wrapped in an {@code Optional}
      * @param <T> {@link TermCollection} or {@link OrderedTermCollection}
      * @implNote Note that ordered collection can be represented as unordered, but its updates are in such case
      *     prohibited.
@@ -276,47 +276,38 @@ public class SkosCollectionDao {
     /**
      * Resolves a page of members of the unordered collection along with their type.
      *
-     * <p>Members are sorted by their label ({@link SKOS#PREF_LABEL} of terms, {@link DC.Terms#TITLE} of collections).
-     * Members with a label in the specified language are placed first. The sort direction is taken from the
-     * {@code label} property of the page sort specification, ascending by default.
+     * <p>Members are sorted by their label in the vocabulary primary language ({@link SKOS#PREF_LABEL} of terms,
+     * {@link DC.Terms#TITLE} of collections). The sort direction is taken from the {@code label} property of the page
+     * sort specification, ascending by default.
      *
      * @param collection the collection whose members should be resolved
      * @param pageable page specification
-     * @param language language of the labels used for sorting
-     * @return members of the requested page sorted by their label
+     * @return members of the requested page sorted by their label in the primary language
      */
-    public List<TypeAwareEntity> findMembers(TermCollection collection, Pageable pageable, String language) {
-        Objects.requireNonNull(language, "Language must not be null");
+    public List<TypeAwareEntity> findMembers(TermCollection collection, Pageable pageable) {
+        Objects.requireNonNull(collection.getPrimaryLanguage(), "Primary language of the collection must not be null");
         try {
             final List<URI> identifiers = em.createNativeQuery(
                             """
                             SELECT DISTINCT ?member WHERE {
                                 ?collection ?hasMember ?member .
                                 OPTIONAL {
-                                    # label in primary language
-                                    ?member ?primaryLabelProperty ?primaryLabel .
-                                    FILTER(?primaryLabelProperty IN (?labelProperties))
-                                    FILTER(lang(?primaryLabel) = ?language)
+                                    ?member ?hasLabel ?label .
+                                    FILTER(?hasLabel IN (?labelProperties))
+                                    FILTER(lang(?label) = ?primaryLanguage)
                                 }
-                                OPTIONAL {
-                                    ?member ?anyLabelProperty ?anyLabel .
-                                    FILTER(?anyLabelProperty IN (?labelProperties))
-                                }
-                                BIND(COALESCE(?primaryLabel, ?anyLabel) AS ?sortLabel)
-                                BIND(IF(BOUND(?primaryLabel), 1, 0) AS ?hasLocaleLabel)
-                            } ORDER BY DESC(?hasLocaleLabel)
-                            """ + buildSortClause(pageable, "?sortLabel", "?member"), URI.class)
+                            } ORDER BY
+                            """ + buildSortClause(pageable, "?label", "?member"), URI.class)
                     .setParameter("collection", collection.getUri())
                     .setParameter("hasMember", TermCollection_.membersPropertyIRI.toURI())
                     .setParameter("labelProperties", MEMBER_LABEL_PROPERTIES)
-                    .setParameter("language", language)
+                    .setParameter("primaryLanguage", collection.getPrimaryLanguage())
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
             Vocabulary reference = new Vocabulary(collection.getVocabulary());
             return findEntitiesWithType(identifiers, reference);
         } catch (TermItException e) {
-
             throw e;
         } catch (RuntimeException e) {
             throw new PersistenceException(
@@ -326,10 +317,10 @@ public class SkosCollectionDao {
 
     /**
      * Builds the sort clause for {@link #findAll(Vocabulary, String, String, Pageable)} and
-     * {@link #findMembers(TermCollection, Pageable, String)}, sorting by the label and then by the entity identifier in
-     * the direction requested for the {@code label} property.
+     * {@link #findMembers(TermCollection, Pageable)}, sorting by the label and then by the entity identifier in the
+     * direction requested for the {@code label} property.
      *
-     * @param label the variable representing the label used for sorting, e.g. {@code "?sortLabel"}
+     * @param label the variable representing the label used for sorting, e.g. {@code "?label"}
      * @param entity the variable representing the sorted entity, e.g. {@code "?member"}
      */
     private static String buildSortClause(Pageable pageable, String label, String entity) {
@@ -339,10 +330,12 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Resolves types of the given entities.
+     * Resolves types of the given entities from the specified vocabulary.
      *
      * @param identifiers identifiers of the entities
+     * @param vocabulary vocabulary of the entities
      * @return entities in the order of {@code identifiers}
+     * @throws NotFoundException if any of the entities is not found in the vocabulary
      */
     public List<TypeAwareEntity> findEntitiesWithType(Collection<URI> identifiers, Vocabulary vocabulary) {
         if (identifiers == null || identifiers.isEmpty()) {
@@ -383,6 +376,7 @@ public class SkosCollectionDao {
      * Resolves the type of the given collection.
      *
      * @param collectionUri the identifier of the collection
+     * @param vocabulary the vocabulary of the collection
      * @return {@link TermCollection} or {@link OrderedTermCollection} or {@code null}
      */
     public Class<? extends SkosCollection<?>> findCollectionType(URI collectionUri, Vocabulary vocabulary) {
