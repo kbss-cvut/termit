@@ -9,7 +9,6 @@ import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -371,7 +370,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
         collection.addMember(foreignTerm.getUri());
 
-        final TermItException ex = assertThrows(NotFoundException.class, () -> sut.persist(collection, vocabulary));
+        final NotFoundException ex = assertThrows(NotFoundException.class, () -> sut.persist(collection, vocabulary));
         assertThat(ex.getMessage()).contains(foreignTerm.getUri().toString());
     }
 
@@ -501,7 +500,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     @ParameterizedTest
     @CsvSource({"2, 1", "1, 2", "0,1", "4, 3"})
     void updateMemberPositionMovesMemberToAdjacentPosition(int originalPos, int newPos) {
-        assert Math.abs(originalPos - newPos) == 1;
+        assertEquals(1, Math.abs(originalPos - newPos));
 
         final URI member = orderedCollection.getMembers().get(originalPos);
         final URI curMember = orderedCollection.getMembers().get(newPos);
@@ -641,6 +640,45 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void removeMemberRemovesMemberFromUnorderedCollection() {
+        final URI member = unorderedMembers.get(2).getUri();
+        final Set<URI> expectedMembers = new HashSet<>(unorderedCollection.getMembers());
+        expectedMembers.remove(member);
+
+        sut.removeMember(unorderedCollection, vocabulary, member);
+
+        TermCollection updated =
+                sut.findUnordered(unorderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).doesNotContain(member);
+        assertThat(updated.getMembers()).containsExactlyInAnyOrderElementsOf(expectedMembers);
+    }
+
+    @Test
+    void removeMemberRemovesMemberFromOrderedCollection() {
+        final URI member = orderedMembers.get(2).getUri();
+        final List<URI> expectedMembers = new ArrayList<>(orderedCollection.getMembers());
+        expectedMembers.remove(2);
+
+        sut.removeMember(orderedCollection, vocabulary, member);
+
+        OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).doesNotContain(member);
+        assertThat(updated.getMembers()).containsExactlyElementsOf(expectedMembers);
+    }
+
+    @Test
+    void removeMemberDoesNothingWhenMemberIsNotInCollection() {
+        final List<URI> expectedMembers = new ArrayList<>(orderedCollection.getMembers());
+
+        sut.removeMember(orderedCollection, vocabulary, Generator.generateUri());
+
+        OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).containsExactlyElementsOf(expectedMembers);
+    }
+
+    @Test
     void findCollectionsWithMemberReturnsOrderedCollectionContainingMember() {
         final Term member = orderedMembers.get(2);
 
@@ -739,5 +777,24 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         final OrderedTermCollection updated =
                 sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
         assertEquals(expectedMembers, updated.getMembers());
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenLabelInPrimaryLanguageIsMissing() {
+        final String otherLanguage = "cs";
+        assertNotEquals(Environment.LANGUAGE, otherLanguage);
+        unorderedCollection.setLabel(MultilingualString.create("Kolekce", otherLanguage));
+
+        final ValidationException ex =
+                assertThrows(ValidationException.class, () -> sut.update(unorderedCollection, vocabulary));
+        assertThat(ex.getMessage()).contains("label");
+        assertThat(ex.getMessage()).containsIgnoringCase("primary");
+    }
+
+    @Test
+    void updateSetsPrimaryLanguageForCollectionWhenMissing() {
+        unorderedCollection.setPrimaryLanguage(null);
+        sut.update(unorderedCollection, vocabulary);
+        assertEquals(vocabulary.getPrimaryLanguage(), unorderedCollection.getPrimaryLanguage());
     }
 }

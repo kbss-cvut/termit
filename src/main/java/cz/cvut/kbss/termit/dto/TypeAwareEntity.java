@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+/** An entity with {@link #uri} carrying its {@link #types} */
 @SparqlResultSetMapping(
         name = TypeAwareEntity.RESULTSET_MAPPING,
         classes = {
