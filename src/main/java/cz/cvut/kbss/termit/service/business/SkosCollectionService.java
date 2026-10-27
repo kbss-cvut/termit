@@ -37,9 +37,9 @@ public class SkosCollectionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SkosCollectionDto> findAll(URI vocabularyUri, Pageable pageable) {
+    public Page<SkosCollectionDto> findAll(URI vocabularyUri, String searchString, Pageable pageable) {
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
-        return repositoryService.findAll(vocabulary, pageable);
+        return repositoryService.findAll(vocabulary, searchString, pageable);
     }
 
     @Transactional

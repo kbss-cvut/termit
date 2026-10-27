@@ -52,7 +52,7 @@ public class SkosCollectionDao {
     /**
      * Matches all collections (both ordered and unordered) in a vocabulary.
      *
-     * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, Vocabulary)}
+     * @implNote Bindings are applied by {@link #bindCollectionsInVocabulary(TypedQuery, String, Vocabulary)}
      */
     private static final String COLLECTIONS_IN_VOCABULARY_PATTERN = """
             GRAPH ?vocabulary {
@@ -61,6 +61,7 @@ public class SkosCollectionDao {
                 FILTER(?type IN (?collectionTypes)) .
                 ?collection ?hasLabel ?label .
                 FILTER(lang(?label) = ?language)
+                FILTER CONTAINS(LCASE(?label), LCASE(?searchString))
             }
             """;
 
@@ -128,7 +129,7 @@ public class SkosCollectionDao {
      * @param vocabulary the vocabulary of the collections
      * @return Page of collection DTOs
      */
-    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, Pageable pageable) {
+    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, String searchString, Pageable pageable) {
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
         Objects.requireNonNull(vocabulary.getPrimaryLanguage(), "Vocabulary primary language must not be null");
         try {
@@ -141,12 +142,13 @@ public class SkosCollectionDao {
                                     """
                                             + buildSortClause(pageable, "?label", "?collection"),
                                     SkosCollectionDto.class),
+                            searchString,
                             vocabulary)
                     .setDescriptor(descriptor(vocabulary))
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
-            return PageableExecutionUtils.getPage(data, pageable, () -> countAll(vocabulary));
+            return PageableExecutionUtils.getPage(data, pageable, () -> countAll(searchString, vocabulary));
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find all SKOS collections in Vocabulary " + Utils.uriToString(vocabulary.getUri()), e);
@@ -159,22 +161,28 @@ public class SkosCollectionDao {
      * @param vocabulary the vocabulary of the collections
      * @return the total number of collections
      */
-    private long countAll(Vocabulary vocabulary) {
+    private long countAll(String searchString, Vocabulary vocabulary) {
         return bindCollectionsInVocabulary(
                         em.createNativeQuery(
                                 "SELECT (COUNT(DISTINCT ?collection) AS ?count) WHERE { "
                                         + COLLECTIONS_IN_VOCABULARY_PATTERN + " }",
                                 Long.class),
+                        searchString,
                         vocabulary)
                 .getSingleResult();
     }
 
-    private <T> TypedQuery<T> bindCollectionsInVocabulary(TypedQuery<T> query, Vocabulary vocabulary) {
+    private <T> TypedQuery<T> bindCollectionsInVocabulary(
+            TypedQuery<T> query, String searchString, Vocabulary vocabulary) {
+        if (searchString == null) {
+            searchString = "";
+        }
         return query.setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
                 .setParameter("collectionTypes", COLLECTION_TYPES)
                 .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
-                .setParameter("language", vocabulary.getPrimaryLanguage());
+                .setParameter("language", vocabulary.getPrimaryLanguage())
+                .setParameter("searchString", searchString);
     }
 
     public SkosCollectionDto findDto(URI collectionUri) {
@@ -285,7 +293,7 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Builds the sort clause for {@link #findAll(Vocabulary, Pageable)} and {@link #findMembers(TermCollection,
+     * Builds the sort clause for {@link #findAll(Vocabulary, String, Pageable)} and {@link #findMembers(TermCollection,
      * Pageable, String)}, sorting by the label and then by the entity identifier in the direction requested for the
      * {@code label} property.
      *

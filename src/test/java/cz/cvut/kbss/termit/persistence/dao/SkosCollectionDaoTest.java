@@ -142,7 +142,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         persistVocabulary(anotherVocabulary, List.of(unrelated));
 
         final List<SkosCollectionDto> result =
-                sut.findAll(vocabulary, Pageable.ofSize(10)).getContent();
+                sut.findAll(vocabulary, null, Pageable.ofSize(10)).getContent();
 
         assertEquals(2, result.size());
         final List<URI> identifiers = identifiers(result);
@@ -162,7 +162,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         allCollections.add(unorderedCollection.getUri());
         allCollections.add(orderedCollection.getUri());
 
-        final Page<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 2));
+        final Page<SkosCollectionDto> result = sut.findAll(vocabulary, null, PageRequest.of(1, 2));
 
         assertEquals(2, result.getSize());
         assertThat(result).map(SkosCollectionDto::getUri).isSubsetOf(allCollections);
@@ -183,7 +183,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final int pageSize = 2;
         final List<URI> found = new ArrayList<>();
         for (int page = 0; page * pageSize < allCollections.size(); page++) {
-            sut.findAll(vocabulary, PageRequest.of(page, pageSize)).forEach(dto -> found.add(dto.getUri()));
+            sut.findAll(vocabulary, null, PageRequest.of(page, pageSize)).forEach(dto -> found.add(dto.getUri()));
         }
 
         assertEquals(allCollections.size(), found.size());
@@ -192,7 +192,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllReturnsEmptyListForPageBeyondLastCollection() {
-        final Page<SkosCollectionDto> result = sut.findAll(vocabulary, PageRequest.of(1, 10));
+        final Page<SkosCollectionDto> result = sut.findAll(vocabulary, null, PageRequest.of(1, 10));
         assertTrue(result.isEmpty());
     }
 
@@ -203,7 +203,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
                 .map(label -> collectionWithLabel(anotherVocabulary, label))
                 .toList();
         persistVocabulary(anotherVocabulary, collections);
-        return sut.findAll(anotherVocabulary, pageable).getContent();
+        return sut.findAll(anotherVocabulary, null, pageable).getContent();
     }
 
     private static List<String> labels(List<SkosCollectionDto> collections) {
@@ -255,7 +255,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         persistVocabulary(anotherVocabulary, List.of(labelled, unlabelled));
 
         // a full page forces the total count to be queried instead of being derived from the page content
-        final Page<SkosCollectionDto> result = sut.findAll(anotherVocabulary, PageRequest.of(0, 1));
+        final Page<SkosCollectionDto> result = sut.findAll(anotherVocabulary, null, PageRequest.of(0, 1));
 
         assertEquals(List.of(labelled.getUri()), identifiers(result.getContent()));
         assertEquals(1, result.getTotalElements());
