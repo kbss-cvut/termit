@@ -174,23 +174,25 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
                         unorderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
     }
 
-    private TermCollection generatePersistedCollection() {
+    private TermCollection generateCollectionAndPersistMembers() {
         final List<Term> terms = Generator.generateTermsWithIds(3);
         final TermCollection collection = Generator.generateTermCollection(vocabulary, terms);
-        transactional(() -> terms.forEach(t -> em.persist(t, vocabularyDescriptor)));
+        transactional(() -> {
+            terms.forEach(t -> em.persist(t, vocabularyDescriptor));
+        });
         return collection;
     }
 
     @Test
     void persistThrowsForUserWithoutWriteAccess() {
         grantAccess(AccessLevel.READ);
-        assertThrows(AccessDeniedException.class, () -> sut.persist(generatePersistedCollection()));
+        assertThrows(AccessDeniedException.class, () -> sut.persist(generateCollectionAndPersistMembers()));
     }
 
     @Test
     void persistDoesNotThrowForUserWithWriteAccess() {
         grantAccess(AccessLevel.WRITE);
-        assertDoesNotThrow(() -> sut.persist(generatePersistedCollection()));
+        assertDoesNotThrow(() -> sut.persist(generateCollectionAndPersistMembers()));
     }
 
     @Test

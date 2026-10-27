@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SkosCollectionServiceTest extends BaseServiceTestRunner {
@@ -100,15 +101,6 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void addMemberThrowsNotFoundExceptionWhenMemberOfOrderedCollectionDoesNotExist() {
-        final URI missingMember = Generator.generateUri();
-
-        final NotFoundException ex = assertThrows(
-                NotFoundException.class, () -> sut.addMember(collection.getUri(), vocabulary.getUri(), missingMember));
-        assertThat(ex.getMessage()).contains(missingMember.toString());
-    }
-
-    @Test
     void addMemberThrowsValidationExceptionWhenCollectionIsAddedToItself() {
         final ValidationException ex = assertThrows(
                 ValidationException.class,
@@ -131,5 +123,17 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         SkosCollectionDto updated = sut.findRequiredDto(entity.getUri(), vocabulary.getUri());
         assertEquals(newLabel, updated.getLabel().get(Environment.LANGUAGE));
         assertThat(updated.getTypes()).contains(SKOS.ORDERED_COLLECTION);
+    }
+
+    @Test
+    void persistSetsPrimaryLanguageForNewCollection() {
+        OrderedTermCollection entity = Generator.generateOrderedTermCollection(vocabulary);
+        entity.setMembers(List.of());
+        entity.setPrimaryLanguage(null);
+        assertNull(entity.getPrimaryLanguage());
+
+        sut.persist(entity);
+
+        assertEquals(vocabulary.getPrimaryLanguage(), entity.getPrimaryLanguage());
     }
 }

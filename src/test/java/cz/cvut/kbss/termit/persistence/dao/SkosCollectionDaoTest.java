@@ -373,7 +373,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findMembersReturnsStreamOfTypeAwareEntitiesWithLoadedTypes() {
+    void findMembersReturnsListOfTypeAwareEntitiesWithLoadedTypes() {
         orderedCollection.getMembers().add(1, unorderedCollection.getUri());
         orderedCollection.getMembers().sort(Comparator.comparing(URI::toString));
 
@@ -420,7 +420,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findMembersReturnsEmptyStreamForPageBeyondLastMember() {
+    void findMembersReturnsEmptyListForPageBeyondLastMember() {
         final List<TypeAwareEntity> result = sut.findMembers(orderedCollection, PageRequest.of(1, 10));
 
         assertTrue(result.isEmpty());

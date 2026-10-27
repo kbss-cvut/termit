@@ -23,6 +23,7 @@ import java.net.URI;
 @Service
 public class SkosCollectionService {
     private static final Logger LOG = LoggerFactory.getLogger(SkosCollectionService.class);
+
     private final SkosCollectionRepositoryService repositoryService;
     private final VocabularyService vocabularyService;
     private final DtoMapper dtoMapper;

@@ -331,6 +331,8 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         assertEquals(expected.getUri(), actual.getUri());
         assertEquals(expected.getLabel(), actual.getLabel());
         assertEquals(expected.getVocabulary(), actual.getVocabulary());
+        assertEquals(expected.getDescription(), actual.getDescription());
+        assertEquals(expected.getTypes(), actual.getTypes());
     }
 
     @Test

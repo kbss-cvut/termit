@@ -378,9 +378,7 @@ public class SkosCollectionController extends BaseController {
                 responseCode = "409",
                 description = "When the specified positions or the member identifier are invalid.")
     })
-    @PostMapping(
-            value = "/ordered/{collectionLocalName}/members/positions",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(value = "/ordered/{collectionLocalName}/members/positions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateOrderedMemberPosition(
             @Parameter(
@@ -415,7 +413,7 @@ public class SkosCollectionController extends BaseController {
         LOG.debug(
                 "Updating position for member <{}> in collection <{}> from {} to {}",
                 memberIri,
-                collectionNamespace,
+                collectionUri,
                 originalPos,
                 newPos);
         collectionService.updateOrderedMemberPosition(collectionUri, vocabularyUri, memberIri, originalPos, newPos);
@@ -454,11 +452,15 @@ public class SkosCollectionController extends BaseController {
             @Parameter(description = "String by which to filter the options (label).")
                     @RequestParam(name = "searchString", required = false)
                     String searchString,
-            @RequestParam(name = QueryParams.PAGE, required = false) Integer page,
-            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer size) {
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                    @RequestParam(name = QueryParams.PAGE, required = false)
+                    Integer page,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                    @RequestParam(name = QueryParams.PAGE_SIZE, required = false)
+                    Integer size) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
-        Page<HasIdentifier> result = collectionService.findAddMemberOptions(
+        final Page<HasIdentifier> result = collectionService.findAddMemberOptions(
                 collectionUri, vocabularyUri, searchString, createPageRequest(size, page));
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
