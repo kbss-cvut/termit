@@ -91,10 +91,13 @@ public class SkosCollectionController extends BaseController {
                     Integer pageNo,
             @Parameter(description = "String by which to filter the collections (their title).")
                     @RequestParam(name = "searchString", required = false)
-                    String searchString) {
+                    String searchString,
+            @Parameter(description = "The language tag of the search string, defaults to vocabulary primary language")
+                    @RequestParam(name = "searchLanguage", required = false)
+                    String searchLanguage) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        final Page<SkosCollectionDto> result =
-                collectionService.findAll(vocabularyUri, searchString, createPageRequest(pageSize, pageNo));
+        final Page<SkosCollectionDto> result = collectionService.findAll(
+                vocabularyUri, searchString, searchLanguage, createPageRequest(pageSize, pageNo));
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());

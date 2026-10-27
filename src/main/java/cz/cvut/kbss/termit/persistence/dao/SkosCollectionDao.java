@@ -59,8 +59,18 @@ public class SkosCollectionDao {
                 ?collection a ?type ;
                     ?inScheme ?vocabulary .
                 FILTER(?type IN (?collectionTypes)) .
-                ?collection ?hasLabel ?label .
-                FILTER(lang(?label) = ?language)
+
+                ?collection ?hasLabel ?primaryLabel .
+                FILTER(lang(?primaryLabel) = ?primaryLanguage)
+
+                OPTIONAL {
+                    ?collection ?hasLabel ?searchLabel .
+                    FILTER(lang(?searchLabel) = ?language)
+                }
+
+                BIND(IF(BOUND(?searchLabel), 0, 1) AS ?hasLabelInSearch)
+                BIND(COALESCE(?searchLabel, ?primaryLabel) AS ?label)
+
                 FILTER CONTAINS(LCASE(?label), LCASE(?searchString))
             }
             """;
@@ -129,7 +139,8 @@ public class SkosCollectionDao {
      * @param vocabulary the vocabulary of the collections
      * @return Page of collection DTOs
      */
-    public Page<SkosCollectionDto> findAll(Vocabulary vocabulary, String searchString, Pageable pageable) {
+    public Page<SkosCollectionDto> findAll(
+            Vocabulary vocabulary, String searchString, String searchLanguage, Pageable pageable) {
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
         Objects.requireNonNull(vocabulary.getPrimaryLanguage(), "Vocabulary primary language must not be null");
         try {
@@ -138,17 +149,19 @@ public class SkosCollectionDao {
                                     """
                                     SELECT DISTINCT ?collection WHERE {
                                     """ + COLLECTIONS_IN_VOCABULARY_PATTERN + """
-                                    } ORDER BY
+                                    } ORDER BY ?hasLabelInSearch
                                     """
-                                            + buildSortClause(pageable, "?label", "?collection"),
+                                            + buildSortClause(pageable, "?primaryLabel", "?collection"),
                                     SkosCollectionDto.class),
                             searchString,
+                            searchLanguage,
                             vocabulary)
                     .setDescriptor(descriptor(vocabulary))
                     .setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize())
                     .getResultList();
-            return PageableExecutionUtils.getPage(data, pageable, () -> countAll(searchString, vocabulary));
+            return PageableExecutionUtils.getPage(
+                    data, pageable, () -> countAll(searchString, searchLanguage, vocabulary));
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to find all SKOS collections in Vocabulary " + Utils.uriToString(vocabulary.getUri()), e);
@@ -161,27 +174,32 @@ public class SkosCollectionDao {
      * @param vocabulary the vocabulary of the collections
      * @return the total number of collections
      */
-    private long countAll(String searchString, Vocabulary vocabulary) {
+    private long countAll(String searchString, String searchLanguage, Vocabulary vocabulary) {
         return bindCollectionsInVocabulary(
                         em.createNativeQuery(
                                 "SELECT (COUNT(DISTINCT ?collection) AS ?count) WHERE { "
                                         + COLLECTIONS_IN_VOCABULARY_PATTERN + " }",
                                 Long.class),
                         searchString,
+                        searchLanguage,
                         vocabulary)
                 .getSingleResult();
     }
 
     private <T> TypedQuery<T> bindCollectionsInVocabulary(
-            TypedQuery<T> query, String searchString, Vocabulary vocabulary) {
+            TypedQuery<T> query, String searchString, String searchLanguage, Vocabulary vocabulary) {
         if (searchString == null) {
             searchString = "";
+        }
+        if (searchLanguage == null) {
+            searchLanguage = vocabulary.getPrimaryLanguage();
         }
         return query.setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("inScheme", SkosCollection_.vocabularyPropertyIRI)
                 .setParameter("collectionTypes", COLLECTION_TYPES)
                 .setParameter("hasLabel", SkosCollection_.labelPropertyIRI.toURI())
-                .setParameter("language", vocabulary.getPrimaryLanguage())
+                .setParameter("language", searchLanguage)
+                .setParameter("primaryLanguage", vocabulary.getPrimaryLanguage())
                 .setParameter("searchString", searchString);
     }
 
@@ -293,9 +311,9 @@ public class SkosCollectionDao {
     }
 
     /**
-     * Builds the sort clause for {@link #findAll(Vocabulary, String, Pageable)} and {@link #findMembers(TermCollection,
-     * Pageable, String)}, sorting by the label and then by the entity identifier in the direction requested for the
-     * {@code label} property.
+     * Builds the sort clause for {@link #findAll(Vocabulary, String, String, Pageable)} and
+     * {@link #findMembers(TermCollection, Pageable, String)}, sorting by the label and then by the entity identifier in
+     * the direction requested for the {@code label} property.
      *
      * @param label the variable representing the label used for sorting, e.g. {@code "?sortLabel"}
      * @param entity the variable representing the sorted entity, e.g. {@code "?member"}
