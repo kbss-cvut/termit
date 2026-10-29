@@ -116,10 +116,8 @@ public class SkosCollectionDao {
     private static final Set<URI> MEMBER_LABEL_PROPERTIES =
             Set.of(AbstractTerm_.labelPropertyIRI.toURI(), SkosCollection_.labelPropertyIRI.toURI());
 
-    private static final URI UNORDERED_URI = TermCollection_.entityClassIRI.toURI();
-    private static final URI ORDERED_URI = OrderedTermCollection_.entityClassIRI.toURI();
-
-    private static final Set<URI> COLLECTION_TYPES = Set.of(ORDERED_URI, UNORDERED_URI);
+    private static final Set<URI> COLLECTION_TYPES =
+            Set.of(TermCollection_.entityClassIRI.toURI(), OrderedTermCollection_.entityClassIRI.toURI());
 
     private final EntityManager em;
 
