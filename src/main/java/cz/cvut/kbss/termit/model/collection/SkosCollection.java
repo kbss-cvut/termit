@@ -13,7 +13,9 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +28,7 @@ import java.util.Set;
 @PrimaryNotBlank("label")
 @OWLClass(iri = SKOS.COLLECTION)
 public abstract class SkosCollection<T extends Collection<URI>> extends Asset<MultilingualString>
-        implements HasTypes, HasPrimaryLanguage {
+        implements SupportsSnapshots, HasTypes, HasPrimaryLanguage {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
@@ -113,5 +115,10 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
 
     public boolean isOrdered() {
         return hasType(SKOS.ORDERED_COLLECTION);
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return hasType(Vocabulary.s_c_version_of_collection);
     }
 }
