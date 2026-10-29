@@ -137,8 +137,7 @@ public class SkosCollectionRepositoryService {
         throw new ValidationException("Illegal entity in SKOS collection: " + Utils.uriToString(entity.getUri()));
     }
 
-    @Transactional(readOnly = true)
-    protected void preUpdate(SkosCollection<?> collection, Vocabulary vocabulary) {
+    private void preUpdate(SkosCollection<?> collection, Vocabulary vocabulary) {
         collectionDao.detach(collection);
         final SkosCollection<?> existing = find(collection.getUri(), vocabulary)
                 .orElseThrow(() ->
@@ -160,7 +159,7 @@ public class SkosCollectionRepositoryService {
         validate(collection, getAddedMembers(collection, existing), vocabulary);
     }
 
-    protected Set<URI> getAddedMembers(SkosCollection<?> updatedCollection, SkosCollection<?> existingCollection) {
+    private Set<URI> getAddedMembers(SkosCollection<?> updatedCollection, SkosCollection<?> existingCollection) {
         final Set<URI> existingMembers = new HashSet<>(existingCollection.getMembers());
         return updatedCollection.getMembers().stream()
                 .filter(Predicate.not(existingMembers::contains))
@@ -174,7 +173,7 @@ public class SkosCollectionRepositoryService {
      * @param members members that should be validated, allows to validate only a subset of collection members
      * @param vocabulary the vocabulary the members have to belong to
      */
-    protected void validate(SkosCollection<?> collection, Collection<URI> members, Vocabulary vocabulary) {
+    private void validate(SkosCollection<?> collection, Collection<URI> members, Vocabulary vocabulary) {
         BaseRepositoryService.validate(collection, validator);
         Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
         if (members != null && members.contains(collection.getUri())) {
@@ -226,8 +225,7 @@ public class SkosCollectionRepositoryService {
         return collectionDao.exists(collectionUri);
     }
 
-    @Transactional(readOnly = true)
-    protected void verifyIdentifierUnique(SkosCollection<?> instance) {
+    private void verifyIdentifierUnique(SkosCollection<?> instance) {
         if (exists(instance.getUri())) {
             throw ResourceExistsException.create(instance.getClass().getSimpleName(), instance.getUri());
         }
@@ -301,8 +299,7 @@ public class SkosCollectionRepositoryService {
                 .collect(Collectors.toSet());
     }
 
-    @Transactional(readOnly = true)
-    protected SkosCollection<?> mapToCollection(SkosCollectionDto entity) {
+    private SkosCollection<?> mapToCollection(SkosCollectionDto entity) {
         Vocabulary vocabulary = new Vocabulary(entity.getVocabulary());
         if (entity.isOrdered()) {
             return findOrdered(entity.getUri(), vocabulary).orElse(null);
