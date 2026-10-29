@@ -36,6 +36,7 @@ import tools.jackson.core.type.TypeReference;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -286,7 +287,8 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(get(PATH, VOCABULARY_NAME)).andExpect(status().isNotFound());
     }
 
-    private static <T extends SkosCollection<?>> void assertCollectionEquals(T expected, T actual) {
+    private static <C extends Collection<URI>, T extends SkosCollection<C>> void assertCollectionEquals(
+            T expected, T actual) {
         assertEquals(expected.getUri(), actual.getUri());
         assertEquals(expected.getLabel(), actual.getLabel());
         assertEquals(expected.getVocabulary(), actual.getVocabulary());

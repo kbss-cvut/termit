@@ -591,7 +591,7 @@ public class Generator {
         return token;
     }
 
-    private static void populateSkosCollection(SkosCollection<?> skosCollection) {
+    public static void populateSkosCollection(SkosCollection<?> skosCollection) {
         skosCollection.setUri(generateUri());
         final MultilingualString label =
                 MultilingualString.create("SKOS collection-" + randomInt(), Environment.LANGUAGE);
