@@ -82,6 +82,9 @@ public class SkosCollectionDao {
      * 1.
      *
      * @implNote Bindings are applied by {@link #bindAddMemberOptions(Query, URI, Vocabulary, String)}
+     * @implNote {@code MINUS} is evaluated only once for query resulting in better performance than {@code FILTER NOT
+     *     EXISTS} which is evaluated for each candidate. Keep the MINUS block at the end preventing RDF4J optimizer
+     *     from promoting later filters into the MINUS block causing invalid results.
      */
     private static final String ADD_MEMBER_OPTIONS_PATTERN = """
             GRAPH ?vocabulary {
