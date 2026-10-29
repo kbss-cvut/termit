@@ -552,12 +552,12 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsReturnsTermsAndCollectionsWithTotalCountHeader() throws Exception {
+    void findNonMembersReturnsTermsAndCollectionsWithTotalCountHeader() throws Exception {
         final PageRequest pageRequest = PageRequest.of(1, 5);
         final List<HasIdentifier> options = new ArrayList<>(generateMembers(3));
         options.addAll(generateCollectionDtos(2));
         final int totalCount = 12;
-        when(collectionServiceMock.findAddMemberOptions(COLLECTION_URI, VOCABULARY_URI, null, pageRequest))
+        when(collectionServiceMock.findNonMembers(COLLECTION_URI, VOCABULARY_URI, null, pageRequest))
                 .thenReturn(new PageImpl<>(options, pageRequest, totalCount));
 
         final MvcResult mvcResult = mockMvc.perform(get(ADD_MEMBER_OPTIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
@@ -580,9 +580,9 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsPassesPageSpecificationToService() throws Exception {
+    void findNonMembersPassesPageSpecificationToService() throws Exception {
         final PageRequest pageRequest = PageRequest.of(2, 5);
-        when(collectionServiceMock.findAddMemberOptions(COLLECTION_URI, VOCABULARY_URI, null, pageRequest))
+        when(collectionServiceMock.findNonMembers(COLLECTION_URI, VOCABULARY_URI, null, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
         mockMvc.perform(get(ADD_MEMBER_OPTIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
@@ -591,14 +591,13 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
                 .andExpect(status().isOk());
 
-        verify(collectionServiceMock).findAddMemberOptions(COLLECTION_URI, VOCABULARY_URI, null, pageRequest);
+        verify(collectionServiceMock).findNonMembers(COLLECTION_URI, VOCABULARY_URI, null, pageRequest);
     }
 
     @Test
-    void findAddMemberOptionsPassesSearchStringToService() throws Exception {
+    void findNonMembersPassesSearchStringToService() throws Exception {
         final String searchString = "locality";
-        when(collectionServiceMock.findAddMemberOptions(any(), any(), any(), any()))
-                .thenReturn(Page.empty());
+        when(collectionServiceMock.findNonMembers(any(), any(), any(), any())).thenReturn(Page.empty());
 
         mockMvc.perform(get(ADD_MEMBER_OPTIONS_PATH, VOCABULARY_NAME, COLLECTION_NAME)
                         .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
@@ -607,8 +606,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(PAGE_SIZE, "5"))
                 .andExpect(status().isOk());
 
-        verify(collectionServiceMock)
-                .findAddMemberOptions(eq(COLLECTION_URI), eq(VOCABULARY_URI), eq(searchString), any());
+        verify(collectionServiceMock).findNonMembers(eq(COLLECTION_URI), eq(VOCABULARY_URI), eq(searchString), any());
     }
 
     @Test

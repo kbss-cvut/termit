@@ -665,21 +665,19 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
                 .isEmpty());
     }
 
-    private Page<TypeAwareEntity> findAddMemberOptions(
+    private Page<TypeAwareEntity> findNonMembers(
             SkosCollection<?> collection, Vocabulary vocabulary, Pageable pageable) {
-        return findAddMemberOptions(collection, vocabulary, null, pageable);
+        return findNonMembers(collection, vocabulary, null, pageable);
     }
 
-    private Page<TypeAwareEntity> findAddMemberOptions(
+    private Page<TypeAwareEntity> findNonMembers(
             SkosCollection<?> collection, Vocabulary vocabulary, String searchString, Pageable pageable) {
-        return readOnlyTransactional(
-                () -> sut.findAddMemberOptions(collection.getUri(), vocabulary, searchString, pageable));
+        return readOnlyTransactional(() -> sut.findNonMembers(collection.getUri(), vocabulary, searchString, pageable));
     }
 
     private List<URI> findAddMemberOptionIdentifiers(
             SkosCollection<?> collection, Vocabulary vocabulary, Pageable pageable) {
-        return identifiers(
-                findAddMemberOptions(collection, vocabulary, pageable).getContent());
+        return identifiers(findNonMembers(collection, vocabulary, pageable).getContent());
     }
 
     /** Members that are not contained in {@link #unorderedCollection} */
@@ -704,7 +702,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsReturnsTermsAndCollectionsFromTheSameVocabulary() {
+    void findNonMembersReturnsTermsAndCollectionsFromTheSameVocabulary() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> anotherTerms = termsWithLabels(anotherVocabulary, "Alpha", "Bravo", "Charlie");
         final TermCollection anotherCollection = collectionWithLabel(anotherVocabulary, "Delta");
@@ -716,7 +714,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final List<Term> additionalTerms = termsWithLabels(vocabulary, "Echo", "Foxtrot");
         transactional(() -> additionalTerms.forEach(t -> em.persist(t, vocabularyDescriptor)));
 
-        final Page<TypeAwareEntity> result = findAddMemberOptions(orderedCollection, vocabulary, PAGEABLE_ALL);
+        final Page<TypeAwareEntity> result = findNonMembers(orderedCollection, vocabulary, PAGEABLE_ALL);
 
         final List<URI> expectedAddableMembers = Stream.of(
                         Set.of(unorderedCollection.getUri()),
@@ -730,7 +728,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsExcludesMembersOfUnorderedCollection() {
+    void findNonMembersExcludesMembersOfUnorderedCollection() {
         final List<URI> result = findAddMemberOptionIdentifiers(unorderedCollection, vocabulary, PAGEABLE_ALL);
 
         assertThat(result).doesNotContainAnyElementsOf(unorderedCollection.getMembers());
@@ -738,7 +736,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsExcludesMembersOfOrderedCollection() {
+    void findNonMembersExcludesMembersOfOrderedCollection() {
         final List<URI> result = findAddMemberOptionIdentifiers(orderedCollection, vocabulary, PAGEABLE_ALL);
 
         assertThat(result).doesNotContainAnyElementsOf(orderedCollection.getMembers());
@@ -746,14 +744,14 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsExcludesCollectionItself() {
+    void findNonMembersExcludesCollectionItself() {
         final List<URI> result = findAddMemberOptionIdentifiers(unorderedCollection, vocabulary, PAGEABLE_ALL);
 
         assertThat(result).doesNotContain(unorderedCollection.getUri()).contains(orderedCollection.getUri());
     }
 
     @Test
-    void findAddMemberOptionsExcludesCollectionAlreadyBeingMember() {
+    void findNonMembersExcludesCollectionAlreadyBeingMember() {
         final TermCollection nested = Generator.generateTermCollection(vocabulary, List.of());
         final TermCollection collection = persistUnorderedCollection(List.of(nested));
 
@@ -765,7 +763,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsSortsTermsByLabelAscendingByDefault() {
+    void findNonMembersSortsTermsByLabelAscendingByDefault() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = termsWithLabels(anotherVocabulary, "Alpha", "Bravo", "Charlie", "Delta");
         final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms.reversed());
@@ -776,7 +774,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsSortsTermsByLabelDescendingWhenRequested() {
+    void findNonMembersSortsTermsByLabelDescendingWhenRequested() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final Term alpha = termWithLabel(anotherVocabulary, "Alpha");
         final Term bravo = termWithLabel(anotherVocabulary, "Bravo");
@@ -793,7 +791,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsSortsCollectionsByLabel() {
+    void findNonMembersSortsCollectionsByLabel() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final Term alpha = termWithLabel(anotherVocabulary, "Alpha");
         final Term bravo = termWithLabel(anotherVocabulary, "Bravo");
@@ -809,7 +807,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsUsesLabelInVocabularyPrimaryLanguage() {
+    void findNonMembersUsesLabelInVocabularyPrimaryLanguage() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final String primaryLanguage = anotherVocabulary.getPrimaryLanguage();
         final String otherLanguage = "cs";
@@ -831,9 +829,9 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsReturnsEntitiesWithResolvedTypes() {
-        final List<TypeAwareEntity> result = findAddMemberOptions(unorderedCollection, vocabulary, PAGEABLE_ALL)
-                .getContent();
+    void findNonMembersReturnsEntitiesWithResolvedTypes() {
+        final List<TypeAwareEntity> result =
+                findNonMembers(unorderedCollection, vocabulary, PAGEABLE_ALL).getContent();
 
         assertEquals(membersNotInUnorderedCollection(), new HashSet<>(identifiers(result)));
         result.forEach(e -> {
@@ -849,7 +847,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsRespectsPagination() {
+    void findNonMembersRespectsPagination() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = termsWithLabels(anotherVocabulary, "Alpha", "Bravo", "Charlie", "Delta", "Echo");
         final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms.reversed());
@@ -860,7 +858,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsReturnsDisjointPagesCoveringAllOptions() {
+    void findNonMembersReturnsDisjointPagesCoveringAllOptions() {
         final Set<URI> options = membersNotInUnorderedCollection();
 
         final int pageSize = 4;
@@ -875,29 +873,29 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsReturnsTotalCountOfAllOptions() {
+    void findNonMembersReturnsTotalCountOfAllOptions() {
         final int pageSize = 2;
 
         final Page<TypeAwareEntity> result =
-                findAddMemberOptions(unorderedCollection, vocabulary, PageRequest.ofSize(pageSize));
+                findNonMembers(unorderedCollection, vocabulary, PageRequest.ofSize(pageSize));
 
         assertEquals(pageSize, result.getNumberOfElements());
         assertEquals(membersNotInUnorderedCollection().size(), result.getTotalElements());
     }
 
     @Test
-    void findAddMemberOptionsReturnsEmptyPageWhenAllEntitiesAreMembers() {
+    void findNonMembersReturnsEmptyPageWhenAllEntitiesAreMembers() {
         unorderedCollection.getMembers().addAll(membersNotInUnorderedCollection());
         transactional(() -> sut.update(unorderedCollection, vocabulary));
 
-        final Page<TypeAwareEntity> result = findAddMemberOptions(unorderedCollection, vocabulary, PAGEABLE_ALL);
+        final Page<TypeAwareEntity> result = findNonMembers(unorderedCollection, vocabulary, PAGEABLE_ALL);
 
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotalElements());
     }
 
     @Test
-    void findAddMemberOptionsReturnsOnlyTermsAndCollectionsWithLabelContainingSearchString() {
+    void findNonMembersReturnsOnlyTermsAndCollectionsWithLabelContainingSearchString() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = termsWithLabels(anotherVocabulary, "Main street", "Side street", "Park");
         final TermCollection streetCollection = collectionWithLabel(anotherVocabulary, "Streets");
@@ -907,27 +905,26 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
                 Stream.concat(terms.stream(), Stream.of(streetCollection, parkCollection))
                         .toList());
 
-        final Page<TypeAwareEntity> result =
-                findAddMemberOptions(collection, anotherVocabulary, "street", PAGEABLE_ALL);
+        final Page<TypeAwareEntity> result = findNonMembers(collection, anotherVocabulary, "street", PAGEABLE_ALL);
 
         assertEquals(
                 identifiers(List.of(streetCollection, terms.get(0), terms.get(1))), identifiers(result.getContent()));
     }
 
     @Test
-    void findAddMemberOptionsMatchesSearchStringIgnoringCase() {
+    void findNonMembersMatchesSearchStringIgnoringCase() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = termsWithLabels(anotherVocabulary, "Alpha", "ALPHABET", "Bravo");
         final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms);
 
-        final Page<TypeAwareEntity> result = findAddMemberOptions(collection, anotherVocabulary, "aLpHa", PAGEABLE_ALL);
+        final Page<TypeAwareEntity> result = findNonMembers(collection, anotherVocabulary, "aLpHa", PAGEABLE_ALL);
 
         // alpha and alphabet
         assertEquals(identifiers(terms.subList(0, 2)), identifiers(result.getContent()));
     }
 
     @Test
-    void findAddMemberOptionsMatchesSearchStringOnlyInVocabularyPrimaryLanguageLabel() {
+    void findNonMembersMatchesSearchStringOnlyInVocabularyPrimaryLanguageLabel() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final String primaryLanguage = anotherVocabulary.getPrimaryLanguage();
         final String otherLanguage = "cs";
@@ -942,38 +939,37 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final TermCollection collection =
                 persistVocabularyWithEmptyCollection(anotherVocabulary, List.of(matching, nonMatching));
 
-        final Page<TypeAwareEntity> result =
-                findAddMemberOptions(collection, anotherVocabulary, "street", PAGEABLE_ALL);
+        final Page<TypeAwareEntity> result = findNonMembers(collection, anotherVocabulary, "street", PAGEABLE_ALL);
 
         assertEquals(identifiers(List.of(matching)), identifiers(result.getContent()));
     }
 
     @Test
-    void findAddMemberOptionsReturnsTotalCountOfOptionsMatchingSearchString() {
+    void findNonMembersReturnsTotalCountOfOptionsMatchingSearchString() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = termsWithLabels(anotherVocabulary, "Street 1", "Street 2", "Street 3", "Park");
         final TermCollection collection = persistVocabularyWithEmptyCollection(anotherVocabulary, terms);
         final int pageSize = 2;
 
         final Page<TypeAwareEntity> result =
-                findAddMemberOptions(collection, anotherVocabulary, "street", PageRequest.ofSize(pageSize));
+                findNonMembers(collection, anotherVocabulary, "street", PageRequest.ofSize(pageSize));
 
         assertEquals(pageSize, result.getNumberOfElements());
         assertEquals(3, result.getTotalElements());
     }
 
     @Test
-    void findAddMemberOptionsReturnsAllOptionsWhenSearchStringIsEmpty() {
-        final Page<TypeAwareEntity> result = findAddMemberOptions(unorderedCollection, vocabulary, "", PAGEABLE_ALL);
+    void findNonMembersReturnsAllOptionsWhenSearchStringIsEmpty() {
+        final Page<TypeAwareEntity> result = findNonMembers(unorderedCollection, vocabulary, "", PAGEABLE_ALL);
 
         assertEquals(membersNotInUnorderedCollection(), new HashSet<>(identifiers(result.getContent())));
         assertEquals(membersNotInUnorderedCollection().size(), result.getTotalElements());
     }
 
     @Test
-    void findAddMemberOptionsReturnsEmptyPageWhenNoLabelContainsSearchString() {
+    void findNonMembersReturnsEmptyPageWhenNoLabelContainsSearchString() {
         final Page<TypeAwareEntity> result =
-                findAddMemberOptions(unorderedCollection, vocabulary, "no label contains this string", PAGEABLE_ALL);
+                findNonMembers(unorderedCollection, vocabulary, "no label contains this string", PAGEABLE_ALL);
 
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotalElements());

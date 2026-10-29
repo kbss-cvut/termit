@@ -559,9 +559,8 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsMapsIdentifiersToRespectiveEntities() {
-        final List<HasIdentifier> result = sut.findAddMemberOptions(
-                        unorderedCollection.getUri(), vocabulary, null, pageable)
+    void findNonMembersMapsIdentifiersToRespectiveEntities() {
+        final List<HasIdentifier> result = sut.findNonMembers(unorderedCollection.getUri(), vocabulary, null, pageable)
                 .getContent();
 
         final Set<HasIdentifier> expected = new HashSet<>();
@@ -586,12 +585,12 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findAddMemberOptionsReturnsOnlyOptionsMatchingSearchString() {
+    void findNonMembersReturnsOnlyOptionsMatchingSearchString() {
         final Term matching = orderedMembers.get(2);
         final String searchString = matching.getLabel().get(Environment.LANGUAGE);
 
         final Page<HasIdentifier> result =
-                sut.findAddMemberOptions(unorderedCollection.getUri(), vocabulary, searchString, pageable);
+                sut.findNonMembers(unorderedCollection.getUri(), vocabulary, searchString, pageable);
 
         assertEquals(List.of(matching.toTermInfo()), result.getContent());
         assertEquals(1, result.getTotalElements());

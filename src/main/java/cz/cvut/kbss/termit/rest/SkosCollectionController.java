@@ -428,7 +428,7 @@ public class SkosCollectionController extends BaseController {
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
     })
     @GetMapping(value = "/{collectionLocalName}/members/options", produces = JsonLd.MEDIA_TYPE)
-    public ResponseEntity<List<HasIdentifier>> findAddMemberOptions(
+    public ResponseEntity<List<HasIdentifier>> findNonMembers(
             @Parameter(
                             description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                             example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
@@ -460,7 +460,7 @@ public class SkosCollectionController extends BaseController {
                     Integer size) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
-        final Page<HasIdentifier> result = collectionService.findAddMemberOptions(
+        final Page<HasIdentifier> result = collectionService.findNonMembers(
                 collectionUri, vocabularyUri, searchString, createPageRequest(size, page));
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
