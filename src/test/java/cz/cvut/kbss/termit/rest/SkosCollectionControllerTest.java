@@ -169,11 +169,11 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getMembersReturnsMembersOfUnorderedCollectionWithTotalCountHeader() throws Exception {
+    void getMembersReturnsMembersWithTotalCountHeader() throws Exception {
         final PageRequest pageRequest = PageRequest.of(1, 5);
         final List<HasIdentifier> members = generateMembers(pageRequest.getPageSize());
         final int totalCount = 12;
-        when(collectionServiceMock.findMembersFromUnordered(COLLECTION_URI, VOCABULARY_URI, pageRequest))
+        when(collectionServiceMock.findMembers(COLLECTION_URI, VOCABULARY_URI, pageRequest))
                 .thenReturn(new PageImpl<>(members, pageRequest, totalCount));
 
         final MvcResult mvcResult = mockMvc.perform(
@@ -191,7 +191,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     @Test
     void getMembersPassesPageSpecificationToService() throws Exception {
         final PageRequest pageRequest = PageRequest.of(2, 5);
-        when(collectionServiceMock.findMembersFromUnordered(COLLECTION_URI, VOCABULARY_URI, pageRequest))
+        when(collectionServiceMock.findMembers(COLLECTION_URI, VOCABULARY_URI, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
         mockMvc.perform(get(PATH + "/{collection}/members", VOCABULARY_NAME, COLLECTION_NAME)
@@ -199,41 +199,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
                         .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
                         .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
                 .andExpect(status().isOk());
-        verify(collectionServiceMock).findMembersFromUnordered(COLLECTION_URI, VOCABULARY_URI, pageRequest);
-    }
-
-    @Test
-    void getOrderedMembersReturnsMembersOfOrderedCollectionWithTotalCountHeader() throws Exception {
-        final PageRequest pageRequest = PageRequest.of(1, 5);
-        final List<HasIdentifier> members = generateMembers(pageRequest.getPageSize());
-        final int totalCount = 12;
-        when(collectionServiceMock.findMembersFromOrdered(COLLECTION_URI, VOCABULARY_URI, pageRequest))
-                .thenReturn(new PageImpl<>(members, pageRequest, totalCount));
-
-        final MvcResult mvcResult = mockMvc.perform(
-                        get(PATH + "/ordered/{collection}/members", VOCABULARY_NAME, COLLECTION_NAME)
-                                .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
-                                .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
-                                .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
-                .andExpect(status().isOk())
-                .andReturn();
-        final List<TermInfo> result = readValue(mvcResult, new TypeReference<>() {});
-        assertEquals(members, result);
-        assertEquals(Integer.toString(totalCount), mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER));
-    }
-
-    @Test
-    void getOrderedMembersPassesPageSpecificationToService() throws Exception {
-        final PageRequest pageRequest = PageRequest.of(2, 5);
-        when(collectionServiceMock.findMembersFromOrdered(COLLECTION_URI, VOCABULARY_URI, pageRequest))
-                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
-
-        mockMvc.perform(get(PATH + "/ordered/{collection}/members", VOCABULARY_NAME, COLLECTION_NAME)
-                        .param(SkosCollectionController.COLLECTION_NAMESPACE_PARAM, COLLECTION_NAMESPACE)
-                        .param(PAGE, Integer.toString(pageRequest.getPageNumber()))
-                        .param(PAGE_SIZE, Integer.toString(pageRequest.getPageSize())))
-                .andExpect(status().isOk());
-        verify(collectionServiceMock).findMembersFromOrdered(COLLECTION_URI, VOCABULARY_URI, pageRequest);
+        verify(collectionServiceMock).findMembers(COLLECTION_URI, VOCABULARY_URI, pageRequest);
     }
 
     private List<SkosCollectionDto> generateCollectionDtos(int count) {

@@ -292,6 +292,7 @@ public class SkosCollectionDao {
      * @return members of the requested page sorted by their label in the primary language
      */
     public List<TypeAwareEntity> findMembers(TermCollection collection, Pageable pageable) {
+        Objects.requireNonNull(collection.getUri(), "SKOS collection uri must not be null");
         Objects.requireNonNull(collection.getPrimaryLanguage(), "Primary language of the collection must not be null");
         try {
             final List<URI> identifiers = em.createNativeQuery(

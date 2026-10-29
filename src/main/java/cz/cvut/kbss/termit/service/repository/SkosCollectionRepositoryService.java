@@ -50,6 +50,28 @@ public class SkosCollectionRepositoryService {
     }
 
     /**
+     * Loads members of the collection and maps them to respective entity instances.
+     *
+     * @param collectionUri The collection identifier whose members should be loaded
+     * @param pageable page specification
+     * @return page of entities that are part of the collection, in the order of the collection
+     * @see #resolveEntity(TypeAwareEntity)
+     */
+    @Transactional(readOnly = true)
+    public Page<HasIdentifier> findMembers(URI collectionUri, Vocabulary vocabulary, Pageable pageable) {
+        final SkosCollection<?> collection =
+                find(collectionUri, vocabulary).orElseThrow(() -> notFound(collectionUri, vocabulary.getUri()));
+        if (collection instanceof TermCollection unordered) {
+            return findMembers(unordered, pageable);
+        }
+        if (collection instanceof OrderedTermCollection ordered) {
+            return findMembers(ordered, pageable);
+        }
+        throw new IllegalStateException(
+                "Unknown SKOS collection type: " + collection.getClass().getName());
+    }
+
+    /**
      * Loads members of the ordered collection and maps them to respective entity instances.
      *
      * @param collection The collection whose members should be loaded

@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
-import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
@@ -68,21 +67,9 @@ public class SkosCollectionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<HasIdentifier> findMembersFromOrdered(URI collectionUri, URI vocabularyUri, Pageable pageable) {
+    public Page<HasIdentifier> findMembers(URI collectionUri, URI vocabularyUri, Pageable pageable) {
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
-        final OrderedTermCollection collection = repositoryService
-                .findOrdered(collectionUri, vocabulary)
-                .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
-        return repositoryService.findMembers(collection, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<HasIdentifier> findMembersFromUnordered(URI collectionUri, URI vocabularyUri, Pageable pageable) {
-        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
-        final TermCollection collection = repositoryService
-                .findUnordered(collectionUri, vocabulary)
-                .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
-        return repositoryService.findMembers(collection, pageable);
+        return repositoryService.findMembers(collectionUri, vocabulary, pageable);
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")

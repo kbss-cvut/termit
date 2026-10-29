@@ -118,6 +118,32 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void findMembersReturnsMembersOfOrderedCollection() {
+        final List<URI> expectedMembers = new ArrayList<>(orderedCollection.getMembers());
+
+        final List<URI> members = sut.findMembers(orderedCollection.getUri(), vocabulary, pageable).stream()
+                .map(HasIdentifier::getUri)
+                .toList();
+        assertEquals(expectedMembers, members);
+    }
+
+    @Test
+    void findMembersReturnsMembersOfUnorderedCollection() {
+        final List<URI> expectedMembers = new ArrayList<>(unorderedCollection.getMembers());
+
+        final List<URI> members = sut.findMembers(unorderedCollection.getUri(), vocabulary, pageable).stream()
+                .map(HasIdentifier::getUri)
+                .toList();
+
+        assertThat(members).containsExactlyInAnyOrderElementsOf(expectedMembers);
+    }
+
+    @Test
+    void findMembersThrowsWhenCollectionDoesNotExist() {
+        assertThrows(NotFoundException.class, () -> sut.findMembers(Generator.generateUri(), vocabulary, pageable));
+    }
+
+    @Test
     void findMembersMaintainsMemberOrder() {
         final List<URI> initialOrder = new ArrayList<>(orderedCollection.getMembers());
         final List<URI> actualMembers = sut.findMembers(orderedCollection, pageable).stream()
