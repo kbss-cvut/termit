@@ -275,8 +275,8 @@ public class SkosCollectionController extends BaseController {
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
             description =
-                    "Gets members of the unordered collection with the specified local name from the vocabulary with the specified identifier. "
-                            + "Members are ordered by their labels in the vocabulary primary language.")
+                    "Gets members of the collection with the specified local name from the vocabulary with the specified identifier. "
+                            + "Members of an unordered collection are ordered by their labels in the vocabulary primary language.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Page of collection members."),
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
@@ -313,56 +313,8 @@ public class SkosCollectionController extends BaseController {
                     Integer pageNo) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
-        final Page<HasIdentifier> result = collectionService.findMembersFromUnordered(
-                collectionUri, vocabularyUri, createPageRequest(pageSize, pageNo));
-        return ResponseEntity.ok()
-                .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
-                .body(result.getContent());
-    }
-
-    @Operation(
-            security = {@SecurityRequirement(name = "bearer-key")},
-            description =
-                    "Gets members of the ordered collection with the specified local name from the vocabulary with the specified identifier. "
-                            + "Members are ordered based on the collection order.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Page of collection members in collection order."),
-        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
-    })
-    @GetMapping(
-            value = "/ordered/{collectionLocalName}/members",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<List<HasIdentifier>> getOrderedMembers(
-            @Parameter(
-                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                    @PathVariable
-                    String localName,
-            @Parameter(
-                            description = ApiDoc.ID_COLLECTION_LOCAL_NAME_DESCRIPTION,
-                            example = ApiDoc.ID_COLLECTION_LOCAL_NAME_EXAMPLE)
-                    @PathVariable
-                    String collectionLocalName,
-            @Parameter(
-                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
-                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                    Optional<String> namespace,
-            @Parameter(
-                            description = ApiDoc.ID_COLLECTION_NAMESPACE_DESCRIPTION,
-                            example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
-                    @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
-                    String collectionNamespace,
-            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
-                    @RequestParam(name = QueryParams.PAGE_SIZE, required = false)
-                    Integer pageSize,
-            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
-                    @RequestParam(name = QueryParams.PAGE, required = false)
-                    Integer pageNo) {
-        final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
-        final Page<HasIdentifier> result = collectionService.findMembersFromOrdered(
-                collectionUri, vocabularyUri, createPageRequest(pageSize, pageNo));
+        final Page<HasIdentifier> result =
+                collectionService.findMembers(collectionUri, vocabularyUri, createPageRequest(pageSize, pageNo));
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());

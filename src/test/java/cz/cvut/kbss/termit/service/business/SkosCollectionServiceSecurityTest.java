@@ -146,32 +146,16 @@ class SkosCollectionServiceSecurityTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findMembersFromOrderedSucceedsForUserWithVocabularyReadAccess() {
-        grantAccess(AccessLevel.READ);
-        assertDoesNotThrow(
-                () -> sut.findMembersFromOrdered(orderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
-    }
-
-    @Test
-    void findMembersFromOrderedThrowsAccessDeniedForUserWithoutVocabularyReadAccess() {
+    void findMembersThrowsForUserWithoutVocabularyReadAccess() {
         assertThrows(
                 AccessDeniedException.class,
-                () -> sut.findMembersFromOrdered(orderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
+                () -> sut.findMembers(orderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
     }
 
     @Test
-    void findMembersFromUnorderedSucceedsForUserWithVocabularyReadAccess() {
+    void findMembersSucceedsForUserWithoutVocabularyReadAccess() {
         grantAccess(AccessLevel.READ);
-        assertDoesNotThrow(() ->
-                sut.findMembersFromUnordered(unorderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
-    }
-
-    @Test
-    void findMembersFromUnorderedThrowsAccessDeniedForUserWithoutVocabularyReadAccess() {
-        assertThrows(
-                AccessDeniedException.class,
-                () -> sut.findMembersFromUnordered(
-                        unorderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
+        assertDoesNotThrow(() -> sut.findMembers(orderedCollection.getUri(), vocabulary.getUri(), Pageable.ofSize(10)));
     }
 
     private TermCollection generateCollectionAndPersistMembers() {

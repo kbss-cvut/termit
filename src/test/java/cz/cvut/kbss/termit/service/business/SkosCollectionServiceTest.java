@@ -58,17 +58,17 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findMembersFromUnorderedThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
+    void findMembersThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
         assertThrows(
                 NotFoundException.class,
-                () -> sut.findMembersFromUnordered(Generator.generateUri(), vocabulary.getUri(), Pageable.ofSize(10)));
+                () -> sut.findMembers(Generator.generateUri(), vocabulary.getUri(), Pageable.ofSize(10)));
     }
 
     @Test
-    void findMembersFromOrderedThrowsNotFoundExceptionWhenCollectionDoesNotExist() {
+    void findMembersThrowsNotFoundExceptionWhenVocabularyDoesNotExist() {
         assertThrows(
                 NotFoundException.class,
-                () -> sut.findMembersFromOrdered(Generator.generateUri(), vocabulary.getUri(), Pageable.ofSize(10)));
+                () -> sut.findMembers(collection.getUri(), Generator.generateUri(), Pageable.ofSize(10)));
     }
 
     @Test
