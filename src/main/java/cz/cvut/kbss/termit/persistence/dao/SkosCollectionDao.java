@@ -218,6 +218,12 @@ public class SkosCollectionDao {
                 .setParameter("searchString", searchString);
     }
 
+    /**
+     * Finds DTO describing the SKOS collection identified by {@code collectionUri}
+     *
+     * @param collectionUri the identifier of the SKOS collection
+     * @return {@link SkosCollectionDto} if found, or empty optional if no collection with the identifier exists.
+     */
     public Optional<SkosCollectionDto> findDto(URI collectionUri) {
         try {
             return Optional.ofNullable(em.find(SkosCollectionDto.class, collectionUri));
@@ -423,6 +429,13 @@ public class SkosCollectionDao {
                 .setParameter("ids", identifiers);
     }
 
+    /**
+     * Updates the given SKOS collection in the given vocabulary.
+     *
+     * @param skosCollection the SKOS collection to update
+     * @param vocabulary the vocabulary of the collection
+     * @implNote Evicts cache for the respective {@link SkosCollectionDto} in the vocabulary and default context
+     */
     public void update(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
         try {
             em.merge(skosCollection, descriptor(vocabulary));
@@ -438,6 +451,12 @@ public class SkosCollectionDao {
         }
     }
 
+    /**
+     * Persists the given SKOS collection in the given vocabulary
+     *
+     * @param skosCollection the SKOS collection to persist
+     * @param vocabulary the vocabulary of the SKOS collection
+     */
     public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
         try {
             em.persist(skosCollection, descriptor(vocabulary));
@@ -471,6 +490,12 @@ public class SkosCollectionDao {
         }
     }
 
+    /**
+     * Checks whether a SKOS collection with the given identifier exists.
+     *
+     * @param collectionUri the identifier of the SKOS collection to check
+     * @return {@code true} when a collection already exists, {@code false} otherwise
+     */
     public boolean exists(URI collectionUri) {
         Objects.requireNonNull(collectionUri);
         try {
@@ -552,6 +577,12 @@ public class SkosCollectionDao {
                 .setParameter("searchString", searchString);
     }
 
+    /**
+     * Finds all collections which contain the given member.
+     *
+     * @param memberUri the member identifier to search
+     * @return List of <b>partial</b> collection DTOs with only {@code uri}, {@code types} and {@code vocabulary} set.
+     */
     public List<SkosCollectionDto> findCollectionsWithMember(URI memberUri) {
         Objects.requireNonNull(memberUri, "Member URI must not be null");
         try {
@@ -586,6 +617,12 @@ public class SkosCollectionDao {
         }
     }
 
+    /**
+     * Detaches the given SKOS collection from persistence context.
+     *
+     * @param collection the managed entity to detach
+     * @see EntityManager#detach(Object)
+     */
     public void detach(SkosCollection<?> collection) {
         em.detach(collection);
     }
