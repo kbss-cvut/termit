@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
+import cz.cvut.kbss.termit.event.BeforeTermRemovedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -11,11 +12,14 @@ import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.SkosCollectionDao;
+import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Utils;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.validation.Validator;
@@ -349,5 +353,17 @@ public class SkosCollectionRepositoryService {
     private static NotFoundException notFound(URI collectionUri, URI vocabularyUri) {
         return new NotFoundException("Collection " + Utils.uriToString(collectionUri) + " not found in vocabulary "
                 + Utils.uriToString(vocabularyUri));
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    @EventListener
+    public void on(BeforeTermRemovedEvent event) {
+        Objects.requireNonNull(event, "Event must not be null!");
+        final TermRemovalParams params = event.getRemovalParams();
+        Objects.requireNonNull(params, "Term removal params must not be null!");
+        Objects.requireNonNull(params.termToRemove().getUri(), "Term identifier for removal must not be null!");
+        if (event.getRemovalParams().removeRelationships()) {
+            removeMemberFromAllCollections(params.termToRemove().getUri());
+        }
     }
 }

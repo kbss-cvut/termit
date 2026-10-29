@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.BeforeTermRemovedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -38,6 +39,7 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
+import cz.cvut.kbss.termit.service.repository.removal.SubTermRemovalStrategy;
 import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
@@ -47,7 +49,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -86,7 +88,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     private final TermOccurrenceService termOccurrenceService;
 
     private final DataRepositoryService dataService;
-    private final SkosCollectionRepositoryService skosCollectionRepositoryService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public TermRepositoryService(
             Validator validator,
@@ -97,7 +99,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             VocabularyRepositoryService vocabularyService,
             VocabularyNamespaceResolver namespaceResolver,
             DataRepositoryService dataService,
-            @Lazy SkosCollectionRepositoryService skosCollectionRepositoryService) {
+            ApplicationEventPublisher applicationEventPublisher) {
         super(validator);
         this.idResolver = idResolver;
         this.termDao = termDao;
@@ -106,7 +108,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.termOccurrenceService = termOccurrenceService;
         this.namespaceResolver = namespaceResolver;
         this.dataService = dataService;
-        this.skosCollectionRepositoryService = skosCollectionRepositoryService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
@@ -695,6 +697,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         final URI termUri = removalParams.termToRemove().getUri();
         Term toRemove = findRequired(termUri);
         removalParams = removalParams.withTerm(toRemove);
+        applicationEventPublisher.publishEvent(new BeforeTermRemovedEvent(this, removalParams));
         termDao.detach(toRemove);
 
         LOG.debug("Removing term <{}>", termUri);
@@ -702,8 +705,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         LOG.debug("Applying sub-terms removal strategy for term <{}>", termUri);
         removalParams.subTermsStrategy().apply(removalParams, this);
 
-        // handle removal from collections explicitly to maintain ordered collections linked list
-        skosCollectionRepositoryService.removeMemberFromAllCollections(termUri);
         termDao.flushAndClear();
 
         if (removalParams.removeRelationships()) {
@@ -730,6 +731,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      */
     @Override
     public void remove(Term instance) {
+        applicationEventPublisher.publishEvent(new BeforeTermRemovedEvent(
+                this, new TermRemovalParams(instance, SubTermRemovalStrategy.FAIL, false, false)));
         super.remove(instance);
     }
 
