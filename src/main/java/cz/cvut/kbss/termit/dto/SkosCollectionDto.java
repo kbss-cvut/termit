@@ -1,13 +1,17 @@
 package cz.cvut.kbss.termit.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
@@ -19,7 +23,9 @@ import cz.cvut.kbss.termit.util.Constants;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -57,6 +63,15 @@ public class SkosCollectionDto implements HasIdentifier, HasTypes {
 
     @Types(readOnly = true)
     private Set<String> types;
+
+    @Properties(fetchType = FetchType.EAGER)
+    private Map<String, Set<Object>> properties;
+
+    /** Prevents JOPA from loading the members into {@link #properties} */
+    @JsonIgnore
+    @Inferred(includeExplicit = false)
+    @OWLObjectProperty(iri = SKOS.MEMBER)
+    private Set<URI> members = Collections.emptySet();
 
     public SkosCollectionDto() {}
 
@@ -112,6 +127,14 @@ public class SkosCollectionDto implements HasIdentifier, HasTypes {
     @Override
     public void setTypes(Set<String> types) {
         this.types = types;
+    }
+
+    public Map<String, Set<Object>> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Set<Object>> properties) {
+        this.properties = properties;
     }
 
     @Override
