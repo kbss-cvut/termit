@@ -100,13 +100,13 @@ public class SkosCollectionDao {
                     BIND(1 AS ?priority)
                 }
                 ?entity ?inScheme ?vocabulary .
-                FILTER(lang(?label) = ?language)
+                FILTER(lang(?label) = ?language) .
+                FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
             }
             # filter non-members
-            FILTER NOT EXISTS {
+            MINUS {
                 ?collection ?hasMember|(?hasMemberList/?listRest*/?listFirst) ?entity .
             }
-            FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
             """;
 
     /** Property identifiers representing a label of collection member */
