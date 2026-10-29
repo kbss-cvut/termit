@@ -125,10 +125,10 @@ public class SkosCollectionService {
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
     @Transactional(readOnly = true)
-    public Page<HasIdentifier> findAddMemberOptions(
+    public Page<HasIdentifier> findNonMembers(
             URI collectionUri, URI vocabularyUri, String searchString, Pageable pageRequest) {
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
-        return repositoryService.findAddMemberOptions(collectionUri, vocabulary, searchString, pageRequest);
+        return repositoryService.findNonMembers(collectionUri, vocabulary, searchString, pageRequest);
     }
 
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")

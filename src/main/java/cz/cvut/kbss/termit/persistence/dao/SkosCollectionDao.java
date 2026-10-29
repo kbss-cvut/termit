@@ -81,12 +81,12 @@ public class SkosCollectionDao {
      * itself) along with their label in the vocabulary language. Collections are bound to {@code ?priority} 0, terms to
      * 1.
      *
-     * @implNote Bindings are applied by {@link #bindAddMemberOptions(Query, URI, Vocabulary, String)}
-     * @implNote {@code MINUS} is evaluated only once for query resulting in better performance than {@code FILTER NOT
-     *     EXISTS} which is evaluated for each candidate. Keep the MINUS block at the end preventing RDF4J optimizer
-     *     from promoting later filters into the MINUS block causing invalid results.
+     * @implNote Bindings are applied by {@link #bindFindNonMembersPattern(Query, URI, Vocabulary, String)}.
+     *     {@code MINUS} is evaluated only once for query resulting in better performance than {@code FILTER NOT EXISTS}
+     *     which is evaluated for each candidate. Keep the MINUS block at the end preventing RDF4J optimizer from
+     *     promoting later filters into the MINUS block causing invalid results.
      */
-    private static final String ADD_MEMBER_OPTIONS_PATTERN = """
+    private static final String FIND_NON_MEMBERS_PATTERN = """
             GRAPH ?vocabulary {
                 {
                     # a different collection in vocabulary
@@ -497,7 +497,7 @@ public class SkosCollectionDao {
      * @param pageRequest page request
      * @return Page of entities with their types that can be added to the collection
      */
-    public Page<TypeAwareEntity> findAddMemberOptions(
+    public Page<TypeAwareEntity> findNonMembers(
             URI collectionUri, Vocabulary vocabulary, String searchString, Pageable pageRequest) {
         Objects.requireNonNull(collectionUri, "Collection identifier must not be null");
         Objects.requireNonNull(vocabulary.getUri(), "Vocabulary URI must not be null");
@@ -507,36 +507,33 @@ public class SkosCollectionDao {
                     """
                     SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
                     """.formatted(Constants.GROUP_CONCAT_SEPARATOR)
-                            + ADD_MEMBER_OPTIONS_PATTERN + """
+                            + FIND_NON_MEMBERS_PATTERN + """
                     } GROUP BY ?entity ?priority ?label
                     ORDER BY ASC(?priority)
                     """ + buildSortClause(pageRequest, "?label", "?entity"),
                     TypeAwareEntity.RESULTSET_MAPPING);
-            bindAddMemberOptions(query, collectionUri, vocabulary, searchString);
+            bindFindNonMembersPattern(query, collectionUri, vocabulary, searchString);
             @SuppressWarnings("unchecked")
             final List<TypeAwareEntity> data = query.setFirstResult((int) pageRequest.getOffset())
                     .setMaxResults(pageRequest.getPageSize())
                     .getResultList();
             return PageableExecutionUtils.getPage(
-                    data, pageRequest, () -> countAddMemberOptions(collectionUri, vocabulary, searchString));
+                    data, pageRequest, () -> countNonMembers(collectionUri, vocabulary, searchString));
         } catch (RuntimeException e) {
             throw new PersistenceException(
-                    "Failed to find add member options for SKOS collection " + Utils.uriToString(collectionUri), e);
+                    "Failed to find add non members of SKOS collection " + Utils.uriToString(collectionUri), e);
         }
     }
 
-    /**
-     * Counts all possible collection members matched by {@link #findAddMemberOptions(URI, Vocabulary, String,
-     * Pageable)}.
-     */
-    private long countAddMemberOptions(URI collectionUri, Vocabulary vocabulary, String searchString) {
+    /** Counts all possible collection members matched by {@link #findNonMembers(URI, Vocabulary, String, Pageable)}. */
+    private long countNonMembers(URI collectionUri, Vocabulary vocabulary, String searchString) {
         final TypedQuery<Long> query = em.createNativeQuery(
-                "SELECT (COUNT(DISTINCT ?entity) AS ?count) WHERE { " + ADD_MEMBER_OPTIONS_PATTERN + " }", Long.class);
-        bindAddMemberOptions(query, collectionUri, vocabulary, searchString);
+                "SELECT (COUNT(DISTINCT ?entity) AS ?count) WHERE { " + FIND_NON_MEMBERS_PATTERN + " }", Long.class);
+        bindFindNonMembersPattern(query, collectionUri, vocabulary, searchString);
         return query.getSingleResult();
     }
 
-    private void bindAddMemberOptions(Query query, URI collectionUri, Vocabulary vocabulary, String searchString) {
+    private void bindFindNonMembersPattern(Query query, URI collectionUri, Vocabulary vocabulary, String searchString) {
         if (searchString == null) {
             searchString = "";
         }

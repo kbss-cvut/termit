@@ -263,14 +263,14 @@ public class SkosCollectionRepositoryService {
     /**
      * Loads entities that can be added to the collection and maps them to respective entity instances.
      *
-     * @see SkosCollectionDao#findAddMemberOptions(URI, Vocabulary, String, Pageable)
+     * @see SkosCollectionDao#findNonMembers(URI, Vocabulary, String, Pageable)
      * @see #resolveEntity(TypeAwareEntity)
      */
     @Transactional(readOnly = true)
-    public Page<HasIdentifier> findAddMemberOptions(
+    public Page<HasIdentifier> findNonMembers(
             URI collectionUri, Vocabulary vocabulary, String searchString, Pageable pageRequest) {
         return collectionDao
-                .findAddMemberOptions(collectionUri, vocabulary, searchString, pageRequest)
+                .findNonMembers(collectionUri, vocabulary, searchString, pageRequest)
                 .map(this::resolveEntity);
     }
 
