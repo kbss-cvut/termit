@@ -797,4 +797,28 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(unorderedCollection, vocabulary);
         assertEquals(vocabulary.getPrimaryLanguage(), unorderedCollection.getPrimaryLanguage());
     }
+
+    @Test
+    void addMemberDoesNothingWhenMemberIsAlreadyPresentInUnorderedCollection() {
+        final URI member = unorderedMembers.get(2).getUri();
+
+        sut.addMember(unorderedCollection, vocabulary, member);
+
+        final TermCollection updated =
+                sut.findUnordered(unorderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).containsOnlyOnce(member);
+    }
+
+    @Test
+    void addMemberDoesNothingWhenMemberIsAlreadyPresentInOrderedCollection() {
+        final URI member = orderedMembers.get(2).getUri();
+        final List<URI> expectedMembers = new ArrayList<>(orderedCollection.getMembers());
+
+        sut.addMember(orderedCollection, vocabulary, member);
+
+        final OrderedTermCollection updated =
+                sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getMembers()).containsOnlyOnce(member);
+        assertEquals(expectedMembers, updated.getMembers());
+    }
 }

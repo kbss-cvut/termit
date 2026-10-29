@@ -41,6 +41,8 @@ public class OrderedTermCollection extends SkosCollection<List<URI>> {
         if (getMembers() == null || getMembers().isEmpty()) {
             setMembers(new ArrayList<>());
         }
-        getMembers().addFirst(member);
+        if (!hasMember(member)) {
+            getMembers().addFirst(member);
+        }
     }
 }
