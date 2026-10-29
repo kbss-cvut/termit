@@ -125,6 +125,14 @@ public abstract class DtoMapper {
 
     public abstract SkosCollectionDto skosCollectionToDto(SkosCollection<?> entity);
 
+    /**
+     * Maps entity type to additional {@code types} of the created dto.
+     *
+     * <p>JOPA excludes the type of the entity itself from {@code types}. Unordered collection is SKOS collection, its
+     * {@code types} are empty. Ordered collection is SKOS ordered collection and SKOS collection, its {@code types}
+     * contains only SKOS collection. Because collection DTO is also SKOS collection, its {@code types} should not
+     * contain its type, but the ordered collection type needs to be added when mapped from ordered collection entity.
+     */
     @AfterMapping
     @SuppressWarnings("unused") // executed after skosCollectionToDto mapping
     protected void transferEntityType(SkosCollection<?> entity, @MappingTarget SkosCollectionDto dto) {
