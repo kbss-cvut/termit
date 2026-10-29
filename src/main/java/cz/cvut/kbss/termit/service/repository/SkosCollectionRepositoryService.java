@@ -59,6 +59,7 @@ public class SkosCollectionRepositoryService {
      */
     @Transactional(readOnly = true)
     public Page<HasIdentifier> findMembers(OrderedTermCollection collection, Pageable pageable) {
+        Objects.requireNonNull(collection, "Ordered SKOS collection must not be null");
         final List<HasIdentifier> data = resolveEntities(collectionDao.findMembers(collection, pageable));
         return new PageImpl<>(data, pageable, collection.getMembers().size());
     }
@@ -73,6 +74,7 @@ public class SkosCollectionRepositoryService {
      */
     @Transactional(readOnly = true)
     public Page<HasIdentifier> findMembers(TermCollection collection, Pageable pageable) {
+        Objects.requireNonNull(collection, "SKOS Collection must not be null");
         final List<HasIdentifier> data = resolveEntities(collectionDao.findMembers(collection, pageable));
         return new PageImpl<>(data, pageable, collection.getMembers().size());
     }
@@ -200,12 +202,16 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void update(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        Objects.requireNonNull(skosCollection, "SKOS collection must not be null!");
+        Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
         preUpdate(skosCollection, vocabulary);
         collectionDao.update(skosCollection, vocabulary);
     }
 
     @Transactional
     public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        Objects.requireNonNull(skosCollection, "SKOS collection must not be null!");
+        Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
         validate(skosCollection, skosCollection.getMembers(), vocabulary);
         verifyIdentifierUnique(skosCollection);
         collectionDao.persist(skosCollection, vocabulary);
@@ -213,6 +219,8 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void remove(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        Objects.requireNonNull(skosCollection, "SKOS collection must not be null!");
+        Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
         final SkosCollection<?> managed = collectionDao
                 .find(skosCollection.getClass(), skosCollection.getUri(), vocabulary)
                 .orElseThrow(() -> notFound(skosCollection.getUri(), vocabulary.getUri()));
@@ -235,8 +243,9 @@ public class SkosCollectionRepositoryService {
     public void updateMemberPosition(
             OrderedTermCollection collection, Vocabulary vocabulary, URI memberIri, int originalPos, int newPos) {
         Objects.requireNonNull(collection.getUri(), "Collection identifier must not be null!");
-        Objects.requireNonNull(memberIri, "Member identifier must not be null!");
         Objects.requireNonNull(collection.getMembers(), "Collection members must not be null!");
+        Objects.requireNonNull(vocabulary.getUri(), "Vocabulary identifier must not be null!");
+        Objects.requireNonNull(memberIri, "Member identifier must not be null!");
         if (originalPos < 0 || newPos < 0) {
             throw new ValidationException("Illegal member position in SKOS collection! Position must not be negative!");
         }
@@ -274,18 +283,25 @@ public class SkosCollectionRepositoryService {
 
     @Transactional
     public void addMember(SkosCollection<?> collection, Vocabulary vocabulary, URI member) {
+        Objects.requireNonNull(collection, "SKOS collection must not be null!");
+        Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
+        Objects.requireNonNull(member, "Member must not be null!");
         collection.addMember(member);
         update(collection, vocabulary);
     }
 
     @Transactional
     public void removeMember(SkosCollection<?> collection, Vocabulary vocabulary, URI member) {
+        Objects.requireNonNull(collection, "SKOS collection must not be null!");
+        Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
+        Objects.requireNonNull(member, "Member must not be null!");
         collection.removeMember(member);
         update(collection, vocabulary);
     }
 
     @Transactional
     public void removeMemberFromAllCollections(URI member) {
+        Objects.requireNonNull(member, "Member must not be null!");
         findCollectionsWithMember(member).forEach(collection -> {
             collection.removeMember(member);
             // persisted by transaction commit
@@ -294,6 +310,7 @@ public class SkosCollectionRepositoryService {
 
     @Transactional(readOnly = true)
     public Set<SkosCollection<?>> findCollectionsWithMember(URI member) {
+        Objects.requireNonNull(member, "Member must not be null!");
         return collectionDao.findCollectionsWithMember(member).stream()
                 .map(this::mapToCollection)
                 .collect(Collectors.toSet());
