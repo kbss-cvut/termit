@@ -26,7 +26,11 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.SkosCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.resource.Document;
+import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
@@ -35,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,12 +84,14 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         }
 
         transactional(() -> sut.createSnapshot(root));
-        vocabularyTerms.keySet().forEach(
-                v -> assertTrue(em.createNativeQuery("ASK { ?snapshot ?isSnapshotOf ?v . }", Boolean.class)
-                                  .setParameter("isSnapshotOf",
-                                          URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
-                                  .setParameter("v", v)
-                                  .getSingleResult()));
+        vocabularyTerms
+                .keySet()
+                .forEach(v -> assertTrue(em.createNativeQuery("ASK { ?snapshot ?isSnapshotOf ?v . }", Boolean.class)
+                        .setParameter(
+                                "isSnapshotOf",
+                                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
+                        .setParameter("v", v)
+                        .getSingleResult()));
     }
 
     private Vocabulary generateVocabularyWithTerm(boolean rootTerm) {
@@ -115,6 +122,19 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
                 break;
         }
         transactional(() -> em.merge(termOne, descriptorFactory.termDescriptor(termOne)));
+    }
+
+    private <T extends SkosCollection<?>> T generateCollectionWithTerms(T collection, Vocabulary vocabulary) {
+        Generator.populateSkosCollection(collection);
+        collection.setVocabulary(vocabulary.getUri());
+
+        Generator.generateTermsWithIds(5).forEach(term -> {
+            term.setVocabulary(vocabulary.getUri());
+            collection.addMember(term.getUri());
+            transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+        });
+        transactional(() -> em.persist(collection, descriptorFactory.vocabularyDescriptor(vocabulary)));
+        return collection;
     }
 
     @Test
@@ -157,11 +177,26 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
     }
 
     private <T extends Asset<?>> T findRequiredSnapshot(HasIdentifier asset, Class<T> cls) {
-        final String isSnapshotOf = Vocabulary.class.equals(cls) ? cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary : cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term;
+        final String isSnapshotOf = Vocabulary.class.equals(cls)
+                ? cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary
+                : cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term;
         final T result = em.createNativeQuery("SELECT ?s WHERE { ?s ?isSnapshotOf ?a }", cls)
-                           .setParameter("isSnapshotOf", URI.create(isSnapshotOf))
-                           .setParameter("a", asset)
-                           .getSingleResult();
+                .setParameter("isSnapshotOf", URI.create(isSnapshotOf))
+                .setParameter("a", asset)
+                .getSingleResult();
+        assertNotNull(result);
+        return result;
+    }
+
+    private <C extends Collection<URI>, T extends SkosCollection<C>> T findRequiredCollectionSnapshot(T collection) {
+        final Class<T> cls = (Class<T>) collection.getClass();
+        final String owlClass = EntityToOwlClassMapper.getOwlClassForEntity(cls);
+        final T result = em.createNativeQuery("SELECT ?c WHERE { ?c a ?type; ?isSnapshotOf ?a }", cls)
+                .setParameter("type", URI.create(owlClass))
+                .setParameter(
+                        "isSnapshotOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_collection))
+                .setParameter("a", collection.getUri())
+                .getSingleResult();
         assertNotNull(result);
         return result;
     }
@@ -173,11 +208,15 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.createSnapshot(vocabulary));
         final String queryString = "ASK { ?s ?isSnapshotOf ?a }";
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                             cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary)).setParameter("a", vocabulary)
-                     .getSingleResult());
-        assertTrue(em.createNativeQuery(queryString, Boolean.class).setParameter("isSnapshotOf", URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term)).setParameter("a", term).getSingleResult());
+        assertTrue(em.createNativeQuery(queryString, Boolean.class)
+                .setParameter(
+                        "isSnapshotOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_vocabulary))
+                .setParameter("a", vocabulary)
+                .getSingleResult());
+        assertTrue(em.createNativeQuery(queryString, Boolean.class)
+                .setParameter("isSnapshotOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_is_version_of_term))
+                .setParameter("a", term)
+                .getSingleResult());
     }
 
     @Test
@@ -237,5 +276,43 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         final Vocabulary snapshot = findRequiredSnapshot(vocabulary, Vocabulary.class);
         final Vocabulary importedSnapshot = findRequiredSnapshot(imported, Vocabulary.class);
         assertThat(snapshot.getImportedVocabularies(), hasItem(importedSnapshot.getUri()));
+    }
+
+    @Test
+    void createSnapshotCreatesSnapshotOfUnorderedCollection() {
+        final Vocabulary vocabulary = generateVocabularyWithTerm(true);
+        final TermCollection collection = generateCollectionWithTerms(new TermCollection(), vocabulary);
+
+        transactional(() -> sut.createSnapshot(vocabulary));
+
+        final TermCollection snapshot = findRequiredCollectionSnapshot(collection);
+        assertCollectionSnapshot(collection, snapshot);
+    }
+
+    @Test
+    void createSnapshotCreatesSnapshotOfOrderedCollection() {
+        final Vocabulary vocabulary = generateVocabularyWithTerm(true);
+        final OrderedTermCollection collection = generateCollectionWithTerms(new OrderedTermCollection(), vocabulary);
+
+        transactional(() -> sut.createSnapshot(vocabulary));
+
+        final OrderedTermCollection snapshot = findRequiredCollectionSnapshot(collection);
+        assertCollectionSnapshot(collection, snapshot);
+    }
+
+    private <C extends Collection<URI>, T extends SkosCollection<C>> void assertCollectionSnapshot(
+            T originalCollection, T snapshot) {
+        assertThat(snapshot.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_collection));
+
+        final String suffix = snapshot.getUri()
+                .toString()
+                .substring(originalCollection.getUri().toString().length());
+        assertTrue(suffix.matches("/verze/\\d+T\\d+Z"));
+
+        originalCollection.getMembers().forEach(originalMember -> {
+            assertThat(snapshot.getMembers(), hasItem(URI.create(originalMember + suffix)));
+        });
+        assertEquals(
+                originalCollection.getMembers().size(), snapshot.getMembers().size());
     }
 }
