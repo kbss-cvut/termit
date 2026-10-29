@@ -54,9 +54,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Supports SKOS-based export of glossaries and terms.
- */
+/** Supports SKOS-based export of glossaries and terms. */
 @Repository
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SKOSExporter {
@@ -65,8 +63,10 @@ public class SKOSExporter {
 
     private static final String VOCABULARY_EXPORT_QUERY = "export/skos/exportVocabulary.rq";
     private static final String TERMS_EXPORT_QUERY = "export/skos/exportVocabularyTerms.rq";
+    private static final String COLLECTIONS_EXPORT_QUERY = "export/skos/exportVocabularyCollections.rq";
     private static final String TERMS_FULL_EXPORT_QUERY = "export/full/exportVocabularyTerms.rq";
     private static final String TERMS_HIERARCHY_EXPORT_QUERY = "export/full/exportHierarchy.rq";
+    private static final String COLLECTIONS_FULL_EXPORT_QUERY = "export/full/exportVocabularyCollections.rq";
 
     private final VocabularyContextMapper vocabularyContextMapper;
 
@@ -84,11 +84,11 @@ public class SKOSExporter {
 
     /**
      * Exports vocabulary and terms of the specified vocabulary as a SKOS model.
-     * <p>
-     * Only basic SKOS properties are exported for terms. To get all available data, use
+     *
+     * <p>Only basic SKOS properties are exported for terms. To get all available data, use
      * {@link #exportFullVocabulary(Vocabulary)}.
-     * <p>
-     * The exported data can be retrieved using {@link #exportAs(ExportFormat)}.
+     *
+     * <p>The exported data can be retrieved using {@link #exportAs(ExportFormat)}.
      *
      * @param vocabulary Vocabulary to export
      * @see #exportAs(ExportFormat)
@@ -98,14 +98,15 @@ public class SKOSExporter {
         Objects.requireNonNull(vocabulary);
         exportVocabularyInstance(vocabulary);
         exportVocabularyTermsWithQuery(vocabulary, TERMS_EXPORT_QUERY);
+        exportVocabularyCollections(vocabulary, COLLECTIONS_EXPORT_QUERY);
     }
 
     /**
      * Exports vocabulary and terms of the specified vocabulary as a SKOS model.
-     * <p>
-     * This method exports all available asserted data for each term.
-     * <p>
-     * The exported data can be retrieved using {@link #exportAs(ExportFormat)}.
+     *
+     * <p>This method exports all available asserted data for each term.
+     *
+     * <p>The exported data can be retrieved using {@link #exportAs(ExportFormat)}.
      *
      * @param vocabulary Vocabulary to export
      * @see #exportAs(ExportFormat)
@@ -114,6 +115,7 @@ public class SKOSExporter {
         Objects.requireNonNull(vocabulary);
         exportVocabularyInstance(vocabulary);
         exportVocabularyTermsWithQuery(vocabulary, TERMS_FULL_EXPORT_QUERY);
+        exportVocabularyCollections(vocabulary, COLLECTIONS_FULL_EXPORT_QUERY);
     }
 
     /**
@@ -146,15 +148,16 @@ public class SKOSExporter {
                                                                    ?hasPreferredNamespace ?namespace .
                                                                    }""");
         tq.setBinding("vocabulary", vocabularyIri);
-        tq.setBinding("hasPreferredPrefix",
-                      vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix));
-        tq.setBinding("hasPreferredNamespace",
-                      vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
+        tq.setBinding(
+                "hasPreferredPrefix", vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix));
+        tq.setBinding(
+                "hasPreferredNamespace", vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
         try (final TupleQueryResult result = tq.evaluate()) {
             while (result.hasNext()) {
                 final BindingSet binding = result.next();
-                model.setNamespace(binding.getValue("prefix").stringValue(),
-                                   binding.getValue("namespace").stringValue());
+                model.setNamespace(
+                        binding.getValue("prefix").stringValue(),
+                        binding.getValue("namespace").stringValue());
             }
         }
         model.setNamespace(SKOS.PREFIX, SKOS.NAMESPACE);
@@ -171,7 +174,8 @@ public class SKOSExporter {
     private void exportVocabularyTermsWithQuery(Vocabulary vocabulary, String queryFile) {
         final long startTime = System.currentTimeMillis();
         LOG.trace("Exporting terms from {}.", vocabulary);
-        final IRI graphIri = vf.createIRI(vocabularyContextMapper.getVocabularyContext(vocabulary).toString());
+        final IRI graphIri = vf.createIRI(
+                vocabularyContextMapper.getVocabularyContext(vocabulary).toString());
         final IRI vocabularyIri = vf.createIRI(vocabulary.getUri().toString());
         try (final RepositoryConnection conn = repository.getConnection()) {
             GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(queryFile));
@@ -190,8 +194,8 @@ public class SKOSExporter {
 
     /**
      * Exports the vocabulary of the specified vocabulary and its terms.
-     * <p>
-     * In addition, terms from other vocabularies referenced via the any of the specified properties are exported as
+     *
+     * <p>In addition, terms from other vocabularies referenced via the any of the specified properties are exported as
      * well, together with metadata of their respective glossaries.
      *
      * @param vocabulary Vocabulary to export
@@ -207,11 +211,11 @@ public class SKOSExporter {
 
     /**
      * Exports the vocabulary of the specified vocabulary and its terms.
-     * <p>
-     * In addition, terms from other vocabularies referenced via the any of the specified properties are exported as
+     *
+     * <p>In addition, terms from other vocabularies referenced via the any of the specified properties are exported as
      * well, together with metadata of their respective glossaries.
-     * <p>
-     * This method exports all available asserted data for each term.
+     *
+     * <p>This method exports all available asserted data for each term.
      *
      * @param vocabulary Vocabulary to export
      * @param properties RDF properties representing references to other terms to take into account when exporting
@@ -239,11 +243,13 @@ public class SKOSExporter {
             final String queryString = Utils.loadQuery(queryFile);
             properties.forEach(p -> {
                 final IRI property = vf.createIRI(p);
-                final Set<IRI> referencedTerms = model.stream().filter(s -> s.getPredicate().equals(property))
-                                                      .map(s -> {
-                                                          assert s.getObject().isIRI();
-                                                          return (IRI) s.getObject();
-                                                      }).collect(Collectors.toSet());
+                final Set<IRI> referencedTerms = model.stream()
+                        .filter(s -> s.getPredicate().equals(property))
+                        .map(s -> {
+                            assert s.getObject().isIRI();
+                            return (IRI) s.getObject();
+                        })
+                        .collect(Collectors.toSet());
                 referencedTerms.forEach(referencedTerm -> {
                     final GraphQuery gq = conn.prepareGraphQuery(queryString);
                     gq.setBinding("term", referencedTerm);
@@ -258,23 +264,23 @@ public class SKOSExporter {
      * {@link #exportReferencedTermsWithQuery(Collection, String)}.
      */
     private void exportReferencedVocabularies() {
-        final Set<IRI> vocabulariesToExport = model.stream().filter(s -> s.getPredicate().equals(SKOS.IN_SCHEME))
-                                                   .map(s -> {
-                                                       assert s.getObject().isIRI();
-                                                       return (IRI) s.getObject();
-                                                   })
-                                                   .filter(vocIri -> !model.contains(vocIri, RDF.TYPE, SKOS.CONCEPT_SCHEME))
-                                                   .collect(Collectors.toSet());
+        final Set<IRI> vocabulariesToExport = model.stream()
+                .filter(s -> s.getPredicate().equals(SKOS.IN_SCHEME))
+                .map(s -> {
+                    assert s.getObject().isIRI();
+                    return (IRI) s.getObject();
+                })
+                .filter(vocIri -> !model.contains(vocIri, RDF.TYPE, SKOS.CONCEPT_SCHEME))
+                .collect(Collectors.toSet());
         LOG.trace("Exporting metadata of vocabularies of referenced terms: {}.", vocabulariesToExport);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final String queryString = Utils.loadQuery(VOCABULARY_EXPORT_QUERY);
-            vocabulariesToExport.forEach(
-                    vocIri -> {
-                        final GraphQuery gq = conn.prepareGraphQuery(queryString);
-                        gq.setBinding("vocabulary", vocIri);
-                        evaluateAndAddToModel(gq);
-                        resolvePrefixes(vocIri, conn);
-                    });
+            vocabulariesToExport.forEach(vocIri -> {
+                final GraphQuery gq = conn.prepareGraphQuery(queryString);
+                gq.setBinding("vocabulary", vocIri);
+                evaluateAndAddToModel(gq);
+                resolvePrefixes(vocIri, conn);
+            });
         }
     }
 
@@ -285,12 +291,29 @@ public class SKOSExporter {
      */
     public byte[] exportAs(ExportFormat format) {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final RDFWriter writer = switch (format) {
-            case TURTLE -> new TurtleWriterFactory().getWriter(bos);
-            case RDF_XML -> new RDFXMLPrettyWriterFactory().getWriter(bos);
-            default -> throw new IllegalArgumentException("Unsupported SKOS export format " + format);
-        };
+        final RDFWriter writer =
+                switch (format) {
+                    case TURTLE -> new TurtleWriterFactory().getWriter(bos);
+                    case RDF_XML -> new RDFXMLPrettyWriterFactory().getWriter(bos);
+                    default -> throw new IllegalArgumentException("Unsupported SKOS export format " + format);
+                };
         Rio.write(model, writer);
         return bos.toByteArray();
+    }
+
+    private void exportVocabularyCollections(Vocabulary vocabulary, String queryFile) {
+        final long startTime = System.currentTimeMillis();
+        LOG.trace("Exporting collections from {}.", vocabulary);
+        final IRI graphIri = vf.createIRI(
+                vocabularyContextMapper.getVocabularyContext(vocabulary).toString());
+        final IRI vocabularyIri = vf.createIRI(vocabulary.getUri().toString());
+        try (final RepositoryConnection conn = repository.getConnection()) {
+            GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(queryFile));
+            gq.setBinding("g", graphIri);
+            gq.setBinding("vocabulary", vocabularyIri);
+            evaluateAndAddToModel(gq);
+        }
+        final long endTime = System.currentTimeMillis();
+        LOG.debug("Collections export query evaluation took {} ms.", endTime - startTime);
     }
 }

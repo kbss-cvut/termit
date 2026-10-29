@@ -1,0 +1,43 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dd: <http://onto.fel.cvut.cz/ontologies/data-description/>
+PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+CONSTRUCT {
+    ?collection a ?type, skos:Collection ;
+        skos:inScheme ?vocabulary ;
+        dc:title ?label ;
+        dc:description ?description ;
+        skos:member ?member ;
+        skos:memberList ?listHead .
+
+    ?node rdf:first ?nodeMember ;
+        rdf:rest ?nextNode .
+} WHERE {
+    ?collection a skos:Collection .
+    GRAPH ?g {
+        ?collection a ?type ;
+            skos:inScheme ?vocabulary ;
+            dc:title ?label .
+
+        OPTIONAL {
+            ?collection dc:description ?description .
+        }
+
+        {
+            # unordered collection members
+            ?collection skos:member ?member .
+        } UNION {
+            # ordered collection list head
+            ?collection skos:memberList ?listHead .
+        } UNION {
+            # ordered collection list nodes
+            ?collection skos:memberList/rdf:rest* ?node .
+            ?node rdf:first ?nodeMember .
+            OPTIONAL {
+                ?node rdf:rest ?nextNode .
+            }
+        }
+    }
+}
