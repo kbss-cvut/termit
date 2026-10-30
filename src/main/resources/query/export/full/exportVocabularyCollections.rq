@@ -16,7 +16,7 @@ CONSTRUCT {
         rdf:rest ?nextNode .
 } WHERE {
     ?collection a skos:Collection .
-    GRAPH ?g {
+    GRAPH ?graph {
         ?collection a ?type ;
             skos:inScheme ?vocabulary .
 
