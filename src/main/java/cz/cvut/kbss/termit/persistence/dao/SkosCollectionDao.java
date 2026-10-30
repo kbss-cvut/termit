@@ -1,12 +1,10 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
-import cz.cvut.kbss.jopa.model.EntityGraph;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
-import cz.cvut.kbss.jopa.query.QueryHints;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -587,8 +585,6 @@ public class SkosCollectionDao {
     public List<SkosCollectionDto> findCollectionsWithMember(URI memberUri) {
         Objects.requireNonNull(memberUri, "Member URI must not be null");
         try {
-            EntityGraph<SkosCollectionDto> graph = em.createEntityGraph(SkosCollectionDto.class);
-            graph.addAttributeNodes("vocabulary");
             final Query query = em.createNativeQuery(
                             """
                     SELECT DISTINCT ?collection ?vocabulary (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
@@ -607,8 +603,7 @@ public class SkosCollectionDao {
                     .setParameter("listFirst", URI.create(RDF.FIRST))
                     .setParameter("collectionTypes", COLLECTION_TYPES)
                     .setParameter("member", memberUri)
-                    .setParameter("inVocabulary", SkosCollection_.vocabularyPropertyIRI)
-                    .setHint(QueryHints.FETCH_GRAPH, graph);
+                    .setParameter("inVocabulary", SkosCollection_.vocabularyPropertyIRI);
 
             @SuppressWarnings("unchecked")
             final List<SkosCollectionDto> result = query.getResultList();
