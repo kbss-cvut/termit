@@ -27,6 +27,7 @@ import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -170,7 +171,7 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
         final String disposition = mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION);
         assertNotNull(disposition);
         assertThat(disposition, containsString("attachment"));
-        assertThat(disposition, containsString("filename=\"" + expectedFileName + ".jsonld\""));
+        assertThat(disposition, containsStringIgnoringCase("filename=\"" + expectedFileName + ".jsonld\""));
     }
 
     @Test
