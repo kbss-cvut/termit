@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.event.CustomAttributeMadeSymmetricEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -30,18 +29,16 @@ import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Collections;
@@ -61,18 +58,14 @@ public class DataRepositoryService {
 
     private final Configuration config;
 
-    private final ApplicationEventPublisher eventPublisher;
-
     @Autowired
     public DataRepositoryService(
             DataDao dataDao,
             IdentifierResolver idResolver,
-            Configuration config,
-            ApplicationEventPublisher eventPublisher) {
+            Configuration config) {
         this.dataDao = dataDao;
         this.idResolver = idResolver;
         this.config = config;
-        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -209,16 +202,8 @@ public class DataRepositoryService {
         existing.setDomain(attribute.getDomain());
         existing.setRange(attribute.getRange());
         existing.setAnnotatedRelationships(attribute.getAnnotatedRelationships());
-        notifyIfCustomAttributeBecameSymmetric(existing, attribute);
         existing.setTypes(attribute.getTypes());
         LOG.debug("Updating custom attribute {}", existing);
-    }
-
-    private void notifyIfCustomAttributeBecameSymmetric(CustomAttribute original, CustomAttribute updated) {
-        if (!original.isSymmetric() && updated.isSymmetric()) {
-            assert Objects.equals(updated.getRange(), updated.getDomain());
-            eventPublisher.publishEvent(new CustomAttributeMadeSymmetricEvent(this, updated));
-        }
     }
 
     /**

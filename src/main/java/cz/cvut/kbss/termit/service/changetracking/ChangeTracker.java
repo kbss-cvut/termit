@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.changetracking;
 
-import cz.cvut.kbss.termit.event.AssetChangesRecordedEvent;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
@@ -32,15 +31,13 @@ import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingHelperDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.annotation.Nonnull;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -60,20 +57,16 @@ public class ChangeTracker {
 
     private final SecurityUtils securityUtils;
 
-    private final ApplicationEventPublisher eventPublisher;
-
     @Autowired
     public ChangeTracker(
             ChangeCalculator changeCalculator,
             ChangeRecordDao changeRecordDao,
             ChangeTrackingHelperDao helperDao,
-            SecurityUtils securityUtils,
-            ApplicationEventPublisher eventPublisher) {
+            SecurityUtils securityUtils) {
         this.changeCalculator = changeCalculator;
         this.changeRecordDao = changeRecordDao;
         this.helperDao = helperDao;
         this.securityUtils = securityUtils;
-        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -103,7 +96,6 @@ public class ChangeTracker {
             ch.setTimestamp(now);
             changeRecordDao.persist(ch, update);
         });
-        eventPublisher.publishEvent(new AssetChangesRecordedEvent<>(this, changes));
     }
 
     /**
