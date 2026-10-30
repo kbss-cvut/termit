@@ -335,9 +335,14 @@ public class SkosCollectionRepositoryService {
     }
 
     @Transactional(readOnly = true)
+    public List<SkosCollectionDto> findCollectionDtosWithMember(URI member) {
+        return collectionDao.findCollectionsWithMember(member);
+    }
+
+    @Transactional(readOnly = true)
     public Set<SkosCollection<?>> findCollectionsWithMember(URI member) {
         Objects.requireNonNull(member, "Member must not be null!");
-        return collectionDao.findCollectionsWithMember(member).stream()
+        return findCollectionDtosWithMember(member).stream()
                 .map(this::mapToCollection)
                 .collect(Collectors.toSet());
     }

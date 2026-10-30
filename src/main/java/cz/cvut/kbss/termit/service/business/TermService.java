@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -48,6 +49,7 @@ import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
@@ -105,6 +107,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     private final LanguageService languageService;
     private final DtoMapper dtoMapper;
     private final TermAuthorizationService termAuthorizationService;
+    private final SkosCollectionRepositoryService skosCollectionRepositoryService;
 
     @Autowired
     public TermService(
@@ -118,7 +121,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             CommentService commentService,
             LanguageService languageService,
             DtoMapper dtoMapper,
-            TermAuthorizationService termAuthorizationService) {
+            TermAuthorizationService termAuthorizationService,
+            SkosCollectionRepositoryService skosCollectionRepositoryService) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -130,6 +134,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.languageService = languageService;
         this.dtoMapper = dtoMapper;
         this.termAuthorizationService = termAuthorizationService;
+        this.skosCollectionRepositoryService = skosCollectionRepositoryService;
     }
 
     /**
@@ -890,5 +895,23 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @Transactional(readOnly = true)
     public List<Term> findAllFullByUris(Collection<URI> uris) {
         return repositoryService.findAllFullByUris(uris);
+    }
+
+    /**
+     * Finds all SKOS collections the term with the specified identifier is member of.
+     *
+     * @param termUri the identifier of the term
+     * @param vocabulary vocabulary of the term for authorization
+     * @return the list of collections
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
+    @Transactional(readOnly = true)
+    public List<SkosCollectionDto> findAllCollections(URI termUri, Vocabulary vocabulary) {
+        return skosCollectionRepositoryService.findCollectionDtosWithMember(termUri).stream()
+                .filter(c -> c.getVocabulary().equals(vocabulary.getUri()))
+                .map(partial -> skosCollectionRepositoryService
+                        .findDto(partial.getUri())
+                        .orElseThrow())
+                .toList();
     }
 }
