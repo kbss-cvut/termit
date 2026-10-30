@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeExcepti
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.dao.SkosCollectionDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.util.DuplicateSymmetricRelationshipPruner;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
@@ -107,6 +108,7 @@ public class SKOSImporter implements VocabularyImporter {
     private final Model mappingStatements = new LinkedHashModel();
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final SkosCollectionDao skosCollectionDao;
 
     private IRI vocabularyIri;
 
@@ -116,12 +118,14 @@ public class SKOSImporter implements VocabularyImporter {
             VocabularyDao vocabularyDao,
             VocabularyNamespaceResolver namespaceResolver,
             ApplicationEventPublisher eventPublisher,
-            EntityManager em) {
+            EntityManager em,
+            SkosCollectionDao skosCollectionDao) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
         this.namespaceResolver = namespaceResolver;
         this.eventPublisher = eventPublisher;
         this.em = em;
+        this.skosCollectionDao = skosCollectionDao;
     }
 
     @Override
@@ -235,6 +239,7 @@ public class SKOSImporter implements VocabularyImporter {
             newVocabulary.setDocument(toRemove.getDocument());
             newVocabulary.setAcl(toRemove.getAcl());
             vocabularyDao.removeVocabularyKeepDocument(toRemove);
+            skosCollectionDao.removeAllCollections(toRemove);
         });
     }
 
