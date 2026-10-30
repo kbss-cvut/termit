@@ -33,6 +33,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.Collection;
@@ -624,5 +626,43 @@ public class SkosCollectionDao {
      */
     public void detach(SkosCollection<?> collection) {
         em.detach(collection);
+    }
+
+    /** Forcefully removes all collections from the specified vocabulary */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void removeAllCollections(Vocabulary vocabulary) {
+        try {
+            em.createNativeQuery("""
+                DELETE {
+                    GRAPH ?vocabulary {
+                        ?collection ?predicate ?object .
+                        ?listNode ?listPredicate ?listObject .
+                    }
+                } WHERE {
+                    GRAPH ?vocabulary {
+                        ?collection a ?type ;
+                            ?inVocabulary ?vocabulary .
+                        FILTER(?type IN (?collectionTypes)) .
+                        {
+                            # triples of the collection itself
+                            ?collection ?predicate ?object .
+                        } UNION {
+                            # triples of the list nodes holding members of an ordered collection
+                            ?collection ?hasMemberList/?listRest* ?listNode .
+                            ?listNode ?listPredicate ?listObject .
+                        }
+                    }
+                }
+            """)
+                    .setParameter("vocabulary", vocabulary.getUri())
+                    .setParameter("collectionTypes", COLLECTION_TYPES)
+                    .setParameter("inVocabulary", SkosCollection_.vocabularyPropertyIRI)
+                    .setParameter("hasMemberList", OrderedTermCollection_.membersPropertyIRI)
+                    .setParameter("listRest", URI.create(RDF.REST))
+                    .executeUpdate();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(
+                    "Failed to remove all collections from vocabulary: " + Utils.uriToString(vocabulary.getUri()), e);
+        }
     }
 }
