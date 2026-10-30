@@ -24,7 +24,9 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -120,6 +122,45 @@ class TermTest {
         sut.consolidateInferred();
         assertEquals(originalExactMatchSize + sut.getInverseExactMatchTerms().size(), sut.getExactMatchTerms().size());
         sut.getInverseExactMatchTerms().forEach(ti -> assertThat(sut.getExactMatchTerms(), hasItem(ti)));
+    }
+
+    @Test
+    void consolidateInferredCopiesInverseCustomAttributesToPropertiesWhenPropertiesAreNull() {
+        final Term sut = Generator.generateTermWithId();
+        final String property = Generator.generateUri().toString();
+        final Set<URI> values = IntStream.range(0, 5)
+                                         .mapToObj(i -> Generator.generateUri())
+                                         .collect(Collectors.toSet());
+        sut.setInverseCustomAttributes(Map.of(property, values));
+
+        sut.consolidateInferred();
+        assertEquals(values, sut.getProperties().get(property));
+    }
+
+    @Test
+    void consolidateInferredMergesInverseCustomAttributesIntoExistingProperties() {
+        final Term sut = Generator.generateTermWithId();
+        final String property = Generator.generateUri().toString();
+        final URI existingValue = Generator.generateUri();
+        final Map<String, Set<Object>> properties = new HashMap<>();
+        properties.put(property, new HashSet<>(Set.of(existingValue)));
+        sut.setProperties(properties);
+        final Set<URI> inverseValues = IntStream.range(0, 5)
+                                                .mapToObj(i -> Generator.generateUri())
+                                                .collect(Collectors.toSet());
+        sut.setInverseCustomAttributes(Map.of(property, inverseValues));
+
+        sut.consolidateInferred();
+        assertThat(sut.getProperties().get(property), hasItem(existingValue));
+        inverseValues.forEach(v -> assertThat(sut.getProperties().get(property), hasItem(v)));
+    }
+
+    @Test
+    void consolidateInferredLeavesPropertiesNullWhenInverseCustomAttributesAreNull() {
+        final Term sut = Generator.generateTermWithId();
+
+        sut.consolidateInferred();
+        assertThat(sut.getProperties(), anyOf(nullValue(), org.hamcrest.Matchers.anEmptyMap()));
     }
 
     @Test

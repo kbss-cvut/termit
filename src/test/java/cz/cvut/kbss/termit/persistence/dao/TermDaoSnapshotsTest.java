@@ -242,7 +242,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             term.addRelatedTerm(new TermInfo(related));
             em.merge(term, descriptorFactory.termDescriptor(term));
-            Generator.simulateInferredSkosRelationship(term, Collections.singleton(related), SKOS.RELATED, em);
+            Generator.simulateInferredRelationship(term, Collections.singleton(related), SKOS.RELATED, em);
         });
         final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(1, ChronoUnit.DAYS);
         final Term termSnapshot = generateSnapshotStub(term, timestamp);

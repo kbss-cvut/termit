@@ -468,7 +468,7 @@ public class Generator {
         return new Snapshot(uri, timestamp, asset.getUri(), type);
     }
 
-    public static void simulateInferredSkosRelationship(
+    public static void simulateInferredRelationship(
             AbstractTerm source, Collection<? extends AbstractTerm> related, String relationship, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
