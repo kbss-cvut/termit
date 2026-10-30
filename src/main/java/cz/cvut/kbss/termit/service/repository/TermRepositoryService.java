@@ -188,6 +188,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         differentiator.differentiateRelatedTerms(instance, original);
         differentiator.differentiateRelatedMatchTerms(instance, original);
         differentiator.differentiateExactMatchTerms(instance, original);
+        differentiator.differentiateSymmetricCustomAttributes(
+                instance, original, dataService.findSymmetricCustomAttributes());
         orphanedRelationshipRemover.removeOrphanedInverseTermRelationships(instance, original);
         instance.splitExternalAndInternalParents();
         pruneAndNormalizeTranslations(instance);

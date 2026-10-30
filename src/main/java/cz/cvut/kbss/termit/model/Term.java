@@ -53,9 +53,7 @@ import java.util.Set;
 @Disjoint({"parentTerms", "exactMatchTerms"})
 public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, HasProperties {
 
-    /**
-     * Set of term base term properties that support translations.
-     */
+    /** Set of term base term properties that support translations. */
     public static final Set<String> MULTILINGUAL_PROPERTIES =
             Set.of(SKOS.PREF_LABEL, SKOS.ALT_LABEL, SKOS.HIDDEN_LABEL, SKOS.DEFINITION, SKOS.EXAMPLE, SKOS.SCOPE_NOTE);
 
@@ -110,9 +108,7 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
             fetch = FetchType.EAGER)
     private TermDefinitionSource definitionSource;
 
-    /**
-     * Parent terms from the same vocabulary.
-     */
+    /** Parent terms from the same vocabulary. */
     @OWLObjectProperty(
             iri = SKOS.BROADER,
             fetch = FetchType.EAGER,
@@ -138,8 +134,7 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<Object>> properties;
 
-    public Term() {
-    }
+    public Term() {}
 
     public Term(URI uri) {
         setUri(uri);
@@ -293,8 +288,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
 
     /**
      * Consolidates the asserted and inferred symmetric attributes.
-     * <p>
-     * The attributes include {@code related}, {@code relatedMatch}, {@code exactMatch} and symmetric custom
+     *
+     * <p>The attributes include {@code related}, {@code relatedMatch}, {@code exactMatch} and symmetric custom
      * attributes.
      *
      * <p>This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch},
@@ -315,9 +310,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
             if (properties == null) {
                 this.properties = new HashMap<>(inverseCustomAttributes.size());
             }
-            inverseCustomAttributes.forEach((prop, values) -> {
-                properties.computeIfAbsent(prop, _ -> new HashSet<>()).addAll(values);
-            });
+            inverseCustomAttributes.forEach((prop, values) ->
+                    properties.computeIfAbsent(prop, _ -> new HashSet<>()).addAll(values));
         }
     }
 
@@ -340,8 +334,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
     /**
      * Adds the specified term to the parent terms of this instance.
      *
-     * <p>If the specified term is from the same glossary, it is added to {@link parentTerms}, otherwise, it is added
-     * to the {@link externalParentTerms}.
+     * <p>If the specified term is from the same glossary, it is added to {@link parentTerms}, otherwise, it is added to
+     * the {@link externalParentTerms}.
      *
      * @param term Term to add as parent
      */
@@ -363,8 +357,8 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
     /**
      * Adds the specified term info to the parent terms of this instance.
      *
-     * <p>If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added
-     * to the {@code externalParentTerms}.
+     * <p>If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
+     * the {@code externalParentTerms}.
      *
      * @param termInfo TermInfo to add as parent
      */
@@ -387,7 +381,7 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
      * Checks whether this term has a parent term in the same vocabulary.
      *
      * @return Whether this term has a parent in its vocabulary. Returns {@code false} also if this term has no parent
-     * term at all.
+     *     term at all.
      */
     public boolean hasParentInSameVocabulary() {
         return parentTerms != null
