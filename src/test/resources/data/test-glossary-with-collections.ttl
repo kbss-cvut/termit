@@ -1,0 +1,74 @@
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+
+<http://onto.fel.cvut.cz/ontologies/application/termit>  a        owl:Ontology , <http://www.w3.org/2004/02/skos/core#ConceptScheme> ;
+        <http://purl.org/dc/terms/creator>
+                " Martin Ledvinka" , "Michal Med" ;
+        <http://purl.org/dc/terms/language>
+                "cs";
+        <http://purl.org/dc/terms/title>
+                "Vocabulary of system TermIt - glossary"@en , "Slovník systému TermIt - glosář"@cs ;
+        <http://purl.org/dc/terms/description>
+                "This is a test version of the vocabulary of TermIt"@en , "Toto je testovací verze slovníku systému TermIt"@cs ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+                "termit" ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri>
+                "http://onto.fel.cvut.cz/ontologies/application/termit/" ;
+        <http://purl.org/dc/terms/created>
+                "25.04.2019" ;
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/version/1.1.1> .
+
+termit:blocked-user
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Blocked TermIt user"@en , "Zablokovaný uživatel TermItu"@cs .
+
+termit:user
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "TermIt user"@en , "Uživatel TermItu"@cs .
+
+termit:reader
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit:user , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Limited TermIt user"@en , "Omezený uživatel TermItu"@cs .
+
+termit:unordered-collection
+        a       skos:Collection ;
+        skos:inScheme <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        dcterms:title "Unordered collection"@en ;
+        skos:member termit:user, termit:blocked-user .
+
+termit:ordered-collection
+        a       skos:OrderedCollection ;
+        skos:inScheme <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        dcterms:title "Ordered collection"@en ;
+        skos:memberList termit:ordered-collection-member-list .
+
+termit:ordered-collection-member-list rdf:first termit:reader ;
+        rdf:rest termit:ordered-collection-node1 .
+
+termit:ordered-collection-node2 rdf:first termit:unordered-collection .
+
+termit:ordered-collection-node1 rdf:first termit:user ;
+        rdf:rest termit:ordered-collection-node2 .
+
+
