@@ -77,15 +77,17 @@ class TermTest {
         final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
         sut.setVocabulary(Generator.generateUri());
         sut.setRelated(IntStream.range(0, 5)
-                                .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
-                                .collect(Collectors.toSet()));
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                .collect(Collectors.toSet()));
         sut.setInverseRelated(IntStream.range(0, 5)
-                                       .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
-                                       .collect(Collectors.toSet()));
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                .collect(Collectors.toSet()));
         final int originalRelatedSize = sut.getRelated().size();
 
         sut.consolidateInferred();
-        assertEquals(originalRelatedSize + sut.getInverseRelated().size(), sut.getRelated().size());
+        assertEquals(
+                originalRelatedSize + sut.getInverseRelated().size(),
+                sut.getRelated().size());
         sut.getInverseRelated().forEach(ti -> assertThat(sut.getRelated(), hasItem(ti)));
     }
 
@@ -93,34 +95,35 @@ class TermTest {
     void consolidateInferredCopiesInverseRelatedMatchTermsToRelatedMatch() {
         final Term sut = Generator.generateTermWithId();
         sut.setRelatedMatch(IntStream.range(0, 5)
-                                     .mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
-                                     .collect(Collectors.toSet()));
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                .collect(Collectors.toSet()));
         sut.setInverseRelatedMatch(IntStream.range(0, 5)
-                                            .mapToObj(i -> new TermInfo(
-                                                    Generator.generateTermWithId(Generator.generateUri())))
-                                            .collect(Collectors.toSet()));
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                .collect(Collectors.toSet()));
         final int originalRelatedMatchSize = sut.getRelatedMatch().size();
 
         sut.consolidateInferred();
-        assertEquals(originalRelatedMatchSize + sut.getInverseRelatedMatch().size(), sut.getRelatedMatch().size());
+        assertEquals(
+                originalRelatedMatchSize + sut.getInverseRelatedMatch().size(),
+                sut.getRelatedMatch().size());
         sut.getInverseRelatedMatch().forEach(ti -> assertThat(sut.getRelatedMatch(), hasItem(ti)));
     }
 
     @Test
     void consolidateInferredCopiesInverseExactMatchTermsToExactMatch() {
         final Term sut = Generator.generateTermWithId();
-        sut.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
-                                                                                        .generateTermWithId(
-                                                                                                Generator.generateUri())))
-                                        .collect(Collectors.toSet()));
-        sut.setInverseExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
-                                                                                               .generateTermWithId(
-                                                                                                       Generator.generateUri())))
-                                               .collect(Collectors.toSet()));
+        sut.setExactMatchTerms(IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                .collect(Collectors.toSet()));
+        sut.setInverseExactMatchTerms(IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                .collect(Collectors.toSet()));
         final int originalExactMatchSize = sut.getExactMatchTerms().size();
 
         sut.consolidateInferred();
-        assertEquals(originalExactMatchSize + sut.getInverseExactMatchTerms().size(), sut.getExactMatchTerms().size());
+        assertEquals(
+                originalExactMatchSize + sut.getInverseExactMatchTerms().size(),
+                sut.getExactMatchTerms().size());
         sut.getInverseExactMatchTerms().forEach(ti -> assertThat(sut.getExactMatchTerms(), hasItem(ti)));
     }
 
@@ -128,9 +131,8 @@ class TermTest {
     void consolidateInferredCopiesInverseCustomAttributesToPropertiesWhenPropertiesAreNull() {
         final Term sut = Generator.generateTermWithId();
         final String property = Generator.generateUri().toString();
-        final Set<URI> values = IntStream.range(0, 5)
-                                         .mapToObj(i -> Generator.generateUri())
-                                         .collect(Collectors.toSet());
+        final Set<URI> values =
+                IntStream.range(0, 5).mapToObj(_ -> Generator.generateUri()).collect(Collectors.toSet());
         sut.setInverseCustomAttributes(Map.of(property, values));
 
         sut.consolidateInferred();
@@ -145,9 +147,8 @@ class TermTest {
         final Map<String, Set<Object>> properties = new HashMap<>();
         properties.put(property, new HashSet<>(Set.of(existingValue)));
         sut.setProperties(properties);
-        final Set<URI> inverseValues = IntStream.range(0, 5)
-                                                .mapToObj(i -> Generator.generateUri())
-                                                .collect(Collectors.toSet());
+        final Set<URI> inverseValues =
+                IntStream.range(0, 5).mapToObj(_ -> Generator.generateUri()).collect(Collectors.toSet());
         sut.setInverseCustomAttributes(Map.of(property, inverseValues));
 
         sut.consolidateInferred();
@@ -192,11 +193,13 @@ class TermTest {
     @Test
     void consolidateParentsCopiesExternalParentTermsToParentTerms() {
         final Term sut = Generator.generateTermWithId();
-        final Set<TermInfo> externalParents = IntStream.range(0, 5).mapToObj(i -> {
-            final TermInfo t = Generator.generateTermInfoWithId();
-            t.setVocabulary(Generator.generateUri());
-            return t;
-        }).collect(Collectors.toSet());
+        final Set<TermInfo> externalParents = IntStream.range(0, 5)
+                .mapToObj(_ -> {
+                    final TermInfo t = Generator.generateTermInfoWithId();
+                    t.setVocabulary(Generator.generateUri());
+                    return t;
+                })
+                .collect(Collectors.toSet());
         sut.setExternalParentTerms(externalParents);
 
         sut.consolidateParents();
@@ -216,16 +219,20 @@ class TermTest {
         final URI glossaryUri = Generator.generateUri();
         final Term sut = Generator.generateTermWithId();
         sut.setVocabulary(glossaryUri);
-        final Set<TermInfo> externalParents = IntStream.range(0, 5).mapToObj(i -> {
-            final TermInfo t = Generator.generateTermInfoWithId();
-            t.setVocabulary(Generator.generateUri());
-            return t;
-        }).collect(Collectors.toSet());
-        final Set<TermInfo> internalParents = IntStream.range(0, 5).mapToObj(i -> {
-            final TermInfo t = Generator.generateTermInfoWithId();
-            t.setVocabulary(glossaryUri);
-            return t;
-        }).collect(Collectors.toSet());
+        final Set<TermInfo> externalParents = IntStream.range(0, 5)
+                .mapToObj(_ -> {
+                    final TermInfo t = Generator.generateTermInfoWithId();
+                    t.setVocabulary(Generator.generateUri());
+                    return t;
+                })
+                .collect(Collectors.toSet());
+        final Set<TermInfo> internalParents = IntStream.range(0, 5)
+                .mapToObj(_ -> {
+                    final TermInfo t = Generator.generateTermInfoWithId();
+                    t.setVocabulary(glossaryUri);
+                    return t;
+                })
+                .collect(Collectors.toSet());
         final Set<TermInfo> allParents = new HashSet<>(externalParents);
         allParents.addAll(internalParents);
         sut.setParentTerms(allParents);

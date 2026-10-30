@@ -25,10 +25,9 @@ import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import org.eclipse.rdf4j.model.vocabulary.OWL;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -183,21 +182,21 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
     void findLoadsInferredInverseSymmetricCustomAttributes() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         final List<Term> targets = Arrays.asList(
-                Generator.generateTermWithId(vocabulary.getUri()),
-                Generator.generateTermWithId(vocabulary.getUri()));
+                Generator.generateTermWithId(vocabulary.getUri()), Generator.generateTermWithId(vocabulary.getUri()));
         final CustomAttribute attribute = generateSymmetricCustomAttribute();
         transactional(() -> {
             em.persist(attribute);
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             targets.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             // Simulates inferred symmetric statements, i.e., term attribute target placed in the default context
-            targets.forEach(t -> Generator.simulateInferredRelationship(t, List.of(term),
-                                                                      attribute.getUri().toString(), em));
+            targets.forEach(t -> Generator.simulateInferredRelationship(
+                    t, List.of(term), attribute.getUri().toString(), em));
         });
 
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
-        final Set<URI> values = result.get().getInverseCustomAttributes().get(attribute.getUri().toString());
+        final Set<URI> values =
+                result.get().getInverseCustomAttributes().get(attribute.getUri().toString());
         assertEquals(targets.size(), values.size());
         targets.forEach(t -> assertThat(values, hasItem(t.getUri())));
     }
@@ -215,15 +214,21 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             em.persist(targetOne, descriptorFactory.termDescriptor(vocabulary));
             em.persist(targetTwo, descriptorFactory.termDescriptor(vocabulary));
-            Generator.simulateInferredRelationship(targetOne, List.of(term), attributeOne.getUri().toString(), em);
-            Generator.simulateInferredRelationship(targetTwo, List.of(term), attributeTwo.getUri().toString(), em);
+            Generator.simulateInferredRelationship(
+                    targetOne, List.of(term), attributeOne.getUri().toString(), em);
+            Generator.simulateInferredRelationship(
+                    targetTwo, List.of(term), attributeTwo.getUri().toString(), em);
         });
 
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
         final Map<String, Set<URI>> inverseCustomAttributes = result.get().getInverseCustomAttributes();
-        assertEquals(Set.of(targetOne.getUri()), inverseCustomAttributes.get(attributeOne.getUri().toString()));
-        assertEquals(Set.of(targetTwo.getUri()), inverseCustomAttributes.get(attributeTwo.getUri().toString()));
+        assertEquals(
+                Set.of(targetOne.getUri()),
+                inverseCustomAttributes.get(attributeOne.getUri().toString()));
+        assertEquals(
+                Set.of(targetTwo.getUri()),
+                inverseCustomAttributes.get(attributeTwo.getUri().toString()));
     }
 
     @Test
@@ -236,13 +241,17 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
             em.persist(attribute);
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             em.persist(target, descriptorFactory.termDescriptor(vocabulary));
-            Generator.simulateInferredRelationship(target, List.of(term), attribute.getUri().toString(), em);
+            Generator.simulateInferredRelationship(
+                    target, List.of(term), attribute.getUri().toString(), em);
         });
 
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
-        assertThat(result.get().getInverseCustomAttributes().getOrDefault(attribute.getUri().toString(), Set.of()),
-                   anyOf(nullValue(), emptyCollectionOf(URI.class)));
+        assertThat(
+                result.get()
+                        .getInverseCustomAttributes()
+                        .getOrDefault(attribute.getUri().toString(), Set.of()),
+                anyOf(nullValue(), emptyCollectionOf(URI.class)));
     }
 
     @Test
@@ -260,8 +269,11 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
         // The asserted value is stored in the term's context, so it must not be reported as inferred
-        assertThat(result.get().getInverseCustomAttributes().getOrDefault(attribute.getUri().toString(), Set.of()),
-                   anyOf(nullValue(), emptyCollectionOf(URI.class)));
+        assertThat(
+                result.get()
+                        .getInverseCustomAttributes()
+                        .getOrDefault(attribute.getUri().toString(), Set.of()),
+                anyOf(nullValue(), emptyCollectionOf(URI.class)));
     }
 
     private static CustomAttribute generateSymmetricCustomAttribute() {

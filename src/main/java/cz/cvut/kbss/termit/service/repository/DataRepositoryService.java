@@ -29,8 +29,6 @@ import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +37,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Collections;
@@ -59,10 +60,7 @@ public class DataRepositoryService {
     private final Configuration config;
 
     @Autowired
-    public DataRepositoryService(
-            DataDao dataDao,
-            IdentifierResolver idResolver,
-            Configuration config) {
+    public DataRepositoryService(DataDao dataDao, IdentifierResolver idResolver, Configuration config) {
         this.dataDao = dataDao;
         this.idResolver = idResolver;
         this.config = config;
@@ -99,6 +97,17 @@ public class DataRepositoryService {
         Objects.requireNonNull(range);
         return dataDao.findAllCustomAttributes(List.of(
                 CustomAttributeSpecifications.hasDomain(domain), CustomAttributeSpecifications.hasRange(range)));
+    }
+
+    /**
+     * Retrieves all custom attributes that are symmetric.
+     *
+     * @return a list of {@link CustomAttribute} instances that are symmetric; the list will be empty if no such
+     *     attributes exist.
+     */
+    @Transactional(readOnly = true)
+    public List<CustomAttribute> findSymmetricCustomAttributes() {
+        return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.isSymmetric()));
     }
 
     /**
