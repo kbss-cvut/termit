@@ -26,6 +26,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.TreeModel;
+import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -304,13 +305,12 @@ public class SKOSExporter {
     private void exportVocabularyCollections(Vocabulary vocabulary, String queryFile) {
         final long startTime = System.currentTimeMillis();
         LOG.trace("Exporting collections from {}.", vocabulary);
-        final IRI graphIri = vf.createIRI(
-                vocabularyContextMapper.getVocabularyContext(vocabulary).toString());
-        final IRI vocabularyIri = vf.createIRI(vocabulary.getUri().toString());
+        final String context = Utils.uriToString(vocabularyContextMapper.getVocabularyContext(vocabulary));
+        // using RDF4J binding for ?graph triggers NPE in GraphDB
+        final String query = Utils.loadQuery(queryFile).replace("?graph", context);
         try (final RepositoryConnection conn = repository.getConnection()) {
-            GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(queryFile));
-            gq.setBinding("g", graphIri);
-            gq.setBinding("vocabulary", vocabularyIri);
+            GraphQuery gq = conn.prepareGraphQuery(query);
+            gq.setBinding("vocabulary", Values.iri(vocabulary.getUri().toString()));
             evaluateAndAddToModel(gq);
         }
         final long endTime = System.currentTimeMillis();
