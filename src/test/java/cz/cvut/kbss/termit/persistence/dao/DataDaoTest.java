@@ -740,8 +740,8 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllCustomAttributesWithIdentifiersReturnsMatchingAttributes() {
         Set<CustomAttribute> matchingAttributes = IntStream.range(0, 3)
-                                                           .mapToObj((i) -> Generator.generateCustomAttribute())
-                                                           .collect(Collectors.toUnmodifiableSet());
+                .mapToObj((i) -> Generator.generateCustomAttribute())
+                .collect(Collectors.toUnmodifiableSet());
         transactional(() -> {
             matchingAttributes.forEach(sut::persist);
             // non-matching attributes
