@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.CustomAttributeMadeSymmetricEvent;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -233,5 +234,16 @@ class DataRepositoryServiceTest {
         assertEquals(
                 existing.getUri(),
                 ((CustomAttributeMadeSymmetricEvent) event).getAtt().getUri());
+    }
+
+    @Test
+    void findCustomAttributesThrowsWhenAnAttributeIsMissing() {
+        final Set<URI> uris = Set.of(Generator.generateUri(), Generator.generateUri());
+        final CustomAttribute attribute = new CustomAttribute();
+        attribute.setUri(uris.iterator().next());
+
+        when(dataDao.findAllCustomAttributes(any())).thenReturn(List.of(attribute));
+
+        assertThrows(NotFoundException.class, () -> sut.findCustomAttributes(uris));
     }
 }

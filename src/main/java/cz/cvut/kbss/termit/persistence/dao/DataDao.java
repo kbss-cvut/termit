@@ -172,6 +172,7 @@ public class DataDao {
         final CriteriaQuery<CustomAttribute> query = cb.createQuery(CustomAttribute.class);
         final Root<CustomAttribute> root = query.from(CustomAttribute.class);
         query.select(root)
+                .distinct()
                 .where(specifications.stream()
                         .map(s -> s.toPredicate(root, query, cb))
                         .toList())

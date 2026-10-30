@@ -18,12 +18,13 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -31,11 +32,11 @@ import java.util.Set;
 
 /**
  * Represents application-wide configuration.
- * <p>
- * The runtime configuration consists of predefined default values and configuration loaded from config files on
+ *
+ * <p>The runtime configuration consists of predefined default values and configuration loaded from config files on
  * classpath. Values from config files supersede the default values.
- * <p>
- * The configuration can be also set via <a
+ *
+ * <p>The configuration can be also set via <a
  * href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
  * environment variables</a>. These override any statically configured values.
  */
@@ -45,22 +46,22 @@ import java.util.Set;
 public class Configuration {
     /**
      * TermIt frontend URL.
-     * <p>
-     * It is used, for example, for links in emails sent to users.
+     *
+     * <p>It is used, for example, for links in emails sent to users.
      */
     private String url = "http://localhost:3000/#";
 
     /**
      * URL of the modeling tool.
-     * <p>
-     * The modeling tool can be used to further specify the relationships between terms.
+     *
+     * <p>The modeling tool can be used to further specify the relationships between terms.
      */
     private String modelingToolUrl;
 
     /**
      * Name of the JMX bean exported by TermIt.
-     * <p>
-     * Normally should not need to change unless multiple instances of TermIt are running in the same application
+     *
+     * <p>Normally should not need to change unless multiple instances of TermIt are running in the same application
      * server.
      */
     private String jmxBeanName = "TermItAdminBean";
@@ -74,8 +75,8 @@ public class Configuration {
     private Integer asyncThreadCount = Runtime.getRuntime().availableProcessors();
 
     /**
-     * The amount of time in which calls of throttled methods should be merged. The value must be positive
-     * ({@code > 0}).
+     * The amount of time in which calls of throttled methods should be merged. The value must be positive ({@code >
+     * 0}).
      *
      * @configurationdoc.default 10 seconds
      * @see cz.cvut.kbss.termit.util.throttle.Throttle
@@ -84,8 +85,8 @@ public class Configuration {
     private Duration throttleThreshold = Duration.ofSeconds(10);
 
     /**
-     * After how much time, should objects with completed futures be discarded. The value must be positive
-     * ({@code > 0}).
+     * After how much time, should objects with completed futures be discarded. The value must be positive ({@code >
+     * 0}).
      *
      * @configurationdoc.default 1 minute
      */
@@ -93,8 +94,8 @@ public class Configuration {
 
     /**
      * Whether to generate ASCII-only identifiers.
-     * <p>
-     * By default, generated identifiers may contain accented characters (like č). Setting this configuration to
+     *
+     * <p>By default, generated identifiers may contain accented characters (like č). Setting this configuration to
      * {@code true} ensures all generated identifiers are ASCII-only and accented character are normalized to ASCII.
      *
      * @configurationdoc.default false
@@ -103,40 +104,58 @@ public class Configuration {
 
     @Valid
     private Persistence persistence = new Persistence();
+
     @Valid
     private Repository repository = new Repository();
+
     @Valid
     private ChangeTracking changetracking = new ChangeTracking();
+
     @Valid
     private Comments comments = new Comments();
+
     @Valid
     private Namespace namespace = new Namespace();
+
     @Valid
     private Admin admin = new Admin();
+
     @Valid
     private File file = new File();
+
     @Valid
     private Jwt jwt = new Jwt();
+
     @Valid
     private TextAnalysis textAnalysis = new TextAnalysis();
+
     @Valid
     private Glossary glossary = new Glossary();
+
     @Valid
     private PublicView publicView = new PublicView();
+
     @Valid
     private External external = new External();
+
     @Valid
     private Cors cors = new Cors();
+
     @Valid
     private Schedule schedule = new Schedule();
+
     @Valid
     private ACL acl = new ACL();
+
     @Valid
     private Mail mail = new Mail();
+
     @Valid
     private Security security = new Security();
+
     @Valid
     private Language language = new Language();
+
     @Valid
     private Template template = new Template();
 
@@ -350,14 +369,10 @@ public class Configuration {
 
     @Validated
     public static class Persistence {
-        /**
-         * OntoDriver class for the repository.
-         */
+        /** OntoDriver class for the repository. */
         @NotNull
         String driver;
-        /**
-         * Language used to store strings in the repository (persistence unit language).
-         */
+        /** Language used to store strings in the repository (persistence unit language). */
         @NotNull
         String language;
 
@@ -380,24 +395,18 @@ public class Configuration {
 
     @Validated
     public static class Repository {
-        /**
-         * URL of the main application repository.
-         */
+        /** URL of the main application repository. */
         @NotNull
         String url;
         /**
          * Public URL of the main application repository.
-         * <p>
-         * Can be used to provide read-only no authorization access to the underlying data.
+         *
+         * <p>Can be used to provide read-only no authorization access to the underlying data.
          */
         Optional<String> publicUrl = Optional.empty();
-        /**
-         * Username for connecting to the application repository.
-         */
+        /** Username for connecting to the application repository. */
         String username;
-        /**
-         * Password for connecting to the application repository.
-         */
+        /** Password for connecting to the application repository. */
         String password;
 
         public String getUrl() {
@@ -467,9 +476,7 @@ public class Configuration {
 
     @Validated
     public static class Comments {
-        /**
-         * IRI of the repository context used to store comments (discussion to assets).
-         */
+        /** IRI of the repository context used to store comments (discussion to assets). */
         @NotNull
         String context;
 
@@ -484,33 +491,28 @@ public class Configuration {
 
     @Validated
     public static class Namespace {
-        /**
-         * Namespace for vocabulary identifiers.
-         */
+        /** Namespace for vocabulary identifiers. */
         @NotNull
         String vocabulary;
-        /**
-         * Namespace for user identifiers.
-         */
+        /** Namespace for user identifiers. */
         @NotNull
         String user;
-        /**
-         * Namespace for resource identifiers.
-         */
+        /** Namespace for resource identifiers. */
         @NotNull
         String resource;
-        /**
-         * Namespace for custom attribute identifiers.
-         */
+        /** Namespace for custom attribute identifiers. */
         @NotNull
         String customAttribute = Vocabulary.s_c_custom_attribute;
+        /** Namespace for custom attribute profiles */
+        @NotNull
+        String customAttributeProfile = Vocabulary.s_c_custom_attribute_profile;
         /**
          * Separator of Term namespace from the parent Vocabulary identifier.
-         * <p>
-         * Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized
+         *
+         * <p>Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized
          * label, this separator is used to (optionally) configure the Term identifier namespace.
-         * <p>
-         * For example, if we have a Vocabulary with IRI
+         *
+         * <p>For example, if we have a Vocabulary with IRI
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan} and a Term with normalized label
          * {@code inhabited-area}, the resulting IRI will be
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where
@@ -520,11 +522,11 @@ public class Configuration {
         private NamespaceDetail term = new NamespaceDetail();
         /**
          * Separator of File namespace from the parent Document identifier.
-         * <p>
-         * Since File identifier is given by the identifier of the Document it belongs to and its own normalized label,
-         * this separator is used to (optionally) configure the File identifier namespace.
-         * <p>
-         * For example, if we have a Document with IRI
+         *
+         * <p>Since File identifier is given by the identifier of the Document it belongs to and its own normalized
+         * label, this separator is used to (optionally) configure the File identifier namespace.
+         *
+         * <p>For example, if we have a Document with IRI
          * {@code http://www.example.org/ontologies/resources/metropolitan-plan/document} and a File with normalized
          * label {@code main-file}, the resulting IRI will be
          * {@code http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
@@ -535,8 +537,8 @@ public class Configuration {
 
         /**
          * Separator of snapshot timestamp and original asset identifier.
-         * <p>
-         * For example, if we have a Vocabulary with IRI
+         *
+         * <p>For example, if we have a Vocabulary with IRI
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan} and the snapshot separator is
          * configured to {@code version}, a snapshot IRI will look something like
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
@@ -574,6 +576,14 @@ public class Configuration {
 
         public void setCustomAttribute(String customAttribute) {
             this.customAttribute = customAttribute;
+        }
+
+        public String getCustomAttributeProfile() {
+            return customAttributeProfile;
+        }
+
+        public void setCustomAttributeProfile(String customAttributeProfile) {
+            this.customAttributeProfile = customAttributeProfile;
         }
 
         public NamespaceDetail getTerm() {
@@ -618,14 +628,10 @@ public class Configuration {
 
     @Validated
     public static class Admin {
-        /**
-         * Specifies the folder in which admin credentials are saved when its account is generated.
-         */
+        /** Specifies the folder in which admin credentials are saved when its account is generated. */
         @NotNull
         String credentialsLocation;
-        /**
-         * Name of the file in which admin credentials are saved when its account is generated.
-         */
+        /** Name of the file in which admin credentials are saved when its account is generated. */
         @NotNull
         String credentialsFile;
 
@@ -648,9 +654,7 @@ public class Configuration {
 
     @Validated
     public static class File {
-        /**
-         * Specifies root directory in which document files are stored.
-         */
+        /** Specifies root directory in which document files are stored. */
         @NotNull
         String storage;
 
@@ -665,9 +669,7 @@ public class Configuration {
 
     @Validated
     public static class Jwt {
-        /**
-         * Secret key used when hashing a JWT.
-         */
+        /** Secret key used when hashing a JWT. */
         String secretKey;
 
         public String getSecretKey() {
@@ -681,25 +683,17 @@ public class Configuration {
 
     @Validated
     public static class TextAnalysis {
-        /**
-         * URL of the text analysis service.
-         */
+        /** URL of the text analysis service. */
         private String url;
 
-        /**
-         * URL of the endpoint providing list of languages supported by the text analysis service.
-         */
+        /** URL of the endpoint providing list of languages supported by the text analysis service. */
         private String languagesUrl;
 
-        /**
-         * Score threshold for a term occurrence for it to be saved into the repository.
-         */
+        /** Score threshold for a term occurrence for it to be saved into the repository. */
         @NotNull
         private String termOccurrenceMinScore = Constants.SCORE_THRESHOLD.toString();
 
-        /**
-         * Maximum of the prefix and suffix of a text quote selector.
-         */
+        /** Maximum of the prefix and suffix of a text quote selector. */
         @Min(8)
         private int textQuoteSelectorContextLength = 32;
 
@@ -738,9 +732,7 @@ public class Configuration {
 
     @Validated
     public static class Glossary {
-        /**
-         * IRI path to append to vocabulary IRI to get glossary identifier.
-         */
+        /** IRI path to append to vocabulary IRI to get glossary identifier. */
         @NotNull
         private String fragment;
 
@@ -755,9 +747,7 @@ public class Configuration {
 
     @Validated
     public static class PublicView {
-        /**
-         * Unmapped properties allowed to appear in the public term access API.
-         */
+        /** Unmapped properties allowed to appear in the public term access API. */
         @NotNull
         private Set<String> whiteListProperties = Set.of();
 
@@ -772,18 +762,16 @@ public class Configuration {
 
     @Validated
     public static class Cors {
-        /**
-         * A comma-separated list of allowed origins for CORS.
-         */
+        /** A comma-separated list of allowed origins for CORS. */
         @NotNull
         private String allowedOrigins = "http://localhost:3000";
 
         /**
          * A comma-separated list of allowed origin patterns for CORS.
-         * <p>
-         * This allows a more dynamic configuration of allowed origins that {@link #allowedOrigins} which contains exact
-         * origin URLs. It is useful, for example, for Netlify preview builds of the frontend which use a generated
-         * subdomain URL.
+         *
+         * <p>This allows a more dynamic configuration of allowed origins that {@link #allowedOrigins} which contains
+         * exact origin URLs. It is useful, for example, for Netlify preview builds of the frontend which use a
+         * generated subdomain URL.
          */
         private String allowedOriginPatterns;
 
@@ -853,9 +841,7 @@ public class Configuration {
     @Validated
     public static class Mail {
 
-        /**
-         * Human-readable name to use as email sender.
-         */
+        /** Human-readable name to use as email sender. */
         private String sender;
 
         public String getSender() {
@@ -867,26 +853,20 @@ public class Configuration {
         }
     }
 
-    /**
-     * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
-     */
+    /** Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s. */
     @Validated
     public static class ACL {
 
-        /**
-         * Default access level for users in the editor role.
-         */
+        /** Default access level for users in the editor role. */
         private AccessLevel defaultEditorAccessLevel = AccessLevel.READ;
 
-        /**
-         * Default access level for users in the reader role.
-         */
+        /** Default access level for users in the reader role. */
         private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
 
         /**
          * Default access level for anonymous (non-logged-in) users.
-         * <p>
-         * Allowed values are {@link AccessLevel#NONE} and {@link AccessLevel#READ}.
+         *
+         * <p>Allowed values are {@link AccessLevel#NONE} and {@link AccessLevel#READ}.
          */
         private AccessLevel defaultAnonymousAccessLevel = AccessLevel.NONE;
 
@@ -919,27 +899,26 @@ public class Configuration {
     public static class Security {
 
         public enum ProviderType {
-            INTERNAL, OIDC
+            INTERNAL,
+            OIDC
         }
 
         /**
          * Determines whether the internal security mechanism or an external OIDC service will be used for
          * authentication.
-         * <p>
-         * In case na OIDC service is selected, it should be configured using standard Spring Boot OAuth2 properties.
+         *
+         * <p>In case na OIDC service is selected, it should be configured using standard Spring Boot OAuth2 properties.
          */
         private ProviderType provider = ProviderType.INTERNAL;
 
         /**
          * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
-         * <p>
-         * Supports nested objects via dot notation.
+         *
+         * <p>Supports nested objects via dot notation.
          */
         private String roleClaim = "realm_access.roles";
 
-        /**
-         * A duration for how long requests for resetting passwords are valid before expiration.
-         */
+        /** A duration for how long requests for resetting passwords are valid before expiration. */
         @NotNull
         private Duration passwordChangeRequestValidity = Duration.ofHours(24);
 
@@ -976,9 +955,9 @@ public class Configuration {
 
         /**
          * Path to a file containing definition of the language of types terms can be classified with.
-         * <p>
-         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel,
-         * scopeNote and broader/narrower).
+         *
+         * <p>The file must be in Turtle format. The term definitions must use SKOS terminology for attributes
+         * (prefLabel, scopeNote and broader/narrower).
          */
         @Valid
         private LanguageSource types = new LanguageSource();
@@ -1026,11 +1005,11 @@ public class Configuration {
 
         /**
          * Template file for Excel import.
-         * <p>
-         * The purpose of configuring this file is mainly to have the value lists for term types and states in the
+         *
+         * <p>The purpose of configuring this file is mainly to have the value lists for term types and states in the
          * template aligned with the corresponding languages used by TermIt.
-         * <p>
-         * Empty value means the built-in template file should be used.
+         *
+         * <p>Empty value means the built-in template file should be used.
          */
         private Optional<String> excelImport = Optional.empty();
 
@@ -1045,17 +1024,12 @@ public class Configuration {
 
     @Validated
     public static class External {
-        
-                
-        /**
-         * CRON value that determines how often will the external vocabularies be updated.
-         */
+
+        /** CRON value that determines how often will the external vocabularies be updated. */
         @NotNull
         private String reloadCron = "";
-        
-        /**
-         * Address for the external resource
-         */
+
+        /** Address for the external resource */
         @NotNull
         private String resource = "";
 
@@ -1067,16 +1041,12 @@ public class Configuration {
             this.resource = resource;
         }
 
-        /**
-         * @return the reloadCron
-         */
+        /** @return the reloadCron */
         public String getReloadCron() {
             return reloadCron;
         }
 
-        /**
-         * @param reloadCron the reloadCron to set
-         */
+        /** @param reloadCron the reloadCron to set */
         public void setReloadCron(String reloadCron) {
             this.reloadCron = reloadCron;
         }
