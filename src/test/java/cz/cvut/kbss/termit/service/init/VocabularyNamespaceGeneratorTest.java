@@ -1,9 +1,11 @@
 package cz.cvut.kbss.termit.service.init;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -21,6 +23,11 @@ class VocabularyNamespaceGeneratorTest extends BaseServiceTestRunner {
 
     @Autowired
     VocabularyNamespaceGenerator sut;
+
+    @BeforeEach
+    void setup() {
+        Environment.resetCurrentUser();
+    }
 
     @Test
     void generatesNamespaceForVocabularyWithoutNamespace() {
