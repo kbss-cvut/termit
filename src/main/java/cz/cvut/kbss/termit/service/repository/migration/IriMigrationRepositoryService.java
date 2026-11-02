@@ -10,11 +10,15 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
+import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.namespace.VocabularyNamespaceResolver;
+import cz.cvut.kbss.termit.service.business.SkosCollectionService;
+import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
@@ -46,6 +50,8 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
     private final VocabularyNamespaceResolver vocabularyNamespaceResolver;
     private final ChangeRecordDao changeRecordDao;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final SkosCollectionService skosCollectionService;
+    private final SkosCollectionRepositoryService skosCollectionRepositoryService;
 
     public IriMigrationRepositoryService(
             LongRunningTasksRegistry longRunningTasksRegistry,
@@ -55,7 +61,9 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
             VocabularyRepositoryService vocabularyRepositoryService,
             VocabularyNamespaceResolver vocabularyNamespaceResolver,
             ChangeRecordDao changeRecordDao,
-            ApplicationEventPublisher applicationEventPublisher) {
+            ApplicationEventPublisher applicationEventPublisher,
+            SkosCollectionService skosCollectionService,
+            SkosCollectionRepositoryService skosCollectionRepositoryService) {
         super(longRunningTasksRegistry);
         this.iriMigrationDao = iriMigrationDao;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
@@ -64,6 +72,8 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
         this.vocabularyNamespaceResolver = vocabularyNamespaceResolver;
         this.changeRecordDao = changeRecordDao;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.skosCollectionService = skosCollectionService;
+        this.skosCollectionRepositoryService = skosCollectionRepositoryService;
     }
 
     /**
@@ -144,6 +154,10 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
                 assert changedAsset != null;
                 yield ((TermDescription) changedAsset).getVocabulary();
             }
+            case SKOS_COLLECTION -> {
+                assert changedAsset != null;
+                yield ((SkosCollection<?>) changedAsset).getVocabulary();
+            }
             default -> null;
         };
     }
@@ -153,6 +167,12 @@ public class IriMigrationRepositoryService extends LongRunningTaskScheduler {
             case TERM -> termRepositoryService.findRequired(pair.originalIri());
             case VOCABULARY -> vocabularyRepositoryService.findRequired(pair.originalIri());
             case CUSTOM_ATTRIBUTE -> null;
+            case SKOS_COLLECTION ->
+                skosCollectionRepositoryService
+                        .findDto(pair.originalIri())
+                        .flatMap(dto ->
+                                skosCollectionRepositoryService.find(dto.getUri(), new Vocabulary(dto.getVocabulary())))
+                        .orElseThrow(() -> NotFoundException.create("SKOS Collection", pair.originalIri()));
         };
     }
 

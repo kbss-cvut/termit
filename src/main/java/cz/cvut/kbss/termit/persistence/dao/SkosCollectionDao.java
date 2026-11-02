@@ -224,7 +224,11 @@ public class SkosCollectionDao {
      */
     public Optional<SkosCollectionDto> findDto(URI collectionUri) {
         try {
-            return Optional.ofNullable(em.find(SkosCollectionDto.class, collectionUri));
+            return Optional.ofNullable(em.find(SkosCollectionDto.class, collectionUri))
+                    .map(dto -> {
+                        em.detach(dto);
+                        return dto;
+                    });
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find SKOS collection DTO " + Utils.uriToString(collectionUri), e);
         }
@@ -416,7 +420,8 @@ public class SkosCollectionDao {
      * @param vocabulary vocabulary of the entities
      */
     private Query entitiesWithTypeQuery(Collection<URI> identifiers, Vocabulary vocabulary) {
-        return em.createNativeQuery("""
+        Query query = em.createNativeQuery(
+                        """
                  SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
                      ?entity a ?type ;
                          ?inScheme ?vocabulary .
@@ -424,8 +429,11 @@ public class SkosCollectionDao {
                  } GROUP BY ?entity
                  """.formatted(Constants.GROUP_CONCAT_SEPARATOR), TypeAwareEntity.RESULTSET_MAPPING)
                 .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
-                .setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("ids", identifiers);
+        if (vocabulary != null) {
+            query.setParameter("vocabulary", vocabulary.getUri());
+        }
+        return query;
     }
 
     /**
