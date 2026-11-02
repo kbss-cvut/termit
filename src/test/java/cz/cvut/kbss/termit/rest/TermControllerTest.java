@@ -1473,6 +1473,20 @@ public class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock, never()).resolveAllAncestors(term);
     }
 
+    @Test
+    void getTermCollectionsResolvesTermIdentifier() throws Exception {
+        final Term term = Generator.generateTerm();
+        term.setUri(URI.create(NAMESPACE + TERM_NAME));
+
+        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
+        when(termServiceMock.findRequiredTermInfo(term.getUri())).thenReturn(term.toTermInfo());
+
+        mockMvc.perform(get("/terms/" + TERM_NAME + "/collections").param(Constants.QueryParams.NAMESPACE, NAMESPACE))
+                .andExpect(status().isOk());
+
+        verify(termServiceMock).findAllCollectionsWithTerm(term.toTermInfo());
+    }
+
     public static class TermSelectionParamsBuilder {
         private boolean flat = false;
         private boolean includeImported = false;

@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TermBatchEditDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -48,6 +49,7 @@ import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -138,6 +140,9 @@ class TermServiceTest {
 
     @Mock
     private TermAuthorizationService termAuthorizationService;
+
+    @Mock
+    private SkosCollectionRepositoryService collectionRepositoryService;
 
     @InjectMocks
     private TermService sut;
@@ -939,5 +944,30 @@ class TermServiceTest {
                                 (repositoryService, searchString, vocabulary) -> verify(repositoryService)
                                         .findAllFlatInVocabularies(
                                                 eq(searchString), anyCollection(), eq(Constants.DEFAULT_PAGE_SPEC))));
+    }
+
+    @Test
+    void findAllCollectionsWithTermMapsPartialDtoToFullDtos() {
+        final TermInfo info = Generator.generateTermInfoWithId();
+        final List<SkosCollectionDto> partials = Stream.of(Generator.generateTermCollection(vocabulary))
+                .map(dtoMapper::skosCollectionToDto)
+                .toList();
+        final List<SkosCollectionDto> fullDtos = Stream.of(Generator.generateTermCollection(vocabulary))
+                .map(dtoMapper::skosCollectionToDto)
+                .toList();
+        when(collectionRepositoryService.findCollectionDtosWithMember(info.getUri()))
+                .thenReturn(partials);
+        when(collectionRepositoryService.findDto(any())).then(answer -> {
+            URI uri = answer.getArgument(0);
+            SkosCollectionDto partial = partials.stream()
+                    .filter(dto -> dto.getUri().equals(uri))
+                    .findAny()
+                    .orElseThrow();
+            int index = partials.indexOf(partial);
+            return Optional.of(fullDtos.get(index));
+        });
+
+        final List<SkosCollectionDto> result = sut.findAllCollectionsWithTerm(info);
+        assertEquals(fullDtos, result);
     }
 }

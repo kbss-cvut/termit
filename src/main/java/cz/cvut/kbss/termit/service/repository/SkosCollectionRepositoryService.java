@@ -334,6 +334,12 @@ public class SkosCollectionRepositoryService {
         });
     }
 
+    /**
+     * Finds all collections which contain the given member.
+     *
+     * @param member the member identifier to search
+     * @return List of <b>partial</b> collection DTOs with only {@code uri}, {@code types} and {@code vocabulary} set.
+     */
     @Transactional(readOnly = true)
     public List<SkosCollectionDto> findCollectionDtosWithMember(URI member) {
         return collectionDao.findCollectionsWithMember(member);
