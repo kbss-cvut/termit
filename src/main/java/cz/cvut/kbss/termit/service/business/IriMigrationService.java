@@ -2,12 +2,14 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationLongRunningTask;
@@ -46,6 +48,7 @@ public class IriMigrationService {
     private final TermAuthorizationService termAuthorizationService;
 
     private final SecurityUtils securityUtils;
+    private final SkosCollectionRepositoryService skosCollectionRepositoryService;
 
     @Autowired
     public IriMigrationService(
@@ -54,13 +57,15 @@ public class IriMigrationService {
             TermRepositoryService termRepositoryService,
             VocabularyAuthorizationService vocabularyAuthorizationService,
             TermAuthorizationService termAuthorizationService,
-            SecurityUtils securityUtils) {
+            SecurityUtils securityUtils,
+            SkosCollectionRepositoryService skosCollectionRepositoryService) {
         this.repositoryService = repositoryService;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.termRepositoryService = termRepositoryService;
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
         this.termAuthorizationService = termAuthorizationService;
         this.securityUtils = securityUtils;
+        this.skosCollectionRepositoryService = skosCollectionRepositoryService;
     }
 
     /**
@@ -121,6 +126,13 @@ public class IriMigrationService {
                 yield termAuthorizationService.canMigrateIdentifier(term);
             }
             case CUSTOM_ATTRIBUTE -> securityUtils.getCurrentUser().isAdmin();
+            case SKOS_COLLECTION -> {
+                final SkosCollectionDto dto = skosCollectionRepositoryService
+                        .findDto(iris.originalIri())
+                        .orElseThrow(() -> NotFoundException.create("SKOS Collection", iris.originalIri()));
+                final Vocabulary vocabulary = vocabularyRepositoryService.findRequired(dto.getVocabulary());
+                yield vocabularyAuthorizationService.canMigrateIdentifier(vocabulary);
+            }
         };
     }
 }

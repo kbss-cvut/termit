@@ -108,9 +108,6 @@ public class IriMigrationAction implements Runnable {
         switch (migrationType) {
             case TERM -> validateTermMigration();
             case VOCABULARY -> validateVocabularyMigration();
-            case CUSTOM_ATTRIBUTE -> {
-                /* no validation */
-            }
         }
     }
 
