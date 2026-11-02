@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermBatchEditDto;
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -898,17 +899,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds all SKOS collections the term with the specified identifier is member of.
+     * Finds all SKOS collections the term is member of.
      *
-     * @param termUri the identifier of the term
-     * @param vocabulary vocabulary of the term for authorization
      * @return the list of collections
      */
-    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
     @Transactional(readOnly = true)
-    public List<SkosCollectionDto> findAllCollections(URI termUri, Vocabulary vocabulary) {
-        return skosCollectionRepositoryService.findCollectionDtosWithMember(termUri).stream()
-                .filter(c -> c.getVocabulary().equals(vocabulary.getUri()))
+    public List<SkosCollectionDto> findAllCollectionsWithTerm(TermDescription term) {
+        return skosCollectionRepositoryService.findCollectionDtosWithMember(term.getUri()).stream()
                 .map(partial -> skosCollectionRepositoryService
                         .findDto(partial.getUri())
                         .orElseThrow())

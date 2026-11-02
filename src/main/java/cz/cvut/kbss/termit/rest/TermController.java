@@ -1382,20 +1382,21 @@ public class TermController extends BaseController {
         @ApiResponse(responseCode = "200", description = "The list of collections."),
         @ApiResponse(responseCode = "404", description = "The term was not found."),
     })
-    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/collections", produces = JsonLd.MEDIA_TYPE)
+    @GetMapping(value = "/terms/{localName}/collections", produces = JsonLd.MEDIA_TYPE)
     public List<SkosCollectionDto> getTermCollections(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(
+                            description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                            example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
                     @PathVariable
                     String localName,
-            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
-                    @PathVariable
-                    String termLocalName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                    Optional<String> namespace) {
-        final URI termUri = getTermUri(localName, termLocalName, namespace);
-        final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        return termService.findAllCollections(termUri, getVocabulary(vocabularyUri));
+            @Parameter(
+                            description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                            example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE)
+                    String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        final TermInfo term = termService.findRequiredTermInfo(termUri);
+        return termService.findAllCollectionsWithTerm(term);
     }
 
     /** A couple of constants for the {@link TermController} API documentation. */

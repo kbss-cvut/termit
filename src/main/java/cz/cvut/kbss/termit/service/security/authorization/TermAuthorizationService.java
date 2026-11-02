@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.security.authorization;
 
+import cz.cvut.kbss.termit.dto.TermDescription;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.TermInfoWithParents;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -69,9 +70,14 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
         return canCreateIn(getVocabulary(parent));
     }
 
-    private Vocabulary getVocabulary(AbstractTerm term) {
+    private Vocabulary getVocabulary(TermDescription term) {
         Objects.requireNonNull(term);
+        Objects.requireNonNull(term.getVocabulary());
         return new Vocabulary(term.getVocabulary());
+    }
+
+    public boolean canRead(TermDescription term) {
+        return vocabularyAuthorizationService.canRead(getVocabulary(term));
     }
 
     @Override
