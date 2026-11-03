@@ -8,8 +8,10 @@ import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.SkosCollectionDao;
 import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
@@ -210,6 +212,12 @@ public class SkosCollectionRepositoryService {
         collectionDao
                 .findEntitiesWithType(members, vocabulary)
                 .forEach(SkosCollectionRepositoryService::ensureHasCorrectMemberType);
+        if (collection.getProperties() != null) {
+            if (collection.getProperties().containsKey(TermCollection_.membersPropertyIRI.toString())
+                    || collection.getProperties().containsKey(OrderedTermCollection_.membersPropertyIRI.toString())) {
+                throw new ValidationException("Collection must not contain members in its additional properties!");
+            }
+        }
     }
 
     /**

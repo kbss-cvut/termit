@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
@@ -25,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -252,5 +255,63 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
 
         assertThat(updatedParent.getMembers()).containsExactly(collection.getUri());
         assertThat(orderedParent.getMembers()).containsExactly(collection.getUri());
+    }
+
+    @Test
+    void updatePersistsAdditionalPropertyForOrderedCollection() {
+        OrderedTermCollection ordered = Generator.generateOrderedTermCollection(vocabulary);
+        ordered.setMembers(new ArrayList<>());
+
+        List<Term> members = Generator.generateTermsWithIds(5);
+        transactional(() -> members.forEach(t -> {
+            termRepositoryService.addRootTermToVocabulary(t, vocabulary);
+            ordered.getMembers().add(t.getUri());
+        }));
+
+        sut.persist(ordered);
+
+        final String property = DC.Terms.CREATED;
+        final Set<Object> propertyValue = Set.of(OffsetDateTime.now());
+
+        final SkosCollectionDto dto = sut.findRequiredDto(ordered.getUri(), vocabulary.getUri());
+        dto.getProperties().put(property, propertyValue);
+
+        sut.update(dto);
+
+        SkosCollectionDto updatedDto = sut.findRequiredDto(dto.getUri(), vocabulary.getUri());
+        OrderedTermCollection updated =
+                repositoryService.findOrdered(ordered.getUri(), vocabulary).orElseThrow();
+
+        assertThat(updatedDto.getProperties()).containsEntry(property, propertyValue);
+        assertThat(updated.getProperties()).containsEntry(property, propertyValue);
+    }
+
+    @Test
+    void updatePersistsAdditionalPropertyForUnorderedCollection() {
+        TermCollection unordered = Generator.generateTermCollection(vocabulary);
+        unordered.setMembers(new HashSet<>());
+
+        List<Term> members = Generator.generateTermsWithIds(5);
+        transactional(() -> members.forEach(t -> {
+            termRepositoryService.addRootTermToVocabulary(t, vocabulary);
+            unordered.getMembers().add(t.getUri());
+        }));
+
+        sut.persist(unordered);
+
+        final String property = DC.Terms.CREATED;
+        final Set<Object> propertyValue = Set.of(OffsetDateTime.now());
+
+        final SkosCollectionDto dto = sut.findRequiredDto(unordered.getUri(), vocabulary.getUri());
+        dto.getProperties().put(property, propertyValue);
+
+        sut.update(dto);
+
+        SkosCollectionDto updatedDto = sut.findRequiredDto(dto.getUri(), vocabulary.getUri());
+        TermCollection updated =
+                repositoryService.findUnordered(unordered.getUri(), vocabulary).orElseThrow();
+
+        assertThat(updatedDto.getProperties()).containsEntry(property, propertyValue);
+        assertThat(updated.getProperties()).containsEntry(property, propertyValue);
     }
 }

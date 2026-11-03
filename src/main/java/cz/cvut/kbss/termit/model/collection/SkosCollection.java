@@ -2,16 +2,19 @@ package cz.cvut.kbss.termit.model.collection;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.Sparql;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
@@ -22,13 +25,14 @@ import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 @MappedSuperclass
 @PrimaryNotBlank("label")
 @OWLClass(iri = SKOS.COLLECTION)
 public abstract class SkosCollection<T extends Collection<URI>> extends Asset<MultilingualString>
-        implements SupportsSnapshots, HasTypes, HasPrimaryLanguage {
+        implements SupportsSnapshots, HasTypes, HasPrimaryLanguage, HasProperties {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
@@ -52,6 +56,9 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
 
     @Types
     private Set<String> types;
+
+    @Properties(fetchType = FetchType.EAGER)
+    private Map<String, Set<Object>> properties;
 
     public abstract T getMembers();
 
@@ -120,5 +127,13 @@ public abstract class SkosCollection<T extends Collection<URI>> extends Asset<Mu
     @Override
     public boolean isSnapshot() {
         return hasType(Vocabulary.s_c_version_of_collection);
+    }
+
+    public Map<String, Set<Object>> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Set<Object>> properties) {
+        this.properties = properties;
     }
 }

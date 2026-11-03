@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection_;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
@@ -1090,5 +1091,22 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         });
 
         assertSnapshotOfCollectionIsFoundBySnapshotOfTerm(collection, member);
+    }
+
+    @Test
+    void orderedCollectionDoesNotContainMembersInAdditionalProperties() {
+        final OrderedTermCollection result = sut.find(
+                        OrderedTermCollection.class, orderedCollection.getUri(), vocabulary)
+                .orElseThrow();
+        assertNotNull(result.getProperties());
+        assertThat(result.getProperties()).doesNotContainKey(OrderedTermCollection_.membersPropertyIRI.toString());
+    }
+
+    @Test
+    void unorderedCollectionDoesNotContainMembersInAdditionalProperties() {
+        final TermCollection result = sut.find(TermCollection.class, unorderedCollection.getUri(), vocabulary)
+                .orElseThrow();
+        assertNotNull(result.getProperties());
+        assertThat(result.getProperties()).doesNotContainKey(TermCollection_.membersPropertyIRI.toString());
     }
 }
