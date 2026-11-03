@@ -66,10 +66,9 @@ import java.util.stream.Collectors;
 
 public class Utils {
 
-    /**
-     * Email validation regexp by OWASP.
-     */
-    private static final String EMAIL_REGEXP = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
+    /** Email validation regexp by OWASP. */
+    private static final String EMAIL_REGEXP =
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
 
     private Utils() {
         throw new AssertionError();
@@ -87,8 +86,8 @@ public class Utils {
 
     /**
      * Loads query from the specified file.
-     * <p>
-     * The query should be in the query directory specified by {@link Constants#QUERY_DIRECTORY}.
+     *
+     * <p>The query should be in the query directory specified by {@link Constants#QUERY_DIRECTORY}.
      *
      * @param queryFilePath Path to the query file within the {@link Constants#QUERY_DIRECTORY}
      * @return Query string read from the file
@@ -99,8 +98,8 @@ public class Utils {
 
     /**
      * Loads the content of a text file from the classpath.
-     * <p>
-     * That is, this method resolves the specified path w.r.t. the application classpath.
+     *
+     * <p>That is, this method resolves the specified path w.r.t. the application classpath.
      *
      * @param path Path to the file to load
      * @return Content of the file as a string
@@ -121,8 +120,8 @@ public class Utils {
      * Changes IRI of a resource in a model.
      *
      * @param originalIri the IRI to change
-     * @param newIri      the new, changed, IRI
-     * @param model       model to change the IRI in
+     * @param newIri the new, changed, IRI
+     * @param model model to change the IRI in
      */
     public static void changeIri(final String originalIri, final String newIri, final Model model) {
         changeIrisByFunction(originalIri::equals, _ -> newIri, model);
@@ -132,29 +131,27 @@ public class Utils {
      * Changes IRI of a resource in a model.
      *
      * @param originalNamespace the IRI to change
-     * @param newNamespace      the new, changed, IRI
-     * @param model             model to change the IRI in
+     * @param newNamespace the new, changed, IRI
+     * @param model model to change the IRI in
      */
-    public static void changeNamespace(final String originalNamespace,
-                                       final String newNamespace,
-                                       final Model model) {
+    public static void changeNamespace(final String originalNamespace, final String newNamespace, final Model model) {
         changeIrisByFunction(
                 oIri -> oIri.startsWith(originalNamespace),
                 oIri -> oIri.replaceFirst("^" + originalNamespace, newNamespace),
-                model
-        );
+                model);
     }
 
     /**
      * Changes IRI of a resource in a model.
      *
      * @param checkOriginalIri checks whether the original IRI should be renamed
-     * @param transformIri     transforms the original IRI to the new IRI
-     * @param model            model to change the IRI in
+     * @param transformIri transforms the original IRI to the new IRI
+     * @param model model to change the IRI in
      */
-    private static void changeIrisByFunction(final Function<String, Boolean> checkOriginalIri,
-                                             final Function<String, String> transformIri,
-                                             final Model model) {
+    private static void changeIrisByFunction(
+            final Function<String, Boolean> checkOriginalIri,
+            final Function<String, String> transformIri,
+            final Model model) {
         final Collection<Statement> statementsToAdd = new HashSet<>();
         final Collection<Statement> statementsToRemove = new HashSet<>();
         model.getStatements(null, null, null).forEach(s -> {
@@ -180,8 +177,8 @@ public class Utils {
 
             if (changed) {
                 statementsToAdd.add(Statements.statement(subject, predicate, object, s.getContext()));
-                statementsToRemove
-                        .add(Statements.statement(s.getSubject(), s.getPredicate(), s.getObject(), s.getContext()));
+                statementsToRemove.add(
+                        Statements.statement(s.getSubject(), s.getPredicate(), s.getObject(), s.getContext()));
             }
         });
         model.removeAll(statementsToRemove);
@@ -190,13 +187,13 @@ public class Utils {
 
     /**
      * Extracts the necessary vocabulary namespace from the specified concept identifiers.
-     * <p>
-     * It is assumed the vocabulary namespace is the same for all concepts.
+     *
+     * <p>It is assumed the vocabulary namespace is the same for all concepts.
      *
      * @param conceptUris set of concept IRIs
      * @return vocabulary namespace
      * @throws IllegalArgumentException if the namespace is not the same in all concept IRIs, there is no concept, or
-     *                                  the concept IRI is not an absolute IRI.
+     *     the concept IRI is not an absolute IRI.
      */
     public static String extractVocabularyNamespaceFromTermIris(final Set<String> conceptUris) {
         if (conceptUris.isEmpty()) {
@@ -228,13 +225,13 @@ public class Utils {
 
     /**
      * Gets unique IRI from the base string.
-     * <p>
-     * This method checks whether base is unique (fails the getAsset test). If not, the IRI is extended with numbers
+     *
+     * <p>This method checks whether base is unique (fails the getAsset test). If not, the IRI is extended with numbers
      * until it gets unique.
      *
-     * @param base     base string to derive the IRI from
+     * @param base base string to derive the IRI from
      * @param getAsset checker function to see
-     * @param <T>      type of the asset
+     * @param <T> type of the asset
      * @return Generated identifier
      */
     public static <T> String getUniqueIriFromBase(final String base, final Function<String, Optional<T>> getAsset) {
@@ -250,11 +247,12 @@ public class Utils {
 
     /**
      * Joins the contents of the specified collections into one.
-     * <p>
-     * Note that this method performs no uniqueness checks or sorting. It only handles possible {@code null} arguments.
+     *
+     * <p>Note that this method performs no uniqueness checks or sorting. It only handles possible {@code null}
+     * arguments.
      *
      * @param collections Collections to join, can be null
-     * @param <T>         Type of the collection elements
+     * @param <T> Type of the collection elements
      * @return Collection containing elements from all the specified collections
      */
     @SafeVarargs
@@ -271,17 +269,18 @@ public class Utils {
     /**
      * Extracts translations of values of the specified property of the specified subject.
      *
-     * @param subject  Subject whose property values to extract
+     * @param subject Subject whose property values to extract
      * @param property Property whose values to extract
-     * @param model    Model containing data to process
+     * @param model Model containing data to process
      * @return {@code MultilingualString} instance containing all available property value translations
      */
     public static MultilingualString resolveTranslations(Resource subject, IRI property, Model model) {
         final MultilingualString s = new MultilingualString();
         model.filter(subject, property, null).forEach(st -> {
             if (st.getObject().isLiteral()) {
-                ((Literal) st.getObject()).getLanguage()
-                                          .ifPresent(lang -> s.set(lang, ((Literal) st.getObject()).getLabel()));
+                ((Literal) st.getObject())
+                        .getLanguage()
+                        .ifPresent(lang -> s.set(lang, ((Literal) st.getObject()).getLabel()));
             }
         });
         return s;
@@ -298,8 +297,8 @@ public class Utils {
 
     /**
      * Trims the specified input string, if it is not {@code null}.
-     * <p>
-     * If it is, returns an empty string.
+     *
+     * <p>If it is, returns an empty string.
      *
      * @param input Input string, possibly {@code null}
      * @return Trimmed input string, not {@code null}
@@ -320,8 +319,8 @@ public class Utils {
 
     /**
      * Checks whether the specified string is blank.
-     * <p>
-     * {@code null} is considered blank, too.
+     *
+     * <p>{@code null} is considered blank, too.
      *
      * @param input Input to check
      * @return {@code true} if the specified string is blank or null, {@code false} otherwise
@@ -377,8 +376,8 @@ public class Utils {
 
     /**
      * Removes blank translations from the specified {@link MultilingualString}.
-     * <p>
-     * That is, deletes records in languages where the value is a blank string.
+     *
+     * <p>That is, deletes records in languages where the value is a blank string.
      *
      * @param str Multilingual string to prune, possibly {@code null}
      */
@@ -391,8 +390,8 @@ public class Utils {
 
     /**
      * Normalizes the translations in the specified {@link MultilingualString}.
-     * <p>
-     * This ensures Unicode characters are represented in the same way.
+     *
+     * <p>This ensures Unicode characters are represented in the same way.
      *
      * @param str Multilingual string to normalize, possibly {@code null}
      */
@@ -400,9 +399,9 @@ public class Utils {
         if (str == null) {
             return;
         }
-        str.keySet().forEach(k -> str.computeIfPresent(k,
-                                                       (_, value) -> IdentifierResolver.normalizeUnicodeCharacters(
-                                                               value)));
+        str.keySet()
+                .forEach(k ->
+                        str.computeIfPresent(k, (_, value) -> IdentifierResolver.normalizeUnicodeCharacters(value)));
     }
 
     /**
@@ -414,9 +413,7 @@ public class Utils {
         if (map == null) {
             return "";
         }
-        return map.keySet().stream()
-                  .map(key -> key + "=" + map.get(key))
-                  .collect(Collectors.joining(", ", "{", "}"));
+        return map.keySet().stream().map(key -> key + "=" + map.get(key)).collect(Collectors.joining(", ", "{", "}"));
     }
 
     /**

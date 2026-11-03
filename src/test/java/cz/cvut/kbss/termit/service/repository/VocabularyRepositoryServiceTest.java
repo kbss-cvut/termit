@@ -447,8 +447,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void updateSavesLabelInNewLanguage() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
-        final MultilingualString expected =
-                new MultilingualString(vocabulary.getLabel());
+        final MultilingualString expected = new MultilingualString(vocabulary.getLabel());
 
         final String newCsName = "Nový název";
         expected.set("cs", newCsName);

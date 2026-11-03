@@ -1,0 +1,19 @@
+changelog:
+    -   changeSet:
+            id: 12
+            changes:
+                -   type: sparqlUpdate
+                    query: |
+                        prefix sys: <http://www.ontotext.com/owlim/system#>
+    
+                        INSERT DATA {
+                            <_:termit-5.2.0> sys:addRuleset <https://raw.githubusercontent.com/kbss-cvut/termit-docker/refs/heads/master/db-server/rulesets/rules-termit-graphdb.pie>
+                        }
+                -   type: sparqlUpdate
+                    query: |
+                        PREFIX sys: <http://www.ontotext.com/owlim/system#>
+    
+                        INSERT DATA { _:b sys:defaultRuleset "termit-5.2.0" }
+                -   type: sparqlUpdate
+                    query: |
+                        INSERT DATA { [] <http://www.ontotext.com/owlim/system#reinfer> [] }

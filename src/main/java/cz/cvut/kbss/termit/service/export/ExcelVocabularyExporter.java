@@ -54,32 +54,20 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Implements vocabulary export to the MS Excel format.
- */
+/** Implements vocabulary export to the MS Excel format. */
 @Service("excel")
 public class ExcelVocabularyExporter implements VocabularyExporter {
 
-    /**
-     * Name of the sheet where prefix mapping should be put
-     */
+    /** Name of the sheet where prefix mapping should be put */
     public static final String PREFIX_SHEET_NAME = "Prefix";
 
-    /**
-     * Index number of the prefix column
-     */
+    /** Index number of the prefix column */
     public static final int PREFIX_COLUMN_NUMBER = 0;
-    /**
-     * Index number of the namespace column
-     */
+    /** Index number of the namespace column */
     public static final int NAMESPACE_COLUMN_NUMBER = 1;
-    /**
-     * Name of the prefix column in the prefix mapping sheet
-     */
+    /** Name of the prefix column in the prefix mapping sheet */
     static final String PREFIX_COLUMN = "Prefix";
-    /**
-     * Name of the namespace column in the prefix mapping sheet
-     */
+    /** Name of the namespace column in the prefix mapping sheet */
     static final String NAMESPACE_COLUMN = "Namespace";
 
     private static final String FONT = "Arial";
@@ -114,8 +102,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             generatePrefixMappingSheet(wb, prefixes.values());
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
-            return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
-                                                  ExportFormat.EXCEL.getFileExtension());
+            return new TypeAwareByteArrayResource(
+                    bos.toByteArray(), ExportFormat.EXCEL.getMediaType(), ExportFormat.EXCEL.getFileExtension());
         } catch (IOException e) {
             throw new TermItException("Unable to generate excel file from glossary of " + vocabulary, e);
         }
@@ -144,9 +132,11 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             Utils.emptyIfNull(t.getHiddenLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getExamples()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
         }
-        return uniqueLanguages.stream().filter(Objects::nonNull)
-                              .filter(lang -> !MultilingualString.NO_LANG.equals(lang)).sorted()
-                              .collect(Collectors.toList());
+        return uniqueLanguages.stream()
+                .filter(Objects::nonNull)
+                .filter(lang -> !MultilingualString.NO_LANG.equals(lang))
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     private static XSSFFont initFont(XSSFWorkbook wb) {
@@ -157,9 +147,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     private void generateHeader(XSSFSheet sheet, String langCode) {
-        final List<String> columns = Constants.EXPORT_COLUMN_LABELS.getOrDefault(langCode,
-                                                                                 Constants.EXPORT_COLUMN_LABELS.get(
-                                                                                         Constants.DEFAULT_LANGUAGE));
+        final List<String> columns = Constants.EXPORT_COLUMN_LABELS.getOrDefault(
+                langCode, Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE));
         final Row row = generateHeaderRow(sheet);
         for (int i = 0; i < columns.size(); i++) {
             sheet.setColumnWidth(i, COLUMN_WIDTH * 256);
@@ -178,8 +167,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         return row;
     }
 
-    private void generateTermRows(List<Term> terms, XSSFSheet sheet, String langCode,
-                                  Map<URI, PrefixDeclaration> prefixes) {
+    private void generateTermRows(
+            List<Term> terms, XSSFSheet sheet, String langCode, Map<URI, PrefixDeclaration> prefixes) {
         final XSSFFont font = initFont(sheet.getWorkbook());
         final CellStyle style = sheet.getWorkbook().createCellStyle();
         style.setFont(font);
@@ -209,10 +198,12 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         allRelated.addAll(Utils.emptyIfNull(t.getInverseExactMatchTerms()));
         allRelated.addAll(Utils.emptyIfNull(t.getRelatedMatch()));
         allRelated.addAll(Utils.emptyIfNull(t.getInverseRelatedMatch()));
-        allRelated.addAll(
-                Utils.emptyIfNull(t.getExternalParentTerms()).stream().map(TermInfo::new).collect(Collectors.toSet()));
-        allRelated.stream().filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
-                  .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
+        allRelated.addAll(Utils.emptyIfNull(t.getExternalParentTerms()).stream()
+                .map(TermInfo::new)
+                .collect(Collectors.toSet()));
+        allRelated.stream()
+                .filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
+                .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
     }
 
     private void generatePrefixMappingSheet(XSSFWorkbook wb, Collection<PrefixDeclaration> prefixes) {
