@@ -94,7 +94,7 @@ public class ReadOnlyTerm extends AbstractTerm {
             this.hiddenLabels = new HashSet<>(term.getHiddenLabels());
         }
         if (term.getDescription() != null) {
-            this.description = new MultilingualString(term.getDescription().getValue());
+            this.description = new MultilingualString(term.getDescription());
         }
         if (term.getSources() != null) {
             this.sources = new HashSet<>(term.getSources());

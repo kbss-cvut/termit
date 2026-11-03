@@ -239,13 +239,13 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final TypeAwareResource result = sut.exportVocabulary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
         for (Term t : terms) {
-            t.getLabel().getValue().forEach((lang, val) -> assertThat(model,
+            t.getLabel().forEach((lang, val) -> assertThat(model,
                                                                       hasItem(vf.createStatement(
                                                                               vf.createIRI(t.getUri().toString()),
                                                                               SKOS.PREF_LABEL,
                                                                               vf.createLiteral(val, lang)))));
             if (t.getAltLabels() != null && !t.getAltLabels().isEmpty()) {
-                t.getAltLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
+                t.getAltLabels().forEach(src -> src.forEach((lang, val) -> assertThat(model,
                                                                                                  hasItem(vf.createStatement(
                                                                                                          vf.createIRI(
                                                                                                                  t.getUri()
@@ -257,7 +257,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
             }
             if (t.getHiddenLabels() != null && !t.getHiddenLabels().isEmpty()) {
-                t.getHiddenLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
+                t.getHiddenLabels().forEach(src -> src.forEach((lang, val) -> assertThat(model,
                                                                                                     hasItem(vf.createStatement(
                                                                                                             vf.createIRI(
                                                                                                                     t.getUri()
@@ -268,7 +268,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
                                                                                                                     lang))))));
 
             }
-            t.getDefinition().getValue().forEach((lang, val) -> assertThat(model,
+            t.getDefinition().forEach((lang, val) -> assertThat(model,
                                                                            hasItem(vf.createStatement(
                                                                                    vf.createIRI(t.getUri().toString()),
                                                                                    SKOS.DEFINITION,

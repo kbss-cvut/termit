@@ -138,10 +138,10 @@ public class DataDao {
             } else {
                 final RdfsResource res = map.get(r.getUri());
                 if (r.getLabel() != null) {
-                    res.getLabel().getValue().putAll(r.getLabel().getValue());
+                    res.getLabel().putAll(r.getLabel());
                 }
                 if (r.getComment() != null) {
-                    res.getComment().getValue().putAll(r.getComment().getValue());
+                    res.getComment().putAll(r.getComment());
                 }
             }
         });

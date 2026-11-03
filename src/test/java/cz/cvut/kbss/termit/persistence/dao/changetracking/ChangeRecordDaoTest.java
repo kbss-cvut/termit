@@ -236,7 +236,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         enableRdfsInference(em);
         final UpdateChangeRecord record = generateUpdateRecord(Utils.timestamp(), vocabulary.getUri());
         final MultilingualString original = MultilingualString.create("Test term", "en");
-        final MultilingualString newValue = new MultilingualString(original.getValue());
+        final MultilingualString newValue = new MultilingualString(original);
         newValue.set("cs", "Testovací pojem");
         record.setOriginalValue(Collections.singleton(original));
         record.setNewValue(Collections.singleton(newValue));

@@ -229,7 +229,7 @@ public class TermRelationshipAnnotationDao {
             conn.begin();
             for (final Object value : values) {
                 if (value instanceof MultilingualString mls) {
-                    mls.getValue().forEach((lang, label) -> {
+                    mls.forEach((lang, label) -> {
                         final Value val = Rdf4jUtils.createLiteral(label, lang, vf);
                         conn.add(subjTriple, annProperty, val, contextIri);
                     });

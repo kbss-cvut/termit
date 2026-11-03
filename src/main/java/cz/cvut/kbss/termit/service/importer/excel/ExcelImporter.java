@@ -205,7 +205,7 @@ public class ExcelImporter implements VocabularyImporter {
      */
     private void prepareTermsForPersist(List<Term> terms, Vocabulary targetVocabulary) {
         terms.stream().peek(t -> t.setUri(resolveTermIdentifierWrtVocabulary(t, targetVocabulary)))
-             .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
+             .peek(t -> t.getLabel().forEach((lang, value) -> {
                  final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
                                                                                      targetVocabulary,
                                                                                      lang);
@@ -343,7 +343,7 @@ public class ExcelImporter implements VocabularyImporter {
         if (source == null) {
             return target;
         }
-        source.getValue().forEach((lang, value) -> {
+        source.forEach((lang, value) -> {
             if (!target.contains(lang)) {
                 target.set(lang, value);
             }

@@ -69,8 +69,8 @@ public class UfoTermTypesService {
         }
         return cache.stream().map(t -> {
             final Term copy = new Term(t.getUri());
-            copy.setLabel(new MultilingualString(t.getLabel().getValue()));
-            copy.setDescription(new MultilingualString(t.getDescription().getValue()));
+            copy.setLabel(new MultilingualString(t.getLabel()));
+            copy.setDescription(new MultilingualString(t.getDescription()));
             copy.setSubTerms(t.getSubTerms().stream().map(ti -> new TermInfo(ti.getUri())).collect(Collectors.toSet()));
             return copy;
         }).collect(Collectors.toList());

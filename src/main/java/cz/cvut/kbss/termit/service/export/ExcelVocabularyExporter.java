@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.export;
 
 import com.neovisionaries.i18n.LanguageCode;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -135,13 +136,17 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         final Set<String> uniqueLanguages = new HashSet<>();
         for (Term t : terms) {
             uniqueLanguages.addAll(t.getLabel().getLanguages());
-            uniqueLanguages.addAll(t.getDefinition() != null ? t.getDefinition().getLanguages() : Collections.emptyList());
-            uniqueLanguages.addAll(t.getDescription() != null ? t.getDescription().getLanguages() : Collections.emptyList());
+            uniqueLanguages.addAll(
+                    t.getDefinition() != null ? t.getDefinition().getLanguages() : Collections.emptyList());
+            uniqueLanguages.addAll(
+                    t.getDescription() != null ? t.getDescription().getLanguages() : Collections.emptyList());
             Utils.emptyIfNull(t.getAltLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getHiddenLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getExamples()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
         }
-        return uniqueLanguages.stream().filter(Objects::nonNull).sorted().collect(Collectors.toList());
+        return uniqueLanguages.stream().filter(Objects::nonNull)
+                              .filter(lang -> !MultilingualString.NO_LANG.equals(lang)).sorted()
+                              .collect(Collectors.toList());
     }
 
     private static XSSFFont initFont(XSSFWorkbook wb) {
