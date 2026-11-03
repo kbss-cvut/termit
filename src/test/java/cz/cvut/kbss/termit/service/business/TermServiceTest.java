@@ -481,9 +481,9 @@ class TermServiceTest {
     void updateInvokesTextAnalysisOnAllTermsInTermsVocabularyWhenLabelHasChanged() {
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term update = new Term(original.getUri());
-        update.setLabel(new MultilingualString(original.getLabel().getValue()));
-        update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
-        update.setDescription(new MultilingualString(original.getDescription().getValue()));
+        update.setLabel(new MultilingualString(original.getLabel()));
+        update.setDefinition(new MultilingualString(original.getDefinition()));
+        update.setDescription(new MultilingualString(original.getDescription()));
         update.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
         when(termRepositoryService.update(update)).thenReturn(update);
@@ -653,9 +653,9 @@ class TermServiceTest {
         final Term original = generateTermWithId(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
         final Term update = new Term(original.getUri());
-        update.setLabel(new MultilingualString(original.getLabel().getValue()));
-        update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
-        update.setDescription(new MultilingualString(original.getDescription().getValue()));
+        update.setLabel(new MultilingualString(original.getLabel()));
+        update.setDefinition(new MultilingualString(original.getDefinition()));
+        update.setDescription(new MultilingualString(original.getDescription()));
         update.setVocabulary(vocabulary.getUri());
         update.setState(Generator.randomItem(Generator.TERM_STATES));
         when(termRepositoryService.update(update)).thenReturn(update);
@@ -758,8 +758,8 @@ class TermServiceTest {
             it.next().setState(Generator.TERM_STATES[i++]);
         }
         final Term original = new Term(term.getUri());
-        original.setLabel(new MultilingualString(term.getLabel().getValue()));
-        original.setDefinition(new MultilingualString(term.getDefinition().getValue()));
+        original.setLabel(new MultilingualString(term.getLabel()));
+        original.setDefinition(new MultilingualString(term.getDefinition()));
         original.setSubTerms(term.getSubTerms().stream().map(TermInfo::new).collect(Collectors.toSet()));
         term.setState(terminalState.getUri());
 

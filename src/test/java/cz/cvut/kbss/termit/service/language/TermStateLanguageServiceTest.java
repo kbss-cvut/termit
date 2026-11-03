@@ -56,11 +56,11 @@ class TermStateLanguageServiceTest {
         assertEquals(3, result.size());
         result.forEach(r -> {
             assertNotNull(r.getLabel());
-            assertThat(r.getLabel().getValue(), hasKey("cs"));
-            assertThat(r.getLabel().getValue(), hasKey("en"));
+            assertThat(r.getLabel(), hasKey("cs"));
+            assertThat(r.getLabel(), hasKey("en"));
             assertNotNull(r.getComment());
-            assertThat(r.getComment().getValue(), hasKey("cs"));
-            assertThat(r.getComment().getValue(), hasKey("en"));
+            assertThat(r.getComment(), hasKey("cs"));
+            assertThat(r.getComment(), hasKey("en"));
         });
     }
 

@@ -87,10 +87,10 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         Objects.requireNonNull(other);
         setUri(other.getUri());
         if (other.getLabel() != null) {
-            this.label = new MultilingualString(other.getLabel().getValue());
+            this.label = new MultilingualString(other.getLabel());
         }
         if (other.getDefinition() != null) {
-            this.definition = new MultilingualString(other.getDefinition().getValue());
+            this.definition = new MultilingualString(other.getDefinition());
         }
         this.primaryLanguage = other.primaryLanguage;
         this.state = other.state;

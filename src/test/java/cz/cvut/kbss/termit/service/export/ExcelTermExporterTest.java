@@ -69,15 +69,15 @@ class ExcelTermExporterTest {
         final XSSFRow row = generateExcel();
         sut.export(term, row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        term.getLabel().getValue().values()
+        term.getLabel().values()
             .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(2).getStringCellValue().matches(".+;.+"));
         term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s.get())));
         assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
         term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s.get())));
-        term.getDefinition().getValue().values()
+        term.getDefinition().values()
             .forEach(v -> assertThat(row.getCell(4).getStringCellValue(), containsString(v)));
-        term.getDescription().getValue().values()
+        term.getDescription().values()
             .forEach(v -> assertThat(row.getCell(5).getStringCellValue(), containsString(v)));
         assertEquals(term.getTypes().iterator().next(), row.getCell(6).getStringCellValue());
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
@@ -113,7 +113,7 @@ class ExcelTermExporterTest {
         final XSSFRow row = generateExcel();
         sut.export(term, row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        term.getLabel().getValue().values()
+        term.getLabel().values()
             .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
     }
 
@@ -126,7 +126,7 @@ class ExcelTermExporterTest {
         final XSSFRow row = generateExcel();
         sut.export(term, row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        term.getLabel().getValue().values()
+        term.getLabel().values()
             .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
         term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
@@ -143,7 +143,7 @@ class ExcelTermExporterTest {
         final XSSFRow row = generateExcel();
         sut.export(term, row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        term.getHiddenLabels().forEach(ms -> ms.getValue().values()
+        term.getHiddenLabels().forEach(ms -> ms.values()
                                                .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
                                                                         containsString(v))));
     }

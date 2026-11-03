@@ -89,9 +89,9 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         final String strTimestamp = timestamp.toString().replace(":", "");
         final Term stub = new Term();
         stub.setUri(URI.create(term.getUri().toString() + "/version/" + strTimestamp));
-        stub.setLabel(new MultilingualString(term.getLabel().getValue()));
-        stub.setDefinition(new MultilingualString(term.getDefinition().getValue()));
-        stub.setDescription(new MultilingualString(term.getDescription().getValue()));
+        stub.setLabel(new MultilingualString(term.getLabel()));
+        stub.setDefinition(new MultilingualString(term.getDefinition()));
+        stub.setDescription(new MultilingualString(term.getDescription()));
         // This one will simulate a vocabulary snapshot
         final URI vocSnapshotUri = URI.create(vocabulary.getUri().toString() + "/version/" + strTimestamp);
         stub.setVocabulary(vocSnapshotUri);

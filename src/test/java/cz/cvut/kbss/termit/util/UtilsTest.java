@@ -216,7 +216,7 @@ class UtilsTest {
         str.set("cs", "");
         str.set("de", "   ");
         Utils.pruneBlankTranslations(str);
-        assertEquals(1, str.getValue().size());
+        assertEquals(1, str.size());
         assertEquals("test", str.get("en"));
     }
 
@@ -228,7 +228,7 @@ class UtilsTest {
         final IRI property = RDFS.LABEL;
         final MultilingualString expected =
                 MultilingualString.create("English", "en").set("cs", "Česky");
-        expected.getValue().forEach((lang, v) -> model.add(subject, property, vf.createLiteral(v, lang)));
+        expected.forEach((lang, v) -> model.add(subject, property, vf.createLiteral(v, lang)));
 
         assertEquals(expected, Utils.resolveTranslations(subject, property, model));
     }

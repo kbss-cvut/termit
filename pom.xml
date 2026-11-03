@@ -39,8 +39,8 @@
         <java.version>25</java.version>
         <org.apache.tika.tika-core.version>3.3.1</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
-        <cz.cvut.kbss.jopa.version>2.12.5</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.18.1</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jopa.version>3.0.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.19.0</cz.cvut.kbss.jsonld.version>
 
         <packaging>jar</packaging>
     </properties>
@@ -64,10 +64,11 @@
             <artifactId>jopa-impl</artifactId>
             <version>${cz.cvut.kbss.jopa.version}</version>
         </dependency>
+        <!-- Temporarily stick to older version because RDF4J 6 does not support RDF-star any more -->
         <dependency>
             <groupId>cz.cvut.kbss.jopa</groupId>
             <artifactId>ontodriver-rdf4j</artifactId>
-            <version>${cz.cvut.kbss.jopa.version}</version>
+            <version>2.12.5</version>
         </dependency>
         <!-- For RDF/XML export -->
         <dependency>
@@ -80,7 +81,7 @@
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.5.0</version>
+            <version>0.6.0</version>
         </dependency>
 
         <!-- Spring -->

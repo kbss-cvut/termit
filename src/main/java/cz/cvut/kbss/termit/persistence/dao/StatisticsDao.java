@@ -93,7 +93,7 @@ public class StatisticsDao {
         while (it.hasNext()) {
             final DistributionDto current = it.next();
             if (previous != null && previous.getResource().getUri().equals(current.getResource().getUri())) {
-                previous.getResource().getLabel().getValue().putAll(current.getResource().getLabel().getValue());
+                previous.getResource().getLabel().putAll(current.getResource().getLabel());
                 it.remove();
             } else {
                 previous = current;
@@ -166,10 +166,10 @@ public class StatisticsDao {
         while (it.hasNext()) {
             final TermTypeDistributionDto current = it.next();
             if (previous != null && previous.getVocabulary().getUri().equals(current.getVocabulary().getUri())) {
-                previous.getVocabulary().getLabel().getValue().putAll(current.getVocabulary().getLabel().getValue());
+                previous.getVocabulary().getLabel().putAll(current.getVocabulary().getLabel());
                 if (previous.getTypeDistribution().stream().noneMatch(ddto -> ddto.getResource().getUri().equals(
-                        current.getTypeDistribution().get(0).getResource().getUri()))) {
-                    previous.getTypeDistribution().add(current.getTypeDistribution().get(0));
+                        current.getTypeDistribution().getFirst().getResource().getUri()))) {
+                    previous.getTypeDistribution().add(current.getTypeDistribution().getFirst());
                 }
                 it.remove();
             } else {

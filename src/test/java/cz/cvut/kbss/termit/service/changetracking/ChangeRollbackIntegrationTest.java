@@ -137,7 +137,7 @@ class ChangeRollbackIntegrationTest extends BaseServiceTestRunner {
     }
 
     private MultilingualString makeCopy(MultilingualString original) {
-        return new MultilingualString(original.getValue());
+        return new MultilingualString(original);
     }
 
     private UpdateChangeRecord getRecord(Asset<?> changedAsset) {

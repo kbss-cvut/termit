@@ -125,7 +125,7 @@ public class Utils {
      * @param model       model to change the IRI in
      */
     public static void changeIri(final String originalIri, final String newIri, final Model model) {
-        changeIrisByFunction(originalIri::equals, oIri -> newIri, model);
+        changeIrisByFunction(originalIri::equals, _ -> newIri, model);
     }
 
     /**
@@ -386,7 +386,7 @@ public class Utils {
         if (str == null) {
             return;
         }
-        str.getValue().entrySet().removeIf(e -> e.getValue().isBlank());
+        str.entrySet().removeIf(e -> e.getValue().isBlank());
     }
 
     /**
@@ -400,9 +400,9 @@ public class Utils {
         if (str == null) {
             return;
         }
-        str.getValue().keySet().forEach(k -> str.getValue().computeIfPresent(k,
-                                                                             (key, value) -> IdentifierResolver.normalizeUnicodeCharacters(
-                                                                                     value)));
+        str.keySet().forEach(k -> str.computeIfPresent(k,
+                                                       (_, value) -> IdentifierResolver.normalizeUnicodeCharacters(
+                                                               value)));
     }
 
     /**

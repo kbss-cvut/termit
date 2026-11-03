@@ -411,8 +411,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection conn = repo.getConnection()) {
-                value.getValue()
-                        .forEach((lang, label) -> assertTrue(conn.hasStatement(
+                value.forEach((lang, label) -> assertTrue(conn.hasStatement(
                                 vf.createTriple(
                                         vf.createIRI(SUBJECT.toString()),
                                         vf.createIRI(SKOS.RELATED),

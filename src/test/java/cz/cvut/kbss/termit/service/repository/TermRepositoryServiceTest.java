@@ -941,7 +941,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         term.getLabel().set(Environment.LANGUAGE, "update");
         term.getLabel().set("cs", "");
         final MultilingualString expected =
-                new MultilingualString(term.getLabel().getValue());
+                new MultilingualString(term.getLabel());
         expected.remove("cs");
         transactional(() -> sut.update(term));
 
@@ -955,7 +955,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         term.getDefinition().set(Environment.LANGUAGE, "   ");
         term.getDefinition().set("cs", "Test");
         final MultilingualString expected =
-                new MultilingualString(term.getDefinition().getValue());
+                new MultilingualString(term.getDefinition());
         expected.remove(Environment.LANGUAGE);
 
         sut.addRootTermToVocabulary(term, vocabulary);

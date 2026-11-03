@@ -91,9 +91,9 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
     public RdfsResource(RdfsResource other) {
         this.uri = other.uri;
         assert other.label != null;
-        this.label = new MultilingualString(other.label.getValue());
+        this.label = new MultilingualString(other.label);
         if (other.comment != null) {
-            this.comment = new MultilingualString(other.comment.getValue());
+            this.comment = new MultilingualString(other.comment);
         }
         this.types = new HashSet<>(Utils.emptyIfNull(other.types));
     }

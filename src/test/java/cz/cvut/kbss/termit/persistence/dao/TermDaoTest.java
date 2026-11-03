@@ -1099,12 +1099,12 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         // translations
         final Map<String, Set<String>> allLabels = new HashMap<>();
         result.getAltLabels()
-                .forEach(alt -> alt.getValue().forEach((lang, val) -> {
+                .forEach(alt -> alt.forEach((lang, val) -> {
                     allLabels.putIfAbsent(lang, new HashSet<>());
                     allLabels.get(lang).add(val);
                 }));
         term.getAltLabels()
-                .forEach(alt -> alt.getValue().forEach((lang, val) -> {
+                .forEach(alt -> alt.forEach((lang, val) -> {
                     assertThat(allLabels, hasKey(lang));
                     assertThat(allLabels.get(lang), hasItem(val));
                 }));

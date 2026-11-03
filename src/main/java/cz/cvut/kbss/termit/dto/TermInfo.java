@@ -71,7 +71,7 @@ public class TermInfo implements TermDescription {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
         assert term.getLabel() != null;
-        this.label = new MultilingualString(term.getLabel().getValue());
+        this.label = new MultilingualString(term.getLabel());
         this.vocabulary = term.getVocabulary();
         this.state = term.getState();
         this.types = term.getTypes();
@@ -81,7 +81,7 @@ public class TermInfo implements TermDescription {
         Objects.requireNonNull(other);
         this.uri = other.getUri();
         assert other.getLabel() != null;
-        this.label = new MultilingualString(other.getLabel().getValue());
+        this.label = new MultilingualString(other.getLabel());
         this.vocabulary = other.getVocabulary();
         this.state = other.getState();
         this.types = new HashSet<>(Utils.emptyIfNull(other.getTypes()));

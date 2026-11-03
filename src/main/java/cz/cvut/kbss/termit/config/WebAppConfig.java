@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.config;
 
-import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.ConfigParam;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
@@ -29,8 +28,6 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.security.model.LoginStatus;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.LangStringSerializer;
-import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
-import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -101,8 +98,6 @@ public class WebAppConfig implements WebMvcConfigurer {
      */
     public static JsonMapper createJsonObjectMapper() {
         final SimpleModule multilingualStringModule = new SimpleModule();
-        multilingualStringModule.addSerializer(MultilingualString.class, new MultilingualStringSerializer());
-        multilingualStringModule.addDeserializer(MultilingualString.class, new MultilingualStringDeserializer());
         multilingualStringModule.addSerializer(LangString.class, new LangStringSerializer());
         return JsonMapper.builder()
                          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
