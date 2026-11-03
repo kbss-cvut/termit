@@ -7,7 +7,7 @@ changelog:
                         prefix sys: <http://www.ontotext.com/owlim/system#>
     
                         INSERT DATA {
-                            <_:termit-5.2.0> sys:addRuleset <https://raw.githubusercontent.com/kbss-cvut/termit-docker/refs/heads/master/db-server/rulesets/rules-termit-graphdb.pie>
+                            <_:termit-5.2.0> sys:addRuleset <https://raw.githubusercontent.com/kbss-cvut/termit-docker/c63d6ad3a6c1032993e8c8ffb2cb6950c051bf70/db-server/rulesets/rules-termit-graphdb.pie>
                         }
                 -   type: sparqlUpdate
                     query: |
