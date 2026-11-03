@@ -6,7 +6,6 @@ import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.util.Constants;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -24,13 +23,6 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private IriMigrationDao sut;
-
-    private IriMigrationPair iris;
-
-    @BeforeEach
-    void setUp() {
-        iris = new IriMigrationPair(Generator.generateUri(), Generator.generateUri());
-    }
 
     /**
      * Provides the subject, predicate and object data to insert into a graph and Iri migration pairs with subject,
@@ -114,9 +106,7 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
 
         insertData(subject, predicate, object, graph);
 
-        transactional(() -> {
-            sut.migrateIdentifier(iris);
-        });
+        transactional(() -> sut.migrateIdentifier(iris));
 
         assertFalse(askExists(subject, predicate, object, graph));
         assertTrue(askExistsAfterMigration(subject, predicate, object, graph, iris));
@@ -127,9 +117,7 @@ class IriMigrationDaoTest extends BaseDaoTestRunner {
     void migrateIdentifierReplacesIriInDefaultGraph(URI subject, URI predicate, URI object, IriMigrationPair iris) {
         insertData(subject, predicate, object, null);
 
-        transactional(() -> {
-            sut.migrateIdentifier(iris);
-        });
+        transactional(() -> sut.migrateIdentifier(iris));
 
         assertFalse(askExists(subject, predicate, object, null));
         assertFalse(askExists(subject, predicate, object, Constants.DEFAULT_GRAPH));

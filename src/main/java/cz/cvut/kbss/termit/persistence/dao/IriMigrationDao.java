@@ -69,7 +69,8 @@ public class IriMigrationDao {
     public List<URI> getEntityTypes(URI entityUri) {
         Objects.requireNonNull(entityUri);
         try {
-            return em.createNativeQuery("SELECT DISTINCT ?type WHERE { ?entity a ?type }", URI.class)
+            return em.createNativeQuery(
+                            "SELECT DISTINCT ?type WHERE { ?entity a ?type . FILTER (isIRI(?type)) }", URI.class)
                     .setParameter("entity", entityUri)
                     .getResultList();
         } catch (RuntimeException e) {
