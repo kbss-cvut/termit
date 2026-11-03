@@ -412,14 +412,14 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection conn = repo.getConnection()) {
                 value.forEach((lang, label) -> assertTrue(conn.hasStatement(
-                                vf.createTriple(
-                                        vf.createIRI(SUBJECT.toString()),
-                                        vf.createIRI(SKOS.RELATED),
-                                        vf.createIRI(OBJECT.toString())),
-                                vf.createIRI(annotationProperty.toString()),
-                                vf.createLiteral(label, lang),
-                                false,
-                                vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit"))));
+                        vf.createTriple(
+                                vf.createIRI(SUBJECT.toString()),
+                                vf.createIRI(SKOS.RELATED),
+                                vf.createIRI(OBJECT.toString())),
+                        vf.createIRI(annotationProperty.toString()),
+                        vf.createLiteral(label, lang),
+                        false,
+                        vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit"))));
             }
         });
     }

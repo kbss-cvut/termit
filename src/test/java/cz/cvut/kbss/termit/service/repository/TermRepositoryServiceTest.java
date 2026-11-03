@@ -940,8 +940,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
         term.getLabel().set(Environment.LANGUAGE, "update");
         term.getLabel().set("cs", "");
-        final MultilingualString expected =
-                new MultilingualString(term.getLabel());
+        final MultilingualString expected = new MultilingualString(term.getLabel());
         expected.remove("cs");
         transactional(() -> sut.update(term));
 
@@ -954,8 +953,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.getDefinition().set(Environment.LANGUAGE, "   ");
         term.getDefinition().set("cs", "Test");
-        final MultilingualString expected =
-                new MultilingualString(term.getDefinition());
+        final MultilingualString expected = new MultilingualString(term.getDefinition());
         expected.remove(Environment.LANGUAGE);
 
         sut.addRootTermToVocabulary(term, vocabulary);

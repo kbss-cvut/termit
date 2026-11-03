@@ -59,15 +59,14 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     private MultilingualString definition;
 
     @JsonIgnore
-    @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" +
-            """
+    @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" + """
             SELECT DISTINCT ?lang WHERE {
                 ?vocabulary dcterms:language ?lang .
             }
             """)
     private String primaryLanguage;
 
-    @Transient  // Not used by JOPA
+    @Transient // Not used by JOPA
     @OWLObjectProperty(iri = SKOS.NARROWER) // But map the property for JSON-LD serialization
     private Set<TermInfo> subTerms;
 
@@ -80,8 +79,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @Types
     private Set<String> types;
 
-    public AbstractTerm() {
-    }
+    public AbstractTerm() {}
 
     protected AbstractTerm(AbstractTerm other) {
         Objects.requireNonNull(other);
@@ -96,8 +94,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.state = other.state;
         this.vocabulary = other.vocabulary;
         if (other.getSubTerms() != null) {
-            this.subTerms = other.getSubTerms().stream().map(TermInfo::new)
-                                 .collect(Collectors.toCollection(LinkedHashSet::new));
+            this.subTerms = other.getSubTerms().stream()
+                    .map(TermInfo::new)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
         }
         if (other.getTypes() != null) {
             this.types = new HashSet<>(other.getTypes());
@@ -220,10 +219,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" +
-                getLabel() + ' ' +
-                Utils.uriToString(getUri()) +
-                ", types=" + getTypes() +
-                '}';
+        return getClass().getSimpleName() + "{" + getLabel()
+                + ' ' + Utils.uriToString(getUri())
+                + ", types="
+                + getTypes() + '}';
     }
 }
