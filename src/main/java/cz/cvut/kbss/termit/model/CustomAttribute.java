@@ -4,10 +4,10 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.Context;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.vocabulary.OWL;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
 
 import java.net.URI;
 import java.util.Set;
@@ -66,7 +66,6 @@ public class CustomAttribute extends RdfsResource {
      * @return {@code true} if this custom attribute is symmetric, {@code false} otherwise
      */
     public boolean isSymmetric() {
-        // TODO Use JOPA OWL constant when available in the next release
-        return hasType(OWL.SYMMETRICPROPERTY.stringValue());
+        return hasType(OWL.SYMMETRIC_PROPERTY);
     }
 }

@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.persistence.dao.spec;
 
+import cz.cvut.kbss.jopa.vocabulary.OWL;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.CustomAttribute_;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
 
 import java.net.URI;
 
@@ -18,8 +18,6 @@ public class CustomAttributeSpecifications {
     }
 
     public static Specification<CustomAttribute> isSymmetric() {
-        // TODO Use JOPA OWL constant when available in the next release
-        // TODO Next JOPA release should allow referencing Types specification from the static metamodel
-        return (root, _, cb) -> cb.isMember(URI.create(OWL.SYMMETRICPROPERTY.stringValue()), root.getAttr("types"));
+        return (root, _, cb) -> cb.isMember(URI.create(OWL.SYMMETRIC_PROPERTY), root.getAttr(CustomAttribute_.types));
     }
 }

@@ -698,8 +698,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         final CustomAttribute pOne = createCustomAttribute();
         pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
-        // TODO Use JOPA OWL constant when available in the next release
-        pOne.addType(org.eclipse.rdf4j.model.vocabulary.OWL.SYMMETRICPROPERTY.stringValue());
+        pOne.addType(OWL.SYMMETRIC_PROPERTY);
         final CustomAttribute pTwo = createCustomAttribute();
         pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
         pTwo.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
