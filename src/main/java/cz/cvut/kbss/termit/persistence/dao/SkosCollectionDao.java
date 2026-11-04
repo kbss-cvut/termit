@@ -444,16 +444,23 @@ public class SkosCollectionDao {
     public void update(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
         try {
             em.merge(skosCollection, descriptor(vocabulary));
-            em.getEntityManagerFactory()
-                    .getCache()
-                    .evict(SkosCollectionDto.class, skosCollection.getUri(), vocabulary.getUri());
-            em.getEntityManagerFactory().getCache().evict(SkosCollectionDto.class, skosCollection.getUri(), null);
+            evictCache(skosCollection, vocabulary);
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to update SKOS collection " + Utils.uriToString(skosCollection.getUri()) + " in vocabulary "
                             + Utils.uriToString(vocabulary.getUri()),
                     e);
         }
+    }
+
+    private void evictCache(SkosCollection<?> collection, Vocabulary vocabulary) {
+        em.getEntityManagerFactory()
+                .getCache()
+                .evict(SkosCollectionDto.class, collection.getUri(), vocabulary.getUri());
+        em.getEntityManagerFactory().getCache().evict(SkosCollectionDto.class, collection.getUri(), null);
+
+        em.getEntityManagerFactory().getCache().evict(collection.getClass(), collection.getUri(), vocabulary.getUri());
+        em.getEntityManagerFactory().getCache().evict(collection.getClass(), collection.getUri(), null);
     }
 
     /**
@@ -483,10 +490,7 @@ public class SkosCollectionDao {
         Objects.requireNonNull(skosCollection.getUri(), "Collection identifier must not be null!");
         try {
             em.remove(skosCollection);
-            em.getEntityManagerFactory()
-                    .getCache()
-                    .evict(SkosCollectionDto.class, skosCollection.getUri(), vocabulary.getUri());
-            em.getEntityManagerFactory().getCache().evict(SkosCollectionDto.class, skosCollection.getUri(), null);
+            evictCache(skosCollection, vocabulary);
         } catch (RuntimeException e) {
             throw new PersistenceException(
                     "Failed to remove SKOS collection " + Utils.uriToString(skosCollection.getUri())
