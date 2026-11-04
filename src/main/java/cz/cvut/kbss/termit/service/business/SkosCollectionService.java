@@ -1,14 +1,18 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.event.CollectionTypeUpdateEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
@@ -24,26 +28,30 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 
 @Service
-public class SkosCollectionService {
+public class SkosCollectionService implements ChangeRecordProvider<SkosCollection<?>> {
     private static final Logger LOG = LoggerFactory.getLogger(SkosCollectionService.class);
 
     private final SkosCollectionRepositoryService repositoryService;
     private final VocabularyService vocabularyService;
     private final DtoMapper dtoMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final ChangeRecordService changeRecordService;
 
     public SkosCollectionService(
             SkosCollectionRepositoryService repositoryService,
             VocabularyService vocabularyService,
             DtoMapper dtoMapper,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ChangeRecordService changeRecordService) {
         this.repositoryService = repositoryService;
         this.vocabularyService = vocabularyService;
         this.dtoMapper = dtoMapper;
         this.eventPublisher = eventPublisher;
+        this.changeRecordService = changeRecordService;
     }
 
     @Transactional(readOnly = true)
@@ -177,5 +185,34 @@ public class SkosCollectionService {
                 .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
         repositoryService.removeMember(collection, vocabulary, member);
         LOG.debug("Removed member <{}> from collection <{}>", member, collectionUri);
+    }
+
+    /**
+     * Gets change records of the specified collection filtered by {@link ChangeRecordFilterDto}.
+     *
+     * @param collection Collection to find change records for
+     * @param filterDto Filter parameters
+     * @return List of change records, ordered by record timestamp in descending order
+     */
+    @Override
+    public List<AbstractChangeRecord> getChanges(SkosCollection<?> collection, ChangeRecordFilterDto filterDto) {
+        return changeRecordService.getChanges(collection, filterDto);
+    }
+
+    /**
+     * Gets change records of the specified collection filtered by {@link ChangeRecordFilterDto}.
+     *
+     * @param collectionUri Collection identifier to find change records for
+     * @param vocabularyUri Vocabulary identifier to which the collection belongs
+     * @param filterDto Filter parameters
+     * @return List of change records, ordered by record timestamp in descending order
+     */
+    public List<AbstractChangeRecord> getChanges(
+            URI collectionUri, URI vocabularyUri, ChangeRecordFilterDto filterDto) {
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyUri);
+        final SkosCollection<?> collection = repositoryService
+                .find(collectionUri, vocabulary)
+                .orElseThrow(() -> notFound(collectionUri, vocabularyUri));
+        return getChanges(collection, filterDto);
     }
 }
