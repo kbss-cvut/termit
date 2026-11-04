@@ -14,6 +14,7 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
@@ -28,6 +29,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+@Audited
 @MappedSuperclass
 @PrimaryNotBlank("label")
 @OWLClass(iri = SKOS.COLLECTION)

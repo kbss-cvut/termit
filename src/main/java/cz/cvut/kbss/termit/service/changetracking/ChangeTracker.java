@@ -17,9 +17,11 @@
  */
 package cz.cvut.kbss.termit.service.changetracking;
 
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
+import cz.cvut.kbss.termit.event.CollectionTypeUpdateEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -40,8 +42,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Nonnull;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Tracks changes to assets. */
@@ -92,6 +98,7 @@ public class ChangeTracker {
         LOG.trace(
                 "Found changes to attributes: {}",
                 changes.stream().map(ch -> ch.getChangedAttribute().toString()).collect(Collectors.joining(", ")));
+        // TODO filter changes to collection members and optimize the records for diffs only
         changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);
@@ -139,5 +146,28 @@ public class ChangeTracker {
         changeRecord.setTimestamp(Utils.timestamp());
 
         changeRecordDao.persist(changeRecord, asset);
+    }
+
+    /** Records the change of SKOS collection type */
+    @Transactional
+    @EventListener
+    public void onCollectionTypeUpdateEvent(CollectionTypeUpdateEvent event) {
+        Set<String> originalTypes =
+                new HashSet<>(event.getCollectionBeforeTypeChange().getTypes());
+        originalTypes.add(event.getOriginalType().toString());
+
+        Set<String> newTypes = new HashSet<>(originalTypes);
+        newTypes.remove(event.getOriginalType().toString());
+        newTypes.add(event.getNewType().toString());
+
+        UpdateChangeRecord record = new UpdateChangeRecord(event.getAsset());
+        record.setAuthor(securityUtils.getCurrentUser().toUser());
+        record.setTimestamp(Utils.timestamp());
+
+        record.setChangedAttribute(URI.create(RDF.TYPE));
+        record.setOriginalValue(Collections.unmodifiableSet(originalTypes));
+        record.setNewValue(Collections.unmodifiableSet(newTypes));
+
+        changeRecordDao.persist(record, event.getAsset());
     }
 }

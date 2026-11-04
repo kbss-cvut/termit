@@ -24,8 +24,9 @@ import java.lang.annotation.Target;
 
 /**
  * Marks an entity class which should be audited, i.e., whose changes should be tracked.
+ *
+ * @implNote The annotation has no runtime effect and serves only documentation purpose
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
-public @interface Audited {
-}
+public @interface Audited {}

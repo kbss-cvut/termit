@@ -2,6 +2,9 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.TypeAwareEntity;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.event.BeforeTermRemovedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
@@ -16,6 +19,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.SkosCollectionDao;
 import cz.cvut.kbss.termit.service.repository.removal.TermRemovalParams;
 import cz.cvut.kbss.termit.util.Utils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,12 +45,17 @@ public class SkosCollectionRepositoryService {
     private final SkosCollectionDao collectionDao;
     private final TermRepositoryService termRepositoryService;
     private final Validator validator;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SkosCollectionRepositoryService(
-            SkosCollectionDao collectionDao, TermRepositoryService termRepositoryService, Validator validator) {
+            SkosCollectionDao collectionDao,
+            TermRepositoryService termRepositoryService,
+            Validator validator,
+            ApplicationEventPublisher eventPublisher) {
         this.collectionDao = collectionDao;
         this.termRepositoryService = termRepositoryService;
         this.validator = validator;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -239,11 +248,17 @@ public class SkosCollectionRepositoryService {
         Objects.requireNonNull(skosCollection, "SKOS collection must not be null!");
         Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
         preUpdate(skosCollection, vocabulary);
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, skosCollection));
         collectionDao.update(skosCollection, vocabulary);
     }
 
     @Transactional
     public void persist(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
+        persistInternal(skosCollection, vocabulary);
+        eventPublisher.publishEvent(new AssetPersistEvent(this, skosCollection));
+    }
+
+    private void persistInternal(SkosCollection<?> skosCollection, Vocabulary vocabulary) {
         Objects.requireNonNull(skosCollection, "SKOS collection must not be null!");
         Objects.requireNonNull(vocabulary, "Vocabulary must not be null!");
         validate(skosCollection, skosCollection.getMembers(), vocabulary);
@@ -258,6 +273,7 @@ public class SkosCollectionRepositoryService {
         final SkosCollection<?> managed = collectionDao
                 .find(skosCollection.getClass(), skosCollection.getUri(), vocabulary)
                 .orElseThrow(() -> notFound(skosCollection.getUri(), vocabulary.getUri()));
+        eventPublisher.publishEvent(new BeforeAssetDeleteEvent(this, managed));
         removeMemberFromAllCollections(managed.getUri());
         collectionDao.remove(managed, vocabulary);
     }
@@ -399,6 +415,6 @@ public class SkosCollectionRepositoryService {
         // not removing the collection from other collections
         collectionDao.remove(existing, vocabulary);
         collectionDao.flushAndClear();
-        persist(newInstance, vocabulary);
+        persistInternal(newInstance, vocabulary);
     }
 }

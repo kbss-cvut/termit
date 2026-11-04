@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.event.CollectionTypeUpdateEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
@@ -12,6 +13,7 @@ import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,14 +33,17 @@ public class SkosCollectionService {
     private final SkosCollectionRepositoryService repositoryService;
     private final VocabularyService vocabularyService;
     private final DtoMapper dtoMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SkosCollectionService(
             SkosCollectionRepositoryService repositoryService,
             VocabularyService vocabularyService,
-            DtoMapper dtoMapper) {
+            DtoMapper dtoMapper,
+            ApplicationEventPublisher eventPublisher) {
         this.repositoryService = repositoryService;
         this.vocabularyService = vocabularyService;
         this.dtoMapper = dtoMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -81,10 +86,12 @@ public class SkosCollectionService {
             converted = new TermCollection();
             ((TermCollection) converted).setMembers(new HashSet<>(existing.getMembers()));
         }
+        dtoMapper.updateCollectionFromDto(modifiedCollection, existing);
         dtoMapper.updateCollectionFromDto(modifiedCollection, converted);
         converted.setVocabulary(existing.getVocabulary());
         converted.setPrimaryLanguage(existing.getPrimaryLanguage());
         converted.setUri(existing.getUri());
+        eventPublisher.publishEvent(new CollectionTypeUpdateEvent(this, existing));
         repositoryService.replace(existing, converted, vocabulary);
     }
 

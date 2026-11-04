@@ -20,9 +20,7 @@ package cz.cvut.kbss.termit.event;
 import cz.cvut.kbss.termit.model.Asset;
 import org.springframework.context.ApplicationEvent;
 
-/**
- * Event published when an asset is updated.
- */
+/** Event published when an asset is updated, before the update is merged into database. */
 public class AssetUpdateEvent extends ApplicationEvent {
 
     private final Asset<?> asset;
