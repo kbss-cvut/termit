@@ -380,6 +380,31 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void removeRawDataRemovesSpecifiedQuadsFromRepository() {
+        final URI context = Generator.generateUri();
+        final URI termOne = Generator.generateUri();
+        final URI termTwo = Generator.generateUri();
+        final List<Quad> toRemove =
+                List.of(new Quad(termOne, URI.create(SKOS.RELATED.stringValue()), termTwo, context));
+
+        transactional(() -> em.createNativeQuery("INSERT DATA { GRAPH ?ctx { ?x ?y ?z . } }")
+                .setParameter("ctx", context)
+                .setParameter("x", termOne)
+                .setParameter("y", URI.create(SKOS.RELATED.stringValue()))
+                .setParameter("z", termTwo)
+                .executeUpdate());
+        transactional(() -> sut.removeRawData(toRemove));
+
+        readOnlyTransactional(
+                () -> assertFalse(em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x ?y ?z . } }", Boolean.class)
+                        .setParameter("x", termOne)
+                        .setParameter("y", URI.create(SKOS.RELATED.stringValue()))
+                        .setParameter("z", termTwo)
+                        .setParameter("ctx", context)
+                        .getSingleResult()));
+    }
+
+    @Test
     void findAllCustomAttributesReturnsCustomAttributes() {
         final CustomAttribute pOne = createCustomAttribute();
         pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
@@ -640,8 +665,8 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         readOnlyTransactional(() -> {
             final boolean usageExists = em.createNativeQuery("""
-                ASK { ?subject ?attribute ?value .}
-            """, Boolean.class)
+                                                                         ASK { ?subject ?attribute ?value .}
+                                                                     """, Boolean.class)
                     .setParameter("attribute", attribute.getUri())
                     .getSingleResult();
 
@@ -666,5 +691,24 @@ class DataDaoTest extends BaseDaoTestRunner {
     private static CustomAttribute createCustomAttribute() {
         return new CustomAttribute(
                 Generator.generateUri(), MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
+    }
+
+    @Test
+    void findAllSymmetricCustomAttributesReturnsSymmetricCustomAttributes() {
+        final CustomAttribute pOne = createCustomAttribute();
+        pOne.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pOne.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pOne.addType(OWL.SYMMETRIC_PROPERTY);
+        final CustomAttribute pTwo = createCustomAttribute();
+        pTwo.setDomain(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        pTwo.setRange(URI.create(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
+        transactional(() -> {
+            em.persist(pOne);
+            em.persist(pTwo);
+        });
+
+        final List<CustomAttribute> result =
+                sut.findAllCustomAttributes(List.of(CustomAttributeSpecifications.isSymmetric()));
+        assertEquals(List.of(pOne), result);
     }
 }

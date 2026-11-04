@@ -77,32 +77,12 @@ Rules
     -------------------------------
     this <termit:has-term-definition-source> source
 
-  Id: term_3
-
-    this <rdf:type> <skos:Concept>
-    this <skos:related> related
-    -------------------------------
-    related <skos:related> this
-
-  Id: term_4
-
-    this <rdf:type> <skos:Concept>
-    this <skos:relatedMatch> related
-    -------------------------------
-    related <skos:relatedMatch> this
-
   Id: sioc_comment_1
 
     source <rdf:type> <termit:reaction>
     source <activity:object> this
     -------------------------------
     this <termit:has-reaction> source
-
-  Id: skos_exact_match_symmetry
-
-    source <skos:exactMatch> this
-    -------------------------------
-    this <skos:exactMatch> source
 
   Id: skos_exact_match_transitivity
 
@@ -117,4 +97,11 @@ Rules
     this <skos:broadMatch> parent
     -------------------------------
     parent <skos:narrowMatch> this
+
+  Id: property_symmetry
+
+    property <rdf:type> <owl:SymmetricProperty>
+    x property y
+    -----------------------------------------
+    y property x
 }

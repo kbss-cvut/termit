@@ -1,0 +1,72 @@
+PREFIX dd:   <http://onto.fel.cvut.cz/ontologies/data-description/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# Replaces any occurrence of ?originalIri with ?newIri
+# Prevents snapshot modification except rewiring the is-version-of relations
+#   to maintain the link to the snapshotted entity
+# Prevents identifier change record modification
+
+DELETE {
+    GRAPH ?graph {
+        ?subject ?predicate ?object .
+    }
+}
+INSERT {
+    # insert pattern must not contain graph specification when inserting into default graph
+    ##$INSERT_PATTERN$##
+}
+WHERE {
+    GRAPH ?graph {
+        ?subject ?predicate ?object .
+    }
+
+    # only triples where the original IRI is used
+    FILTER (
+        ?subject = ?originalIri ||
+        ?predicate = ?originalIri ||
+        ?object = ?originalIri
+    )
+
+    FILTER (
+        # Prevent snapshot modification
+        # ?graph must not be a version of vocabulary
+        NOT EXISTS { GRAPH ?graph { ?graph a dd:version-of-vocabulary } }
+        ||
+        # Unless rewiring the is-version-of-* relation
+        # ?graph can be version of vocabulary if ?predicate is version-of-*
+        (?predicate IN (?isVersionOfRelations) && (?subject != ?originalIri))
+    )
+
+    # Prevent change record modification
+    FILTER (
+        # allow rewiring change records to modified entity
+        ?predicate = dd:has-changed-entity
+        ||
+        # prevent other modifications to identifier change records
+        NOT EXISTS { ?subject a ?identifierChangeType }
+    )
+
+    # bind new values replacing the original IRI
+    BIND(
+        IF(?subject = ?originalIri,
+            ?newIri,
+            ?subject)
+    AS ?newSubject
+    )
+
+    BIND(
+        IF(?predicate = ?originalIri,
+            ?newIri,
+            ?predicate)
+    AS ?newPredicate
+    )
+
+    BIND(
+        IF(?object = ?originalIri,
+            ?newIri,
+            ?object)
+    AS ?newObject
+    )
+
+
+}

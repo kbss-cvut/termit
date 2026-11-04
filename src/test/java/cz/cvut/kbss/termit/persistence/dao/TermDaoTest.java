@@ -309,7 +309,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
-        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         assertEquals(terms.size(), result.size());
         assertThat(result, hasItems(terms.toArray(new Term[] {})));
     }
@@ -319,7 +319,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
-        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         terms.sort(Comparator.comparing(Environment::getPrimaryLabel));
         assertEquals(terms, result);
     }
@@ -350,7 +350,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(8);
         addTermsAndSave(terms, vocabulary);
 
-        final List<FlatTermDto> page = sut.findAllFlat(vocabulary, PageRequest.of(0, 5));
+        final List<FlatTermDto> page = sut.findAllFlat(vocabulary, PageRequest.of(0, 5), null);
         final List<Term> expected = new ArrayList<>(terms.subList(0, 5));
         assertEquals(5, page.size());
         assertEquals(termsToFlatDtos(expected), page);
@@ -361,8 +361,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(9);
         addTermsAndSave(terms, vocabulary);
 
-        final List<FlatTermDto> first = sut.findAllFlat(vocabulary, PageRequest.of(0, 4));
-        final List<FlatTermDto> second = sut.findAllFlat(vocabulary, PageRequest.of(1, 4));
+        final List<FlatTermDto> first = sut.findAllFlat(vocabulary, PageRequest.of(0, 4), null);
+        final List<FlatTermDto> second = sut.findAllFlat(vocabulary, PageRequest.of(1, 4), null);
 
         assertEquals(4, first.size());
         assertEquals(4, second.size());
@@ -383,15 +383,15 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> otherTerms = generateTerms(2);
         addTermsAndSave(otherTerms, another);
 
-        final List<FlatTermDto> result = sut.findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<FlatTermDto> result = sut.findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         assertEquals(vocTerms.size(), result.size());
         assertThat(result, hasItems(termsToFlatDtos(vocTerms).toArray(new FlatTermDto[0])));
     }
 
     /**
-     * Verifies that {@link TermDao#findAll(Vocabulary, org.springframework.data.domain.Pageable)} returns hierarchical
-     * DTOs (root has its child in subTerms) while {@link TermDao#findAllFlat(Vocabulary,
-     * org.springframework.data.domain.Pageable)} returns a flat list without a populated sub-term hierarchy.
+     * Verifies that {@link TermDao#findAll(Vocabulary, org.springframework.data.domain.Pageable, String)} returns
+     * hierarchical DTOs (root has its child in subTerms) while {@link TermDao#findAllFlat(Vocabulary,
+     * org.springframework.data.domain.Pageable, String)} returns a flat list without a populated sub-term hierarchy.
      */
     @Test
     void findAllFlatReturnsFlatListWithoutSubTerms() {
@@ -410,7 +410,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         });
         transactional(() -> em.persist(child, descriptorFactory.termDescriptor(vocabulary)));
 
-        final List<TermDto> hierarchical = sut.findAll(vocabulary, PageRequest.of(0, 10));
+        final List<TermDto> hierarchical = sut.findAll(vocabulary, PageRequest.of(0, 10), null);
         assertEquals(2, hierarchical.size());
         final TermDto rootDto = hierarchical.stream()
                 .filter(t -> t.getUri().equals(root.getUri()))
@@ -419,7 +419,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertNotNull(rootDto.getSubTerms());
         assertTrue(rootDto.getSubTerms().stream().anyMatch(st -> st.getUri().equals(child.getUri())));
 
-        final List<FlatTermDto> flat = sut.findAllFlat(vocabulary, PageRequest.of(0, 10));
+        final List<FlatTermDto> flat = sut.findAllFlat(vocabulary, PageRequest.of(0, 10), null);
         assertEquals(2, flat.size());
         assertTrue(flat.stream().anyMatch(t -> t.getUri().equals(root.getUri())));
         assertTrue(flat.stream().anyMatch(t -> t.getUri().equals(child.getUri())));
@@ -604,44 +604,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(term, evt.get().getAsset());
-    }
-
-    @Test
-    void findAllRootsReturnsOnlyTermsWithMatchingLabelLanguage() {
-        final List<Term> terms = generateTerms(5);
-        final Term foreignLabelTerm = Generator.generateTermWithId();
-        final List<Term> allTerms = new ArrayList<>(terms);
-        allTerms.add(foreignLabelTerm);
-        addTermsAndSave(allTerms, vocabulary);
-        transactional(() -> insertForeignLabel(foreignLabelTerm));
-
-        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
-        assertEquals(toDtos(terms), result);
-    }
-
-    private void insertForeignLabel(Term term) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (final RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.remove(vf.createIRI(term.getUri().toString()), vf.createIRI(SKOS.PREF_LABEL), null);
-            conn.add(
-                    vf.createIRI(term.getUri().toString()),
-                    vf.createIRI(SKOS.PREF_LABEL),
-                    vf.createLiteral("Adios", "es"));
-        }
-    }
-
-    @Test
-    void findAllReturnsOnlyTermsWithMatchingLanguageLabel() {
-        final List<Term> terms = generateTerms(5);
-        final Term foreignLabelTerm = Generator.generateTermWithId();
-        final List<Term> allTerms = new ArrayList<>(terms);
-        allTerms.add(foreignLabelTerm);
-        addTermsAndSave(allTerms, vocabulary);
-        transactional(() -> insertForeignLabel(foreignLabelTerm));
-
-        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
-        assertEquals(terms, result);
     }
 
     @Test
@@ -852,7 +814,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     void findAllLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
 
-        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         assertEquals(2, result.size());
         final Optional<Term> parentResult =
                 result.stream().filter(t -> t.equals(parent)).findFirst();
@@ -1137,12 +1099,12 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         // translations
         final Map<String, Set<String>> allLabels = new HashMap<>();
         result.getAltLabels()
-                .forEach(alt -> alt.getValue().forEach((lang, val) -> {
+                .forEach(alt -> alt.forEach((lang, val) -> {
                     allLabels.putIfAbsent(lang, new HashSet<>());
                     allLabels.get(lang).add(val);
                 }));
         term.getAltLabels()
-                .forEach(alt -> alt.getValue().forEach((lang, val) -> {
+                .forEach(alt -> alt.forEach((lang, val) -> {
                     assertThat(allLabels, hasKey(lang));
                     assertThat(allLabels.get(lang), hasItem(val));
                 }));
@@ -1324,7 +1286,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
-        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC, null);
         assertEquals(terms.size(), result.size());
         assertThat(result, hasItems(toDtos(terms).toArray(new TermDto[] {})));
     }

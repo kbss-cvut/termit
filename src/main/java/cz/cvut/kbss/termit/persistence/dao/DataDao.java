@@ -89,16 +89,16 @@ public class DataDao {
 
     /** SPARQL where clause matching custom attribute usage in vocabulary graphs, while excluding snapshots */
     private static final String CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE = """
-                WHERE {
-                    GRAPH ?context {
-                        ?subject ?attribute ?object .
-                        ?context a ?vocabulary .
-                        FILTER NOT EXISTS {
-                            ?context a ?versionOfVocabulary .
-                        }
+            WHERE {
+                GRAPH ?context {
+                    ?subject ?attribute ?object .
+                    ?context a ?vocabulary .
+                    FILTER NOT EXISTS {
+                        ?context a ?versionOfVocabulary .
                     }
                 }
-                """;
+            }
+            """;
 
     private final EntityManager em;
 
@@ -138,10 +138,10 @@ public class DataDao {
             } else {
                 final RdfsResource res = map.get(r.getUri());
                 if (r.getLabel() != null) {
-                    res.getLabel().getValue().putAll(r.getLabel().getValue());
+                    res.getLabel().putAll(r.getLabel());
                 }
                 if (r.getComment() != null) {
-                    res.getComment().getValue().putAll(r.getComment().getValue());
+                    res.getComment().putAll(r.getComment());
                 }
             }
         });
@@ -218,7 +218,7 @@ public class DataDao {
         if (resources.isEmpty()) {
             return Optional.empty();
         }
-        final RdfsResource result = resources.get(0);
+        final RdfsResource result = resources.getFirst();
         result.setTypes(resources.stream().flatMap(r -> r.getTypes().stream()).collect(Collectors.toSet()));
         return Optional.of(result);
     }
@@ -335,27 +335,64 @@ public class DataDao {
      * <p>This method allows bypassing the JOPA-based persistence layer and thus should be used very carefully and
      * sparsely.
      *
+     * <p>This method assumes a transaction is currently active.
+     *
      * @param data Data to insert
      */
     public void insertRawData(Collection<Quad> data) {
         Objects.requireNonNull(data);
-        final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
-        try (final RepositoryConnection con = repo.getConnection()) {
-            final ValueFactory vf = con.getValueFactory();
-            con.begin();
-            data.forEach(quad -> {
-                Value v = quad.object() instanceof URI
-                        ? vf.createIRI(quad.object().toString())
-                        : Rdf4jUtils.createLiteral(quad.object(), config.getLanguage(), vf);
-
-                con.add(
-                        vf.createIRI(quad.subject().toString()),
-                        vf.createIRI(quad.predicate().toString()),
-                        v,
-                        quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
-            });
-            con.commit();
+        if (data.isEmpty()) {
+            return;
         }
+        // Force repository connection initialization
+        em.createNativeQuery("ASK { ?x a rdfs:Class }").getSingleResult();
+        final RepositoryConnection conn = em.unwrap(RepositoryConnection.class);
+        assert conn.isActive();
+        final ValueFactory vf = conn.getValueFactory();
+        data.forEach(quad -> {
+            Value v = quad.object() instanceof URI
+                    ? vf.createIRI(quad.object().toString())
+                    : Rdf4jUtils.createLiteral(quad.object(), config.getLanguage(), vf);
+
+            conn.add(
+                    vf.createIRI(quad.subject().toString()),
+                    vf.createIRI(quad.predicate().toString()),
+                    v,
+                    quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
+        });
+    }
+
+    /**
+     * Removes the specified data from the repository.
+     *
+     * <p>This method allows bypassing the JOPA-based persistence layer and thus should be used very carefully and
+     * sparsely.
+     *
+     * <p>This method assumes a transaction is currently active.
+     *
+     * @param data Data to remove
+     */
+    public void removeRawData(Collection<Quad> data) {
+        Objects.requireNonNull(data);
+        if (data.isEmpty()) {
+            return;
+        }
+        // Force repository connection initialization
+        em.createNativeQuery("ASK { ?x a rdfs:Class }").getSingleResult();
+        final RepositoryConnection conn = em.unwrap(RepositoryConnection.class);
+        assert conn.isActive();
+        final ValueFactory vf = conn.getValueFactory();
+        data.forEach(quad -> {
+            Value v = quad.object() instanceof URI
+                    ? vf.createIRI(quad.object().toString())
+                    : Rdf4jUtils.createLiteral(quad.object(), config.getLanguage(), vf);
+
+            conn.remove(
+                    vf.createIRI(quad.subject().toString()),
+                    vf.createIRI(quad.predicate().toString()),
+                    v,
+                    quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
+        });
     }
 
     private int countCustomAttributeUsage(RepositoryConnection con, IRI predicate) {
@@ -461,12 +498,12 @@ public class DataDao {
         Objects.requireNonNull(attribute.getUri());
         try {
             em.createNativeQuery("""
-            DELETE {
-                GRAPH ?context {
-                    ?subject ?attribute ?object .
-                }
-            }
-            """ + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE)
+                                         DELETE {
+                                             GRAPH ?context {
+                                                 ?subject ?attribute ?object .
+                                             }
+                                         }
+                                         """ + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE)
                     .setParameter("attribute", attribute.getUri())
                     .setParameter("vocabulary", Vocabulary_.entityClassIRI)
                     .setParameter("versionOfVocabulary", URI.create(Vocabulary.s_c_version_of_vocabulary))

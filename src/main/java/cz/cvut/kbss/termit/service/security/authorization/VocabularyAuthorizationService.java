@@ -32,9 +32,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Authorizes access to vocabularies.
- */
+/** Authorizes access to vocabularies. */
 @Service
 public class VocabularyAuthorizationService implements AssetAuthorizationService<Vocabulary> {
 
@@ -44,9 +42,10 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     private final SecurityUtils securityUtils;
 
-    public VocabularyAuthorizationService(AccessControlListBasedAuthorizationService aclAuthorizationService,
-                                          VocabularyRepositoryService vocabularyRepositoryService,
-                                          SecurityUtils securityUtils) {
+    public VocabularyAuthorizationService(
+            AccessControlListBasedAuthorizationService aclAuthorizationService,
+            VocabularyRepositoryService vocabularyRepositoryService,
+            SecurityUtils securityUtils) {
         this.aclAuthorizationService = aclAuthorizationService;
         this.vocabularyRepositoryService = vocabularyRepositoryService;
         this.securityUtils = securityUtils;
@@ -54,8 +53,8 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     /**
      * Checks if the current user can create a vocabulary.
-     * <p>
-     * Currently, this check means that a user must be at least in the editor role.
+     *
+     * <p>Currently, this check means that a user must be at least in the editor role.
      *
      * @return {@code true} if the current user can create a vocabulary, {@code false} otherwise
      */
@@ -70,10 +69,10 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     /**
      * Checks if the current user can create a snapshot of the specified vocabulary.
-     * <p>
-     * Currently, creation of snapshots requires admin privileges, because otherwise it could happen that a user would
-     * have security access to the snapshot vocabulary, but not to other related vocabularies whose snapshot would be
-     * created by cascading the operation. Requiring admin access is more restrictive but safe in this regard.
+     *
+     * <p>Currently, creation of snapshots requires admin privileges, because otherwise it could happen that a user
+     * would have security access to the snapshot vocabulary, but not to other related vocabularies whose snapshot would
+     * be created by cascading the operation. Requiring admin access is more restrictive but safe in this regard.
      *
      * @param asset Vocabulary whose snapshot is to be created
      * @return {@code true} if the current user can create the snapshot, {@code false} otherwise
@@ -86,8 +85,8 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     /**
      * Checks if the current user can remove a snapshot of the specified vocabulary.
-     * <p>
-     * Currently, removal of snapshots requires admin privileges, because otherwise it could happen that a user would
+     *
+     * <p>Currently, removal of snapshots requires admin privileges, because otherwise it could happen that a user would
      * have security access to the snapshot vocabulary, but not to other related vocabularies whose snapshot would be
      * removed by cascading the operation. Requiring admin access is more restrictive but safe in this regard.
      *
@@ -102,8 +101,8 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     /**
      * Checks if the current user can manage access to the specified vocabulary.
-     * <p>
-     * A use can manage access to a vocabulary when they have {@link AccessLevel#SECURITY} level access.
+     *
+     * <p>A use can manage access to a vocabulary when they have {@link AccessLevel#SECURITY} level access.
      *
      * @param asset Vocabulary to which access is checked
      * @return {@code true} if the current user can manage the ACL of the specified vocabulary, {@code false} otherwise
@@ -116,13 +115,13 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     /**
      * Checks if the current use can remove files from a document associated with the specified vocabulary.
-     * <p>
-     * A user can remove files from a vocabulary document when they have {@link AccessLevel#SECURITY} level access to
+     *
+     * <p>A user can remove files from a vocabulary document when they have {@link AccessLevel#SECURITY} level access to
      * the vocabulary.
      *
      * @param asset Vocabulary to which access is checked
      * @return {@code true} if the current user can remove files from the specified vocabulary's document, {@code false}
-     * otherwise
+     *     otherwise
      */
     public boolean canRemoveFiles(Vocabulary asset) {
         Objects.requireNonNull(asset);
@@ -135,7 +134,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
      *
      * @param vocabularyIri Vocabulary identifier
      * @return {@code true} if the current user can reimport the vocabulary or no such vocabulary exists and the user is
-     * authorized to create a new vocabulary, {@code false} otherwise
+     *     authorized to create a new vocabulary, {@code false} otherwise
      */
     public boolean canReimport(URI vocabularyIri) {
         final UserAccount user = securityUtils.getCurrentUser();
@@ -203,6 +202,21 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     @Transactional(readOnly = true)
     public List<VocabularyDto> getReadableVocabularies() {
         return vocabularyRepositoryService.findAll().stream()
-                                          .filter(this::canRead).toList();
+                .filter(this::canRead)
+                .toList();
+    }
+
+    /**
+     * Checks whether the current user can migrate the identiifer of the specified asset.
+     *
+     * @param asset Resource access to which is to be authorized
+     * @return {@code true} if the current user can migrate the identifier of the specified asset, {@code false}
+     *     otherwise
+     */
+    @Override
+    public boolean canMigrateIdentifier(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = securityUtils.getCurrentUser();
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset);
     }
 }

@@ -31,7 +31,6 @@ import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingHelperDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
-import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,13 +38,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.Nonnull;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-/**
- * Tracks changes to assets.
- */
+/** Tracks changes to assets. */
 @Service
 public class ChangeTracker {
 
@@ -60,8 +59,11 @@ public class ChangeTracker {
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public ChangeTracker(ChangeCalculator changeCalculator, ChangeRecordDao changeRecordDao,
-                         ChangeTrackingHelperDao helperDao, SecurityUtils securityUtils) {
+    public ChangeTracker(
+            ChangeCalculator changeCalculator,
+            ChangeRecordDao changeRecordDao,
+            ChangeTrackingHelperDao helperDao,
+            SecurityUtils securityUtils) {
         this.changeCalculator = changeCalculator;
         this.changeRecordDao = changeRecordDao;
         this.helperDao = helperDao;
@@ -70,8 +72,8 @@ public class ChangeTracker {
 
     /**
      * Records an asset update.
-     * <p>
-     * Each changed attribute is stored as a separate change record
+     *
+     * <p>Each changed attribute is stored as a separate change record
      *
      * @param event Event representing the asset update
      */
@@ -87,8 +89,9 @@ public class ChangeTracker {
             return;
         }
         LOG.trace("Recording update of asset {}.", update);
-        LOG.trace("Found changes to attributes: {}", changes.stream().map(ch -> ch.getChangedAttribute().toString())
-                                                            .collect(Collectors.joining(", ")));
+        LOG.trace(
+                "Found changes to attributes: {}",
+                changes.stream().map(ch -> ch.getChangedAttribute().toString()).collect(Collectors.joining(", ")));
         changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);

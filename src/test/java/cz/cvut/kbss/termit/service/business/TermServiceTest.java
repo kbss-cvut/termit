@@ -481,9 +481,9 @@ class TermServiceTest {
     void updateInvokesTextAnalysisOnAllTermsInTermsVocabularyWhenLabelHasChanged() {
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term update = new Term(original.getUri());
-        update.setLabel(new MultilingualString(original.getLabel().getValue()));
-        update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
-        update.setDescription(new MultilingualString(original.getDescription().getValue()));
+        update.setLabel(new MultilingualString(original.getLabel()));
+        update.setDefinition(new MultilingualString(original.getDefinition()));
+        update.setDescription(new MultilingualString(original.getDescription()));
         update.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
         when(termRepositoryService.update(update)).thenReturn(update);
@@ -653,9 +653,9 @@ class TermServiceTest {
         final Term original = generateTermWithId(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
         final Term update = new Term(original.getUri());
-        update.setLabel(new MultilingualString(original.getLabel().getValue()));
-        update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
-        update.setDescription(new MultilingualString(original.getDescription().getValue()));
+        update.setLabel(new MultilingualString(original.getLabel()));
+        update.setDefinition(new MultilingualString(original.getDefinition()));
+        update.setDescription(new MultilingualString(original.getDescription()));
         update.setVocabulary(vocabulary.getUri());
         update.setState(Generator.randomItem(Generator.TERM_STATES));
         when(termRepositoryService.update(update)).thenReturn(update);
@@ -758,8 +758,8 @@ class TermServiceTest {
             it.next().setState(Generator.TERM_STATES[i++]);
         }
         final Term original = new Term(term.getUri());
-        original.setLabel(new MultilingualString(term.getLabel().getValue()));
-        original.setDefinition(new MultilingualString(term.getDefinition().getValue()));
+        original.setLabel(new MultilingualString(term.getLabel()));
+        original.setDefinition(new MultilingualString(term.getDefinition()));
         original.setSubTerms(term.getSubTerms().stream().map(TermInfo::new).collect(Collectors.toSet()));
         term.setState(terminalState.getUri());
 
@@ -867,16 +867,16 @@ class TermServiceTest {
                 Arguments.of(new TermSelectionParams(false, false, false, false, PageRequest.of(5, 10)), (BiConsumer<
                                 TermRepositoryService, Vocabulary>)
                         (repositoryService, vocabulary) ->
-                                verify(repositoryService).findAll(vocabulary, PageRequest.of(5, 10))),
+                                verify(repositoryService).findAll(vocabulary, PageRequest.of(5, 10), null)),
                 Arguments.of(
                         new TermSelectionParams(true, false, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>)
                                 (repositoryService, vocabulary) -> verify(repositoryService)
-                                        .findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC, List.of())),
+                                        .findAllFlat(vocabulary, Constants.DEFAULT_PAGE_SPEC, null, List.of())),
                 Arguments.of(
                         new TermSelectionParams(false, true, false, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>) (repositoryService, vocabulary) ->
-                                verify(repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC)),
+                                verify(repositoryService).findAllFull(vocabulary, Constants.DEFAULT_PAGE_SPEC, null)),
                 Arguments.of(
                         new TermSelectionParams(true, false, true, false, Constants.DEFAULT_PAGE_SPEC),
                         (BiConsumer<TermRepositoryService, Vocabulary>)

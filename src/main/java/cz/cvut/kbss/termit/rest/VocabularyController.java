@@ -333,7 +333,7 @@ public class VocabularyController extends BaseController {
                     @RequestParam(name = QueryParams.NAMESPACE, required = false)
                     Optional<String> namespace,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
-                    @RequestParam(name = "type", required = false)
+                    @RequestParam(name = "changeType", required = false)
                     URI changeType,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
                     @RequestParam(name = "author", required = false, defaultValue = "")

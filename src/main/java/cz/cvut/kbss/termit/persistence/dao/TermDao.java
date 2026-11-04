@@ -62,6 +62,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
@@ -87,6 +88,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
     private static final URI TERM_FROM_VOCABULARY = URI.create(SKOS.IN_SCHEME);
     private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
+    private static final URI NOTATION_PROP = URI.create(SKOS.NOTATION);
 
     /**
      * Matches triples where the term is an object in a vocabulary graph excluding vocabulary snapshots.
@@ -97,19 +99,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *     {@link #referencesToTermExist(AbstractTerm)}
      */
     private static final String REFERENCES_TO_TERM_WHERE_CLAUSE = """
-                WHERE {
-                    GRAPH ?context {
-                        FILTER NOT EXISTS {
-                            ?context a ?versionOfVocabulary .
-                        }
-                        ?other ?relation ?term .
-                        ?context a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
-                        FILTER (?relation NOT IN (
-                            <http://www.w3.org/2004/02/skos/core#hasTopConcept>
-                        ))
+            WHERE {
+                GRAPH ?context {
+                    FILTER NOT EXISTS {
+                        ?context a ?versionOfVocabulary .
                     }
+                    ?other ?relation ?term .
+                    ?context a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                    FILTER (?relation NOT IN (
+                        <http://www.w3.org/2004/02/skos/core#hasTopConcept>
+                    ))
                 }
-                """;
+            }
+            """;
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -188,6 +190,34 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseRelated(loadInverseRelatedTerms(r));
         r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
+        r.setInverseCustomAttributes(loadInverseCustomAttributes(r));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Set<URI>> loadInverseCustomAttributes(Term r) {
+        final Map<String, Set<URI>> result = new HashMap<>();
+        em.createNativeQuery("""
+                                     SELECT ?prop ?y WHERE {
+                                         ?prop a ?customAttribute, <http://www.w3.org/2002/07/owl#SymmetricProperty> .
+                                         ?term ?prop ?y .
+                                         FILTER NOT EXISTS {
+                                             GRAPH ?g {
+                                                 ?term ?prop ?y .
+                                             }
+                                         }
+                                     }
+                                     """)
+                .setParameter("term", r)
+                .setParameter("customAttribute", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_custom_attribute))
+                .getResultStream()
+                .forEach(row -> {
+                    assert row instanceof Object[];
+                    final Object[] values = (Object[]) row;
+                    final String prop = values[0].toString();
+                    final URI target = (URI) values[1];
+                    result.computeIfAbsent(prop, _ -> new HashSet<>()).add(target);
+                });
+        return result;
     }
 
     /** Flushes pending term changes and clears the persistence context. */
@@ -403,38 +433,65 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @param pageSpec Page specification
+     * @param sortLang Language for sorting.
      * @return List of vocabulary term DTOs
      */
-    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
         Objects.requireNonNull(vocabulary);
         try {
-            final TypedQuery<FlatTermDto> query = findAllFlatQuery(vocabulary, pageSpec);
+            final TypedQuery<FlatTermDto> query = findAllFlatQuery(vocabulary, pageSpec, sortLang);
             return executeAndBuildHierarchy(query);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
     }
 
-    private TypedQuery<FlatTermDto> findAllFlatQuery(Vocabulary vocabulary, Pageable pageSpec) {
-        return em.createNativeQuery(
+    private TypedQuery<FlatTermDto> findAllFlatQuery(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        return createFindAllInVocabularyQuery(vocabulary, pageSpec, sortLang, FlatTermDto.class);
+    }
+
+    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
+        return createFindAllInVocabularyQuery(vocabulary, pageSpec, sortLang, URI.class)
+                .getResultList();
+    }
+
+    private <T> TypedQuery<T> createFindAllInVocabularyQuery(
+            Vocabulary vocabulary, Pageable pageSpec, String sortLang, Class<T> resultType) {
+        final String targetLang = sortLang != null ? sortLang : vocabulary.getPrimaryLanguage();
+        final String sortClause = buildSortClause(pageSpec);
+
+        final boolean sortByNotation = pageSpec.getSort().getOrderFor("notation") != null;
+        final String notationPattern = sortByNotation ? "OPTIONAL { ?term ?hasNotation ?rawNotation . } " : "";
+        final String groupBy = sortByNotation ? "GROUP BY ?term " : "";
+
+        final TypedQuery<T> query = em.createNativeQuery(
                         "SELECT DISTINCT ?term WHERE {" + "GRAPH ?context { "
                                 + "?term a ?type ;"
-                                + "?hasLabel ?label ;"
                                 + "?inVocabulary ?vocabulary ."
-                                + "?vocabulary ?hasLanguage ?labelLang ."
                                 + "}"
-                                + "FILTER (lang(?label) = ?labelLang) ."
-                                + " } ORDER BY "
-                                + orderSentence("?label"),
-                        FlatTermDto.class)
+                                + "OPTIONAL { "
+                                + "  ?term ?hasLabel ?primaryLabel . "
+                                + "  FILTER(lang(?primaryLabel) = ?targetLang) "
+                                + "} "
+                                + "OPTIONAL { ?term ?hasLabel ?anyLabel . } "
+                                + notationPattern
+                                + "BIND(COALESCE(?primaryLabel, ?anyLabel) AS ?sortLabel) "
+                                + "BIND(IF(BOUND(?primaryLabel), 1, 0) AS ?hasLocaleLabel) "
+                                + " } " + groupBy + "ORDER BY "
+                                + sortClause,
+                        resultType)
                 .setParameter("context", context(vocabulary))
                 .setParameter("type", typeUri)
                 .setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("hasLabel", LABEL_PROP)
                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                .setParameter("targetLang", targetLang)
                 .setMaxResults(pageSpec.getPageSize())
                 .setFirstResult((int) pageSpec.getOffset());
+        if (sortByNotation) {
+            query.setParameter("hasNotation", NOTATION_PROP);
+        }
+        return query;
     }
 
     private List<TermDto> executeAndBuildHierarchy(TypedQuery<FlatTermDto> query) {
@@ -462,12 +519,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @param pageSpec Page specification
+     * @param sortLang Language for sorting.
      * @return Flat list of vocabulary term DTOs
      */
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
         Objects.requireNonNull(vocabulary);
         try {
-            return findAllFlatQuery(vocabulary, pageSpec).getResultList();
+            return findAllFlatQuery(vocabulary, pageSpec, sortLang).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -479,15 +537,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @param pageSpec Page specification
+     * @param sortLang Language for sorting.
      * @param includeTerms Identifier of terms that should be additionally included in the result
      * @return Flat list of vocabulary term DTOs
      * @see #findAllFlat(Pageable, Collection)
      */
-    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
+    public List<FlatTermDto> findAllFlat(
+            Vocabulary vocabulary, Pageable pageSpec, String sortLang, Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         try {
             final List<FlatTermDto> result =
-                    findAllFlatQuery(vocabulary, pageSpec).getResultList();
+                    findAllFlatQuery(vocabulary, pageSpec, sortLang).getResultList();
             loadIncludedTerms(getMissingTerms(result, includeTerms)).forEach(dto -> result.add(new FlatTermDto(dto)));
             return result;
         } catch (RuntimeException e) {
@@ -542,14 +602,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * <p>No differences are made between root terms and terms with parents. Note that this method returns terms with
      * all their ancestors eagerly loaded. If only direct parent terms are necessary, prefer
-     * {@link #findAllFlat(Vocabulary, Pageable)}.
+     * {@link #findAllFlat(Vocabulary, Pageable, String)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @param pageSpec Page specification
+     * @param sortLang Language for sorting
      * @return Matching terms, ordered by label
-     * @see #findAllFlat(Vocabulary, Pageable)
+     * @see #findAllFlat(Vocabulary, Pageable, String)
      */
-    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec) {
+    public List<Term> findAllFull(Vocabulary vocabulary, Pageable pageSpec, String sortLang) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         try {
@@ -558,7 +619,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             // The workaround relies on clearing the EntityManager after loading each term
             // The price for this solution is that this method performs poorly for larger vocabularies (hundreds of
             // terms)
-            final List<URI> termIris = findAllTermIris(vocabulary, pageSpec);
+            final List<URI> termIris = findAllTermIris(vocabulary, pageSpec, sortLang);
             final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
             return termIris.stream()
                     .map(ti -> {
@@ -574,26 +635,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    private List<URI> findAllTermIris(Vocabulary vocabulary, Pageable pageSpec) {
-        return em.createNativeQuery(
-                        "SELECT DISTINCT ?term WHERE {" + "GRAPH ?context { "
-                                + "?term a ?type ;"
-                                + "?hasLabel ?label ;"
-                                + "}"
-                                + "?term ?inVocabulary ?vocabulary ."
-                                + " } ORDER BY "
-                                + orderSentence("?label"),
-                        URI.class)
-                .setParameter("type", typeUri)
-                .setParameter("context", context(vocabulary))
-                .setParameter("vocabulary", vocabulary.getUri())
-                .setParameter("hasLabel", LABEL_PROP)
-                .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                .setMaxResults(pageSpec.getPageSize())
-                .setFirstResult((int) pageSpec.getOffset())
-                .getResultList();
     }
 
     /**
@@ -678,7 +719,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      */
     private Set<TermInfo> getSubTerms(HasIdentifier parent) {
         return subTermsCache.getOrCompute(
-                parent.getUri(), (k) -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet()));
+                parent.getUri(), _ -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet()));
     }
 
     /**
@@ -1344,6 +1385,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         if (SKOS.NARROWER.equals(evt.getProperty()) || SKOS.NARROW_MATCH.equals(evt.getProperty())) {
             subTermsCache.evict(evt.getTermUri());
         }
+        em.getEntityManagerFactory().getCache().evict(Term.class, evt.getTermUri(), null);
+        evt.getContext()
+                .ifPresent(ctx -> em.getEntityManagerFactory().getCache().evict(Term.class, evt.getTermUri(), ctx));
         // related, relatedMatch and exactMatch inverse are loaded separately and not cached
     }
 
@@ -1482,12 +1526,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
         try {
             em.createNativeQuery("""
-                        DELETE {
-                            GRAPH ?context {
-                                ?other ?relation ?term .
-                            }
-                        }
-                        """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
+                                         DELETE {
+                                             GRAPH ?context {
+                                                 ?other ?relation ?term .
+                                             }
+                                         }
+                                         """ + REFERENCES_TO_TERM_WHERE_CLAUSE)
                     .setParameter("term", toRemove.getUri())
                     .setParameter(
                             "versionOfVocabulary",
@@ -1508,8 +1552,35 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         if (terms == null || terms.isEmpty()) {
             return;
         }
-        terms.forEach(term -> {
-            em.getEntityManagerFactory().getCache().evict(TermDescription.class, term.getUri(), term.getVocabulary());
-        });
+        terms.forEach(term -> em.getEntityManagerFactory()
+                .getCache()
+                .evict(TermDescription.class, term.getUri(), term.getVocabulary()));
+    }
+
+    /**
+     * Builds a sort clause for the SPARQL query based on the provided {@link Pageable} specification. It prioritizes
+     * terms with translated labels and applies the specified sorting direction.
+     *
+     * @param pageSpec Pageable specification containing sorting information
+     * @return A string representing the sort clause for the SPARQL query
+     */
+    private String buildSortClause(Pageable pageSpec) {
+        if (pageSpec.getSort().isSorted()) {
+            final Sort.Order notationOrder = pageSpec.getSort().getOrderFor("notation");
+            if (notationOrder != null) {
+                final String direction = notationOrder.isAscending() ? "ASC" : "DESC";
+                final String agg = notationOrder.isAscending() ? "MIN" : "MAX";
+                return "DESC(MAX(IF(BOUND(?rawNotation), 1, 0))) " + direction + "(" + agg
+                        + "(STR(?rawNotation))) ASC(?term)";
+            }
+
+            final Sort.Order labelOrder = pageSpec.getSort().getOrderFor("label");
+            if (labelOrder != null) {
+                final String direction = labelOrder.isAscending() ? "ASC" : "DESC";
+                return "DESC(?hasLocaleLabel) " + direction + "(" + orderSentence("STR(?sortLabel)") + ") " + direction
+                        + "(?term)";
+            }
+        }
+        return "DESC(?hasLocaleLabel) ASC(" + orderSentence("STR(?sortLabel)") + ") ASC(?term)";
     }
 }

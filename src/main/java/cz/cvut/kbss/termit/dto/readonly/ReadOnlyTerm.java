@@ -94,14 +94,13 @@ public class ReadOnlyTerm extends AbstractTerm {
             this.hiddenLabels = new HashSet<>(term.getHiddenLabels());
         }
         if (term.getDescription() != null) {
-            this.description = new MultilingualString(term.getDescription().getValue());
+            this.description = new MultilingualString(term.getDescription());
         }
         if (term.getSources() != null) {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
-            this.parentTerms = term.getParentTerms().stream().map(TermInfo::new)
-                                   .collect(Collectors.toSet());
+            this.parentTerms = term.getParentTerms().stream().map(TermInfo::new).collect(Collectors.toSet());
         }
         if (term.getRelated() != null) {
             this.related = new HashSet<>(term.getRelated());
@@ -121,8 +120,9 @@ public class ReadOnlyTerm extends AbstractTerm {
         if (term.getProperties() != null) {
             this.properties = new HashMap<>();
             term.getProperties().keySet().stream()
-                .filter(propertiesToExport::contains)
-                .forEach(property -> this.properties.put(property, term.getProperties().get(property)));
+                    .filter(propertiesToExport::contains)
+                    .forEach(property ->
+                            this.properties.put(property, term.getProperties().get(property)));
         }
     }
 

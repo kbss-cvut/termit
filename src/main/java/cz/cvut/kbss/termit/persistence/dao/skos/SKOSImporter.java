@@ -87,7 +87,7 @@ public class SKOSImporter implements VocabularyImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
 
-    private static final Set<String> MULTILINGUAL_PROPERTIES = Set.of(
+    private static final Set<String> MULTILINGUAL_PROPERTIES_REQUIRING_LANGTAG = Set.of(
             SKOS.PREF_LABEL.toString(),
             SKOS.ALT_LABEL.toString(),
             SKOS.HIDDEN_LABEL.toString(),
@@ -200,7 +200,7 @@ public class SKOSImporter implements VocabularyImporter {
     private void validateRequiredLanguageTags() {
         LOG.debug("Checking that only language-tagged literals are provided.");
         model.stream()
-                .filter(statement -> MULTILINGUAL_PROPERTIES.contains(
+                .filter(statement -> MULTILINGUAL_PROPERTIES_REQUIRING_LANGTAG.contains(
                         statement.getPredicate().stringValue()))
                 .filter(statement -> statement.getObject().isLiteral())
                 .forEach(statement -> {

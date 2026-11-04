@@ -1339,7 +1339,7 @@ public class TermControllerTest extends BaseControllerTestRunner {
         final Term snapshot = new Term();
         final Instant instant = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         snapshot.setUri(URI.create(term.getUri().toString() + "/version/" + instant));
-        snapshot.setLabel(new MultilingualString(term.getLabel().getValue()));
+        snapshot.setLabel(new MultilingualString(term.getLabel()));
         when(termServiceMock.findVersionValidAt(eq(term), any(Instant.class))).thenReturn(snapshot);
 
         final MvcResult mvcResult = mockMvc.perform(get("/terms/" + TERM_NAME + "/versions")

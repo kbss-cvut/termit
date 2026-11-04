@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
+import cz.cvut.kbss.termit.exception.AmbiguousRepositoryContextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -35,8 +35,8 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
  * Default implementation of the context mapper resolves vocabulary context on every call.
- * <p>
- * This incurs a performance penalty of executing a simple query, but does not suffer from potentially stale cache
+ *
+ * <p>This incurs a performance penalty of executing a simple query, but does not suffer from potentially stale cache
  * data.
  */
 @Component
@@ -55,18 +55,17 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
     public URI getVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
-            return em.createNativeQuery("SELECT ?g WHERE { " +
-                             "GRAPH ?g { ?vocabulary a ?type . " +
-                             "}}", URI.class)
-                     .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-                     .setParameter("vocabulary", vocabularyUri)
-                     .getSingleResult();
+            return em.createNativeQuery("SELECT ?g WHERE { " + "GRAPH ?g { ?vocabulary a ?type . " + "}}", URI.class)
+                    .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
+                    .setParameter("vocabulary", vocabularyUri)
+                    .getSingleResult();
         } catch (NoResultException e) {
-            LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
-                      uriToString(vocabularyUri));
+            LOG.trace(
+                    "No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
+                    uriToString(vocabularyUri));
             return vocabularyUri;
         } catch (NoUniqueResultException e) {
-            throw new AmbiguousVocabularyContextException(
+            throw new AmbiguousRepositoryContextException(
                     "Multiple repository contexts found for vocabulary " + uriToString(vocabularyUri));
         }
     }
@@ -76,13 +75,13 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         Objects.requireNonNull(contextUri);
         try {
             return Optional.of(em.createNativeQuery("SELECT ?v WHERE { GRAPH ?g { ?v a ?type . } }", URI.class)
-                                 .setParameter("g", contextUri)
-                                 .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
-                                 .getSingleResult());
+                    .setParameter("g", contextUri)
+                    .setParameter("type", URI.create(SKOS.CONCEPT_SCHEME))
+                    .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (NoUniqueResultException e) {
-            throw new AmbiguousVocabularyContextException(
+            throw new AmbiguousRepositoryContextException(
                     "Multiple vocabularies found in context " + uriToString(contextUri));
         }
     }

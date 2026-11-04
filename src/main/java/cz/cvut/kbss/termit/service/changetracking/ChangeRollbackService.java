@@ -11,7 +11,6 @@ import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.util.HasProperties;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRollbackDao;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.TermAuthorizationService;
@@ -37,7 +36,6 @@ public class ChangeRollbackService {
     private final VocabularyRepositoryService vocabularyService;
     private final TermAuthorizationService termAuthorizationService;
     private final VocabularyAuthorizationService vocabularyAuthorizationService;
-    private final IdentifierResolver identifierResolver;
     private final ChangeRecordDao changeRecordDao;
 
     public ChangeRollbackService(
@@ -47,7 +45,6 @@ public class ChangeRollbackService {
             VocabularyRepositoryService vocabularyService,
             TermAuthorizationService termAuthorizationService,
             VocabularyAuthorizationService vocabularyAuthorizationService,
-            IdentifierResolver identifierResolver,
             ChangeRecordDao changeRecordDao) {
         this.rollbackValidator = rollbackValidator;
         this.rollbackDao = rollbackDao;
@@ -55,7 +52,6 @@ public class ChangeRollbackService {
         this.vocabularyService = vocabularyService;
         this.termAuthorizationService = termAuthorizationService;
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
-        this.identifierResolver = identifierResolver;
         this.changeRecordDao = changeRecordDao;
     }
 

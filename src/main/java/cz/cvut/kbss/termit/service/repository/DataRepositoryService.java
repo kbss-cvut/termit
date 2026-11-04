@@ -100,6 +100,17 @@ public class DataRepositoryService {
     }
 
     /**
+     * Retrieves all custom attributes that are symmetric.
+     *
+     * @return a list of {@link CustomAttribute} instances that are symmetric; the list will be empty if no such
+     *     attributes exist.
+     */
+    @Transactional(readOnly = true)
+    public List<CustomAttribute> findSymmetricCustomAttributes() {
+        return dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.isSymmetric()));
+    }
+
+    /**
      * Finds a custom attribute with the specified identifier.
      *
      * @param attributeUri Attribute identifier
@@ -200,6 +211,7 @@ public class DataRepositoryService {
         existing.setDomain(attribute.getDomain());
         existing.setRange(attribute.getRange());
         existing.setAnnotatedRelationships(attribute.getAnnotatedRelationships());
+        existing.setTypes(attribute.getTypes());
         LOG.debug("Updating custom attribute {}", existing);
     }
 

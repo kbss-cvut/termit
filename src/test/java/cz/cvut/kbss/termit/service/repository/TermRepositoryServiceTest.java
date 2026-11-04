@@ -418,15 +418,13 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void addChildTermUsesTermVocabularyWhenGeneratingUri() {
+    void addChildTermUsesTermVocabularyNamespaceWhenGeneratingUri() {
         final Term parentTerm = generateParentTermFromDifferentVocabulary();
         final Term childTerm = Generator.generateTerm();
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertThat(
-                childTerm.getUri().toString(),
-                startsWith(childVocabulary.getUri().toString()));
+        assertThat(childTerm.getUri().toString(), startsWith(childVocabulary.getPreferredNamespaceUri()));
     }
 
     @Test
@@ -942,8 +940,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
         term.getLabel().set(Environment.LANGUAGE, "update");
         term.getLabel().set("cs", "");
-        final MultilingualString expected =
-                new MultilingualString(term.getLabel().getValue());
+        final MultilingualString expected = new MultilingualString(term.getLabel());
         expected.remove("cs");
         transactional(() -> sut.update(term));
 
@@ -956,8 +953,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.getDefinition().set(Environment.LANGUAGE, "   ");
         term.getDefinition().set("cs", "Test");
-        final MultilingualString expected =
-                new MultilingualString(term.getDefinition().getValue());
+        final MultilingualString expected = new MultilingualString(term.getDefinition());
         expected.remove(Environment.LANGUAGE);
 
         sut.addRootTermToVocabulary(term, vocabulary);
@@ -1096,5 +1092,31 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Term result = sut.findRequiredWithPopulatedCustomAttributes(term.getUri());
         assertTrue(result.getProperties().isEmpty());
+    }
+
+    @Test
+    void addRootTermToVocabularyThrowsWhenTermIdentifierIsOutsideOfVocabularyNamespace() {
+        final Term term = Generator.generateTerm();
+        term.setVocabulary(vocabulary.getUri());
+        final URI uri = Generator.generateUri("http://example.com/different/namespace/");
+        term.setUri(uri);
+
+        ValidationException e =
+                assertThrows(ValidationException.class, () -> sut.addRootTermToVocabulary(term, vocabulary));
+
+        assertEquals("term.created.error.iriNotInVocabularyNamespace", e.getMessageId());
+    }
+
+    @Test
+    void addChildTermThrowsWhenTermIdentifierIsOutsideOfVocabularyNamespace() {
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        final Term term = Generator.generateTerm();
+        term.setVocabulary(vocabulary.getUri());
+        final URI uri = Generator.generateUri("http://example.com/different/namespace/");
+        term.setUri(uri);
+
+        ValidationException e = assertThrows(ValidationException.class, () -> sut.addChildTerm(term, parent));
+
+        assertEquals("term.created.error.iriNotInVocabularyNamespace", e.getMessageId());
     }
 }

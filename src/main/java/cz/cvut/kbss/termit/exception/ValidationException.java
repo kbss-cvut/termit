@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 
 /**
  * Indicates that invalid data have been passed to the application.
- * <p>
- * The exception message should provide information as to what data are invalid and why.
+ *
+ * <p>The exception message should provide information as to what data are invalid and why.
  */
 public class ValidationException extends TermItException {
 
@@ -32,6 +32,11 @@ public class ValidationException extends TermItException {
 
     public ValidationException(String message) {
         super(message);
+        this.validationResult = null;
+    }
+
+    public ValidationException(String message, String messageId) {
+        super(message, messageId);
         this.validationResult = null;
     }
 
@@ -45,10 +50,11 @@ public class ValidationException extends TermItException {
         if (validationResult == null) {
             return super.getMessage();
         }
-        return String.join("\n",
+        return String.join(
+                "\n",
                 validationResult.getViolations().stream()
-                                .map(cv -> "Value of " + cv.getRootBeanClass().getSimpleName() + "." +
-                                        cv.getPropertyPath() + " " + cv.getMessage())
-                                .collect(Collectors.toSet()));
+                        .map(cv -> "Value of " + cv.getRootBeanClass().getSimpleName() + "." + cv.getPropertyPath()
+                                + " " + cv.getMessage())
+                        .collect(Collectors.toSet()));
     }
 }

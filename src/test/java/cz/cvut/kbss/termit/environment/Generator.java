@@ -89,7 +89,18 @@ public class Generator {
      * @return Random URI
      */
     public static URI generateUri() {
-        return URI.create(Environment.BASE_URI + "/randomInstance" + randomInt());
+        return generateUri(Environment.BASE_URI);
+    }
+
+    /**
+     * Generates a (pseudo) random URI within the given namespace.
+     *
+     * @param namespace the namespace of the generated URI
+     * @return Random URI with the given namespace
+     */
+    public static URI generateUri(String namespace) {
+        return URI.create(
+                IdentifierResolver.ensureNamespaceSeparatorTermination(namespace) + "randomInstance" + randomInt());
     }
 
     /**
@@ -258,6 +269,8 @@ public class Generator {
         vocabulary.setDescription(MultilingualString.create(
                 "Description of vocabulary " + vocabulary.getPrimaryLabel(), primaryLanguage));
         vocabulary.setRootTerms(new HashSet<>());
+        vocabulary.setPreferredNamespaceUri(
+                IdentifierResolver.ensureNamespaceSeparatorTermination(Environment.BASE_URI));
         return vocabulary;
     }
 
@@ -318,7 +331,7 @@ public class Generator {
     }
 
     public static List<Term> generateTermsWithIds(int count) {
-        return IntStream.range(0, count).mapToObj(i -> generateTermWithId()).collect(Collectors.toList());
+        return IntStream.range(0, count).mapToObj(_ -> generateTermWithId()).collect(Collectors.toList());
     }
 
     public static Resource generateResource() {
@@ -387,8 +400,8 @@ public class Generator {
     public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
-                IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset)).collect(Collectors.toList());
-        result.add(0, persistRecord);
+                IntStream.range(0, 5).mapToObj(_ -> generateUpdateChange(asset)).collect(Collectors.toList());
+        result.addFirst(persistRecord);
         if (user != null) {
             result.forEach(r -> r.setAuthor(user));
         }
@@ -421,7 +434,7 @@ public class Generator {
      * @return a list of comments
      */
     public static List<Comment> generateComments(Term term) {
-        return IntStream.range(0, 5).mapToObj(i -> generateComment(null, term)).collect(Collectors.toList());
+        return IntStream.range(0, 5).mapToObj(_ -> generateComment(null, term)).collect(Collectors.toList());
     }
 
     public static TermOccurrence generateTermOccurrence(Term term, Asset<?> target, boolean suggested) {
@@ -455,7 +468,7 @@ public class Generator {
         return new Snapshot(uri, timestamp, asset.getUri(), type);
     }
 
-    public static void simulateInferredSkosRelationship(
+    public static void simulateInferredRelationship(
             AbstractTerm source, Collection<? extends AbstractTerm> related, String relationship, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
@@ -491,7 +504,7 @@ public class Generator {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static List<AccessControlRecord<?>> generateAccessControlRecords() {
         final List<AccessControlRecord<?>> result = IntStream.range(0, 5)
-                .mapToObj(i -> {
+                .mapToObj(_ -> {
                     final AccessControlRecord r;
                     int maxAccessLevel = AccessLevel.values().length; // exclusive
                     if (Generator.randomBoolean()) {

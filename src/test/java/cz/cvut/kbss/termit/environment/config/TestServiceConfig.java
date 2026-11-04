@@ -26,8 +26,10 @@ import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
 import cz.cvut.kbss.termit.service.init.lucene.IndexedLanguagesProvider;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -67,7 +69,8 @@ public class TestServiceConfig {
     @Bean
     public RestTemplate restTemplate() {
         final RestTemplate client = new RestTemplate();
-        final JacksonJsonHttpMessageConverter jacksonConverter = new JacksonJsonHttpMessageConverter(Environment.getObjectMapper());
+        final JacksonJsonHttpMessageConverter jacksonConverter =
+                new JacksonJsonHttpMessageConverter(Environment.getObjectMapper());
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         client.setMessageConverters(
                 Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter()));
@@ -123,5 +126,10 @@ public class TestServiceConfig {
     @Primary
     public JsonMapper objectMapper() {
         return Environment.getObjectMapper();
+    }
+
+    @Bean
+    public LongRunningTasksRegistry longRunningTasksRegistry(ApplicationEventPublisher publisher) {
+        return new LongRunningTasksRegistry(publisher);
     }
 }

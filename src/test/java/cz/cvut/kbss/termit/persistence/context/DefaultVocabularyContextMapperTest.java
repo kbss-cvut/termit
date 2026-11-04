@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.persistence.context;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
+import cz.cvut.kbss.termit.exception.AmbiguousRepositoryContextException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +69,7 @@ class DefaultVocabularyContextMapperTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
         transactional(() -> em.persist(v, new EntityDescriptor(Generator.generateUri())));
 
-        assertThrows(AmbiguousVocabularyContextException.class, () -> sut.getVocabularyContext(v));
+        assertThrows(AmbiguousRepositoryContextException.class, () -> sut.getVocabularyContext(v));
     }
 
     @Test
@@ -98,6 +98,6 @@ class DefaultVocabularyContextMapperTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(vOne, new EntityDescriptor(context)));
         transactional(() -> em.persist(vTwo, new EntityDescriptor(context)));
 
-        assertThrows(AmbiguousVocabularyContextException.class, () -> sut.getVocabularyInContext(context));
+        assertThrows(AmbiguousRepositoryContextException.class, () -> sut.getVocabularyInContext(context));
     }
 }

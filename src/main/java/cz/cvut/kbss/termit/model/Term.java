@@ -39,6 +39,7 @@ import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.validation.Disjoint;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -51,6 +52,10 @@ import java.util.Set;
 @Disjoint({"parentTerms", "relatedMatch"})
 @Disjoint({"parentTerms", "exactMatchTerms"})
 public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, HasProperties {
+
+    /** Set of term base term properties that support translations. */
+    public static final Set<String> MULTILINGUAL_PROPERTIES =
+            Set.of(SKOS.PREF_LABEL, SKOS.ALT_LABEL, SKOS.HIDDEN_LABEL, SKOS.DEFINITION, SKOS.EXAMPLE, SKOS.SCOPE_NOTE);
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
@@ -121,6 +126,10 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
             fetch = FetchType.EAGER,
             cascade = {CascadeType.DETACH})
     private Set<TermInfo> externalParentTerms;
+
+    @JsonIgnore
+    @Transient
+    private Map<String, Set<URI>> inverseCustomAttributes;
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<Object>> properties;
@@ -259,6 +268,14 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
         this.definitionSource = definitionSource;
     }
 
+    public Map<String, Set<URI>> getInverseCustomAttributes() {
+        return inverseCustomAttributes;
+    }
+
+    public void setInverseCustomAttributes(Map<String, Set<URI>> inverseCustomAttributes) {
+        this.inverseCustomAttributes = inverseCustomAttributes;
+    }
+
     @Override
     public Map<String, Set<Object>> getProperties() {
         return properties;
@@ -270,12 +287,14 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
     }
 
     /**
-     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch,
-     * exactMatch) terms into related (relatedMatch, exactMatch).
+     * Consolidates the asserted and inferred symmetric attributes.
+     *
+     * <p>The attributes include {@code related}, {@code relatedMatch}, {@code exactMatch} and symmetric custom
+     * attributes.
      *
      * <p>This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch},
-     * {@code exactMatch}) to {@code related} ({@code relatedMatch}, {@code exactMatch}) so that they act as they should
-     * in reality because of skos:related (skos:relatedMatch, skos:exactMatch) being symmetric.
+     * {@code exactMatch}, {@code inverseCustomAttributes}) to {@code related} ({@code relatedMatch},
+     * {@code exactMatch}, {@code properties}).
      */
     public void consolidateInferred() {
         if (inverseRelated != null) {
@@ -286,6 +305,13 @@ public class Term extends AbstractTerm implements SupportsSnapshots, HasTypes, H
         }
         if (inverseExactMatchTerms != null) {
             inverseExactMatchTerms.forEach(ti -> addExactMatch(new TermInfo(ti)));
+        }
+        if (inverseCustomAttributes != null) {
+            if (properties == null) {
+                this.properties = new HashMap<>(inverseCustomAttributes.size());
+            }
+            inverseCustomAttributes.forEach((prop, values) ->
+                    properties.computeIfAbsent(prop, _ -> new HashSet<>()).addAll(values));
         }
     }
 

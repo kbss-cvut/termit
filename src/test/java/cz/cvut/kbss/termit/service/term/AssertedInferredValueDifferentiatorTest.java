@@ -17,12 +17,18 @@
  */
 package cz.cvut.kbss.termit.service.term;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.Term;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -53,8 +59,12 @@ class AssertedInferredValueDifferentiatorTest {
     @Test
     void differentiateRelatedTermsMovesTermsKnownToBeInferredInOriginalToInferredInTarget() {
         final Term target = Generator.generateTermWithId();
-        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
-        final Set<TermInfo> inferred = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> asserted = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
+        final Set<TermInfo> inferred = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
         final Set<TermInfo> consolidated = new HashSet<>(asserted);
         consolidated.addAll(inferred);
         target.setRelated(consolidated);
@@ -69,8 +79,12 @@ class AssertedInferredValueDifferentiatorTest {
     @Test
     void differentiateRelatedTermsHandlesChangesToIncomingRelatedTerms() {
         final Term target = Generator.generateTermWithId();
-        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
-        final Set<TermInfo> inferred = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> asserted = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
+        final Set<TermInfo> inferred = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
         final Set<TermInfo> newAsserted = new HashSet<>(asserted);
         // Remove one asserted and add a different one
         newAsserted.remove(asserted.iterator().next());
@@ -91,8 +105,12 @@ class AssertedInferredValueDifferentiatorTest {
     @Test
     void differentiateRelatedMatchHandlesMovesTermsKnownToBeInferredInOriginalToInferredInTarget() {
         final Term target = Generator.generateTermWithId();
-        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
-        final Set<TermInfo> inferred = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> asserted = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
+        final Set<TermInfo> inferred = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
         final Set<TermInfo> consolidated = new HashSet<>(asserted);
         consolidated.addAll(inferred);
         target.setRelatedMatch(consolidated);
@@ -107,7 +125,9 @@ class AssertedInferredValueDifferentiatorTest {
     @Test
     void differentiateRelatedMatchDoesNothingWhenOriginalInferredAreNotPresent() {
         final Term target = Generator.generateTermWithId();
-        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> asserted = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
         target.setRelatedMatch(asserted);
         final Term original = new Term();
         sut.differentiateRelatedMatchTerms(target, original);
@@ -115,12 +135,15 @@ class AssertedInferredValueDifferentiatorTest {
         assertThat(target.getInverseRelatedMatch(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
     }
 
-
     @Test
     void differentiateExactMatchHandlesMovesTermsKnownToBeInferredInOriginalToInferredInTarget() {
         final Term target = Generator.generateTermWithId();
-        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
-        final Set<TermInfo> inferred = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> asserted = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
+        final Set<TermInfo> inferred = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
         final Set<TermInfo> consolidated = new HashSet<>(asserted);
         consolidated.addAll(inferred);
         target.setExactMatchTerms(consolidated);
@@ -135,11 +158,100 @@ class AssertedInferredValueDifferentiatorTest {
     @Test
     void differentiateExactMatchDoesNothingWhenOriginalInferredAreNotPresent() {
         final Term target = Generator.generateTermWithId();
-        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> asserted = IntStream.range(0, 5)
+                .mapToObj(_ -> new TermInfo(Generator.generateTermWithId()))
+                .collect(Collectors.toSet());
         target.setExactMatchTerms(asserted);
         final Term original = new Term();
         sut.differentiateExactMatchTerms(target, original);
         assertEquals(asserted, target.getExactMatchTerms());
         assertThat(target.getInverseExactMatchTerms(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
+    }
+
+    @Test
+    void
+            differentiateSymmetricCustomAttributesMovesValuesKnownToBeInferredInOriginalToInverseCustomAttributesInTarget() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term target = Generator.generateTermWithId();
+        final Set<URI> asserted =
+                IntStream.range(0, 5).mapToObj(_ -> Generator.generateUri()).collect(Collectors.toSet());
+        final Set<URI> inferred =
+                IntStream.range(0, 5).mapToObj(_ -> Generator.generateUri()).collect(Collectors.toSet());
+        final Set<Object> consolidated = new HashSet<>(asserted);
+        consolidated.addAll(inferred);
+        target.setProperties(Map.of(attribute.getUri().toString(), consolidated));
+        target.setInverseCustomAttributes(new HashMap<>());
+        final Term original = new Term();
+        original.setInverseCustomAttributes(Map.of(attribute.getUri().toString(), inferred));
+
+        sut.differentiateSymmetricCustomAttributes(target, original, List.of(attribute));
+        assertEquals(asserted, target.getProperties().get(attribute.getUri().toString()));
+        assertEquals(
+                inferred,
+                target.getInverseCustomAttributes().get(attribute.getUri().toString()));
+    }
+
+    @Test
+    void differentiateSymmetricCustomAttributesDoesNothingWhenTargetDoesNotContainAttributeProperty() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term target = Generator.generateTermWithId();
+        target.setProperties(Map.of(Generator.generateUri().toString(), Set.of(Generator.generateUri())));
+        final Term original = new Term();
+        original.setInverseCustomAttributes(Map.of(attribute.getUri().toString(), Set.of(Generator.generateUri())));
+
+        sut.differentiateSymmetricCustomAttributes(target, original, List.of(attribute));
+        assertThat(
+                target.getInverseCustomAttributes()
+                        .getOrDefault(attribute.getUri().toString(), Set.of()),
+                emptyCollectionOf(URI.class));
+    }
+
+    @Test
+    void differentiateSymmetricCustomAttributesDoesNothingWhenOriginalInferredAreNotPresent() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term target = Generator.generateTermWithId();
+        final Set<URI> asserted = Set.of(Generator.generateUri(), Generator.generateUri());
+        target.setProperties(Map.of(attribute.getUri().toString(), new HashSet<>(asserted)));
+        final Term original = new Term();
+        original.setInverseCustomAttributes(Map.of());
+
+        sut.differentiateSymmetricCustomAttributes(target, original, List.of(attribute));
+        assertEquals(asserted, target.getProperties().get(attribute.getUri().toString()));
+        assertThat(
+                target.getInverseCustomAttributes()
+                        .getOrDefault(attribute.getUri().toString(), Set.of()),
+                emptyCollectionOf(URI.class));
+    }
+
+    @Test
+    void differentiateSymmetricCustomAttributesHandlesChangesToIncomingValues() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term target = Generator.generateTermWithId();
+        final Set<URI> asserted =
+                IntStream.range(0, 5).mapToObj(_ -> Generator.generateUri()).collect(Collectors.toSet());
+        final Set<URI> inferred =
+                IntStream.range(0, 5).mapToObj(_ -> Generator.generateUri()).collect(Collectors.toSet());
+        final Set<URI> newAsserted = new HashSet<>(asserted);
+        // Remove one asserted value and add a different one
+        newAsserted.remove(asserted.iterator().next());
+        newAsserted.add(Generator.generateUri());
+        final Set<Object> consolidated = new HashSet<>(newAsserted);
+        consolidated.addAll(inferred);
+        target.setProperties(Map.of(attribute.getUri().toString(), consolidated));
+        final Term original = new Term();
+        original.setInverseCustomAttributes(Map.of(attribute.getUri().toString(), inferred));
+
+        sut.differentiateSymmetricCustomAttributes(target, original, List.of(attribute));
+        assertEquals(
+                inferred,
+                target.getInverseCustomAttributes().get(attribute.getUri().toString()));
+        inferred.forEach(
+                v -> assertThat(target.getProperties().get(attribute.getUri().toString()), not(hasItem(v))));
+        assertEquals(newAsserted, target.getProperties().get(attribute.getUri().toString()));
+    }
+
+    private static CustomAttribute generateCustomAttribute() {
+        return new CustomAttribute(
+                Generator.generateUri(), MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
     }
 }
