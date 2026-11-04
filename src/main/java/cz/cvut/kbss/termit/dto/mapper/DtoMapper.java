@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
 import cz.cvut.kbss.termit.dto.acl.AccessHolderDto;
@@ -39,12 +40,15 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
@@ -85,12 +89,12 @@ public abstract class DtoMapper {
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_user:
                 final User user = (User) holder;
                 Utils.emptyIfNull(user.getTypes()).forEach(dto::addType);
-                dto.setLabel(MultilingualString.create(user.getFullName(),
-                                                       config.getPersistence().getLanguage()));
+                dto.setLabel(MultilingualString.create(
+                        user.getFullName(), config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup:
-                dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
-                                                       config.getPersistence().getLanguage()));
+                dto.setLabel(MultilingualString.create(
+                        ((UserGroup) holder).getLabel(), config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_user_role:
                 dto.setLabel(((UserRole) holder).getLabel());
@@ -102,7 +106,8 @@ public abstract class DtoMapper {
     }
 
     public RdfsResource assetToRdfsResource(Asset<?> asset) {
-        final AssetToRdfsResourceMapper mapper = new AssetToRdfsResourceMapper(config.getPersistence().getLanguage());
+        final AssetToRdfsResourceMapper mapper =
+                new AssetToRdfsResourceMapper(config.getPersistence().getLanguage());
         asset.accept(mapper);
         return mapper.getRdfsResource();
     }
@@ -112,11 +117,31 @@ public abstract class DtoMapper {
         this.config = config;
     }
 
-    /**
-     * Transforms normal term to {@link FullTermDtoWithAncestors} and sets its ancestors
-     */
+    /** Transforms normal term to {@link FullTermDtoWithAncestors} and sets its ancestors */
     @Mapping(source = "ancestors", target = "ancestorTerms")
     @Mapping(target = "parentTerms", ignore = true)
     @Mapping(target = "externalParentTerms", ignore = true)
     public abstract FullTermDtoWithAncestors withAncestors(Term term, Set<TermInfoWithParents> ancestors);
+
+    public abstract SkosCollectionDto skosCollectionToDto(SkosCollection<?> entity);
+
+    /**
+     * Maps entity type to additional {@code types} of the created dto.
+     *
+     * <p>JOPA excludes the type of the entity itself from {@code types}. Unordered collection is SKOS collection, its
+     * {@code types} are empty. Ordered collection is SKOS ordered collection and SKOS collection, its {@code types}
+     * contains only SKOS collection. Because collection DTO is also SKOS collection, its {@code types} should not
+     * contain its type, but the ordered collection type needs to be added when mapped from ordered collection entity.
+     */
+    @AfterMapping
+    @SuppressWarnings("unused") // executed after skosCollectionToDto mapping
+    protected void transferEntityType(SkosCollection<?> entity, @MappingTarget SkosCollectionDto dto) {
+        dto.addType(EntityToOwlClassMapper.getOwlClassForEntity(entity.getClass()));
+        dto.getTypes().remove(EntityToOwlClassMapper.getOwlClassForEntity(dto.getClass()));
+    }
+
+    @Mapping(target = "members", ignore = true)
+    @Mapping(target = "primaryLanguage", ignore = true)
+    @Mapping(target = "types", ignore = true)
+    public abstract void updateCollectionFromDto(SkosCollectionDto source, @MappingTarget SkosCollection<?> target);
 }

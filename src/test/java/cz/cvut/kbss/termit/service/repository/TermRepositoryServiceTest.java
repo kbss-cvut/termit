@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.BeforeTermRemovedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
@@ -36,6 +37,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
@@ -48,12 +50,15 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -66,6 +71,7 @@ import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
@@ -99,6 +105,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
     @MockitoSpyBean
     private TermOccurrenceCleanupListener termOccurrenceCleanupListener;
+
+    @MockitoSpyBean
+    private ApplicationEventPublisher applicationEventPublisher;
 
     private UserAccount user;
     private Vocabulary vocabulary;
@@ -1118,5 +1127,125 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         ValidationException e = assertThrows(ValidationException.class, () -> sut.addChildTerm(term, parent));
 
         assertEquals("term.created.error.iriNotInVocabularyNamespace", e.getMessageId());
+    }
+
+    @Test
+    void removePublishesBeforeTermRemovalEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        sut.addRootTermToVocabulary(term, vocabulary);
+
+        sut.remove(term);
+
+        ArgumentCaptor<BeforeTermRemovedEvent> captor = ArgumentCaptor.captor();
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+        final BeforeTermRemovedEvent event = captor.getValue();
+        assertEquals(term, event.getRemovalParams().termToRemove());
+    }
+
+    @Test
+    void removeWithParamsPublishesBeforeTermRemovalEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        sut.addRootTermToVocabulary(term, vocabulary);
+
+        final TermRemovalParams params = new TermRemovalParams(term, SubTermRemovalStrategy.RECONNECT, false, true);
+
+        sut.remove(params);
+
+        ArgumentCaptor<BeforeTermRemovedEvent> captor = ArgumentCaptor.captor();
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+        final BeforeTermRemovedEvent event = captor.getValue();
+        assertEquals(term, event.getRemovalParams().termToRemove());
+    }
+
+    @Test
+    void removeTermWithoutParamsThrowsWhenTermIsMemberOfOrderedCollection() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final OrderedTermCollection orderedTermCollection =
+                Generator.generateOrderedTermCollection(vocabulary, List.of(term));
+        transactional(() -> {
+            sut.addRootTermToVocabulary(term, vocabulary);
+            em.persist(orderedTermCollection, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+
+        assertThrows(AssetRemovalException.class, () -> sut.remove(term));
+    }
+
+    @Test
+    void removeTermWithParamsDoesNotBreakOrderedCollectionMembersList() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final OrderedTermCollection orderedTermCollection = Generator.generateOrderedTermCollection(vocabulary);
+        final List<URI> expectedMembers = new ArrayList<>(orderedTermCollection.getMembers());
+        orderedTermCollection.getMembers().add(2, term.getUri());
+        transactional(() -> {
+            sut.addRootTermToVocabulary(term, vocabulary);
+            em.persist(orderedTermCollection, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+
+        sut.remove(new TermRemovalParams(term, SubTermRemovalStrategy.FAIL, false, true));
+
+        final OrderedTermCollection updated = readOnlyTransactional(() -> em.find(
+                OrderedTermCollection.class,
+                orderedTermCollection.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary)));
+        assertFalse(updated.getMembers().contains(term.getUri()));
+
+        assertEquals(expectedMembers.size(), updated.getMembers().size());
+        assertEquals(expectedMembers, updated.getMembers());
+    }
+
+    @Test
+    void removeTermWithParamsDoesNotRemoveTermFromCollectionWhenRelationshipsShouldNotBeRemoved() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final OrderedTermCollection orderedTermCollection = Generator.generateOrderedTermCollection(vocabulary);
+        orderedTermCollection.getMembers().add(2, term.getUri());
+
+        final List<URI> expectedMembers = new ArrayList<>(orderedTermCollection.getMembers());
+        transactional(() -> {
+            sut.addRootTermToVocabulary(term, vocabulary);
+            em.persist(orderedTermCollection, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+
+        final AssetRemovalException e = assertThrows(
+                AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(term, SubTermRemovalStrategy.FAIL, false, false)));
+        assertThat(e.getMessage(), containsStringIgnoringCase("references to this term exist"));
+
+        final OrderedTermCollection updated = readOnlyTransactional(() -> em.find(
+                OrderedTermCollection.class,
+                orderedTermCollection.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary)));
+        assertTrue(updated.getMembers().contains(term.getUri()));
+
+        assertEquals(expectedMembers.size(), updated.getMembers().size());
+        assertEquals(expectedMembers, updated.getMembers());
+    }
+
+    @Test
+    void removeTermWithParamsDoesNotRemoveTermFromCollectionWhenRemovalFails() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        final OrderedTermCollection orderedTermCollection = Generator.generateOrderedTermCollection(vocabulary);
+        orderedTermCollection.getMembers().add(2, term.getUri());
+
+        final List<URI> expectedMembers = new ArrayList<>(orderedTermCollection.getMembers());
+        transactional(() -> {
+            sut.addRootTermToVocabulary(term, vocabulary);
+            em.persist(orderedTermCollection, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+        transactional(() -> sut.addChildTerm(child, term));
+
+        final AssetRemovalException e = assertThrows(
+                AssetRemovalException.class,
+                () -> sut.remove(new TermRemovalParams(term, SubTermRemovalStrategy.FAIL, false, true)));
+        assertThat(e.getMessage(), containsStringIgnoringCase("it is a parent"));
+
+        final OrderedTermCollection updated = readOnlyTransactional(() -> em.find(
+                OrderedTermCollection.class,
+                orderedTermCollection.getUri(),
+                descriptorFactory.vocabularyDescriptor(vocabulary)));
+        assertTrue(updated.getMembers().contains(term.getUri()));
+
+        assertEquals(expectedMembers.size(), updated.getMembers().size());
+        assertEquals(expectedMembers, updated.getMembers());
     }
 }
