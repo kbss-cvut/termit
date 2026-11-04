@@ -2,7 +2,9 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
@@ -498,6 +500,53 @@ public class SkosCollectionController extends BaseController {
         final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
         LOG.debug("Removing member <{}> from collection <{}>", member, collectionUri);
         collectionService.removeMember(collectionUri, vocabularyUri, member);
+    }
+
+    @Operation(
+            security = {@SecurityRequirement(name = "bearer-key")},
+            description = "Gets a list of changes made to the collection with the specified identifier.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of change records."),
+        @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "422", description = "When the change record is associated with a different asset")
+    })
+    @GetMapping(
+            value = "/{collectionLocalName}/history",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<AbstractChangeRecord> getHistory(
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String localName,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_LOCAL_NAME_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_LOCAL_NAME_EXAMPLE)
+                    @PathVariable
+                    String collectionLocalName,
+            @Parameter(
+                            description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                            example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                    Optional<String> namespace,
+            @Parameter(
+                            description = ApiDoc.ID_COLLECTION_NAMESPACE_DESCRIPTION,
+                            example = ApiDoc.ID_COLLECTION_NAMESPACE_EXAMPLE)
+                    @RequestParam(name = COLLECTION_NAMESPACE_PARAM)
+                    String collectionNamespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+                    @RequestParam(name = "changeType", required = false)
+                    URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+                    @RequestParam(name = "author", required = false, defaultValue = "")
+                    String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+                    @RequestParam(name = "attribute", required = false, defaultValue = "")
+                    String changedAttributeName) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
+        final URI collectionUri = resolveIdentifier(collectionNamespace, collectionLocalName);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return collectionService.getChanges(collectionUri, vocabularyUri, filterDto);
     }
 
     private URI getVocabularyUri(Optional<String> namespace, String fragment) {
