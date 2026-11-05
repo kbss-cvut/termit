@@ -18,6 +18,10 @@ public class CollectionMemberChangeCalculator implements ChangeCalculator {
         if (changed instanceof OrderedTermCollection oChanged && original instanceof OrderedTermCollection oOriginal) {
             return calculateChanges(oChanged, oOriginal);
         }
+        if (changed instanceof OrderedTermCollection || original instanceof OrderedTermCollection) {
+            throw new IllegalArgumentException("Unable to calculate changes between different types: "
+                    + changed.getClass().getName() + " " + original.getClass().getName());
+        }
         return Collections.emptyList();
     }
 
