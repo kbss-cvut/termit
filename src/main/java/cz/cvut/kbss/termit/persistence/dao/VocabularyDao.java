@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
@@ -465,7 +465,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      *
      * @return List of RDF statements representing relationships
      */
-    public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
+    public List<RdfRelationship> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
         Objects.requireNonNull(vocabulary);
 
         try {
@@ -478,7 +478,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                     FILTER(?relation NOT IN (?excluded)) .
                                                     FILTER(isIRI(?object)) .
                                                 } ORDER BY ?subject ?relation
-                                                """, "RDFStatement")
+                                                """, "RdfRelationship")
                     .setParameter("subject", vocabulary)
                     .setParameter("excluded", excludedRelations)
                     .setParameter(
@@ -498,7 +498,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      *
      * <p>We are also not interested in relations where terms from the specified vocabulary are subjects.
      */
-    public List<RdfStatement> getIncomingTermRelations(Vocabulary vocabulary) {
+    public List<RdfRelationship> getIncomingTermRelations(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final URI termType = URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class));
         final URI inVocabulary = URI.create(SKOS.IN_SCHEME);
@@ -518,7 +518,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                         FILTER(?subject != ?object)
                                                         FILTER(?secondVocabulary != ?vocabulary)
                                                 } ORDER by ?subject ?relation ?object
-                                                """, "RDFStatement")
+                                                """, "RdfRelationship")
                     .setMaxResults(DEFAULT_PAGE_SIZE)
                     .setParameter("termType", termType)
                     .setParameter("inVocabulary", inVocabulary)

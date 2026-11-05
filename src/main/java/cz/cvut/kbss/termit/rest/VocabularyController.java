@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
@@ -537,7 +537,7 @@ public class VocabularyController extends BaseController {
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
     })
     @GetMapping(value = "/{localName}/relations")
-    public List<RdfStatement> relations(
+    public List<RdfRelationship> relations(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                     @PathVariable
                     String localName,
@@ -559,7 +559,7 @@ public class VocabularyController extends BaseController {
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
     })
     @GetMapping(value = "/{localName}/terms/relations")
-    public List<RdfStatement> termsRelations(
+    public List<RdfRelationship> termsRelations(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                     @PathVariable
                     String localName,

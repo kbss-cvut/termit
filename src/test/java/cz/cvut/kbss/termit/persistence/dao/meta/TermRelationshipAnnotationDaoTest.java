@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao.meta;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.model.Term;
@@ -71,7 +71,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
         assertThat(
                 result,
                 hasItem(new TermRelationshipAnnotation(
-                        new RdfStatement(SUBJECT, URI.create(SKOS.BROADER), OBJECT), ANNOTATION_PROPERTY, true)));
+                        new RdfRelationship(SUBJECT, URI.create(SKOS.BROADER), OBJECT), ANNOTATION_PROPERTY, true)));
     }
 
     private void loadData(String data) {
@@ -110,7 +110,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
         assertThat(
                 result,
                 hasItem(new TermRelationshipAnnotation(
-                        new RdfStatement(OBJECT, URI.create(SKOS.RELATED), SUBJECT), ANNOTATION_PROPERTY, true)));
+                        new RdfRelationship(OBJECT, URI.create(SKOS.RELATED), SUBJECT), ANNOTATION_PROPERTY, true)));
     }
 
     @Test
@@ -134,7 +134,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 """;
         transactional(() -> loadData(data));
         final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
-                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, true);
+                new RdfRelationship(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, true);
 
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
@@ -178,7 +178,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
         transactional(() -> loadData(data));
 
         final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
-                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
+                new RdfRelationship(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
         readOnlyTransactional(() -> {
@@ -230,7 +230,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
         transactional(() -> loadData(data));
 
         final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
-                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
+                new RdfRelationship(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
         readOnlyTransactional(() -> {
@@ -317,7 +317,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
         transactional(() -> loadData(data));
 
         final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
-                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
+                new RdfRelationship(SUBJECT, URI.create(SKOS.RELATED), OBJECT), ANNOTATION_PROPERTY, false);
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
         readOnlyTransactional(() -> {
@@ -374,7 +374,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
         assertThat(
                 result,
                 hasItem(new TermRelationshipAnnotation(
-                        new RdfStatement(SUBJECT, URI.create(SKOS.BROADER), OBJECT),
+                        new RdfRelationship(SUBJECT, URI.create(SKOS.BROADER), OBJECT),
                         URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation"),
                         new MultilingualString(Map.of("cs", "Česky", "en", "English")))));
     }
@@ -403,7 +403,7 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                 URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/multilingual-annotation");
         final MultilingualString value = new MultilingualString(Map.of("cs", "Hodnota", "en", "Value"));
         final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(
-                new RdfStatement(SUBJECT, URI.create(SKOS.RELATED), OBJECT), annotationProperty, value);
+                new RdfRelationship(SUBJECT, URI.create(SKOS.RELATED), OBJECT), annotationProperty, value);
 
         transactional(() -> sut.updateTermRelationshipAnnotation(annotation));
 
