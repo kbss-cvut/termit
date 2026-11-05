@@ -6,7 +6,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AttributeChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.CollectionMembersUpdateChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.OrderedCollectionMembersUpdateChangeRecord;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ class CollectionMemberChangeCalculatorTest {
 
         Collection<AttributeChangeRecord<?>> records = sut.calculateChanges(changed, original);
         assertEquals(1, records.size());
-        CollectionMembersUpdateChangeRecord record = assertInstanceOf(CollectionMembersUpdateChangeRecord.class, records.iterator().next());
+        OrderedCollectionMembersUpdateChangeRecord record = assertInstanceOf(OrderedCollectionMembersUpdateChangeRecord.class, records.iterator().next());
 
         assertEquals(changed.getMembers(), record.getNewValue());
         assertNotSame(changed.getMembers(), record.getNewValue());

@@ -11,7 +11,7 @@ import java.util.List;
 
 /** Special case of {@link UpdateChangeRecord} representing the original and new values as ordered lists. */
 @OWLClass(iri = Vocabulary.s_c_update_of_ordered_collection_members)
-public class CollectionMembersUpdateChangeRecord extends AttributeChangeRecord<List<URI>> {
+public class OrderedCollectionMembersUpdateChangeRecord extends AttributeChangeRecord<List<URI>> {
 
     @RDFCollection
     @OWLAnnotationProperty(iri = Vocabulary.s_p_has_original_value)
@@ -21,9 +21,9 @@ public class CollectionMembersUpdateChangeRecord extends AttributeChangeRecord<L
     @OWLAnnotationProperty(iri = Vocabulary.s_p_has_new_value)
     private List<URI> newValue;
 
-    public CollectionMembersUpdateChangeRecord() {}
+    public OrderedCollectionMembersUpdateChangeRecord() {}
 
-    public CollectionMembersUpdateChangeRecord(Asset<?> changedEntity) {
+    public OrderedCollectionMembersUpdateChangeRecord(Asset<?> changedEntity) {
         super(changedEntity);
     }
 
@@ -49,7 +49,7 @@ public class CollectionMembersUpdateChangeRecord extends AttributeChangeRecord<L
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof CollectionMembersUpdateChangeRecord)) return false;
+        if (!(o instanceof OrderedCollectionMembersUpdateChangeRecord)) return false;
         return super.equals(o);
     }
 }

@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.AttributeChangeRecord;
-import cz.cvut.kbss.termit.model.changetracking.CollectionMembersUpdateChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.OrderedCollectionMembersUpdateChangeRecord;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ public class CollectionMemberChangeCalculator implements ChangeCalculator {
             return Collections.emptyList();
         }
 
-        CollectionMembersUpdateChangeRecord record = new CollectionMembersUpdateChangeRecord(changed);
+        OrderedCollectionMembersUpdateChangeRecord record = new OrderedCollectionMembersUpdateChangeRecord(changed);
         record.setChangedAttribute(OrderedTermCollection_.membersPropertyIRI.toURI());
         record.setOriginalValue(List.copyOf(original.getMembers()));
         record.setNewValue(List.copyOf(changed.getMembers()));
