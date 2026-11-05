@@ -8,7 +8,7 @@ import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.NotNull;
@@ -35,7 +35,7 @@ public class TermRelationshipAnnotation implements Serializable {
 
     @NotNull
     @OWLObjectProperty(iri = RDF.SUBJECT)
-    private RdfStatement relationship;
+    private RdfRelationship relationship;
 
     @NotNull
     @OWLObjectProperty(iri = RDF.PREDICATE)
@@ -51,22 +51,22 @@ public class TermRelationshipAnnotation implements Serializable {
      * Constructor used by {@link SparqlResultSetMapping}.
      */
     public TermRelationshipAnnotation(URI subject, URI predicate, URI object, URI attribute, Object value) {
-        this.relationship = new RdfStatement(subject, predicate, object);
+        this.relationship = new RdfRelationship(subject, predicate, object);
         this.attribute = attribute;
         this.value = new HashSet<>(Set.of(value));
     }
 
-    public TermRelationshipAnnotation(RdfStatement relationship, URI attribute, Object value) {
+    public TermRelationshipAnnotation(RdfRelationship relationship, URI attribute, Object value) {
         this.relationship = relationship;
         this.attribute = attribute;
         this.value = new HashSet<>(Set.of(value));
     }
 
-    public RdfStatement getRelationship() {
+    public RdfRelationship getRelationship() {
         return relationship;
     }
 
-    public void setRelationship(RdfStatement relationship) {
+    public void setRelationship(RdfRelationship relationship) {
         this.relationship = relationship;
     }
 

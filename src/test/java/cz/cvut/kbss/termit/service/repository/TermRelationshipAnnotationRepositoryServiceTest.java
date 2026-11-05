@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -41,10 +41,10 @@ class TermRelationshipAnnotationRepositoryServiceTest {
     @Test
     void findAllForSubjectFindsTermAndThenRetrievesItsRelationshipAnnotations() {
         final Term term = Generator.generateTermWithId();
-        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(new RdfStatement(term.getUri(),
-                                                                                                      URI.create(
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(new RdfRelationship(term.getUri(),
+                                                                                                         URI.create(
                                                                                                               SKOS.RELATED),
-                                                                                                      Generator.generateUri()),
+                                                                                                         Generator.generateUri()),
                                                                                      URI.create(
                                                                                              DC.Terms.CREATED),
                                                                                      LocalDate.now());
@@ -59,10 +59,10 @@ class TermRelationshipAnnotationRepositoryServiceTest {
     void updateAnnotationChecksForTermExistenceAndThenUpdatesRelationshipAnnotation() {
         final Term term = Generator.generateTermWithId();
         when(termService.exists(term.getUri())).thenReturn(true);
-        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(new RdfStatement(term.getUri(),
-                                                                                                      URI.create(
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(new RdfRelationship(term.getUri(),
+                                                                                                         URI.create(
                                                                                                               SKOS.RELATED),
-                                                                                                      Generator.generateUri()),
+                                                                                                         Generator.generateUri()),
                                                                                      URI.create(
                                                                                              DC.Terms.CREATED),
                                                                                      LocalDate.now());
@@ -76,10 +76,10 @@ class TermRelationshipAnnotationRepositoryServiceTest {
     void updateAnnotationValidatesSpecifiedAnnotation() {
         final Term term = Generator.generateTermWithId();
         when(termService.exists(term.getUri())).thenReturn(true);
-        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(new RdfStatement(term.getUri(),
-                                                                                                      URI.create(
+        final TermRelationshipAnnotation annotation = new TermRelationshipAnnotation(new RdfRelationship(term.getUri(),
+                                                                                                         URI.create(
                                                                                                               SKOS.RELATED),
-                                                                                                      Generator.generateUri()),
+                                                                                                         Generator.generateUri()),
                                                                                      URI.create(
                                                                                              DC.Terms.CREATED),
                                                                                      LocalDate.now());

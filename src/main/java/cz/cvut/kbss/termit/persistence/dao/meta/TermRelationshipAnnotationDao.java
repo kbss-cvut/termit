@@ -5,7 +5,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.meta.AnnotatedTermRelationship;
 import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
@@ -124,7 +124,7 @@ public class TermRelationshipAnnotationDao {
      */
     public void updateTermRelationshipAnnotation(@Nonnull TermRelationshipAnnotation annotation) {
         Objects.requireNonNull(annotation);
-        final Pair<RdfStatement, URI> actualStatementAndContext =
+        final Pair<RdfRelationship, URI> actualStatementAndContext =
                 resolveActualContextAndStatement(annotation.getRelationship());
 
         removeExistingValues(actualStatementAndContext, annotation.getAttribute());
@@ -144,7 +144,7 @@ public class TermRelationshipAnnotationDao {
      * @param statement Statement to resolve
      * @return Actual asserted statement and its repository context
      */
-    private Pair<RdfStatement, URI> resolveActualContextAndStatement(RdfStatement statement) {
+    private Pair<RdfRelationship, URI> resolveActualContextAndStatement(RdfRelationship statement) {
         final List<Object> resultList = em.createNativeQuery("SELECT ?ss ?p ?oo ?g WHERE {" + "{"
                         + "GRAPH ?g {"
                         + "?s ?p ?o ."
@@ -175,7 +175,7 @@ public class TermRelationshipAnnotationDao {
         final Object[] resultRow = (Object[]) resultList.getFirst();
         assert resultRow.length == 4;
         return new Pair<>(
-                new RdfStatement((URI) resultRow[0], (URI) resultRow[1], (URI) resultRow[2]), (URI) resultRow[3]);
+                new RdfRelationship((URI) resultRow[0], (URI) resultRow[1], (URI) resultRow[2]), (URI) resultRow[3]);
     }
 
     /**
@@ -184,7 +184,7 @@ public class TermRelationshipAnnotationDao {
      * @param annotatedStatement Annotated term relationship statement
      * @param annotationProperty Annotation property
      */
-    private void removeExistingValues(Pair<RdfStatement, URI> annotatedStatement, URI annotationProperty) {
+    private void removeExistingValues(Pair<RdfRelationship, URI> annotatedStatement, URI annotationProperty) {
         LOG.trace("Remove existing values of annotation {} - {}", annotatedStatement, annotationProperty);
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
@@ -216,7 +216,7 @@ public class TermRelationshipAnnotationDao {
      * @param values Values of the annotation
      * @param context Target repository context
      */
-    private void insertAnnotations(RdfStatement subject, URI property, Set<Object> values, URI context) {
+    private void insertAnnotations(RdfRelationship subject, URI property, Set<Object> values, URI context) {
         final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         final ValueFactory vf = repo.getValueFactory();
         final IRI annProperty = vf.createIRI(property.toString());

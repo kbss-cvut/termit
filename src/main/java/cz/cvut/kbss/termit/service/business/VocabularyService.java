@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.VocabularySnapshotDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -258,7 +258,7 @@ public class VocabularyService
      * @return List of RDF statements
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
-    public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
+    public List<RdfRelationship> getTermRelations(Vocabulary vocabulary) {
         return repositoryService.getTermRelations(vocabulary);
     }
 
@@ -271,7 +271,7 @@ public class VocabularyService
      * @return List of RDF statements
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
-    public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary) {
+    public List<RdfRelationship> getVocabularyRelations(Vocabulary vocabulary) {
         return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
     }
 
