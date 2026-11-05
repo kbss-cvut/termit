@@ -727,3 +727,12 @@ termit:reversible-change
         skos:broader     dd:update-of-entity ;
         skos:inScheme    <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         skos:prefLabel   "Reversible Change"@en , "Vratná změna"@cs .
+
+termit:update-of-ordered-collection-members
+        a       skos:Concept , owl:Class ;
+        rdfs:subClassOf dd:update-of-entity ;
+        skos:broader    dd:update-of-entity ;
+        skos:inScheme   <http://onto.fel.cvut.cz/ontologies/application/termit> ;
+        skos:prefLabel  "Change of collection members"@en, "Změna členů kolekce"@cs ;
+        skos:definition "Change that modifies members or their order of an ordered collection."@en,
+                        "Změna která mění členy, nebo jejich pořadí, v seřazené kolekci."@cs .
