@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.event.CollectionTypeUpdateEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.AttributeChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.DeleteChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
@@ -47,6 +48,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,7 +58,7 @@ public class ChangeTracker {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChangeTracker.class);
 
-    private final ChangeCalculator changeCalculator;
+    private final List<ChangeCalculator> changeCalculators;
 
     private final ChangeRecordDao changeRecordDao;
 
@@ -66,11 +68,11 @@ public class ChangeTracker {
 
     @Autowired
     public ChangeTracker(
-            ChangeCalculator changeCalculator,
+            List<ChangeCalculator> changeCalculators,
             ChangeRecordDao changeRecordDao,
             ChangeTrackingHelperDao helperDao,
             SecurityUtils securityUtils) {
-        this.changeCalculator = changeCalculator;
+        this.changeCalculators = changeCalculators;
         this.changeRecordDao = changeRecordDao;
         this.helperDao = helperDao;
         this.securityUtils = securityUtils;
@@ -90,7 +92,10 @@ public class ChangeTracker {
         final Asset<?> original = helperDao.findStored(update);
         final Instant now = Utils.timestamp();
         final User user = securityUtils.getCurrentUser().toUser();
-        final Collection<UpdateChangeRecord> changes = changeCalculator.calculateChanges(update, original);
+        final List<AttributeChangeRecord<?>> changes = changeCalculators.stream()
+                .map(calculator -> calculator.calculateChanges(update, original))
+                .flatMap(Collection::stream)
+                .toList();
         if (changes.isEmpty()) {
             return;
         }
@@ -98,7 +103,7 @@ public class ChangeTracker {
         LOG.trace(
                 "Found changes to attributes: {}",
                 changes.stream().map(ch -> ch.getChangedAttribute().toString()).collect(Collectors.joining(", ")));
-        // TODO filter changes to collection members and optimize the records for diffs only
+
         changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);

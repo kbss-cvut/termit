@@ -19,22 +19,13 @@ package cz.cvut.kbss.termit.model.changetracking;
 
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import jakarta.annotation.Nonnull;
 
-import java.net.URI;
-import java.util.Objects;
 import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_update_of_entity)
-public class UpdateChangeRecord extends AbstractChangeRecord {
-
-    @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_changed_attribute)
-    private URI changedAttribute;
+public class UpdateChangeRecord extends AttributeChangeRecord<Set<Object>> {
 
     @OWLAnnotationProperty(iri = Vocabulary.s_p_has_original_value)
     private Set<Object> originalValue;
@@ -42,19 +33,10 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_has_new_value)
     private Set<Object> newValue;
 
-    public UpdateChangeRecord() {
-    }
+    public UpdateChangeRecord() {}
 
     public UpdateChangeRecord(Asset<?> changedAsset) {
         super(changedAsset);
-    }
-
-    public URI getChangedAttribute() {
-        return changedAttribute;
-    }
-
-    public void setChangedAttribute(URI changedAttribute) {
-        this.changedAttribute = changedAttribute;
     }
 
     public Set<Object> getOriginalValue() {
@@ -81,33 +63,11 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
         if (!(o instanceof UpdateChangeRecord that)) {
             return false;
         }
-        if (!super.equals(that)) {
-            return false;
-        }
-        return changedAttribute.equals(that.changedAttribute);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), changedAttribute);
+        return super.equals(o);
     }
 
     @Override
     public String toString() {
-        return "UpdateChangeRecord{" +
-                super.toString() +
-                "changedAttribute=" + changedAttribute +
-                "}";
-    }
-
-    @Override
-    public int compareTo(@Nonnull AbstractChangeRecord o) {
-        if (o instanceof PersistChangeRecord) {
-            return 1;
-        }
-        if (o instanceof DeleteChangeRecord) {
-            return -1;
-        }
-        return super.compareTo(o);
+        return "UpdateChangeRecord{" + super.toString() + "changedAttribute=" + getChangedAttribute() + "}";
     }
 }
