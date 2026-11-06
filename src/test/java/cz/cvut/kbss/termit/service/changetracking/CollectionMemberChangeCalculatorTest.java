@@ -39,11 +39,13 @@ class CollectionMemberChangeCalculatorTest {
 
     @Test
     void calculateChangesReturnsRecordForOrderedCollection() {
-        Collections.swap(changed.getMembers(), 1,4);
+        Collections.swap(changed.getMembers(), 1, 4);
 
         Collection<AttributeChangeRecord<?>> records = sut.calculateChanges(changed, original);
         assertEquals(1, records.size());
-        OrderedCollectionMembersUpdateChangeRecord record = assertInstanceOf(OrderedCollectionMembersUpdateChangeRecord.class, records.iterator().next());
+        OrderedCollectionMembersUpdateChangeRecord record = assertInstanceOf(
+                OrderedCollectionMembersUpdateChangeRecord.class,
+                records.iterator().next());
 
         assertEquals(changed.getMembers(), record.getNewValue());
         assertNotSame(changed.getMembers(), record.getNewValue());
@@ -51,7 +53,6 @@ class CollectionMemberChangeCalculatorTest {
         assertEquals(original.getMembers(), record.getOriginalValue());
         assertNotSame(original.getMembers(), record.getOriginalValue());
     }
-
 
     @ParameterizedTest
     @ValueSource(classes = {Term.class, Vocabulary.class, TermCollection.class})
