@@ -23,9 +23,9 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
@@ -756,10 +756,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
         });
 
-        final List<RdfStatement> relations = sut.getIncomingTermRelations(vocabulary);
+        final List<RdfRelationship> relations = sut.getIncomingTermRelations(vocabulary);
 
         assertEquals(1, relations.size());
-        final RdfStatement relation = relations.getFirst();
+        final RdfRelationship relation = relations.getFirst();
         assertEquals(secondTerm.getUri(), relation.getSubject());
         assertEquals(termRelation, relation.getRelation());
         assertEquals(term.getUri(), relation.getObject());

@@ -31,6 +31,9 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
+import cz.cvut.kbss.termit.dto.rdf.Iri;
+import cz.cvut.kbss.termit.dto.rdf.RdfResource;
+import cz.cvut.kbss.termit.dto.rdf.RdfTriple;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.CustomAttribute_;
@@ -47,7 +50,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
@@ -408,7 +411,7 @@ public class DataDao {
         }
     }
 
-    private List<Statement> findCustomAttributeUsage(
+    private List<RdfTriple> findCustomAttributeUsage(
             RepositoryConnection con, IRI predicate, long offset, int resultLimit) {
         final TupleQuery pageQuery = con.prepareTupleQuery(
                 "SELECT ?subject ?attribute ?object ?context " + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE
@@ -419,22 +422,40 @@ public class DataDao {
         bindCustomAttributeUsageQueryParameters(pageQuery, predicate);
         pageQuery.setIncludeInferred(false);
 
-        final List<Statement> statements = new ArrayList<>(resultLimit);
+        final List<RdfTriple> result = new ArrayList<>(resultLimit);
 
-        try (TupleQueryResult result = pageQuery.evaluate()) {
-            while (result.hasNext()) {
-                final BindingSet bindings = result.next();
+        try (TupleQueryResult queryResult = pageQuery.evaluate()) {
+            while (queryResult.hasNext()) {
+                final BindingSet bindings = queryResult.next();
 
                 final Resource subject = (Resource) bindings.getValue("subject");
                 final IRI statementPredicate = (IRI) bindings.getValue("attribute");
                 final Value object = bindings.getValue("object");
-                final Resource context = (Resource) bindings.getValue("context");
 
-                statements.add(Values.getValueFactory().createStatement(subject, statementPredicate, object, context));
+                result.add(new RdfTriple(
+                        mapSubjectToResource(subject, con), Iri.create(statementPredicate), mapRdf4jValue(object)));
             }
         }
 
-        return statements;
+        return result;
+    }
+
+    private static Object mapRdf4jValue(Value value) {
+        return value.isLiteral()
+                ? Rdf4jUtils.getLiteralValue((Literal) value)
+                : new Iri(URI.create(value.stringValue()));
+    }
+
+    private RdfResource mapSubjectToResource(Resource subject, RepositoryConnection con) {
+        if (subject.isIRI()) {
+            return Iri.create((IRI) subject);
+        } else {
+            // Relationship annotation
+            assert subject.isTriple();
+            final Triple tt = (Triple) subject;
+            return new RdfTriple(
+                    Iri.create((IRI) tt.getSubject()), Iri.create(tt.getPredicate()), mapRdf4jValue(tt.getObject()));
+        }
     }
 
     /**
@@ -444,7 +465,7 @@ public class DataDao {
      * @param pageable {@link Pageable}
      * @return Page of RDF statements
      */
-    public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
+    public Page<RdfTriple> findCustomAttributeUsage(URI identifier, Pageable pageable) {
         Objects.requireNonNull(identifier);
         Objects.requireNonNull(pageable);
 
@@ -459,7 +480,7 @@ public class DataDao {
             }
 
             int maxResults = Math.min(totalCount, pageable.getPageSize());
-            final List<Statement> statements =
+            final List<RdfTriple> statements =
                     findCustomAttributeUsage(con, predicate, pageable.getOffset(), maxResults);
 
             return new PageImpl<>(statements, pageable, totalCount);

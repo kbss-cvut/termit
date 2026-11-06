@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.rdf.RdfTriple;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
@@ -33,7 +34,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -157,7 +157,7 @@ public class DataController {
     @GetMapping(
             value = "/custom-attributes/{localName}/usage",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<List<Statement>> getCustomAttributeUsage(
+    public ResponseEntity<List<RdfTriple>> getCustomAttributeUsage(
             @Parameter(
                             description =
                                     "Locally (in the context of the namespace) unique part of the attribute identifier.",
@@ -180,7 +180,7 @@ public class DataController {
             pageable = PageRequest.of(pageNo, pageSize);
         }
         final URI identifier = identifierResolver.resolveIdentifier(namespace, localName);
-        final Page<Statement> result = dataService.findCustomAttributeUsage(identifier, pageable);
+        final Page<RdfTriple> result = dataService.findCustomAttributeUsage(identifier, pageable);
         return ResponseEntity.ok()
                 .header(Constants.X_TOTAL_COUNT_HEADER, Long.toString(result.getTotalElements()))
                 .body(result.getContent());

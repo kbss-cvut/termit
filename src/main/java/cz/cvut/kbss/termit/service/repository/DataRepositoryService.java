@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.rdf.RdfTriple;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -29,7 +30,6 @@ import cz.cvut.kbss.termit.persistence.dao.spec.CustomAttributeSpecifications;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -236,7 +236,7 @@ public class DataRepositoryService {
      * @return Page of RDF statements
      */
     @Transactional(readOnly = true)
-    public Page<Statement> findCustomAttributeUsage(URI identifier, Pageable pageable) {
+    public Page<RdfTriple> findCustomAttributeUsage(URI identifier, Pageable pageable) {
         return dataDao.findCustomAttributeUsage(identifier, pageable);
     }
 

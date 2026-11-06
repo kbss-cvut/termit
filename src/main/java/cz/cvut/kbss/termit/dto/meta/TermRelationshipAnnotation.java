@@ -8,9 +8,10 @@ import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
-import cz.cvut.kbss.termit.dto.RdfStatement;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
@@ -19,23 +20,25 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@SparqlResultSetMapping(name = "TermRelationshipAnnotation", classes = @ConstructorResult(
-        targetClass = TermRelationshipAnnotation.class,
-        variables = {
-                @VariableResult(name = "subject", type = URI.class),
-                @VariableResult(name = "predicate", type = URI.class),
-                @VariableResult(name = "object", type = URI.class),
-                @VariableResult(name = "attribute", type = URI.class),
-                @VariableResult(name = "value", type = Object.class)
-        }
-))
+@SparqlResultSetMapping(
+        name = "TermRelationshipAnnotation",
+        classes =
+                @ConstructorResult(
+                        targetClass = TermRelationshipAnnotation.class,
+                        variables = {
+                            @VariableResult(name = "subject", type = URI.class),
+                            @VariableResult(name = "predicate", type = URI.class),
+                            @VariableResult(name = "object", type = URI.class),
+                            @VariableResult(name = "attribute", type = URI.class),
+                            @VariableResult(name = "value", type = Object.class)
+                        }))
 @NonEntity
 @OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/TermRelationshipAnnotation")
 public class TermRelationshipAnnotation implements Serializable {
 
     @NotNull
     @OWLObjectProperty(iri = RDF.SUBJECT)
-    private RdfStatement relationship;
+    private RdfRelationship relationship;
 
     @NotNull
     @OWLObjectProperty(iri = RDF.PREDICATE)
@@ -44,29 +47,26 @@ public class TermRelationshipAnnotation implements Serializable {
     @OWLAnnotationProperty(iri = RDF.OBJECT)
     private Set<Object> value;
 
-    public TermRelationshipAnnotation() {
-    }
+    public TermRelationshipAnnotation() {}
 
-    /**
-     * Constructor used by {@link SparqlResultSetMapping}.
-     */
+    /** Constructor used by {@link SparqlResultSetMapping}. */
     public TermRelationshipAnnotation(URI subject, URI predicate, URI object, URI attribute, Object value) {
-        this.relationship = new RdfStatement(subject, predicate, object);
+        this.relationship = new RdfRelationship(subject, predicate, object);
         this.attribute = attribute;
         this.value = new HashSet<>(Set.of(value));
     }
 
-    public TermRelationshipAnnotation(RdfStatement relationship, URI attribute, Object value) {
+    public TermRelationshipAnnotation(RdfRelationship relationship, URI attribute, Object value) {
         this.relationship = relationship;
         this.attribute = attribute;
         this.value = new HashSet<>(Set.of(value));
     }
 
-    public RdfStatement getRelationship() {
+    public RdfRelationship getRelationship() {
         return relationship;
     }
 
-    public void setRelationship(RdfStatement relationship) {
+    public void setRelationship(RdfRelationship relationship) {
         this.relationship = relationship;
     }
 
@@ -91,9 +91,9 @@ public class TermRelationshipAnnotation implements Serializable {
         if (!(o instanceof TermRelationshipAnnotation that)) {
             return false;
         }
-        return Objects.equals(relationship, that.relationship) && Objects.equals(attribute,
-                                                                                 that.attribute) && Objects.equals(
-                value, that.value);
+        return Objects.equals(relationship, that.relationship)
+                && Objects.equals(attribute, that.attribute)
+                && Objects.equals(value, that.value);
     }
 
     @Override
