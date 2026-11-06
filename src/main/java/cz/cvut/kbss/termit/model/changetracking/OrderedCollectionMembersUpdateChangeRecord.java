@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.model.changetracking;
 
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.RDFCollection;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -9,16 +9,19 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.net.URI;
 import java.util.List;
 
+// TODO: Temporarily using OWLObjectProperty for RDF Collection support until JOPA bug is resolved
+// https://github.com/kbss-cvut/jopa/issues/504
+
 /** Special case of {@link UpdateChangeRecord} representing the original and new values as ordered lists. */
 @OWLClass(iri = Vocabulary.s_c_update_of_ordered_collection_members)
 public class OrderedCollectionMembersUpdateChangeRecord extends AttributeChangeRecord<List<URI>> {
 
     @RDFCollection
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_original_value)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_original_value)
     private List<URI> originalValue;
 
     @RDFCollection
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_has_new_value)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_new_value)
     private List<URI> newValue;
 
     public OrderedCollectionMembersUpdateChangeRecord() {}
