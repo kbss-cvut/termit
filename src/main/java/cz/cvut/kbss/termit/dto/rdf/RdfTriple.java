@@ -72,9 +72,9 @@ public class RdfTriple implements RdfResource {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof RdfTriple rdfTriple)) return false;
-        return Objects.equals(subject, rdfTriple.subject) && Objects.equals(predicate,
-                                                                            rdfTriple.predicate) && Objects.equals(
-                object, rdfTriple.object);
+        return Objects.equals(subject, rdfTriple.subject)
+                && Objects.equals(predicate, rdfTriple.predicate)
+                && Objects.equals(object, rdfTriple.object);
     }
 
     @Override
@@ -84,8 +84,9 @@ public class RdfTriple implements RdfResource {
 
     @Override
     public String toString() {
-        return subject.isIri() ? Utils.uriToString(subject.asIri().value()) :
-               "<< " + subject.asRdfTriple().toString() + " >>" + " " + Utils.uriToString(
-                       predicate.value()) + " " + object;
+        return subject.isIri()
+                ? Utils.uriToString(subject.asIri().value())
+                : "<< " + subject.asRdfTriple().toString() + " >>" + " " + Utils.uriToString(predicate.value()) + " "
+                        + object;
     }
 }
