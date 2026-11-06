@@ -23,6 +23,8 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.OWL;
 import cz.cvut.kbss.jopa.vocabulary.XSD;
 import cz.cvut.kbss.ontodriver.model.LangString;
+import cz.cvut.kbss.termit.dto.rdf.Iri;
+import cz.cvut.kbss.termit.dto.rdf.RdfTriple;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.CustomAttribute;
@@ -74,7 +76,6 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -476,13 +477,14 @@ class DataDaoTest extends BaseDaoTestRunner {
                 statement(context, RDF.TYPE, Values.iri(Vocabulary_.entityClassIRI.toString()), context));
 
         transactional(() -> {
-            final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            final Page<RdfTriple> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
 
             assertEquals(1, result.getTotalElements());
-            final Statement statement = result.getContent().getFirst();
-            assertEquals(termIri.toString(), statement.getSubject().stringValue());
-            assertEquals(attribute.getUri().toString(), statement.getPredicate().stringValue());
-            assertEquals(value, statement.getObject());
+            final RdfTriple statement = result.getContent().getFirst();
+            assertTrue(statement.getSubject().isIri());
+            assertEquals(termIri.stringValue(), statement.getSubject().asIri().value().toString());
+            assertEquals(attribute.getUri(), statement.getPredicate().value());
+            assertEquals("Custom attribute value", statement.getObject());
         });
     }
 
@@ -511,19 +513,19 @@ class DataDaoTest extends BaseDaoTestRunner {
                 statement(context, RDF.TYPE, Values.iri(Vocabulary_.entityClassIRI.toString()), context));
 
         transactional(() -> {
-            final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            final Page<RdfTriple> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
 
             assertEquals(1, result.getTotalElements());
-            final Statement statement = result.getContent().getFirst();
-            assertInstanceOf(Triple.class, statement.getSubject());
+            final RdfTriple statement = result.getContent().getFirst();
+            assertTrue(statement.getSubject().isRdfTriple());
 
-            final Triple resultTriple = (Triple) statement.getSubject();
-            assertEquals(termOne, resultTriple.getSubject());
-            assertEquals(relation.toString(), resultTriple.getPredicate().stringValue());
-            assertEquals(termTwo, resultTriple.getObject());
+            final RdfTriple resultTriple = statement.getSubject().asRdfTriple();
+            assertEquals(termOne.stringValue(), resultTriple.getSubject().asIri().value().toString());
+            assertEquals(relation, resultTriple.getPredicate().value());
+            assertEquals(Iri.create(termTwo), resultTriple.getObject());
 
-            assertEquals(attribute.getUri().toString(), statement.getPredicate().stringValue());
-            assertEquals(value, statement.getObject());
+            assertEquals(attribute.getUri(), statement.getPredicate().value());
+            assertEquals("Custom attribute value", statement.getObject());
         });
     }
 
@@ -558,7 +560,7 @@ class DataDaoTest extends BaseDaoTestRunner {
                 statement(context, RDF.TYPE, Values.iri(Vocabulary_.entityClassIRI.toString()), context));
 
         transactional(() -> {
-            final Page<Statement> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            final Page<RdfTriple> result = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(2, result.getTotalElements());
         });
     }
@@ -584,7 +586,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
 
         transactional(() -> {
-            final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            final Page<RdfTriple> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(0, usage.getTotalElements());
 
             boolean typeAssertionExists = em.createNativeQuery(
@@ -627,7 +629,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeAllCustomAttributeUsages(attribute));
 
         readOnlyTransactional(() -> {
-            final Page<Statement> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            final Page<RdfTriple> usage = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(0, usage.getTotalElements());
 
             final boolean relatedStatementExists = em.createNativeQuery(
@@ -682,7 +684,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         setupAttributeUsageInSnapshot(context, attribute);
 
         readOnlyTransactional(() -> {
-            Page<Statement> usages = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
+            Page<RdfTriple> usages = sut.findCustomAttributeUsage(attribute.getUri(), PageRequest.of(0, 10));
             assertEquals(0, usages.getTotalElements());
             assertTrue(usages.isEmpty());
         });
