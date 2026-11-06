@@ -19,11 +19,11 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;

@@ -19,13 +19,13 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
-import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.VocabularySnapshotDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
@@ -56,7 +56,6 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
-import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -71,6 +70,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.annotation.Nonnull;
 
 import java.io.File;
 import java.net.URI;
@@ -87,17 +88,19 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
-
 /**
  * Business logic concerning vocabularies.
- * <p>
- * Note that retrieval methods that take an instance of {@link Vocabulary} as argument do not have explicit
+ *
+ * <p>Note that retrieval methods that take an instance of {@link Vocabulary} as argument do not have explicit
  * authorization annotations. It is assumed that read access has already been authorized when the {@link Vocabulary}
  * instance/reference was retrieved previously.
  */
 @Service
 public class VocabularyService
-        implements CrudService<Vocabulary, VocabularyDto>, ChangeRecordProvider<Vocabulary>, SupportsLastModification, ApplicationEventPublisherAware {
+        implements CrudService<Vocabulary, VocabularyDto>,
+                ChangeRecordProvider<Vocabulary>,
+                SupportsLastModification,
+                ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
 
@@ -123,16 +126,17 @@ public class VocabularyService
 
     private ApplicationEventPublisher eventPublisher;
 
-    public VocabularyService(VocabularyRepositoryService repositoryService,
-                             ExternalVocabularyService externalVocabularyService,
-                             ChangeRecordService changeRecordService,
-                             @Lazy TermService termService,
-                             VocabularyContextMapper contextMapper,
-                             AccessControlListService aclService,
-                             VocabularyAuthorizationService authorizationService,
-                             VocabularyRelationshipResolver relationshipResolver,
-                             VocabularyContentValidator vocabularyValidator,
-                             ApplicationContext context) {
+    public VocabularyService(
+            VocabularyRepositoryService repositoryService,
+            ExternalVocabularyService externalVocabularyService,
+            ChangeRecordService changeRecordService,
+            @Lazy TermService termService,
+            VocabularyContextMapper contextMapper,
+            AccessControlListService aclService,
+            VocabularyAuthorizationService authorizationService,
+            VocabularyRelationshipResolver relationshipResolver,
+            VocabularyContentValidator vocabularyValidator,
+            ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.externalVocabularyService = externalVocabularyService;
         this.changeRecordService = changeRecordService;
@@ -198,8 +202,8 @@ public class VocabularyService
     private void loadFullAuthorInfo(VocabularySnapshotDto snapshotDto) {
         if (snapshotDto.getAuthor() != null && snapshotDto.getAuthor().getFirstName() == null) {
             context.getBean(UserRepositoryService.class)
-                   .find(snapshotDto.getAuthor().getUri())
-                   .ifPresent(snapshotDto::setAuthor);
+                    .find(snapshotDto.getAuthor().getUri())
+                    .ifPresent(snapshotDto::setAuthor);
         }
     }
 
@@ -239,8 +243,8 @@ public class VocabularyService
     /**
      * Gets identifiers of all vocabularies whose terms are in a SKOS relationship with the specified vocabulary or are
      * explicitly imported by it.
-     * <p>
-     * This includes transitively related.
+     *
+     * <p>This includes transitively related.
      *
      * @param entity Base vocabulary whose related vocabularies to return
      * @return Set of vocabulary identifiers
@@ -264,8 +268,8 @@ public class VocabularyService
 
     /**
      * Gets statements representing relationships between the specified vocabulary and other vocabularies.
-     * <p>
-     * A selected set of relationships is excluded (for example, versioning relationships).
+     *
+     * <p>A selected set of relationships is excluded (for example, versioning relationships).
      *
      * @param vocabulary Vocabulary whose relationships to retrieve
      * @return List of RDF statements
@@ -297,16 +301,15 @@ public class VocabularyService
 
     /**
      * Imports a new vocabulary from the specified file.
-     * <p>
-     * The file could be a text file containing RDF.
+     *
+     * <p>The file could be a text file containing RDF.
      *
      * @param rename true, if the IRIs should be modified in order to prevent clashes with existing data
-     * @param file   File from which to import the vocabulary
+     * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyExistsException If a vocabulary with a glossary
-     *                                                                           matching the one in the imported data
-     *                                                                           already exists
+     *     matching the one in the imported data already exists
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
@@ -320,12 +323,12 @@ public class VocabularyService
 
     /**
      * Imports a vocabulary from the specified file.
-     * <p>
-     * The file could be a text file containing RDF. If a vocabulary with the specified identifier already exists, its
-     * content is overridden by the input data.
+     *
+     * <p>The file could be a text file containing RDF. If a vocabulary with the specified identifier already exists,
+     * its content is overridden by the input data.
      *
      * @param vocabularyIri IRI of the vocabulary to be created
-     * @param file          File from which to import the vocabulary
+     * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
@@ -338,7 +341,7 @@ public class VocabularyService
      * Imports translations of terms in the specified vocabulary from the specified file.
      *
      * @param vocabularyIri IRI of vocabulary for whose terms to import translations
-     * @param file          File from which to import the translations
+     * @param file File from which to import the translations
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
@@ -358,16 +361,19 @@ public class VocabularyService
 
     private TypeAwareResource getExcelTemplate(String fileName) {
         final Configuration config = context.getBean(Configuration.class);
-        return config.getTemplate().getExcelImport().map(File::new)
-                     .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f,
-                                                                                   ExportFormat.EXCEL.getMediaType()))
-                     .orElseGet(() -> {
-                         assert getClass().getClassLoader().getResource(
-                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
-                         return new TypeAwareClasspathResource(
-                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
-                                 ExportFormat.EXCEL.getMediaType());
-                     });
+        return config.getTemplate()
+                .getExcelImport()
+                .map(File::new)
+                .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f, ExportFormat.EXCEL.getMediaType()))
+                .orElseGet(() -> {
+                    assert getClass()
+                                    .getClassLoader()
+                                    .getResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension())
+                            != null;
+                    return new TypeAwareClasspathResource(
+                            "template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
+                            ExportFormat.EXCEL.getMediaType());
+                });
     }
 
     /**
@@ -398,11 +404,11 @@ public class VocabularyService
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq    Specification of the size and number of the page to return
+     * @param pageReq Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
-                                                                  Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(
+            Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
@@ -413,9 +419,10 @@ public class VocabularyService
      * @param vocabularyUri Vocabulary to be analyzed
      */
     @Transactional
-    @Throttle(value = "{#vocabularyUri}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
-              name = "allTermsVocabularyAnalysis")
+    @Throttle(
+            value = "{#vocabularyUri}",
+            group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
+            name = "allTermsVocabularyAnalysis")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
     public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
         final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
@@ -424,20 +431,16 @@ public class VocabularyService
         final List<TermDto> allTerms = termService.findAllWithDefinition(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary)
                 .forEach(importedVocabulary ->
-                                 allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
+                        allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
 
         final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
         allTerms.forEach(t -> contextToTerms
-                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()),
-                                 k -> new ArrayList<>())
-                .add(t)
-        );
+                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()), k -> new ArrayList<>())
+                .add(t));
         termService.analyzeTermDefinitions(contextToTerms, vocabulary.getPrimaryLanguage());
     }
 
-    /**
-     * Runs text analysis on definitions of all terms in all vocabularies.
-     */
+    /** Runs text analysis on definitions of all terms in all vocabularies. */
     @Throttle(group = "T(ThrottleGroupProvider).getTextAnalysisVocabulariesAll()", name = "allVocabulariesAnalysis")
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
@@ -448,10 +451,11 @@ public class VocabularyService
 
     /**
      * Removes a vocabulary unless:
+     *
      * <ul>
-     *     <li>it is a document vocabulary or</li>
-     *     <li>it is imported by another vocabulary or</li>
-     *     <li>it contains terms that are a part of relations with another vocabulary</li>
+     *   <li>it is a document vocabulary or
+     *   <li>it is imported by another vocabulary or
+     *   <li>it contains terms that are a part of relations with another vocabulary
      * </ul>
      *
      * @param asset Vocabulary to remove
@@ -466,8 +470,8 @@ public class VocabularyService
 
     /**
      * Validates the content of a vocabulary with the specified identifier.
-     * <p>
-     * This also takes into account vocabularies imported by the specified vocabulary.
+     *
+     * <p>This also takes into account vocabularies imported by the specified vocabulary.
      *
      * @param vocabularyIri Vocabulary to validate
      */
@@ -480,8 +484,8 @@ public class VocabularyService
 
     /**
      * Gets the number of terms in the specified vocabulary.
-     * <p>
-     * Note that this method counts the terms regardless of their hierarchical position.
+     *
+     * <p>Note that this method counts the terms regardless of their hierarchical position.
      *
      * @param vocabulary Vocabulary whose terms should be counted
      * @return Number of terms in the vocabulary, 0 for empty or unknown vocabulary
@@ -492,9 +496,9 @@ public class VocabularyService
 
     /**
      * Creates a snapshot of the specified vocabulary.
-     * <p>
-     * The result is a read-only snapshot of the specified vocabulary, its content and any vocabularies it depends on or
-     * that depend on it.
+     *
+     * <p>The result is a read-only snapshot of the specified vocabulary, its content and any vocabularies it depends on
+     * or that depend on it.
      *
      * @param vocabulary Vocabulary to snapshot
      */
@@ -520,8 +524,8 @@ public class VocabularyService
 
     /**
      * Finds snapshots of the specified asset.
-     * <p>
-     * Note that the list does not contain the currently active version of the asset, as it is not considered a
+     *
+     * <p>Note that the list does not contain the currently active version of the asset, as it is not considered a
      * snapshot.
      *
      * @param asset Asset whose snapshots to find
@@ -533,11 +537,11 @@ public class VocabularyService
 
     /**
      * Finds a version of the specified asset valid at the specified instant.
-     * <p>
-     * The result may be the current version, in case there is no snapshot matching the instant.
+     *
+     * <p>The result may be the current version, in case there is no snapshot matching the instant.
      *
      * @param asset Asset whose version to get
-     * @param at    Instant at which the asset should be returned
+     * @param at Instant at which the asset should be returned
      * @return Version of the asset valid at the specified instant
      */
     public Vocabulary findVersionValidAt(Vocabulary asset, Instant at) {
@@ -553,22 +557,24 @@ public class VocabularyService
     @Transactional(readOnly = true)
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public AccessControlListDto getAccessControlList(Vocabulary vocabulary) {
-        return aclService.findForAsDto(vocabulary).orElseThrow(
-                () -> new NotFoundException("Access control list for vocabulary " + Utils.uriToString(
-                        vocabulary.getUri()) + " not found."));
+        return aclService
+                .findForAsDto(vocabulary)
+                .orElseThrow(() -> new NotFoundException("Access control list for vocabulary "
+                        + Utils.uriToString(vocabulary.getUri()) + " not found."));
     }
 
     private AccessControlList findRequiredAclForVocabulary(Vocabulary vocabulary) {
-        return aclService.findFor(vocabulary).orElseThrow(
-                () -> new NotFoundException("Access control list for vocabulary " + Utils.uriToString(
-                        vocabulary.getUri()) + " not found."));
+        return aclService
+                .findFor(vocabulary)
+                .orElseThrow(() -> new NotFoundException("Access control list for vocabulary "
+                        + Utils.uriToString(vocabulary.getUri()) + " not found."));
     }
 
     /**
      * Adds the specified access control record to the access control list of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param record     Record to add to the target ACL
+     * @param record Record to add to the target ACL
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
@@ -581,7 +587,7 @@ public class VocabularyService
      * Removes the specified access control record from the access control list of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param record     Record to remove from the target ACL
+     * @param record Record to remove from the target ACL
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
@@ -594,7 +600,7 @@ public class VocabularyService
      * Updates access control level in the specified {@link AccessControlRecord}.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param update     Access control record containing updated access level
+     * @param update Access control record containing updated access level
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")

@@ -482,7 +482,9 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertEquals(1, result.getTotalElements());
             final RdfTriple statement = result.getContent().getFirst();
             assertTrue(statement.getSubject().isIri());
-            assertEquals(termIri.stringValue(), statement.getSubject().asIri().value().toString());
+            assertEquals(
+                    termIri.stringValue(),
+                    statement.getSubject().asIri().value().toString());
             assertEquals(attribute.getUri(), statement.getPredicate().value());
             assertEquals("Custom attribute value", statement.getObject());
         });
@@ -520,7 +522,9 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertTrue(statement.getSubject().isRdfTriple());
 
             final RdfTriple resultTriple = statement.getSubject().asRdfTriple();
-            assertEquals(termOne.stringValue(), resultTriple.getSubject().asIri().value().toString());
+            assertEquals(
+                    termOne.stringValue(),
+                    resultTriple.getSubject().asIri().value().toString());
             assertEquals(relation, resultTriple.getPredicate().value());
             assertEquals(Iri.create(termTwo), resultTriple.getObject());
 

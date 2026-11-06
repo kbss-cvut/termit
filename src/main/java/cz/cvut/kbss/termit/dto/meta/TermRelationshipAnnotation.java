@@ -11,6 +11,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
@@ -19,16 +20,18 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@SparqlResultSetMapping(name = "TermRelationshipAnnotation", classes = @ConstructorResult(
-        targetClass = TermRelationshipAnnotation.class,
-        variables = {
-                @VariableResult(name = "subject", type = URI.class),
-                @VariableResult(name = "predicate", type = URI.class),
-                @VariableResult(name = "object", type = URI.class),
-                @VariableResult(name = "attribute", type = URI.class),
-                @VariableResult(name = "value", type = Object.class)
-        }
-))
+@SparqlResultSetMapping(
+        name = "TermRelationshipAnnotation",
+        classes =
+                @ConstructorResult(
+                        targetClass = TermRelationshipAnnotation.class,
+                        variables = {
+                            @VariableResult(name = "subject", type = URI.class),
+                            @VariableResult(name = "predicate", type = URI.class),
+                            @VariableResult(name = "object", type = URI.class),
+                            @VariableResult(name = "attribute", type = URI.class),
+                            @VariableResult(name = "value", type = Object.class)
+                        }))
 @NonEntity
 @OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/TermRelationshipAnnotation")
 public class TermRelationshipAnnotation implements Serializable {
@@ -44,12 +47,9 @@ public class TermRelationshipAnnotation implements Serializable {
     @OWLAnnotationProperty(iri = RDF.OBJECT)
     private Set<Object> value;
 
-    public TermRelationshipAnnotation() {
-    }
+    public TermRelationshipAnnotation() {}
 
-    /**
-     * Constructor used by {@link SparqlResultSetMapping}.
-     */
+    /** Constructor used by {@link SparqlResultSetMapping}. */
     public TermRelationshipAnnotation(URI subject, URI predicate, URI object, URI attribute, Object value) {
         this.relationship = new RdfRelationship(subject, predicate, object);
         this.attribute = attribute;
@@ -91,9 +91,9 @@ public class TermRelationshipAnnotation implements Serializable {
         if (!(o instanceof TermRelationshipAnnotation that)) {
             return false;
         }
-        return Objects.equals(relationship, that.relationship) && Objects.equals(attribute,
-                                                                                 that.attribute) && Objects.equals(
-                value, that.value);
+        return Objects.equals(relationship, that.relationship)
+                && Objects.equals(attribute, that.attribute)
+                && Objects.equals(value, that.value);
     }
 
     @Override

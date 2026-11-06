@@ -32,18 +32,20 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.Objects;
 
-/**
- * Utility class describing a generic {@link #relation} between an {@link #object} and {@link #subject}
- */
+/** Utility class describing a generic {@link #relation} between an {@link #object} and {@link #subject} */
 @NonEntity
 @OWLClass(iri = RDF.STATEMENT)
-@SparqlResultSetMapping(name = "RdfRelationship",
-                        classes = {@ConstructorResult(targetClass = RdfRelationship.class,
-                                                      variables = {
-                                                              @VariableResult(name = "subject", type = URI.class),
-                                                              @VariableResult(name = "relation", type = URI.class),
-                                                              @VariableResult(name = "object", type = URI.class)
-                                                      })})
+@SparqlResultSetMapping(
+        name = "RdfRelationship",
+        classes = {
+            @ConstructorResult(
+                    targetClass = RdfRelationship.class,
+                    variables = {
+                        @VariableResult(name = "subject", type = URI.class),
+                        @VariableResult(name = "relation", type = URI.class),
+                        @VariableResult(name = "object", type = URI.class)
+                    })
+        })
 public class RdfRelationship implements Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
@@ -58,8 +60,7 @@ public class RdfRelationship implements Serializable {
     @OWLObjectProperty(iri = RDF.OBJECT)
     private URI object;
 
-    public RdfRelationship() {
-    }
+    public RdfRelationship() {}
 
     public RdfRelationship(URI subject, URI relation, URI object) {
         this.subject = subject;
@@ -96,9 +97,9 @@ public class RdfRelationship implements Serializable {
         if (!(o instanceof RdfRelationship that)) {
             return false;
         }
-        return Objects.equals(object, that.object) && Objects.equals(relation,
-                                                                     that.relation) && Objects.equals(
-                subject, that.subject);
+        return Objects.equals(object, that.object)
+                && Objects.equals(relation, that.relation)
+                && Objects.equals(subject, that.subject);
     }
 
     @Override
