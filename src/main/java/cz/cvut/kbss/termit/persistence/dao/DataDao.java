@@ -30,6 +30,7 @@ import cz.cvut.kbss.jopa.model.query.criteria.Root;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
 import cz.cvut.kbss.termit.dto.rdf.Iri;
 import cz.cvut.kbss.termit.dto.rdf.RdfResource;
@@ -284,6 +285,8 @@ public class DataDao {
                         "SELECT DISTINCT ?strippedLabel WHERE {" + "{?x ?hasLabel ?label .}"
                                 + "UNION"
                                 + "{?x ?hasTitle ?label .}"
+                                + "UNION"
+                                + "{?x ?hasPrefLabel ?label .}"
                                 + "BIND (str(?label) as ?strippedLabel )."
                                 + languageOptionalPattern
                                 + "BIND (?instanceLanguageVal as ?instanceLanguage) ."
@@ -297,6 +300,7 @@ public class DataDao {
                         String.class)
                 .setParameter("x", id)
                 .setParameter("hasLabel", RDFS_LABEL)
+                .setParameter("hasPrefLabel", URI.create(SKOS.PREF_LABEL))
                 .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                 .setParameter("instanceLanguageVal", config.getLanguage());
         if (languageSpecified) {
