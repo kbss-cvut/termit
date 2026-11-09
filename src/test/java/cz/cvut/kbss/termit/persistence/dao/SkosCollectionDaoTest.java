@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -973,5 +974,47 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotalElements());
+    }
+
+    private static <T extends SkosCollection<?>> void assertCollectionEquals(T expected, T actual) {
+        assertEquals(expected.getUri(), actual.getUri());
+        assertEquals(expected.getLabel(), actual.getLabel());
+        assertEquals(expected.getDescription(), actual.getDescription());
+        assertEquals(expected.getVocabulary(), actual.getVocabulary());
+        assertEquals(expected.getMembers(), actual.getMembers());
+        assertEquals(Utils.emptyIfNull(expected.getTypes()), Utils.emptyIfNull(actual.getTypes()));
+    }
+
+    @Test
+    void unorderedCollectionCanBeLoadedWithoutEntityDescriptor() {
+        final TermCollection result =
+                readOnlyTransactional(() -> em.find(TermCollection.class, unorderedCollection.getUri()));
+        assertCollectionEquals(unorderedCollection, result);
+    }
+
+    @Test
+    void orderedCollectionCanBeLoadedWithoutEntityDescriptor() {
+        final OrderedTermCollection result =
+                readOnlyTransactional(() -> em.find(OrderedTermCollection.class, orderedCollection.getUri()));
+        assertCollectionEquals(orderedCollection, result);
+    }
+
+    /** @see <a href="https://github.com/kbss-cvut/jopa/issues/502">JOPA GH-502</a> */
+    @Test
+    void orderedCollectionCanBeLoadedWithoutEntityDescriptorWhenMembersAreGraduallyAdded() {
+        final List<Term> newMembers = Generator.generateTermsWithIds(5);
+        newMembers.forEach(term -> {
+            term.setVocabulary(vocabulary.getUri());
+            orderedCollection.addMember(term.getUri());
+            transactional(() -> {
+                em.persist(term, descriptorFactory.termDescriptor(term));
+                sut.update(orderedCollection, vocabulary);
+            });
+        });
+
+        final OrderedTermCollection result =
+                readOnlyTransactional(() -> em.find(OrderedTermCollection.class, orderedCollection.getUri()));
+        assertThat(result.getMembers()).containsAll(identifiers(newMembers));
+        assertCollectionEquals(orderedCollection, result);
     }
 }
