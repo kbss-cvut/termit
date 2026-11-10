@@ -420,8 +420,9 @@ public class SkosCollectionDao {
      * @param vocabulary vocabulary of the entities
      */
     private Query entitiesWithTypeQuery(Collection<URI> identifiers, Vocabulary vocabulary) {
-        Query query = em.createNativeQuery(
-                        """
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(identifiers);
+        return em.createNativeQuery("""
                  SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
                      ?entity a ?type ;
                          ?inScheme ?vocabulary .
@@ -429,11 +430,8 @@ public class SkosCollectionDao {
                  } GROUP BY ?entity
                  """.formatted(Constants.GROUP_CONCAT_SEPARATOR), TypeAwareEntity.RESULTSET_MAPPING)
                 .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
+                .setParameter("vocabulary", vocabulary.getUri())
                 .setParameter("ids", identifiers);
-        if (vocabulary != null) {
-            query.setParameter("vocabulary", vocabulary.getUri());
-        }
-        return query;
     }
 
     /**
