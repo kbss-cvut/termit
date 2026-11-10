@@ -21,3 +21,12 @@ changelog:
     -   include:
             file: rulesetUpdate.yaml
             relativeToChangelogFile: true
+    -   changeSet:
+            id: 13
+            changes:
+                -   type: importFromUrl
+                    # Import data description ontology update https://github.com/kbss-cvut/data-description/pull/35
+                    # SKOS Collection snapshots
+                    sourceUrl: https://onto.fel.cvut.cz/ontologies/data-description/version/2.1.0.ttl
+                    graph: http://onto.fel.cvut.cz/ontologies/data-description
+                    replace: true
