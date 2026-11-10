@@ -17,7 +17,6 @@ import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,9 +60,6 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
-    private VocabularyDao vocabularyDao;
-
-    @Autowired
     private DtoMapper dtoMapper;
 
     private Vocabulary vocabulary;
@@ -82,7 +78,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         vocabulary = Generator.generateVocabularyWithId();
         vocabularyDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
-        transactional(() -> vocabularyDao.persist(vocabulary));
+        transactional(() -> em.persist(vocabulary, vocabularyDescriptor));
 
         unorderedMembers = Generator.generateTermsWithIds(5);
         unorderedCollection = Generator.generateTermCollection(vocabulary, unorderedMembers);
@@ -90,11 +86,9 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         orderedMembers = Generator.generateTermsWithIds(5);
         orderedCollection = Generator.generateOrderedTermCollection(vocabulary, orderedMembers);
 
-        transactional(() -> {
-            Stream.of(unorderedMembers, orderedMembers, Set.of(unorderedCollection, orderedCollection))
-                    .flatMap(Collection::stream)
-                    .forEach(e -> em.persist(e, vocabularyDescriptor));
-        });
+        transactional(() -> Stream.of(unorderedMembers, orderedMembers, Set.of(unorderedCollection, orderedCollection))
+                .flatMap(Collection::stream)
+                .forEach(e -> em.persist(e, vocabularyDescriptor)));
     }
 
     @Test
@@ -378,7 +372,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updateRejectsChangeOfCollectionVocabulary() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> vocabularyDao.persist(anotherVocabulary));
+        transactional(() -> em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
         unorderedCollection.setVocabulary(anotherVocabulary.getUri());
 
         final ValidationException ex =
@@ -390,7 +384,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void persistThrowsNotFoundExceptionWhenMemberIsFromAnotherVocabulary() {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> vocabularyDao.persist(anotherVocabulary));
+        transactional(() -> em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
         final Term foreignTerm = Generator.generateTermWithId(anotherVocabulary.getUri());
         transactional(() -> em.persist(foreignTerm, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
         final TermCollection collection = Generator.generateTermCollection(vocabulary, unorderedMembers);
