@@ -67,7 +67,11 @@ public class SkosCollectionDto implements HasIdentifier, HasTypes {
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<Object>> properties;
 
-    /** Prevents JOPA from loading the members into {@link #properties} */
+    /**
+     * Prevents JOPA from loading the members into {@link #properties}. Presence of this field instructs jopa to not
+     * include {@code skos:member} in properties. Members are explicit statements, using {@code includeExplicit = false}
+     * is a "hack" preventing jopa from actually loading them.
+     */
     @JsonIgnore
     @Inferred(includeExplicit = false)
     @OWLObjectProperty(iri = SKOS.MEMBER)
