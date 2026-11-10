@@ -23,6 +23,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -422,5 +423,48 @@ class TermRelationshipAnnotationDaoTest extends BaseDaoTestRunner {
                         vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit"))));
             }
         });
+    }
+
+    @Test
+    void findAllForSubjectReturnsAnnotationsOfInverseSideOfSymmetricCustomAttribute() {
+        final String data = """
+                <http://onto.fel.cvut.cz/ontologies/application/termit> {
+                <http://onto.fel.cvut.cz/ontologies/application/termit> a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/subject> a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> "Subject"@en ;
+                    <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/object> a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> "Object"@en ;
+                    <http://www.w3.org/2004/02/skos/core#inScheme> <http://onto.fel.cvut.cz/ontologies/application/termit> .
+                  <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://onto.fel.cvut.cz/ontologies/application/termit/symmetric-custom-attribute> <http://onto.fel.cvut.cz/ontologies/application/termit/object> .
+                  << <http://onto.fel.cvut.cz/ontologies/application/termit/subject> <http://onto.fel.cvut.cz/ontologies/application/termit/symmetric-custom-attribute> <http://onto.fel.cvut.cz/ontologies/application/termit/object> >> <http://onto.fel.cvut.cz/ontologies/application/termit/approved> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+                }
+                <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attributes> {
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/approved> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute> ;
+                        rdfs:label "Approved"@en ;
+                        rdfs:domain <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
+                    <http://onto.fel.cvut.cz/ontologies/application/termit/symmetric-custom-attribute> a <http://onto.fel.cvut.cz/ontologies/application/termit/custom-attribute>, <http://www.w3.org/2002/07/owl#SymmetricProperty> ;
+                        rdfs:label "Symmetric custom attribute"@en ;
+                        rdfs:domain <http://www.w3.org/2004/02/skos/core#Concept> ;
+                        rdfs:range <http://www.w3.org/2004/02/skos/core#Concept> .
+                }
+                # This simulates inferred inverse side
+                <http://onto.fel.cvut.cz/ontologies/application/termit/object> <http://onto.fel.cvut.cz/ontologies/application/termit/symmetric-custom-attribute> <http://onto.fel.cvut.cz/ontologies/application/termit/subject> .
+                """;
+        transactional(() -> loadData(data));
+
+        final Term t = new Term(OBJECT);
+        t.setVocabulary(URI.create("http://onto.fel.cvut.cz/ontologies/application/termit"));
+        final List<TermRelationshipAnnotation> result = sut.findAllForSubject(t);
+        assertEquals(1, result.size());
+        final TermRelationshipAnnotation annotation = result.getFirst();
+        assertEquals(
+                new RdfRelationship(
+                        OBJECT,
+                        URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/symmetric-custom-attribute"),
+                        SUBJECT),
+                annotation.getRelationship());
+        assertEquals(ANNOTATION_PROPERTY, annotation.getAttribute());
+        assertEquals(Set.of(true), annotation.getValue());
     }
 }

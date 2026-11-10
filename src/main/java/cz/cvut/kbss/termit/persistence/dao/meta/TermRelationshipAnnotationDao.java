@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.dto.meta.TermRelationshipAnnotation;
 import cz.cvut.kbss.termit.dto.rdf.RdfRelationship;
 import cz.cvut.kbss.termit.exception.TermRelationshipAnnotationException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
@@ -69,7 +70,7 @@ public class TermRelationshipAnnotationDao {
         final URI context = vocabularyContextMapper.getVocabularyContext(term.getVocabulary());
         return Stream.concat(
                         findAnnotationsForSubject(term, context).stream(),
-                        findAnnotationsForInverseSideOfSkosSymmetricProperties(term).stream())
+                        findAnnotationsForInverseSideOfSymmetricProperties(term).stream())
                 .toList();
     }
 
@@ -77,10 +78,10 @@ public class TermRelationshipAnnotationDao {
         final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
                 List.of(CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
         return (List<TermRelationshipAnnotation>) em.createNativeQuery("""
-                                                                    SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
-                                                                    GRAPH ?g {
-                                                                    << ?subject ?predicate ?object >> ?attribute ?value . }
-                                                                    }""", "TermRelationshipAnnotation")
+                                                                               SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
+                                                                               GRAPH ?g {
+                                                                               << ?subject ?predicate ?object >> ?attribute ?value . }
+                                                                               }""", "TermRelationshipAnnotation")
                 .setParameter("g", context)
                 .setParameter("subject", term)
                 .setParameter("attribute", annotationProperties)
@@ -94,21 +95,27 @@ public class TermRelationshipAnnotationDao {
      * @param term Term whose relationship annotations to retrieve
      * @return List of resolved annotations
      */
-    private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSkosSymmetricProperties(Term term) {
+    private List<TermRelationshipAnnotation> findAnnotationsForInverseSideOfSymmetricProperties(Term term) {
         final List<CustomAttribute> annotationProperties = dataDao.findAllCustomAttributes(
                 List.of(CustomAttributeSpecifications.hasDomain(URI.create(RDF.STATEMENT))));
+        final List<CustomAttribute> symmetricProperties =
+                dataDao.findAllCustomAttributes(List.of(CustomAttributeSpecifications.isSymmetric()));
+        final List<URI> allSymmetricProperties = Stream.concat(
+                        SYMMETRIC_SKOS_PROPERTIES.stream(),
+                        symmetricProperties.stream().map(RdfsResource::getUri))
+                .toList();
         // Must use FILTER for ?attribute and ?predicate because setting the value directly results in VALUES clause
         // (which is there because ?subject is projected out of the query)
         // causing incorrect query results, because mismatch in the number of items in VALUES meant UNDEF was used.
         return (List<TermRelationshipAnnotation>) em.createNativeQuery("""
-                                                                    SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
-                                                                    GRAPH ?g { << ?object ?predicate ?subject >> ?attribute ?value . }
-                                                                    FILTER (?attribute IN (?atts))
-                                                                    FILTER (?predicate IN (?symmetricSkosProps))
-                                                                    FILTER NOT EXISTS { ?object a ?termSnapshot . }
-                                                                    }""", "TermRelationshipAnnotation")
+                                                                               SELECT DISTINCT ?subject ?predicate ?object ?attribute ?value WHERE {
+                                                                               << ?object ?predicate ?subject >> ?attribute ?value .
+                                                                               FILTER (?attribute IN (?atts))
+                                                                               FILTER (?predicate IN (?symmetricSkosProps))
+                                                                               FILTER NOT EXISTS { ?object a ?termSnapshot . }
+                                                                               }""", "TermRelationshipAnnotation")
                 .setParameter("subject", term)
-                .setParameter("symmetricSkosProps", SYMMETRIC_SKOS_PROPERTIES)
+                .setParameter("symmetricSkosProps", allSymmetricProperties)
                 .setParameter("atts", annotationProperties)
                 .setParameter("termSnapshot", URI.create(Vocabulary.s_c_version_of_term))
                 .getResultStream()
