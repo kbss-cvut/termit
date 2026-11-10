@@ -24,6 +24,8 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.DeleteChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.IdentifierChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.IriMigrationDao;
@@ -38,6 +40,7 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.util.TermSelectionParams;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -100,6 +103,9 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private ChangeRecordDao changeRecordDao;
+
+    @Autowired
+    private SkosCollectionRepositoryService collectionService;
 
     @MockitoSpyBean
     private IriMigrationDao iriMigrationDao;
@@ -1105,5 +1111,43 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         return readOnlyTransactional(() -> em.createNativeQuery("ASK {GRAPH ?graph { ?s ?p ?o }}", Boolean.class)
                 .setParameter("graph", graph)
                 .getSingleResult());
+    }
+
+    @Test
+    void migrateIdentifierMigratesUnorderedCollectionIdentifier() {
+        final TermCollection collection = Generator.generateTermCollection(vocabularyA, termsA);
+        collectionService.persist(collection, vocabularyA);
+
+        assertTrue(collectionService
+                .findUnordered(collection.getUri(), vocabularyA)
+                .isPresent());
+        final IriMigrationPair iris = iriMigration(collection.getUri());
+        sut.migrateIdentifier(iris, IriMigrationType.SKOS_COLLECTION, new IriMigrationParams(), author, task);
+
+        assertTrue(collectionService
+                .findUnordered(collection.getUri(), vocabularyA)
+                .isEmpty());
+        final TermCollection migrated =
+                collectionService.findUnordered(iris.newIri(), vocabularyA).orElseThrow();
+        assertEquals(collection.getLabel(), migrated.getLabel());
+        assertEquals(collection.getMembers(), migrated.getMembers());
+    }
+
+    @Test
+    void migrateIdentifierMigratesOrderedCollectionIdentifier() {
+        final OrderedTermCollection collection = Generator.generateOrderedTermCollection(vocabularyA, termsA);
+        collectionService.persist(collection, vocabularyA);
+
+        assertTrue(
+                collectionService.findOrdered(collection.getUri(), vocabularyA).isPresent());
+        final IriMigrationPair iris = iriMigration(collection.getUri());
+        sut.migrateIdentifier(iris, IriMigrationType.SKOS_COLLECTION, new IriMigrationParams(), author, task);
+
+        assertTrue(
+                collectionService.findOrdered(collection.getUri(), vocabularyA).isEmpty());
+        final OrderedTermCollection migrated =
+                collectionService.findOrdered(iris.newIri(), vocabularyA).orElseThrow();
+        assertEquals(collection.getLabel(), migrated.getLabel());
+        assertEquals(collection.getMembers(), migrated.getMembers());
     }
 }
