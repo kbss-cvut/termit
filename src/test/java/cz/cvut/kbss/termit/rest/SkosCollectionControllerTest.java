@@ -90,7 +90,6 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
     private Vocabulary vocabulary;
 
     private TermCollection collection;
-    private SkosCollectionDto collectionDto;
 
     @BeforeEach
     void setUp() {
@@ -99,7 +98,7 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(VOCABULARY_URI);
 
         collection = generateCollection();
-        collectionDto = Environment.getDtoMapper().skosCollectionToDto(collection);
+        SkosCollectionDto collectionDto = Environment.getDtoMapper().skosCollectionToDto(collection);
 
         lenient().doReturn(collectionDto).when(collectionServiceMock).findRequiredDto(COLLECTION_URI, VOCABULARY_URI);
 
