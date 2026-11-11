@@ -224,7 +224,11 @@ public class SkosCollectionDao {
      */
     public Optional<SkosCollectionDto> findDto(URI collectionUri) {
         try {
-            return Optional.ofNullable(em.find(SkosCollectionDto.class, collectionUri));
+            return Optional.ofNullable(em.find(SkosCollectionDto.class, collectionUri))
+                    .map(dto -> {
+                        em.detach(dto);
+                        return dto;
+                    });
         } catch (RuntimeException e) {
             throw new PersistenceException("Failed to find SKOS collection DTO " + Utils.uriToString(collectionUri), e);
         }
@@ -416,6 +420,8 @@ public class SkosCollectionDao {
      * @param vocabulary vocabulary of the entities
      */
     private Query entitiesWithTypeQuery(Collection<URI> identifiers, Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(identifiers);
         return em.createNativeQuery("""
                  SELECT ?entity (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="%s") AS ?types) WHERE {
                      ?entity a ?type ;
@@ -659,5 +665,10 @@ public class SkosCollectionDao {
             throw new PersistenceException(
                     "Failed to remove all collections from vocabulary: " + Utils.uriToString(vocabulary.getUri()), e);
         }
+    }
+
+    public void flushAndClear() {
+        em.flush();
+        em.clear();
     }
 }

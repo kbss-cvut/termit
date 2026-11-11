@@ -2,6 +2,8 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.IriMigrationPair;
 import cz.cvut.kbss.termit.dto.IriMigrationParams;
+import cz.cvut.kbss.termit.dto.SkosCollectionDto;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
@@ -9,7 +11,9 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.repository.migration.IriMigrationRepositoryService;
@@ -25,12 +29,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +57,9 @@ class IriMigrationServiceTest {
 
     @Mock
     private TermAuthorizationService termAuthorizationService;
+
+    @Mock
+    private SkosCollectionRepositoryService collectionRepositoryService;
 
     @Mock
     private SecurityUtils securityUtils;
@@ -148,6 +158,31 @@ class IriMigrationServiceTest {
                 .migrateIdentifier(
                         eq(iris), eq(IriMigrationType.CUSTOM_ATTRIBUTE), eq(params), eq(user.toUser()), any());
         verifyNoInteractions(vocabularyAuthorizationService, termAuthorizationService);
+    }
+
+    @Test
+    void migrateIdentifierMigratesSkosCollectionWhenCurrentUserIsAdmin() {
+        final UserAccount user = Generator.generateUserAccount();
+        user.addType(UserRole.ADMIN.getType());
+
+        final IriMigrationPair iris = new IriMigrationPair(Generator.generateUri(), Generator.generateUri());
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        when(vocabularyAuthorizationService.canMigrateIdentifier(vocabulary)).thenReturn(true);
+
+        final TermCollection collection = Generator.generateTermCollection(vocabulary);
+        final SkosCollectionDto dto = Environment.getDtoMapper().skosCollectionToDto(collection);
+        when(collectionRepositoryService.findDto(iris.originalIri())).thenReturn(Optional.of(dto));
+        when(vocabularyRepositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
+
+        sut.migrateIdentifier(iris, IriMigrationType.SKOS_COLLECTION, params);
+        verify(repositoryService)
+                .migrateIdentifier(
+                        eq(iris), eq(IriMigrationType.SKOS_COLLECTION), eq(params), eq(user.toUser()), any());
+
+        verify(vocabularyAuthorizationService).canMigrateIdentifier(vocabulary);
+        verifyNoMoreInteractions(vocabularyAuthorizationService);
+        verifyNoInteractions(termAuthorizationService);
     }
 
     @ParameterizedTest
