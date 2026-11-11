@@ -121,6 +121,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                     .setParameter("type", typeUri)
                     .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_version_of_vocabulary))
+                    .setHint(QueryHints.FETCH_GRAPH, em.getEntityGraph("Vocabulary.list"))
                     .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -180,6 +181,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                             Vocabulary.class)
                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_imports_vocabulary))
                     .setParameter("imported", vocabulary.getUri())
+                    .setHint(QueryHints.FETCH_GRAPH, em.getEntityGraph("Vocabulary.bare"))
                     .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -604,7 +606,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     /**
      * Evicts the context of the given vocabulary from JOPA cache
      *
-     * @param vocabulary the vocabualry to evict from cache
+     * @param vocabulary the vocabulary to evict from cache
      */
     public void evictCache(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary.getUri());

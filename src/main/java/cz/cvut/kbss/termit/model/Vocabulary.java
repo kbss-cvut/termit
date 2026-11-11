@@ -21,6 +21,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.exception.LazyLoadingException;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
+import cz.cvut.kbss.jopa.model.annotations.NamedAttributeNode;
+import cz.cvut.kbss.jopa.model.annotations.NamedEntityGraph;
+import cz.cvut.kbss.jopa.model.annotations.NamedSubgraph;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
@@ -52,6 +55,24 @@ import java.util.stream.Collectors;
 @Audited
 @PrimaryNotBlank({"label"})
 @OWLClass(iri = SKOS.CONCEPT_SCHEME)
+@NamedEntityGraph(name = "Vocabulary.list", attributeNodes = {
+        @NamedAttributeNode("label"),
+        @NamedAttributeNode("description"),
+        @NamedAttributeNode("primaryLanguage"),
+        @NamedAttributeNode("importedVocabularies"),
+        @NamedAttributeNode("relatedVocabularies"),
+        @NamedAttributeNode(value = "document", subgraph = "DocumentDto")
+}, subgraphs = {
+        @NamedSubgraph(name = "DocumentDto", type = Document.class, attributeNodes = {
+                @NamedAttributeNode("label"),
+                @NamedAttributeNode("description")
+        })
+})
+@NamedEntityGraph(name = "Vocabulary.bare", attributeNodes = {
+        @NamedAttributeNode("label"),
+        @NamedAttributeNode("description"),
+        @NamedAttributeNode("primaryLanguage")
+})
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class Vocabulary extends Asset<MultilingualString>
         implements HasTypes, HasProperties, SupportsSnapshots, HasPrimaryLanguage, Serializable {
