@@ -121,6 +121,9 @@ public class AssertedInferredValueDifferentiator {
         if (target.getInverseCustomAttributes() == null) {
             target.setInverseCustomAttributes(new HashMap<>());
         }
+        if (target.getProperties() == null || original.getInverseCustomAttributes() == null) {
+            return;
+        }
 
         for (CustomAttribute att : symmetricCustomAttributes) {
             final String strUri = att.getUri().toString();

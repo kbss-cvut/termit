@@ -250,6 +250,33 @@ class AssertedInferredValueDifferentiatorTest {
         assertEquals(newAsserted, target.getProperties().get(attribute.getUri().toString()));
     }
 
+    @Test
+    void differentiateSymmetricCustomAttributesDoesNotThrowWhenTargetPropertiesAreNull() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term target = Generator.generateTermWithId();
+        target.setProperties(null);
+        final Term original = new Term();
+        original.setInverseCustomAttributes(Map.of(attribute.getUri().toString(), Set.of(Generator.generateUri())));
+
+        sut.differentiateSymmetricCustomAttributes(target, original, List.of(attribute));
+        assertThat(target.getProperties(), nullValue());
+        assertEquals(Map.of(), target.getInverseCustomAttributes());
+    }
+
+    @Test
+    void differentiateSymmetricCustomAttributesDoesNotThrowWhenOriginalInverseCustomAttributesAreNull() {
+        final CustomAttribute attribute = generateCustomAttribute();
+        final Term target = Generator.generateTermWithId();
+        final Set<URI> asserted = Set.of(Generator.generateUri(), Generator.generateUri());
+        target.setProperties(Map.of(attribute.getUri().toString(), new HashSet<>(asserted)));
+        final Term original = new Term();
+        original.setInverseCustomAttributes(null);
+
+        sut.differentiateSymmetricCustomAttributes(target, original, List.of(attribute));
+        assertEquals(asserted, target.getProperties().get(attribute.getUri().toString()));
+        assertEquals(Map.of(), target.getInverseCustomAttributes());
+    }
+
     private static CustomAttribute generateCustomAttribute() {
         return new CustomAttribute(
                 Generator.generateUri(), MultilingualString.create("Attribute " + Generator.randomInt(), "en"), null);
