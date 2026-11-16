@@ -1,11 +1,10 @@
 package cz.cvut.kbss.termit.dto.rdf;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import org.eclipse.rdf4j.model.IRI;
 
 import java.net.URI;
 
-public record Iri(@JsonValue URI value) implements RdfResource {
+public record Iri(URI value) implements RdfResource {
 
     @Override
     public boolean isRdfTriple() {

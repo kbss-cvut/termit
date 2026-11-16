@@ -1,33 +1,26 @@
 package cz.cvut.kbss.termit.dto.rdf;
 
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
-import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
-import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.util.Utils;
 
 import java.util.Objects;
 
-@NonEntity
-@OWLClass(iri = RDF.STATEMENT)
 public class RdfTriple implements RdfResource {
 
-    @OWLObjectProperty(iri = RDF.SUBJECT)
     private RdfResource subject;
 
-    @OWLObjectProperty(iri = RDF.PREDICATE)
     private Iri predicate;
 
-    @OWLAnnotationProperty(iri = RDF.OBJECT)
-    private Object object;
+    private RdfValue object;
+
+    private Iri context;
 
     public RdfTriple() {}
 
-    public RdfTriple(RdfResource subject, Iri predicate, Object object) {
+    public RdfTriple(RdfResource subject, Iri predicate, Object object, Iri context) {
         this.subject = Objects.requireNonNull(subject);
         this.predicate = Objects.requireNonNull(predicate);
-        this.object = Objects.requireNonNull(object);
+        this.object = RdfValue.create(Objects.requireNonNull(object));
+        this.context = context;
     }
 
     public RdfResource getSubject() {
@@ -46,12 +39,20 @@ public class RdfTriple implements RdfResource {
         this.predicate = predicate;
     }
 
-    public Object getObject() {
+    public RdfValue getObject() {
         return object;
     }
 
-    public void setObject(Object object) {
+    public void setObject(RdfValue object) {
         this.object = object;
+    }
+
+    public Iri getContext() {
+        return context;
+    }
+
+    public void setContext(Iri context) {
+        this.context = context;
     }
 
     @Override

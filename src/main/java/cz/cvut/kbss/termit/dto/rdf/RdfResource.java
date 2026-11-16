@@ -1,16 +1,28 @@
 package cz.cvut.kbss.termit.dto.rdf;
 
-public interface RdfResource {
+import org.eclipse.rdf4j.model.Resource;
 
-    boolean isRdfTriple();
+import java.net.URI;
 
-    boolean isIri();
-
-    default Iri asIri() {
-        throw new UnsupportedOperationException();
+public interface RdfResource extends RdfValue {
+    @Override
+    default boolean isLiteral() {
+        return false;
     }
 
-    default RdfTriple asRdfTriple() {
-        throw new UnsupportedOperationException();
+    static RdfResource create(Object object) {
+        if (object instanceof Iri iri) {
+            return iri;
+        }
+        if (object instanceof URI uri) {
+            return new Iri(uri);
+        }
+        if (object instanceof RdfTriple rdfTriple) {
+            return rdfTriple;
+        }
+        if (object instanceof Resource resource) {
+            return new Iri(URI.create(resource.stringValue()));
+        }
+        throw new IllegalArgumentException("Cannot create RdfResource from object " + object);
     }
 }
