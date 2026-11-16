@@ -486,7 +486,8 @@ class DataDaoTest extends BaseDaoTestRunner {
                     termIri.stringValue(),
                     statement.getSubject().asIri().value().toString());
             assertEquals(attribute.getUri(), statement.getPredicate().value());
-            assertEquals("Custom attribute value", statement.getObject());
+            assertEquals(
+                    "Custom attribute value", statement.getObject().asLiteral().getLabel());
         });
     }
 
@@ -529,7 +530,8 @@ class DataDaoTest extends BaseDaoTestRunner {
             assertEquals(Iri.create(termTwo), resultTriple.getObject());
 
             assertEquals(attribute.getUri(), statement.getPredicate().value());
-            assertEquals("Custom attribute value", statement.getObject());
+            assertEquals(
+                    "Custom attribute value", statement.getObject().asLiteral().getLabel());
         });
     }
 

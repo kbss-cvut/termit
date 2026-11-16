@@ -431,19 +431,17 @@ public class DataDao {
                 final Resource subject = (Resource) bindings.getValue("subject");
                 final IRI statementPredicate = (IRI) bindings.getValue("attribute");
                 final Value object = bindings.getValue("object");
+                final IRI context = (IRI) bindings.getValue("context");
 
                 result.add(new RdfTriple(
-                        mapSubjectToResource(subject, con), Iri.create(statementPredicate), mapRdf4jValue(object)));
+                        mapSubjectToResource(subject, con),
+                        Iri.create(statementPredicate),
+                        object,
+                        Iri.create(context)));
             }
         }
 
         return result;
-    }
-
-    private static Object mapRdf4jValue(Value value) {
-        return value.isLiteral()
-                ? Rdf4jUtils.getLiteralValue((Literal) value)
-                : new Iri(URI.create(value.stringValue()));
     }
 
     private RdfResource mapSubjectToResource(Resource subject, RepositoryConnection con) {
@@ -454,7 +452,7 @@ public class DataDao {
             assert subject.isTriple();
             final Triple tt = (Triple) subject;
             return new RdfTriple(
-                    Iri.create((IRI) tt.getSubject()), Iri.create(tt.getPredicate()), mapRdf4jValue(tt.getObject()));
+                    Iri.create((IRI) tt.getSubject()), Iri.create(tt.getPredicate()), tt.getObject(), null);
         }
     }
 
