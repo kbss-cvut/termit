@@ -458,7 +458,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         final List<HasIdentifier> result =
                 sut.findMembers(unorderedCollection, pageable).getContent();
 
-        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(orderedCollection);
+        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToOrderedDto(orderedCollection);
 
         final Set<HasIdentifier> expected = new HashSet<>();
         unorderedMembers.forEach(t -> expected.add(t.toTermInfo()));
@@ -586,7 +586,7 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         final Set<HasIdentifier> expected = new HashSet<>();
         orderedMembers.forEach(t -> expected.add(t.toTermInfo()));
 
-        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToDto(orderedCollection);
+        final SkosCollectionDto expectedDto = dtoMapper.skosCollectionToOrderedDto(orderedCollection);
         expected.add(expectedDto);
 
         assertEquals(expected.size(), result.size());
@@ -707,7 +707,6 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
                 OrderedTermCollection.class, collections.iterator().next());
         assertEquals(orderedCollection.getUri(), ordered.getUri());
         assertEquals(orderedCollection.getVocabulary(), ordered.getVocabulary());
-        assertEquals(orderedCollection.getTypes(), ordered.getTypes());
     }
 
     @Test

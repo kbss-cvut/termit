@@ -377,4 +377,20 @@ public class SkosCollectionRepositoryService {
             removeMemberFromAllCollections(params.termToRemove().getUri());
         }
     }
+
+    /**
+     * Replaces the {@code existing} instance with the {@code newInstance} by deleting the old one and persisting the
+     * new instance.
+     *
+     * @param existing the old instance to remove
+     * @param newInstance the new instance to persist
+     * @param vocabulary the vocabulary of the collections
+     */
+    @Transactional
+    public void replace(SkosCollection<?> existing, SkosCollection<?> newInstance, Vocabulary vocabulary) {
+        // not removing the collection from other collections
+        collectionDao.remove(existing, vocabulary);
+        collectionDao.flushAndClear();
+        persist(newInstance, vocabulary);
+    }
 }

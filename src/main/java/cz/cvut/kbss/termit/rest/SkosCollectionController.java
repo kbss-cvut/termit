@@ -161,7 +161,8 @@ public class SkosCollectionController extends BaseController {
     @Operation(
             security = {@SecurityRequirement(name = "bearer-key")},
             description =
-                    "Updates the collection with the specified local name from the vocabulary with the specified identifier.")
+                    "Updates the collection with the specified local name from the vocabulary with the specified identifier."
+                            + "If the type of the collection is changed, the collection is converted.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Collection successfully updated."),
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),

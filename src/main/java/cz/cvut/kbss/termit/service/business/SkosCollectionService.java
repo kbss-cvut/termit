@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
@@ -18,6 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
 
 @Service
 public class SkosCollectionService {
@@ -49,11 +54,38 @@ public class SkosCollectionService {
         final Vocabulary vocabulary = vocabularyService.getReference(skosCollection.getVocabulary());
         final SkosCollection<?> existing = repositoryService
                 .find(skosCollection.getUri(), vocabulary)
-                .filter(c -> c.isOrdered() == skosCollection.isOrdered())
                 .orElseThrow(() -> notFound(skosCollection.getUri(), vocabulary.getUri()));
-        dtoMapper.updateCollectionFromDto(skosCollection, existing);
-        repositoryService.update(existing, vocabulary);
+        if (existing.isOrdered() != skosCollection.isOrdered()) {
+            convertCollectionTypeAndUpdate(skosCollection, existing, vocabulary);
+        } else {
+            dtoMapper.updateCollectionFromDto(skosCollection, existing);
+            repositoryService.update(existing, vocabulary);
+        }
         LOG.debug("Updated collection <{}>", skosCollection.getUri());
+    }
+
+    private void convertCollectionTypeAndUpdate(
+            SkosCollectionDto modifiedCollection, SkosCollection<?> existing, Vocabulary vocabulary) {
+        Objects.requireNonNull(modifiedCollection.getUri());
+        Objects.requireNonNull(existing.getUri());
+        Objects.requireNonNull(existing.getMembers());
+
+        SkosCollection<?> converted;
+        if (modifiedCollection.isOrdered()) {
+            assert !existing.isOrdered();
+            converted = new OrderedTermCollection();
+            ((OrderedTermCollection) converted).setMembers(new ArrayList<>(existing.getMembers()));
+            ((OrderedTermCollection) converted).getMembers().sort(Comparator.naturalOrder());
+        } else {
+            assert existing.isOrdered();
+            converted = new TermCollection();
+            ((TermCollection) converted).setMembers(new HashSet<>(existing.getMembers()));
+        }
+        dtoMapper.updateCollectionFromDto(modifiedCollection, converted);
+        converted.setVocabulary(existing.getVocabulary());
+        converted.setPrimaryLanguage(existing.getPrimaryLanguage());
+        converted.setUri(existing.getUri());
+        repositoryService.replace(existing, converted, vocabulary);
     }
 
     @Transactional

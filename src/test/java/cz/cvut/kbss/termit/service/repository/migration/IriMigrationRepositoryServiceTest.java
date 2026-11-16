@@ -898,6 +898,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
         assertTrue(e.getMessage().contains("snapshot"));
     }
 
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     @Test
     void migrationIsReversible() {
         final Vocabulary toMigrate = vocabularyA;
@@ -1135,6 +1136,7 @@ class IriMigrationRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void migrateIdentifierMigratesOrderedCollectionIdentifier() {
+        enableRdfsInference(em); // required to infer ordered collection is subclass of collection
         final OrderedTermCollection collection = Generator.generateOrderedTermCollection(vocabularyA, termsA);
         collectionService.persist(collection, vocabularyA);
 
