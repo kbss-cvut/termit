@@ -17,10 +17,6 @@ public class OrderedTermCollection extends SkosCollection<List<URI>> {
     @OWLObjectProperty(iri = SKOS.MEMBER_LIST, fetch = FetchType.EAGER)
     private List<URI> members;
 
-    public OrderedTermCollection() {
-        this.addType(SKOS.COLLECTION);
-    }
-
     @Override
     public List<URI> getMembers() {
         return members;

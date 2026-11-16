@@ -368,7 +368,7 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findDtoReturnsDtoOfOrderedCollection() {
-        final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToDto(orderedCollection);
+        final SkosCollectionDto expectedDto = Environment.getDtoMapper().skosCollectionToOrderedDto(orderedCollection);
 
         final SkosCollectionDto result = sut.findDto(orderedCollection.getUri()).orElseThrow();
         assertEquals(expectedDto, result);
@@ -516,17 +516,6 @@ class SkosCollectionDaoTest extends BaseDaoTestRunner {
         final List<TypeAwareEntity> result = sut.findMembers(collection, PageRequest.of(1, 2));
 
         assertEquals(identifiers(terms.subList(2, 4)), identifiers(result));
-    }
-
-    @Test
-    void orderedCollectionHasCollectionTypeWhenRetrievedFromRepository() {
-        final OrderedTermCollection collection = sut.find(
-                        OrderedTermCollection.class, orderedCollection.getUri(), vocabulary)
-                .orElseThrow();
-        assertThat(collection.getTypes()).contains(SKOS.COLLECTION);
-
-        final SkosCollectionDto dto = sut.findDto(orderedCollection.getUri()).orElseThrow();
-        assertThat(dto.getTypes()).contains(SKOS.ORDERED_COLLECTION);
     }
 
     @Test

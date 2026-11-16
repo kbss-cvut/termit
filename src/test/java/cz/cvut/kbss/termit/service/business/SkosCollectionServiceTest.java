@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -127,23 +126,6 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void updateKeepsEntityTypesUnchanged() {
-        OrderedTermCollection entity = Generator.generateOrderedTermCollection(vocabulary);
-        entity.setMembers(List.of());
-        sut.persist(entity);
-        final String newLabel = "new label of the collection";
-
-        SkosCollectionDto dto = sut.findRequiredDto(entity.getUri(), vocabulary.getUri());
-
-        dto.getLabel().set(Environment.LANGUAGE, newLabel);
-        sut.update(dto);
-
-        SkosCollectionDto updated = sut.findRequiredDto(entity.getUri(), vocabulary.getUri());
-        assertEquals(newLabel, updated.getLabel().get(Environment.LANGUAGE));
-        assertThat(updated.getTypes()).contains(SKOS.ORDERED_COLLECTION);
-    }
-
-    @Test
     void persistSetsPrimaryLanguageForNewCollection() {
         OrderedTermCollection entity = Generator.generateOrderedTermCollection(vocabulary);
         entity.setMembers(List.of());
@@ -177,6 +159,7 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         assertEquals(unordered.getVocabulary(), updated.getVocabulary());
         assertEquals(unordered.getPrimaryLanguage(), updated.getPrimaryLanguage());
         assertThat(updated.getMembers()).containsExactlyInAnyOrderElementsOf(unordered.getMembers());
+        assertNotEquals(unordered.isOrdered(), updated.isOrdered());
     }
 
     @Test
@@ -186,7 +169,7 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         transactional(() -> members.forEach(t -> termRepositoryService.addRootTermToVocabulary(t, vocabulary)));
         sut.persist(ordered);
 
-        SkosCollectionDto dto = dtoMapper.skosCollectionToDto(ordered);
+        SkosCollectionDto dto = dtoMapper.skosCollectionToOrderedDto(ordered);
         dto.removeType(OrderedTermCollection_.entityClassIRI.toString());
         assertEquals(ordered.getUri(), dto.getUri());
 
@@ -198,6 +181,7 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         assertEquals(ordered.getVocabulary(), updated.getVocabulary());
         assertEquals(ordered.getPrimaryLanguage(), updated.getPrimaryLanguage());
         assertThat(updated.getMembers()).containsExactlyInAnyOrderElementsOf(ordered.getMembers());
+        assertNotEquals(ordered.isOrdered(), updated.isOrdered());
     }
 
     @Test
@@ -205,7 +189,7 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         OrderedTermCollection ordered = Generator.generateOrderedTermCollection(vocabulary);
         ordered.setMembers(List.of());
 
-        SkosCollectionDto dto = dtoMapper.skosCollectionToDto(ordered);
+        SkosCollectionDto dto = dtoMapper.skosCollectionToOrderedDto(ordered);
         dto.removeType(OrderedTermCollection_.entityClassIRI.toString());
 
         testUpdateDoesNotRemoveCollectionFromOtherCollectionsWhenConvertingItsType(ordered, dto);

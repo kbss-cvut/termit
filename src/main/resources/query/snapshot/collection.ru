@@ -15,10 +15,10 @@ INSERT {
                rdf:rest ?nextSnapshot .
     }
 } WHERE {
+    ?collection a skos:Collection .
     GRAPH ?context {
         # Collection in vocabulary
-        ?collection a skos:Collection ;
-            skos:inScheme ?vocabulary .
+        ?collection skos:inScheme ?vocabulary .
 
         {
             # additional properties (label, description)

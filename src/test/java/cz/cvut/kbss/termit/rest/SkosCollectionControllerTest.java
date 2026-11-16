@@ -413,7 +413,8 @@ class SkosCollectionControllerTest extends BaseControllerTestRunner {
         final ArgumentCaptor<SkosCollectionDto> captor = ArgumentCaptor.captor();
         verify(collectionServiceMock).update(captor.capture());
 
-        assertCollectionEquals(Environment.getDtoMapper().skosCollectionToDto(orderedCollection), captor.getValue());
+        assertCollectionEquals(
+                Environment.getDtoMapper().skosCollectionToOrderedDto(orderedCollection), captor.getValue());
     }
 
     @Test

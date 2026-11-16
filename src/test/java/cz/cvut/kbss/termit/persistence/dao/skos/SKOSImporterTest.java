@@ -724,6 +724,5 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         assertEquals(3, imported.getMembers().size());
         assertEquals(List.of(iri("reader"), iri("user"), iri("unordered-collection")), imported.getMembers());
         assertEquals("Ordered collection", imported.getLabel().get("en"));
-        assertEquals(Set.of(SKOS.COLLECTION.toString()), imported.getTypes());
     }
 }
