@@ -169,7 +169,7 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         transactional(() -> members.forEach(t -> termRepositoryService.addRootTermToVocabulary(t, vocabulary)));
         sut.persist(ordered);
 
-        SkosCollectionDto dto = dtoMapper.skosCollectionToOrderedDto(ordered);
+        SkosCollectionDto dto = dtoMapper.skosCollectionToDto(ordered);
         dto.removeType(OrderedTermCollection_.entityClassIRI.toString());
         assertEquals(ordered.getUri(), dto.getUri());
 
@@ -189,7 +189,7 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         OrderedTermCollection ordered = Generator.generateOrderedTermCollection(vocabulary);
         ordered.setMembers(List.of());
 
-        SkosCollectionDto dto = dtoMapper.skosCollectionToOrderedDto(ordered);
+        SkosCollectionDto dto = dtoMapper.skosCollectionToDto(ordered);
         dto.removeType(OrderedTermCollection_.entityClassIRI.toString());
 
         testUpdateDoesNotRemoveCollectionFromOtherCollectionsWhenConvertingItsType(ordered, dto);
