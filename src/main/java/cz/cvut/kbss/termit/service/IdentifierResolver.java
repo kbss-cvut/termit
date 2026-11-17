@@ -93,7 +93,7 @@ public class IdentifierResolver {
      * <li>Transforming the value to lower case</li>
      * <li>Trimming the string</li>
      * <li>Replacing white spaces and slashes with dashes</li>
-     * <li>Removing invalid characters such as parentheses, square brackets, dollar sign, exclamation mark, etc.</li>
+     * <li>Removing invalid characters such as parentheses, square brackets, dollar sign, semicolon, colon, exclamation mark, etc.</li>
      * </ul>
      * <p>
      * Based on <a href="https://gist.github.com/rponte/893494">https://gist.github.com/rponte/893494</a>
@@ -105,7 +105,7 @@ public class IdentifierResolver {
         Objects.requireNonNull(value);
         return normalizeUnicodeCharacters(value.toLowerCase().trim())
                 .replaceAll("[\\s/\\\\\\p{Z}]", Character.toString(REPLACEMENT_CHARACTER))
-                .replaceAll("[(?&$#§),\\[\\]@]", "");
+                .replaceAll("[(?&$#§),;:\\[\\]@]", "");
     }
 
     /**

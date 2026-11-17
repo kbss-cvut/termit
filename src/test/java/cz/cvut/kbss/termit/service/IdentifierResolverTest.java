@@ -97,7 +97,7 @@ class IdentifierResolverTest {
     @Test
     void normalizeReplacesBackwardSlashesWithDashes() {
         final String value = "C:\\Users";
-        assertEquals("c:-users", IdentifierResolver.normalize(value));
+        assertEquals("c-users", IdentifierResolver.normalize(value));
     }
 
     @Test
@@ -107,9 +107,15 @@ class IdentifierResolverTest {
     }
 
     @Test
+    void normalizeRemovesSemicolons() {
+        final String value = "User;Matrix;Param";
+        assertEquals("usermatrixparam", IdentifierResolver.normalize(value));
+    }
+
+    @Test
     void normalizeRemovesQueryParameterDelimiters() {
         final String value = "legal-content/SK/TXT/HTML/?uri=CELEX:32010R0996&form=sk";
-        assertEquals("legal-content-sk-txt-html-uri=celex:32010r0996form=sk", IdentifierResolver.normalize(value));
+        assertEquals("legal-content-sk-txt-html-uri=celex32010r0996form=sk", IdentifierResolver.normalize(value));
     }
 
     @Test

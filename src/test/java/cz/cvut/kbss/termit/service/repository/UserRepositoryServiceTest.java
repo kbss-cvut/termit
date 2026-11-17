@@ -44,6 +44,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -97,6 +98,18 @@ class UserRepositoryServiceTest {
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(userAccountDao).persist(captor.capture());
         assertEquals(user, captor.getValue());
+    }
+
+    @Test
+    void persistEscapesUriSignificantCharactersFromName() {
+        final UserAccount user = Generator.generateUserAccount();
+        user.setPassword("12345");
+        user.setUri(null);
+        user.setFirstName("User;");
+        configuration.getNamespace().setUser(UserAccount_.entityClassIRI + "/");
+        sut.persist(user);
+        assertNotNull(user.getUri());
+        assertThat(user.getUri().toString(), not(containsString(";")));
     }
 
     @Test
