@@ -1,4 +1,4 @@
-* text = auto
+* text=auto
 *.java text diff=java
 *.png binary
 *.jpg binary
