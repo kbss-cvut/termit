@@ -291,6 +291,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
 
     @Test
     void createSnapshotCreatesSnapshotOfOrderedCollection() {
+        enableRdfsInference(em); // required to infer ordered collection is subclass of collection
         final Vocabulary vocabulary = generateVocabularyWithTerm(true);
         final OrderedTermCollection collection = generateCollectionWithTerms(new OrderedTermCollection(), vocabulary);
 

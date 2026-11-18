@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.FullTermDtoWithAncestors;
+import cz.cvut.kbss.termit.dto.OrderedSkosCollectionDto;
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.PersonalAccessTokenDto;
 import cz.cvut.kbss.termit.dto.SkosCollectionDto;
@@ -40,6 +41,7 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
@@ -124,6 +126,8 @@ public abstract class DtoMapper {
     public abstract FullTermDtoWithAncestors withAncestors(Term term, Set<TermInfoWithParents> ancestors);
 
     public abstract SkosCollectionDto skosCollectionToDto(SkosCollection<?> entity);
+
+    public abstract OrderedSkosCollectionDto skosCollectionToOrderedDto(OrderedTermCollection entity);
 
     /**
      * Maps entity type to additional {@code types} of the created dto.

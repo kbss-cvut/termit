@@ -28,54 +28,15 @@ import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * Service for generating and resolving identifiers.
- */
+/** Service for generating and resolving identifiers. */
 @Service
 public class IdentifierResolver {
 
     private static final char REPLACEMENT_CHARACTER = '-';
-    private static final int[] ILLEGAL_FILENAME_CHARS = {34,
-                                                         60,
-                                                         62,
-                                                         124,
-                                                         0,
-                                                         1,
-                                                         2,
-                                                         3,
-                                                         4,
-                                                         5,
-                                                         6,
-                                                         7,
-                                                         8,
-                                                         9,
-                                                         10,
-                                                         11,
-                                                         12,
-                                                         13,
-                                                         14,
-                                                         15,
-                                                         16,
-                                                         17,
-                                                         18,
-                                                         19,
-                                                         20,
-                                                         21,
-                                                         22,
-                                                         23,
-                                                         24,
-                                                         25,
-                                                         26,
-                                                         27,
-                                                         28,
-                                                         29,
-                                                         30,
-                                                         31,
-                                                         58,
-                                                         42,
-                                                         63,
-                                                         92,
-                                                         47};
+    private static final int[] ILLEGAL_FILENAME_CHARS = {
+        34, 60, 62, 124, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 58, 42, 63, 92, 47
+    };
 
     static {
         Arrays.sort(ILLEGAL_FILENAME_CHARS);
@@ -89,14 +50,16 @@ public class IdentifierResolver {
 
     /**
      * Normalizes the specified value which includes:
+     *
      * <ul>
-     * <li>Transforming the value to lower case</li>
-     * <li>Trimming the string</li>
-     * <li>Replacing white spaces and slashes with dashes</li>
-     * <li>Removing invalid characters such as parentheses, square brackets, dollar sign, exclamation mark, etc.</li>
+     *   <li>Transforming the value to lower case
+     *   <li>Trimming the string
+     *   <li>Replacing white spaces and slashes with dashes
+     *   <li>Removing invalid characters such as parentheses, square brackets, dollar sign, semicolon, colon,
+     *       exclamation mark, etc.
      * </ul>
-     * <p>
-     * Based on <a href="https://gist.github.com/rponte/893494">https://gist.github.com/rponte/893494</a>
+     *
+     * <p>Based on <a href="https://gist.github.com/rponte/893494">https://gist.github.com/rponte/893494</a>
      *
      * @param value The value to normalize
      * @return Normalized string
@@ -105,7 +68,7 @@ public class IdentifierResolver {
         Objects.requireNonNull(value);
         return normalizeUnicodeCharacters(value.toLowerCase().trim())
                 .replaceAll("[\\s/\\\\\\p{Z}]", Character.toString(REPLACEMENT_CHARACTER))
-                .replaceAll("[(?&$#§),\\[\\]@]", "");
+                .replaceAll("[(?&$#§),;:\\[\\]@]", "");
     }
 
     /**
@@ -121,8 +84,8 @@ public class IdentifierResolver {
 
     /**
      * Normalizes Unicode characters to a unified representation.
-     * <p>
-     * This ensures, for example, that accented letters are always represented by a single Unicode character.
+     *
+     * <p>This ensures, for example, that accented letters are always represented by a single Unicode character.
      *
      * @param value The value to normalize
      * @return Normalized value
@@ -134,7 +97,7 @@ public class IdentifierResolver {
     /**
      * Generates identifier, appending a normalized string consisting of the specified components to the namespace.
      *
-     * @param namespace  Base URI for the generation
+     * @param namespace Base URI for the generation
      * @param components Components to normalize and add to the identifier
      * @return Generated identifier
      */
@@ -147,8 +110,8 @@ public class IdentifierResolver {
         if (isAbsoluteUri(comps)) {
             final URI tempUri = URI.create(comps);
             try {
-                return new URI(tempUri.getScheme(), tempUri.getAuthority(), tempUri.getPath(), null,
-                               tempUri.getFragment());
+                return new URI(
+                        tempUri.getScheme(), tempUri.getAuthority(), tempUri.getPath(), null, tempUri.getFragment());
             } catch (URISyntaxException e) {
                 // Shouldn't happen, URI has been already validated using URI.create
                 throw new TermItException(e);
@@ -168,8 +131,8 @@ public class IdentifierResolver {
 
     /**
      * Ensures the specified namespace ends with a separator.
-     * <p>
-     * If the namespace does not end with {@literal /} or {@literal #}, a {@literal /} is appended to it.
+     *
+     * <p>If the namespace does not end with {@literal /} or {@literal #}, a {@literal /} is appended to it.
      *
      * @param namespace Namespace candidate
      * @return Namespace ending with a separator
@@ -187,7 +150,7 @@ public class IdentifierResolver {
      *
      * @param value the URI to check
      * @return {@code true} when the URI is prefixed with protocol ({@code http/s, ftp or file} and it is a valid
-     * {@link URI}. {@code false} otherwise
+     *     {@link URI}. {@code false} otherwise
      */
     public static boolean isAbsoluteUri(String value) {
         try {
@@ -206,9 +169,9 @@ public class IdentifierResolver {
      * components to a namespace which is derived from baseUri by appending namespace separator defined by
      * namespaceSeparator.
      *
-     * @param baseUri            Base identifier namespace
+     * @param baseUri Base identifier namespace
      * @param namespaceSeparator Separator to add to {@code baseUri} before {@code label}
-     * @param label              Components to normalize and add to the identifier
+     * @param label Components to normalize and add to the identifier
      * @return Generated identifier
      */
     public URI generateDerivedIdentifier(URI baseUri, String namespaceSeparator, String label) {
@@ -217,9 +180,9 @@ public class IdentifierResolver {
 
     /**
      * Generates a synthetic identifier using the specified base URL.
-     * <p>
-     * This particular implementation uses the current system time in millis to generate the locally unique part of the
-     * identifier.
+     *
+     * <p>This particular implementation uses the current system time in millis to generate the locally unique part of
+     * the identifier.
      *
      * @param base URL base
      * @return Synthetic identifier containing the specified base
@@ -230,15 +193,15 @@ public class IdentifierResolver {
 
     /**
      * Builds an identifier from the specified namespace and fragment.
-     * <p>
-     * This method assumes that the fragment is a normalized string uniquely identifying a resource in the specified
+     *
+     * <p>This method assumes that the fragment is a normalized string uniquely identifying a resource in the specified
      * namespace.
-     * <p>
-     * Basically, the returned identifier should be the same as would be returned for non-normalized fragments by
+     *
+     * <p>Basically, the returned identifier should be the same as would be returned for non-normalized fragments by
      * {@link #generateIdentifier(String, String...)}.
      *
      * @param namespace Identifier namespace
-     * @param fragment  Normalized string unique in the specified namespace
+     * @param fragment Normalized string unique in the specified namespace
      * @return Identifier
      */
     public URI resolveIdentifier(String namespace, String fragment) {
@@ -253,7 +216,7 @@ public class IdentifierResolver {
      * Creates a namespace URI by appending the specified components to the specified base URI, adding separators where
      * necessary.
      *
-     * @param baseUri    Base URI for the namespace
+     * @param baseUri Base URI for the namespace
      * @param components Components to add to namespace URI. Should be normalized
      * @return Namespace URI, ending with a forward slash
      */
@@ -288,8 +251,8 @@ public class IdentifierResolver {
 
     /**
      * Extracts namespace from the specified URI.
-     * <p>
-     * Namespace in this case means the part of the URI up to the last forward slash or hash tag, whichever comes
+     *
+     * <p>Namespace in this case means the part of the URI up to the last forward slash or hash tag, whichever comes
      * later.
      *
      * @param uri URI to extract namespace from
@@ -304,8 +267,8 @@ public class IdentifierResolver {
 
     /**
      * Sanitizes the specified label so that it can be used as a file name.
-     * <p>
-     * This means replacing illegal characters (e.g., slashes) with dashes.
+     *
+     * <p>This means replacing illegal characters (e.g., slashes) with dashes.
      *
      * @param label Label to sanitize to a valid file name
      * @return Valid file name based on the specified label
