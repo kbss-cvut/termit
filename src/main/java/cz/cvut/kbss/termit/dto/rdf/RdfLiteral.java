@@ -1,14 +1,28 @@
 package cz.cvut.kbss.termit.dto.rdf;
 
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.Literal;
 
 import java.net.URI;
 import java.util.Optional;
 
+@NonEntity
+@OWLClass(iri = Vocabulary.s_c_CompoundLiteral)
 public class RdfLiteral implements RdfValue {
+
+    @OWLDataProperty(iri = RDF.VALUE)
     private final String label;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_language)
     private final String language;
+
+    @OWLAnnotationProperty(iri = DC.Terms.TYPE)
     private final URI datatype;
 
     public RdfLiteral(String label, URI datatype) {

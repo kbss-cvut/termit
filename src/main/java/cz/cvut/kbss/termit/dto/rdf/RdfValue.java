@@ -1,16 +1,7 @@
 package cz.cvut.kbss.termit.dto.rdf;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.eclipse.rdf4j.model.Literal;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = Iri.class, name = "IRI"),
-    @JsonSubTypes.Type(value = RdfLiteral.class, name = "Literal"),
-    @JsonSubTypes.Type(value = RdfTriple.class, name = "Triple")
-})
 public interface RdfValue {
 
     boolean isIri();
@@ -31,7 +22,6 @@ public interface RdfValue {
         throw new UnsupportedOperationException();
     }
 
-    @JsonCreator
     static RdfValue create(Object object) {
         try {
             return RdfResource.create(object);
