@@ -1,17 +1,28 @@
 package cz.cvut.kbss.termit.dto.rdf;
 
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
+import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.util.Utils;
 
 import java.util.Objects;
 
+@NonEntity
+@OWLClass(iri = RDF.STATEMENT)
 public class RdfTriple implements RdfResource {
 
+    @OWLObjectProperty(iri = RDF.SUBJECT)
     private RdfResource subject;
 
+    @OWLObjectProperty(iri = RDF.PREDICATE)
     private Iri predicate;
 
+    @OWLObjectProperty(iri = RDF.OBJECT)
     private RdfValue object;
 
+    @OWLObjectProperty(iri = DC.Terms.SOURCE)
     private Iri context;
 
     public RdfTriple() {}

@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.ontodriver.model.LangString;
 import cz.cvut.kbss.termit.dto.rdf.Iri;
 import cz.cvut.kbss.termit.dto.rdf.RdfTriple;
@@ -50,7 +51,6 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -160,37 +160,28 @@ class DataControllerTest extends BaseControllerTestRunner {
         final URI predicate = Generator.generateUri();
         final URI object = Generator.generateUri();
         final URI context = Generator.generateUri();
-        final RdfTriple triple = new RdfTriple(new Iri(subject), new Iri(predicate), new Iri(object), null);
-        final RdfTriple nestedTriple = new RdfTriple(triple, new Iri(predicate), new Iri(object), new Iri(context));
-        final List<RdfTriple> list = List.of(triple, nestedTriple);
+        final RdfTriple triple = new RdfTriple(new Iri(subject), new Iri(predicate), new Iri(object), new Iri(context));
+        final List<RdfTriple> list = List.of(triple);
 
         when(dataServiceMock.findCustomAttributeUsage(any(), any())).thenReturn(new PageImpl<>(list));
 
         final MvcResult mvcResult = mockMvc.perform(get("/data/custom-attributes/{localName}/usage", "attributeName")
-                        .param("namespace", Generator.generateUriString()))
+                        .param("namespace", Generator.generateUriString())
+                        .accept(JsonLd.MEDIA_TYPE))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        final ArrayNode listResult = objectMapper
+        final ArrayNode listResult = jsonLdObjectMapper
                 .readTree(mvcResult.getResponse().getContentAsString())
+                .get("@graph")
                 .asArray();
 
-        final ObjectNode simpleTriple = listResult.get(0).asObject();
-        assertEquals(objectMapper.writeValueAsString(triple), simpleTriple.toString());
-        assertEquals("Triple", simpleTriple.get("type").asString());
-        assertEquals("IRI", simpleTriple.get("subject").get("type").asString());
-        assertEquals("IRI", simpleTriple.get("predicate").get("type").asString());
-        assertEquals("IRI", simpleTriple.get("object").get("type").asString());
-        assertTrue(simpleTriple.get("context").isNull());
+        final ObjectNode first = listResult.get(0).asObject();
 
-        final ObjectNode resultNestedTriple = listResult.get(1).asObject();
-        assertEquals(objectMapper.writeValueAsString(nestedTriple), resultNestedTriple.toString());
-        assertEquals("Triple", resultNestedTriple.get("type").asString());
-        assertEquals("Triple", resultNestedTriple.get("subject").get("type").asString());
-        assertEquals("IRI", resultNestedTriple.get("predicate").get("type").asString());
-        assertEquals("IRI", resultNestedTriple.get("object").get("type").asString());
-        assertEquals(
-                context.toString(),
-                resultNestedTriple.get("context").get("value").asString());
+        assertEquals(subject.toString(), first.at("/subject/value").stringValue());
+        assertEquals(predicate.toString(), first.at("/predicate/value").stringValue());
+        assertEquals(object.toString(), first.at("/object/value").stringValue());
+        assertEquals(context.toString(), first.at("/context/value").stringValue());
+        assertEquals(RDF.STATEMENT, first.at("/@type/0").stringValue());
     }
 }

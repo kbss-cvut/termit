@@ -156,7 +156,7 @@ public class DataController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @GetMapping(
             value = "/custom-attributes/{localName}/usage",
-            produces = {MediaType.APPLICATION_JSON_VALUE})
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<RdfTriple>> getCustomAttributeUsage(
             @Parameter(
                             description =
