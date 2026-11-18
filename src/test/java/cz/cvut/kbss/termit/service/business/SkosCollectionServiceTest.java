@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
@@ -66,6 +67,10 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> vocabularyDao.persist(vocabulary));
+
+        User user = Generator.generateUserWithId();
+        transactional(() -> em.persist(user));
+        Environment.setCurrentUser(user);
 
         collection = Generator.generateTermCollection(vocabulary);
         collection.setMembers(new HashSet<>());

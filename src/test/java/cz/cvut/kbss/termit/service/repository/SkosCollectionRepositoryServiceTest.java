@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
@@ -83,6 +84,10 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary = Generator.generateVocabularyWithId();
         vocabularyDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, vocabularyDescriptor));
+
+        User user = Generator.generateUserWithId();
+        transactional(() -> em.persist(user));
+        Environment.setCurrentUser(user);
 
         unorderedMembers = Generator.generateTermsWithIds(5);
         unorderedCollection = Generator.generateTermCollection(vocabulary, unorderedMembers);
