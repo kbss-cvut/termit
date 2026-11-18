@@ -67,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -600,6 +601,7 @@ public class Generator {
                 "description of collection " + label.get(Environment.LANGUAGE), Environment.LANGUAGE);
         skosCollection.setDescription(description);
         skosCollection.setPrimaryLanguage(Environment.LANGUAGE);
+        skosCollection.setProperties(new HashMap<>());
     }
 
     public static TermCollection generateTermCollection(Vocabulary vocabulary, Collection<Term> members) {

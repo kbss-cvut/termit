@@ -184,6 +184,7 @@ public class DataRepositoryService {
         final String strDomain = attribute.getDomain().toString();
         if (!SKOS.CONCEPT.equals(strDomain)
                 && !SKOS.CONCEPT_SCHEME.equals(strDomain)
+                && !SKOS.COLLECTION.equals(strDomain)
                 && !RDF.STATEMENT.equals(strDomain)) {
             throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
         }

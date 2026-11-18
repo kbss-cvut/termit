@@ -77,6 +77,16 @@ public class SkosCollectionDto implements HasIdentifier, HasTypes {
     @OWLObjectProperty(iri = SKOS.MEMBER)
     private Set<URI> members = Collections.emptySet();
 
+    /**
+     * Prevents JOPA from loading the members into {@link #properties}. Presence of this field instructs jopa to not
+     * include {@code skos:memberList} in properties. Members are explicit statements, using {@code includeExplicit =
+     * false} is a "hack" preventing jopa from actually loading them.
+     */
+    @JsonIgnore
+    @Inferred(includeExplicit = false)
+    @OWLObjectProperty(iri = SKOS.MEMBER_LIST)
+    private Set<URI> orderedMembers = Collections.emptySet();
+
     public SkosCollectionDto() {}
 
     public SkosCollectionDto(URI uri, URI vocabulary, Set<String> types) {

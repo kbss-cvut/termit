@@ -13,8 +13,10 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
+import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
+import cz.cvut.kbss.termit.model.collection.TermCollection_;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -838,5 +842,24 @@ class SkosCollectionRepositoryServiceTest extends BaseServiceTestRunner {
                 sut.findOrdered(orderedCollection.getUri(), vocabulary).orElseThrow();
         assertThat(updated.getMembers()).containsOnlyOnce(member);
         assertEquals(expectedMembers, updated.getMembers());
+    }
+
+    static Set<String> memberProperties() {
+        return Set.of(
+                TermCollection_.membersPropertyIRI.toString(), OrderedTermCollection_.membersPropertyIRI.toString());
+    }
+
+    @ParameterizedTest
+    @MethodSource("memberProperties")
+    void updateThrowsWhenUnorderedCollectionContainsMemberInProperties(String property) {
+        unorderedCollection.setProperties(Map.of(property, Set.of(new Object())));
+        assertThrows(ValidationException.class, () -> sut.update(unorderedCollection, vocabulary));
+    }
+
+    @ParameterizedTest
+    @MethodSource("memberProperties")
+    void updateThrowsWhenOrderedCollectionContainsMemberInProperties(String property) {
+        orderedCollection.setProperties(Map.of(property, Set.of(new Object())));
+        assertThrows(ValidationException.class, () -> sut.update(orderedCollection, vocabulary));
     }
 }
