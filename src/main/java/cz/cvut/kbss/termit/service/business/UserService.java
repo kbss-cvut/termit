@@ -38,13 +38,14 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.List;
@@ -54,9 +55,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-/**
- * User account-related business logic.
- */
+/** User account-related business logic. */
 @Service
 public class UserService {
 
@@ -80,11 +79,15 @@ public class UserService {
     private final PasswordChangeNotifier passwordChangeNotifier;
 
     @Autowired
-    public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
-                       AccessControlListService aclService, SecurityUtils securityUtils, DtoMapper dtoMapper,
-                       Configuration configuration,
-                       PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService,
-                       PasswordChangeNotifier passwordChangeNotifier) {
+    public UserService(
+            UserRepositoryService repositoryService,
+            UserRoleRepositoryService userRoleRepositoryService,
+            AccessControlListService aclService,
+            SecurityUtils securityUtils,
+            DtoMapper dtoMapper,
+            Configuration configuration,
+            PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService,
+            PasswordChangeNotifier passwordChangeNotifier) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
         this.aclService = aclService;
@@ -138,8 +141,8 @@ public class UserService {
 
     /**
      * Retrieves currently logged-in user.
-     * <p>
-     * It also updates last seen timestamp of the current user. While this is a side effect in a get method, it is a
+     *
+     * <p>It also updates last seen timestamp of the current user. While this is a side effect in a get method, it is a
      * simpler solution that emitting some kind of event and using that.
      *
      * @return Currently logged-in user's account
@@ -160,8 +163,8 @@ public class UserService {
 
     /**
      * Persists a new user.
-     * <p>
-     * When a password is null or blank, a random password is generated and an email for password creation is sent to
+     *
+     * <p>When a password is null or blank, a random password is generated and an email for password creation is sent to
      * the user.
      *
      * @param account Account to save
@@ -202,8 +205,8 @@ public class UserService {
 
     /**
      * Updates current user's account with the specified update data.
-     * <p>
-     * If the update contains also password update, the original password specified in the update object has to match
+     *
+     * <p>If the update contains also password update, the original password specified in the update object has to match
      * current user's password.
      *
      * @param update Account update data
@@ -289,8 +292,8 @@ public class UserService {
 
     /**
      * Locks user account when unsuccessful login attempts limit is exceeded.
-     * <p>
-     * This is an application event listener and should not be called directly.
+     *
+     * <p>This is an application event listener and should not be called directly.
      *
      * @param event The event emitted when login attempts limit is exceeded
      */
@@ -316,9 +319,9 @@ public class UserService {
 
     /**
      * Gets a list of assets the specified user manages.
-     * <p>
-     * By managing it is meant that the user has {@link cz.cvut.kbss.termit.model.acl.AccessLevel#SECURITY} access level
-     * to them.
+     *
+     * <p>By managing it is meant that the user has {@link cz.cvut.kbss.termit.model.acl.AccessLevel#SECURITY} access
+     * level to them.
      *
      * @param user User whose access to check
      * @return List of RDFS resources representing the managed assets
@@ -326,49 +329,58 @@ public class UserService {
     public List<RdfsResource> getManagedAssets(@Nonnull UserAccount user) {
         Objects.requireNonNull(user);
         return aclService.findAssetsByAgentWithSecurityAccess(user.toUser()).stream()
-                         .map(dtoMapper::assetToRdfsResource).collect(Collectors.toList());
+                .map(dtoMapper::assetToRdfsResource)
+                .collect(Collectors.toList());
     }
 
     private PasswordChangeRequest createPasswordChangeRequest(UserAccount userAccount) {
         // delete any existing request for the user
-        passwordChangeRequestRepositoryService.findAllByUserAccount(userAccount)
-                                              .forEach(passwordChangeRequestRepositoryService::remove);
+        passwordChangeRequestRepositoryService
+                .findAllByUserAccount(userAccount)
+                .forEach(passwordChangeRequestRepositoryService::remove);
 
         return passwordChangeRequestRepositoryService.create(userAccount);
     }
 
     @Transactional
     public void requestPasswordReset(String username) {
-        final UserAccount account = repositoryService.findByUsername(username)
-                                                     .orElseThrow(() -> NotFoundException.create(UserAccount.class,
-                                                                                                 username));
+        final UserAccount account = repositoryService
+                .findByUsername(username)
+                .orElseThrow(() -> NotFoundException.create(UserAccount.class, username));
         PasswordChangeRequest request = createPasswordChangeRequest(account);
         passwordChangeNotifier.sendPasswordResetEmail(request);
     }
 
     private boolean isValid(PasswordChangeRequest request) {
-        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity())
-                      .isAfter(Utils.timestamp());
+        return request.getCreatedAt()
+                .plus(securityConfig.getPasswordChangeRequestValidity())
+                .isAfter(Utils.timestamp());
     }
 
     /**
      * Changes the user's password if there is a valid password change request.
-     * <p>
-     * Unlocks the user account if it is locked.
+     *
+     * <p>Unlocks the user account if it is locked.
      */
     @Transactional
     public void changePassword(PasswordChangeDto passwordChangeDto) {
         Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeRequestException(
                 "Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
-        PasswordChangeRequest request = passwordChangeRequestRepositoryService.find(passwordChangeDto.getUri())
-                                                                              .orElseThrow(exception);
+        PasswordChangeRequest request = passwordChangeRequestRepositoryService
+                .find(passwordChangeDto.getUri())
+                .orElseThrow(exception);
 
-        if (!request.getToken().equals(passwordChangeDto.getToken()) || !isValid(request)) {
+        if (!request.getToken().equals(passwordChangeDto.getToken())) {
+            LOG.warn("Provided password request token '{}' does not match stored token.", passwordChangeDto.getToken());
+            throw exception.get();
+        }
+        if (!isValid(request)) {
+            LOG.warn("Password change request no longer valid. Created at {}.", request.getCreatedAt());
             throw exception.get();
         }
 
-        UserAccount account = repositoryService.find(request.getUserAccount().getUri())
-                                               .orElseThrow(exception);
+        UserAccount account =
+                repositoryService.find(request.getUserAccount().getUri()).orElseThrow(exception);
 
         passwordChangeRequestRepositoryService.remove(request);
         account.unlock();
