@@ -282,11 +282,13 @@ public class DataDao {
         }
 
         TypedQuery<String> query = em.createNativeQuery(
-                        "SELECT DISTINCT ?strippedLabel WHERE {" + "{?x ?hasLabel ?label .}"
+                        "SELECT DISTINCT ?strippedLabel WHERE {"
+                                + "{ ?x ?hasLabel ?rdfsLabel . FILTER NOT EXISTS { ?x ?hasPrefLabel ?prefLabel . } }"
                                 + "UNION"
-                                + "{?x ?hasTitle ?label .}"
+                                + "{ ?x ?hasTitle ?dcTitle . }"
                                 + "UNION"
-                                + "{?x ?hasPrefLabel ?label .}"
+                                + "{ ?x ?hasPrefLabel ?prefLabel . }"
+                                + "BIND (COALESCE(?prefLabel, ?dcTitle, ?rdfsLabel) as ?label)"
                                 + "BIND (str(?label) as ?strippedLabel )."
                                 + languageOptionalPattern
                                 + "BIND (?instanceLanguageVal as ?instanceLanguage) ."
