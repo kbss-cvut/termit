@@ -252,6 +252,19 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void getLabelReturnsTermPrefLabelWhenAltLabelIsAlsoAvailable() {
+        enableRdfsInference(em);
+        final Term term = Generator.generateTermWithId();
+        term.setLabel("en", "Preferred label");
+        term.setAltLabels(Set.of(MultilingualString.create("Alternative label", "en")));
+        transactional(() -> em.persist(term));
+
+        final Optional<String> result = sut.getLabel(term.getUri(), "en");
+        assertTrue(result.isPresent());
+        assertEquals(term.getLabel("en"), result.get());
+    }
+
+    @Test
     void persistSavesSpecifiedResource() {
         final RdfsResource resource = new RdfsResource(
                 URI.create(RDFS.LABEL.toString()),
