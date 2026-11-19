@@ -16,6 +16,7 @@ import cz.cvut.kbss.termit.model.collection.OrderedTermCollection;
 import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
@@ -61,6 +62,9 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private TermRepositoryService termRepositoryService;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @BeforeEach
     void setUp() {
@@ -302,5 +306,31 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
 
         assertThat(updatedDto.getProperties()).containsEntry(property, propertyValue);
         assertThat(updated.getProperties()).containsEntry(property, propertyValue);
+    }
+
+    @Test
+    void updateWithTypeConversionReplacesAdditionalProperties() {
+        final String attribute = Generator.generateUriString();
+        final Set<Object> originalValue = Set.of("string");
+        final Set<Object> newValue = Set.of("another string");
+        TermCollection unordered = Generator.generateTermCollection(vocabulary, Set.of());
+        unordered.getProperties().put(attribute, originalValue);
+
+        sut.persist(unordered);
+
+        SkosCollectionDto dto = dtoMapper.skosCollectionToDto(unordered);
+        dto.addType(OrderedTermCollection_.entityClassIRI.toString());
+
+        assertThat(dto.getProperties()).containsEntry(attribute, originalValue);
+        dto.getProperties().put(attribute, newValue);
+        sut.update(dto);
+
+        em.clear();
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        OrderedTermCollection updated =
+                repositoryService.findOrdered(dto.getUri(), vocabulary).orElseThrow();
+        assertThat(updated.getProperties()).extractingByKey(attribute).isEqualTo(newValue);
+        assertThat(updated.getProperties()).hasSize(1);
     }
 }
