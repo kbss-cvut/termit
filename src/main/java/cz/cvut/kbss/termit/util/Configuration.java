@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.convert.DurationUnit;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
 
@@ -27,6 +28,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Set;
 
@@ -928,6 +930,7 @@ public class Configuration {
 
         /** A duration for how long requests for resetting passwords are valid before expiration. */
         @NotNull
+        @DurationUnit(ChronoUnit.HOURS)
         private Duration passwordChangeRequestValidity = Duration.ofHours(24);
 
         public ProviderType getProvider() {
