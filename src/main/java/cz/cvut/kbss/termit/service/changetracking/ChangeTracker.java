@@ -158,7 +158,7 @@ public class ChangeTracker {
     @EventListener
     public void onCollectionTypeUpdateEvent(CollectionTypeUpdateEvent event) {
         final Set<String> types = event.getCollectionBeforeTypeChange().getTypes();
-        Set<String> originalTypes = new HashSet<>(types != null ? types : Set.of());
+        Set<String> originalTypes = new HashSet<>(Utils.emptyIfNull(types));
         originalTypes.add(event.getOriginalType().toString());
 
         Set<String> newTypes = new HashSet<>(originalTypes);
