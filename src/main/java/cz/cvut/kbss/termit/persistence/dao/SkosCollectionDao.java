@@ -490,6 +490,18 @@ public class SkosCollectionDao {
         Objects.requireNonNull(skosCollection.getUri(), "Collection identifier must not be null!");
         try {
             em.remove(skosCollection);
+            // FIXME: Workaround until JOPA GH-508 is fixed
+            // https://github.com/kbss-cvut/jopa/issues/508
+            em.createNativeQuery("""
+                    DELETE WHERE {
+                        GRAPH ?context {
+                            ?collection ?pred ?obj
+                         }
+                    }
+                    """)
+                    .setParameter("context", vocabulary)
+                    .setParameter("collection", skosCollection.getUri())
+                    .executeUpdate();
             evictCache(skosCollection, vocabulary);
         } catch (RuntimeException e) {
             throw new PersistenceException(
