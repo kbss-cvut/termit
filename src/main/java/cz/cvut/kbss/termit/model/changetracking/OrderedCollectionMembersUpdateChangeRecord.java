@@ -9,7 +9,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.net.URI;
 import java.util.List;
 
-/** Special case of {@link UpdateChangeRecord} representing the original and new values as ordered lists. */
+/** Record describing a change to members of an ordered collection */
 @OWLClass(iri = Vocabulary.s_c_update_of_ordered_collection_members)
 public class OrderedCollectionMembersUpdateChangeRecord extends AttributeChangeRecord<List<URI>> {
 

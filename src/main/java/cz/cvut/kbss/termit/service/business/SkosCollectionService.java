@@ -45,13 +45,13 @@ public class SkosCollectionService implements ChangeRecordProvider<SkosCollectio
             SkosCollectionRepositoryService repositoryService,
             VocabularyService vocabularyService,
             DtoMapper dtoMapper,
-            ApplicationEventPublisher eventPublisher,
-            ChangeRecordService changeRecordService) {
+            ChangeRecordService changeRecordService,
+            ApplicationEventPublisher eventPublisher) {
         this.repositoryService = repositoryService;
         this.vocabularyService = vocabularyService;
         this.dtoMapper = dtoMapper;
-        this.eventPublisher = eventPublisher;
         this.changeRecordService = changeRecordService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
