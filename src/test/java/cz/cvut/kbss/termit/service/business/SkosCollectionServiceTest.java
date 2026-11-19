@@ -17,7 +17,6 @@ import cz.cvut.kbss.termit.model.collection.OrderedTermCollection_;
 import cz.cvut.kbss.termit.model.collection.SkosCollection;
 import cz.cvut.kbss.termit.model.collection.TermCollection;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.repository.SkosCollectionRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -45,9 +44,6 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     private EntityManager em;
 
     @Autowired
-    private VocabularyDao vocabularyDao;
-
-    @Autowired
     private SkosCollectionService sut;
 
     @Autowired
@@ -70,17 +66,17 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
     void setUp() {
         enableRdfsInference(em);
         vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> vocabularyDao.persist(vocabulary));
-
-        User user = Generator.generateUserWithId();
-        transactional(() -> em.persist(user));
-        Environment.setCurrentUser(user);
-
         collection = Generator.generateTermCollection(vocabulary);
         collection.setMembers(new HashSet<>());
         collection.setVocabulary(vocabulary.getUri());
         collection.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
-        transactional(() -> em.persist(collection, descriptorFactory.assetDescriptor(vocabulary.getUri())));
+        User user = Generator.generateUserWithId();
+        Environment.setCurrentUser(user);
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(user);
+            em.persist(collection, descriptorFactory.assetDescriptor(vocabulary.getUri()));
+        });
     }
 
     @Test
