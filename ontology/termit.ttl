@@ -707,7 +707,7 @@ termit:custom-attribute-profile-description
     <http://www.w3.org/2004/02/skos/core#prefLabel>
             "Custom attribute profile description"@en , "Popis profilu vlastních atributů"@cs ;
     <http://www.w3.org/2004/02/skos/core#definition>
-            "Description of a custom attribute profile - its title and description."@en , "Popis profilu vlastních atributů - jeho název a popis."@cs .
+            "A description of a custom attribute profile with its title"@en , "Popis profilu vlastních atributů s jeho názvem"@cs .
 
 termit:has-custom-attribute
     a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:ObjectProperty ;
@@ -716,9 +716,9 @@ termit:has-custom-attribute
     <http://www.w3.org/2004/02/skos/core#prefLabel>
             "Has custom attribute"@en , "Má vlastní atribut"@cs ;
     <http://www.w3.org/2004/02/skos/core#definition>
-            "Assigns a custom attribute into a profile."@en , "Přiřazuje vlastní atribut do profilu."@cs ;
+            "Links a custom attribute to a profile."@en , "Přiřazuje vlastní atribut do profilu."@cs ;
     rdfs:domain        termit:custom-attribute-profile ;
-    rdfs:range          termit:custom-attribute .
+    rdfs:range         termit:custom-attribute .
 
 termit:has-last-backup-datetime
         a       <http://www.w3.org/2004/02/skos/core#Concept> , owl:DatatypeProperty ;
