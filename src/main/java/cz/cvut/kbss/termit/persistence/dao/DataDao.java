@@ -417,7 +417,7 @@ public class DataDao {
         }
     }
 
-    private List<RdfTriple> findCustomAttributeUsage(
+    private static List<RdfTriple> findCustomAttributeUsage(
             RepositoryConnection con, IRI predicate, long offset, int resultLimit) {
         final TupleQuery pageQuery = con.prepareTupleQuery(
                 "SELECT ?subject ?attribute ?object ?context " + CUSTOM_ATTRIBUTE_USAGE_WHERE_CLAUSE
@@ -440,17 +440,14 @@ public class DataDao {
                 final IRI context = (IRI) bindings.getValue("context");
 
                 result.add(new RdfTriple(
-                        mapSubjectToResource(subject, con),
-                        Iri.create(statementPredicate),
-                        object,
-                        Iri.create(context)));
+                        mapSubjectToResource(subject), Iri.create(statementPredicate), object, Iri.create(context)));
             }
         }
 
         return result;
     }
 
-    private RdfResource mapSubjectToResource(Resource subject, RepositoryConnection con) {
+    private static RdfResource mapSubjectToResource(Resource subject) {
         if (subject.isIRI()) {
             return Iri.create((IRI) subject);
         } else {
@@ -538,7 +535,7 @@ public class DataDao {
         }
     }
 
-    private void bindCustomAttributeUsageQueryParameters(TupleQuery query, IRI predicate) {
+    private static void bindCustomAttributeUsageQueryParameters(TupleQuery query, IRI predicate) {
         query.setBinding("attribute", predicate);
         query.setBinding("vocabulary", Values.iri(Vocabulary_.entityClassIRI.toString()));
         query.setBinding("versionOfVocabulary", Values.iri(Vocabulary.s_c_version_of_vocabulary));
