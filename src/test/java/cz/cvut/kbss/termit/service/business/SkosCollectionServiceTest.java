@@ -78,7 +78,9 @@ class SkosCollectionServiceTest extends BaseServiceTestRunner {
 
         collection = Generator.generateTermCollection(vocabulary);
         collection.setMembers(new HashSet<>());
-        sut.persist(collection);
+        collection.setVocabulary(vocabulary.getUri());
+        collection.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
+        transactional(() -> em.persist(collection, descriptorFactory.assetDescriptor(vocabulary.getUri())));
     }
 
     @Test
