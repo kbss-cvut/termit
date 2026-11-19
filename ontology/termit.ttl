@@ -734,5 +734,5 @@ termit:update-of-ordered-collection-members
         skos:broader    dd:update-of-entity ;
         skos:inScheme   <http://onto.fel.cvut.cz/ontologies/application/termit> ;
         skos:prefLabel  "Change of collection members"@en, "Změna členů kolekce"@cs ;
-        skos:definition "Change that modifies members or their order of an ordered collection."@en,
+        skos:definition "Change that modifies the members or the order of members of an ordered collection."@en,
                         "Změna která mění členy, nebo jejich pořadí, v seřazené kolekci."@cs .
