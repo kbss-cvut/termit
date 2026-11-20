@@ -37,6 +37,7 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -94,9 +95,7 @@ public class Environment {
         return authentication;
     }
 
-    /**
-     * @see #setCurrentUser(UserAccount)
-     */
+    /** @see #setCurrentUser(UserAccount) */
     public static void setCurrentUser(User user) {
         final UserAccount ua = new UserAccount();
         ua.setUri(user.getUri());
@@ -113,14 +112,13 @@ public class Environment {
             return null;
         }
 
-        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        final TermItUserDetails userDetails =
+                (TermItUserDetails) context.getAuthentication().getDetails();
         assert userDetails != null;
         return userDetails.getUser();
     }
 
-    /**
-     * Resets security context, removing any previously set data.
-     */
+    /** Resets security context, removing any previously set data. */
     public static void resetCurrentUser() {
         SecurityContextHolder.clearContext();
     }
@@ -159,8 +157,7 @@ public class Environment {
      * @return JSON-LD message converter
      */
     public static HttpMessageConverter<?> createJsonLdMessageConverter() {
-        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(
-                getJsonLdObjectMapper());
+        final JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(getJsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
         return converter;
     }
@@ -177,6 +174,10 @@ public class Environment {
         return new ResourceHttpMessageConverter();
     }
 
+    public static HttpMessageConverter<?> createByteArrayMessageConverter() {
+        return new ByteArrayHttpMessageConverter();
+    }
+
     public static InputStream loadFile(String file) {
         return Environment.class.getClassLoader().getResourceAsStream(file);
     }
@@ -184,9 +185,9 @@ public class Environment {
     /**
      * Loads TermIt ontological model into the underlying repository, so that RDFS inference (mainly class and property
      * hierarchy) can be exploited.
-     * <p>
-     * Note that the specified {@code em} has to be transactional, so that a connection to the underlying repository is
-     * open.
+     *
+     * <p>Note that the specified {@code em} has to be transactional, so that a connection to the underlying repository
+     * is open.
      *
      * @param em Transactional {@code EntityManager} used to unwrap the underlying repository
      */
@@ -200,8 +201,10 @@ public class Environment {
                 }
             }
             conn.add(new File("ontology/termit.ttl"), BASE_URI, RDFFormat.TURTLE);
-            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
-                     RDFFormat.RDFXML);
+            conn.add(
+                    Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"),
+                    "",
+                    RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
@@ -212,7 +215,7 @@ public class Environment {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
     }
 
-    public static List<FlatTermDto>termsToFlatDtos(List<Term> terms) {
+    public static List<FlatTermDto> termsToFlatDtos(List<Term> terms) {
         return terms.stream().map(FlatTermDto::new).collect(Collectors.toList());
     }
 
@@ -226,23 +229,20 @@ public class Environment {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.begin();
-            conn.add(vf.createIRI(subject.toString()),
+            conn.add(
+                    vf.createIRI(subject.toString()),
                     vf.createIRI(predicate.toString()),
                     vf.createIRI(object.toString()));
             conn.commit();
         }
     }
 
-    /**
-     * @return label in {@link #LANGUAGE}
-     */
+    /** @return label in {@link #LANGUAGE} */
     public static String getPrimaryLabel(Term term) {
         return term.getLabel(Environment.LANGUAGE);
     }
 
-    /**
-     * @return label in {@link #LANGUAGE}
-     */
+    /** @return label in {@link #LANGUAGE} */
     public static String getPrimaryLabel(cz.cvut.kbss.termit.model.Vocabulary vocabulary) {
         return vocabulary.getLabel(Environment.LANGUAGE);
     }
@@ -257,8 +257,7 @@ public class Environment {
     }
 
     /**
-     * Sets label in {@link #LANGUAGE}
-     * And sets primary language to {@link #LANGUAGE} as well.
+     * Sets label in {@link #LANGUAGE} And sets primary language to {@link #LANGUAGE} as well.
      *
      * @param label label to set
      */

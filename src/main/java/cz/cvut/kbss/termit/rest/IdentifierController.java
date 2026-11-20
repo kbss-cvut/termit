@@ -103,6 +103,10 @@ public class IdentifierController extends BaseController {
                 ensureContextIriIsNull(assetType, contextIri);
                 yield idResolver.generateIdentifier(cfgNamespace.getCustomAttribute(), name);
             }
+            case CUSTOM_ATTRIBUTE_PROFILE -> {
+                ensureContextIriIsNull(assetType, contextIri);
+                yield idResolver.generateIdentifier(cfgNamespace.getCustomAttributeProfile(), name);
+            }
             case COLLECTION -> {
                 ensureContextIriIsNotNull(assetType, contextIri);
                 yield idResolver.generateDerivedIdentifier(

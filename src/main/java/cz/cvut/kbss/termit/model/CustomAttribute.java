@@ -10,6 +10,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.Set;
 
 @Context(CustomAttribute.CONTEXT)
@@ -67,5 +68,19 @@ public class CustomAttribute extends RdfsResource {
      */
     public boolean isSymmetric() {
         return hasType(OWL.SYMMETRIC_PROPERTY);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CustomAttribute attribute)) return false;
+        if (!super.equals(o)) return false;
+        return Objects.equals(domain, attribute.domain)
+                && Objects.equals(range, attribute.range)
+                && Objects.equals(annotatedRelationships, attribute.annotatedRelationships);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), domain, range, annotatedRelationships);
     }
 }
