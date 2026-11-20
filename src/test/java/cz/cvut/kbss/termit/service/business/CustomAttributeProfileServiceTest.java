@@ -3,16 +3,12 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jopa.vocabulary.XSD;
-import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.CustomAttributesProfile;
-import cz.cvut.kbss.termit.dto.CustomAttributesProfileDescription;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.importing.CustomAttributeConflictException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
-import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
-import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,12 +16,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,7 +37,7 @@ class CustomAttributeProfileServiceTest {
 
     @BeforeEach
     void setUp() {
-        this.sut = new CustomAttributeProfileService(dataService, Environment.getJsonLdObjectMapper());
+        this.sut = new CustomAttributeProfileService(dataService);
     }
 
     private static CustomAttribute copyOf(CustomAttribute attribute) {
@@ -54,44 +47,6 @@ class CustomAttributeProfileServiceTest {
         copy.setRange(attribute.getRange());
         copy.setAnnotatedRelationships(attribute.getAnnotatedRelationships());
         return copy;
-    }
-
-    @Test
-    void exportProfileReturnsJsonLdResource() {
-        final CustomAttribute attribute = Generator.generateCustomAttribute();
-        when(dataService.findCustomAttributes(Set.of(attribute.getUri()))).thenReturn(List.of(attribute));
-
-        final TypeAwareResource result =
-                sut.exportProfile(Generator.generateCustomAttributeProfileDescription(), Set.of(attribute.getUri()));
-        assertEquals(Optional.of(JsonLd.MEDIA_TYPE), result.getMediaType());
-        assertEquals(Optional.of(".jsonld"), result.getFileExtension());
-    }
-
-    @Test
-    void exportProfileExportsProfileDescriptionWithSpecifiedCustomAttributes() throws Exception {
-        final CustomAttributesProfileDescription description = Generator.generateCustomAttributeProfileDescription();
-        final List<CustomAttribute> attributes =
-                List.of(Generator.generateCustomAttribute(), Generator.generateCustomAttribute());
-        final Set<URI> attributeUris =
-                attributes.stream().map(HasIdentifier::getUri).collect(Collectors.toUnmodifiableSet());
-
-        when(dataService.findCustomAttributes(attributeUris)).thenReturn(attributes);
-
-        final TypeAwareResource resource = sut.exportProfile(description, attributeUris);
-
-        final CustomAttributesProfile result = Environment.getJsonLdObjectMapper()
-                .readValue(resource.getContentAsByteArray(), CustomAttributesProfile.class);
-        assertEquals(description.getUri(), result.getUri());
-        assertEquals(description.getTitle(), result.getTitle());
-        assertEquals(description.getDescription(), result.getDescription());
-        assertEquals(attributes.size(), result.getCustomAttributes().size());
-        for (CustomAttribute expected : attributes) {
-            final CustomAttribute actual = result.getCustomAttributes().stream()
-                    .filter(expected::equals)
-                    .findFirst()
-                    .orElseThrow();
-            assertEquals(expected, actual);
-        }
     }
 
     @Test

@@ -1,25 +1,16 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.CustomAttributesProfile;
-import cz.cvut.kbss.termit.dto.CustomAttributesProfileDescription;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.importing.CustomAttributeConflictException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
-import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
-import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.json.JsonMapper;
 
-import java.net.URI;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Manages custom attribute profiles.
@@ -29,7 +20,6 @@ import java.util.Set;
  * attribute definitions between TermIt instances.
  *
  * @see CustomAttributesProfile
- * @see CustomAttributesProfileDescription
  */
 @Service
 public class CustomAttributeProfileService {
@@ -38,31 +28,8 @@ public class CustomAttributeProfileService {
 
     private final DataRepositoryService dataService;
 
-    private final JsonMapper jsonLdMapper;
-
-    public CustomAttributeProfileService(
-            DataRepositoryService dataService, @Qualifier("jsonLdMapper") JsonMapper jsonLdMapper) {
+    public CustomAttributeProfileService(DataRepositoryService dataService) {
         this.dataService = dataService;
-        this.jsonLdMapper = jsonLdMapper;
-    }
-
-    /**
-     * Exports the specified custom attributes as a JSON-LD profile.
-     *
-     * <p>The resulting profile consists of the provided description and the definitions of the custom attributes with
-     * the specified identifiers.
-     *
-     * @param profileDescription Description of the exported profile (its identifier, title and description)
-     * @param customAttributeUris Identifiers of the custom attributes to include in the profile
-     * @return Resource containing the profile serialized as JSON-LD
-     */
-    @Transactional(readOnly = true)
-    public TypeAwareResource exportProfile(
-            CustomAttributesProfileDescription profileDescription, Set<URI> customAttributeUris) {
-        LOG.debug("Exporting profile with {} custom attribute(s).", customAttributeUris.size());
-        final List<CustomAttribute> attributes = dataService.findCustomAttributes(customAttributeUris);
-        final CustomAttributesProfile profile = new CustomAttributesProfile(profileDescription, Set.copyOf(attributes));
-        return new TypeAwareByteArrayResource(jsonLdMapper.writeValueAsBytes(profile), JsonLd.MEDIA_TYPE, ".jsonld");
     }
 
     /**
