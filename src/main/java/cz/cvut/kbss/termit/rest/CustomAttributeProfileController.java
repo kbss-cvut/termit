@@ -49,8 +49,10 @@ public class CustomAttributeProfileController {
                 responseCode = "400",
                 description =
                         "The profile is missing its identifier, title, custom attributes, or the provided JSON is invalid."),
-        @ApiResponse(responseCode = "409", description = "The profile or its custom attributes are invalid."),
-        @ApiResponse(responseCode = "422", description = "Existing attribute conflicts with definition in the profile.")
+        @ApiResponse(
+                responseCode = "409",
+                description = "The profile or its custom attributes are invalid."
+                        + " An existing attribute conflicts with definition in the profile."),
     })
     @PostMapping(value = "/import", consumes = JsonLd.MEDIA_TYPE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
