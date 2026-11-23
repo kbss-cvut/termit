@@ -17,12 +17,19 @@
  */
 package cz.cvut.kbss.termit.exception;
 
-/**
- * Indicates an issue with REST parameters semantics.
- */
+import jakarta.annotation.Nonnull;
+
+import java.util.Map;
+
+/** Indicates an issue with REST parameters semantics. */
 public class InvalidParameterException extends TermItException {
 
     public InvalidParameterException(String message) {
         super(message);
+    }
+
+    public InvalidParameterException(
+            String message, Throwable cause, String messageId, @Nonnull Map<String, String> parameters) {
+        super(message, cause, messageId, parameters);
     }
 }
