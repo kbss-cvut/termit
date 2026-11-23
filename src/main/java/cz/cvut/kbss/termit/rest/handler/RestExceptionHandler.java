@@ -40,10 +40,10 @@ import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
+import cz.cvut.kbss.termit.exception.importing.CustomAttributeConflictException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.util.ExceptionUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -56,6 +56,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.net.URISyntaxException;
 import java.util.Optional;
 
@@ -63,9 +65,9 @@ import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
  * Exception handlers for REST controllers.
- * <p>
- * The general pattern should be that unless an exception can be handled in a more appropriate place it bubbles up to a
- * REST controller which originally received the request. There, it is caught by this handler, logged and a reasonable
+ *
+ * <p>The general pattern should be that unless an exception can be handled in a more appropriate place it bubbles up to
+ * a REST controller which originally received the request. There, it is caught by this handler, logged and a reasonable
  * error message is returned to the user.
  *
  * @implSpec Should reflect {@link cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler}
@@ -102,8 +104,8 @@ public class RestExceptionHandler {
     }
 
     private static ErrorInfo errorInfo(HttpServletRequest request, TermItException e) {
-        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), request.getRequestURI(),
-                                                       e.getParameters());
+        return ErrorInfo.createParametrizedWithMessage(
+                e.getMessage(), e.getMessageId(), request.getRequestURI(), e.getParameters());
     }
 
     @ExceptionHandler(PersistenceException.class)
@@ -126,7 +128,8 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorInfo> resourceNotFound(HttpServletRequest request, NotFoundException e) {
-        // Not necessary to log NotFoundException, they may be quite frequent and do not represent an issue with the application
+        // Not necessary to log NotFoundException, they may be quite frequent and do not represent an issue with the
+        // application
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.NOT_FOUND);
     }
 
@@ -163,15 +166,15 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(WebServiceIntegrationException.class)
-    public ResponseEntity<ErrorInfo> webServiceIntegrationException(HttpServletRequest request,
-                                                                    WebServiceIntegrationException e) {
+    public ResponseEntity<ErrorInfo> webServiceIntegrationException(
+            HttpServletRequest request, WebServiceIntegrationException e) {
         logException(e.getCause(), request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AnnotationGenerationException.class)
-    public ResponseEntity<ErrorInfo> annotationGenerationException(HttpServletRequest request,
-                                                                   AnnotationGenerationException e) {
+    public ResponseEntity<ErrorInfo> annotationGenerationException(
+            HttpServletRequest request, AnnotationGenerationException e) {
         logException(e.getCause(), request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -195,22 +198,22 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(UnsupportedOperationException.class)
-    public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(HttpServletRequest request,
-                                                                        UnsupportedOperationException e) {
+    public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(
+            HttpServletRequest request, UnsupportedOperationException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(VocabularyImportException.class)
-    public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
-                                                               VocabularyImportException e) {
+    public ResponseEntity<ErrorInfo> vocabularyImportException(
+            HttpServletRequest request, VocabularyImportException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedImportMediaTypeException(HttpServletRequest request,
-                                                                         UnsupportedImportMediaTypeException e) {
+    public ResponseEntity<ErrorInfo> unsupportedImportMediaTypeException(
+            HttpServletRequest request, UnsupportedImportMediaTypeException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
@@ -228,39 +231,40 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> maxUploadSizeExceededException(HttpServletRequest request,
-                                                                    MaxUploadSizeExceededException e) {
+    public ResponseEntity<ErrorInfo> maxUploadSizeExceededException(
+            HttpServletRequest request, MaxUploadSizeExceededException e) {
         logException(e, request);
-        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(
-                e.getMessage(),
-                "error.file.maxUploadSizeExceeded", request.getRequestURI()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                ErrorInfo.createWithMessageAndMessageId(
+                        e.getMessage(), "error.file.maxUploadSizeExceeded", request.getRequestURI()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> snapshotNotEditableException(HttpServletRequest request,
-                                                                  SnapshotNotEditableException e) {
+    public ResponseEntity<ErrorInfo> snapshotNotEditableException(
+            HttpServletRequest request, SnapshotNotEditableException e) {
         logException(e, request);
-        return new ResponseEntity<>(ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()),
-                                    HttpStatus.CONFLICT);
+        return new ResponseEntity<>(
+                ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(HttpServletRequest request,
-                                                                     UnsupportedSearchFacetException e) {
-        logException(e, request);
-        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidLanguageConstantException(HttpServletRequest request,
-                                                                      InvalidLanguageConstantException e) {
+    public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(
+            HttpServletRequest request, UnsupportedSearchFacetException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidTermStateException(HttpServletRequest request,
-                                                               InvalidTermStateException e) {
+    public ResponseEntity<ErrorInfo> invalidLanguageConstantException(
+            HttpServletRequest request, InvalidLanguageConstantException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> invalidTermStateException(
+            HttpServletRequest request, InvalidTermStateException e) {
         logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
@@ -268,8 +272,8 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request,
-                                                                           InvalidPasswordChangeRequestException e) {
+    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(
+            HttpServletRequest request, InvalidPasswordChangeRequestException e) {
         logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
@@ -277,8 +281,8 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidIdentifierException(HttpServletRequest request,
-                                                                InvalidIdentifierException e) {
+    public ResponseEntity<ErrorInfo> invalidIdentifierException(
+            HttpServletRequest request, InvalidIdentifierException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
@@ -293,22 +297,31 @@ public class RestExceptionHandler {
                 .addParameter("reason", e.getReason())
                 .addParameter("message", e.getMessage())
                 .addParameter("index", Integer.toString(e.getIndex()))
-                .addParameter("char", e.getIndex() < e.getInput().length() ?
-                                      Character.toString(e.getInput().charAt(e.getIndex())) : "");
+                .addParameter(
+                        "char",
+                        e.getIndex() < e.getInput().length()
+                                ? Character.toString(e.getInput().charAt(e.getIndex()))
+                                : "");
         return new ResponseEntity<>(errorInfo(request, exception), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedTextAnalysisLanguageException(HttpServletRequest request,
-                                                                              UnsupportedTextAnalysisLanguageException e) {
+    public ResponseEntity<ErrorInfo> unsupportedTextAnalysisLanguageException(
+            HttpServletRequest request, UnsupportedTextAnalysisLanguageException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedDomainException(HttpServletRequest request,
-                                                                UnsupportedDomainException e) {
+    public ResponseEntity<ErrorInfo> unsupportedDomainException(
+            HttpServletRequest request, UnsupportedDomainException e) {
         logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> customAttributeConflictException(
+            HttpServletRequest request, CustomAttributeConflictException e) {
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 }

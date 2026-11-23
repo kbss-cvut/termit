@@ -98,12 +98,12 @@ class CustomAttributeProfileControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void importCustomAttributesReturnsUnprocessableContentWhenExistingAttributeConflictsWithProfile() throws Exception {
+    void importCustomAttributesReturnsConflictWhenExistingAttributeConflictsWithProfile() throws Exception {
         final CustomAttributesProfile profile = Generator.generateCustomAttributeProfile();
         doThrow(new CustomAttributeConflictException(false, true, Generator.generateUri()))
                 .when(profileService)
                 .importProfile(any());
 
-        requestImport(profile).andExpect(status().isUnprocessableContent());
+        requestImport(profile).andExpect(status().isConflict());
     }
 }
