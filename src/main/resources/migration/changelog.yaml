@@ -29,3 +29,12 @@ changelog:
                     sourceUrl: https://onto.fel.cvut.cz/ontologies/data-description/version/2.1.0.ttl
                     graph: http://onto.fel.cvut.cz/ontologies/data-description
                     replace: true
+    -   changeSet:
+            id: 14
+            changes:
+                -   type: importFromUrl
+                    # SKOS Collection change tracking and custom attribute profiles
+                    sourceUrl: https://raw.githubusercontent.com/kbss-cvut/termit-docker/cddb4a79c0b18f1f4a3962a10797ea5e923373a9/db-server/init-data/termit.trig
+                    graph: http://onto.fel.cvut.cz/ontologies/application/termit
+                    mimeType: "application/trig"
+                    replace: true
